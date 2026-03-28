@@ -1,0 +1,6 @@
+@Yukle.Api_HostAddress = http://localhost:5151
+
+GET {{Yukle.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

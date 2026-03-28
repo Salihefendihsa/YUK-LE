@@ -52,27 +52,32 @@
 ## 🌟 Temel Özellikler
 
 ### 🤖 Yapay Zeka Motoru (Gemini 1.5 Flash & Vision)
+
 - **Dinamik Adil Taban Fiyat:** Güncel yakıt fiyatları + mesafe + araç tipi + güzergah zorluğu analiz edilerek piyasa koşullarına uygun fiyat hesaplanır
 - **Otonom Evrak Onayı:** Şoför ehliyeti, araç ruhsatı, K1/K2 belgesi gibi evraklar Gemini Vision ile analiz edilip otomatik onaylanır
 - **Akıllı Eşleştirme:** Fabrika lokasyonuna en yakın, uygun araç tipine sahip şoförler önceliklendirilir
 
 ### 📍 Coğrafi Bilgi Sistemi (PostGIS)
+
 - **Konum Bazlı Eşleştirme:** Yarıçap tabanlı şoför keşfi
 - **Rota Optimizasyonu:** Gerçek yol mesafesi hesaplama
 - **Adaptif GPS Frekansı:** İvmeölçer + 500m geofencing kurallarıyla şoför telefon bataryası korunur
 
 ### ⚡ Gerçek Zamanlı İşlemler (SignalR)
+
 - **Canlı Konum Takibi:** Yükün anlık konumunu harita üzerinde izleme
 - **Anlık Teklifleşme:** Şoförler ilanı gördüğü anda fiyat teklifi gönderir
 - **Durum Bildirimleri:** Yükleme, taşıma, teslimat aşamalarında push bildirim
 
 ### 💰 Finansal Altyapı
+
 - **İyzico Escrow:** Ödeme güvenli havuzda tutulur, teslimat kanıtıyla serbest bırakılır
 - **QR Kodlu Teslimat Kanıtı:** Alıcı QR okutarak teslimatı onaylar
 - **Otomatik Hakediş:** Kurumsal → fatura bazlı, bireysel → stopaj vergisi kesilmiş net ödeme
 - **Platform Komisyonu:** Her işlemden otomatik ayrıştırma
 
 ### 📋 Yasal Uyumluluk
+
 - **U-ETDS Entegrasyonu:** Ulaştırma Bakanlığı'na Outbox Pattern ile kesintisiz, garantili veri iletimi
 - **K Belgesi Takibi:** Şoför yetki belgelerinin geçerlilik kontrolü
 - **Dijital Taşıma Senedi:** Tüm taşıma işlemleri dijital senet ile kayıt altına alınır
@@ -118,6 +123,7 @@
 ## 🛠 Teknoloji Yığını
 
 ### Backend
+
 | Teknoloji | Kullanım Amacı |
 |---|---|
 | **.NET 8 Web API** | Ana uygulama sunucusu, RESTful API |
@@ -131,6 +137,7 @@
 | **Serilog** | Yapılandırılmış loglama |
 
 ### Mobil
+
 | Teknoloji | Kullanım Amacı |
 |---|---|
 | **Flutter 3.x** | Cross-platform mobil uygulama |
@@ -140,6 +147,7 @@
 | **flutter_local_notifications** | Push bildirimleri |
 
 ### Yapay Zeka & Dış Servisler
+
 | Teknoloji | Kullanım Amacı |
 |---|---|
 | **Google Gemini 1.5 Flash** | Dinamik fiyat hesaplama, akıllı eşleştirme |
@@ -148,6 +156,7 @@
 | **U-ETDS API** | Ulaştırma Bakanlığı yasal bildirim |
 
 ### DevOps & Altyapı
+
 | Teknoloji | Kullanım Amacı |
 |---|---|
 | **Docker & Docker Compose** | Konteynerleştirme |
@@ -230,6 +239,7 @@ YÜK-LE/
 ## 🚀 Kurulum
 
 ### Ön Gereksinimler
+
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - [Flutter 3.x](https://flutter.dev/docs/get-started/install)
 - [PostgreSQL 16](https://www.postgresql.org/download/) + PostGIS
@@ -240,7 +250,7 @@ YÜK-LE/
 
 ```bash
 # 1. Repoyu klonlayın
-git clone https://github.com/YOUR_USERNAME/YUK-LE.git
+git clone https://github.com/Salihefendihsa/YUK-LE.git
 cd YUK-LE
 
 # 2. Docker ile başlatın (önerilen)
@@ -323,7 +333,7 @@ Bu proje tescilli bir yazılımdır. Tüm hakları saklıdır.
 
 Sorularınız veya iş birliği teklifleriniz için:
 
-- **GitHub:** [@YOUR_USERNAME](https://github.com/YOUR_USERNAME)
+- **GitHub:** [@Salihefendihsa](https://github.com/Salihefendihsa)
 
 ---
 
