@@ -17,19 +17,23 @@ public class LoadService
 
     public async Task<int> CreateLoadAsync(CreateLoadDto dto)
     {
-        // 4326 is SRID for GPS (WGS84). Point format is (Longitude, Latitude)
+        // SRID 4326 = WGS84 (Standart GPS). Point format: (Longitude, Latitude)
         var origin = new Point(dto.OriginLng, dto.OriginLat) { SRID = 4326 };
         var destination = new Point(dto.DestLng, dto.DestLat) { SRID = 4326 };
 
         var load = new Load
         {
             Title = dto.Title,
-            Description = dto.Description,
+            OwnerId = dto.OwnerId,
             Weight = dto.Weight,
-            OriginLocation = origin,
-            DestinationLocation = destination,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            Volume = dto.Volume,
+            Price = dto.Price,
+            Type = dto.Type,
+            Origin = origin,
+            Destination = destination,
+            OriginAddress = dto.OriginAddress,
+            DestinationAddress = dto.DestinationAddress,
+            CreatedAt = DateTime.UtcNow
         };
 
         _context.Loads.Add(load);
@@ -40,7 +44,6 @@ public class LoadService
 
     public async Task<List<Load>> GetAllLoadsAsync()
     {
-        // Return all loads and their spatial locations
         return await _context.Loads.ToListAsync();
     }
 }

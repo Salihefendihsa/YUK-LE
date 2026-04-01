@@ -42,5 +42,11 @@ namespace Yukle.Api.Models
         // Cüzdan ve Finansal Takip
         public decimal WalletBalance { get; set; }
         public decimal PendingBalance { get; set; }
+
+        // Navigation Properties (İlişkisel Koleksiyonlar)
+        public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
+        public ICollection<Load> OwnedLoads { get; set; } = new List<Load>();
+        public ICollection<Load> CarriedLoads { get; set; } = new List<Load>();
+        public ICollection<Bid> Bids { get; set; } = new List<Bid>();
     }
 }
