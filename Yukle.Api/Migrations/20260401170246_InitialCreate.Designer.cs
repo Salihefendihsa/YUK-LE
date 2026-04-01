@@ -13,8 +13,8 @@ using Yukle.Api.Data;
 namespace Yukle.Api.Migrations
 {
     [DbContext(typeof(YukleDbContext))]
-    [Migration("20260401145521_AddSpatialLoadModel")]
-    partial class AddSpatialLoadModel
+    [Migration("20260401170246_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -26,6 +26,42 @@ namespace Yukle.Api.Migrations
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "postgis");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Yukle.Api.Models.Bid", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DriverId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LoadId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DriverId");
+
+                    b.HasIndex("LoadId");
+
+                    b.ToTable("Bids");
+                });
 
             modelBuilder.Entity("Yukle.Api.Models.Load", b =>
                 {
@@ -121,6 +157,10 @@ namespace Yukle.Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("text");
@@ -159,6 +199,9 @@ namespace Yukle.Api.Migrations
                         .HasColumnType("numeric(18,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
 
                     b.HasIndex("Phone")
                         .IsUnique();
@@ -203,17 +246,36 @@ namespace Yukle.Api.Migrations
                     b.ToTable("Vehicles");
                 });
 
+            modelBuilder.Entity("Yukle.Api.Models.Bid", b =>
+                {
+                    b.HasOne("Yukle.Api.Models.User", "Driver")
+                        .WithMany("Bids")
+                        .HasForeignKey("DriverId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Yukle.Api.Models.Load", "Load")
+                        .WithMany("Bids")
+                        .HasForeignKey("LoadId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Driver");
+
+                    b.Navigation("Load");
+                });
+
             modelBuilder.Entity("Yukle.Api.Models.Load", b =>
                 {
                     b.HasOne("Yukle.Api.Models.User", "Driver")
-                        .WithMany()
+                        .WithMany("CarriedLoads")
                         .HasForeignKey("DriverId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Yukle.Api.Models.User", "Owner")
-                        .WithMany()
+                        .WithMany("OwnedLoads")
                         .HasForeignKey("OwnerId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Yukle.Api.Models.Vehicle", "Vehicle")
@@ -231,12 +293,28 @@ namespace Yukle.Api.Migrations
             modelBuilder.Entity("Yukle.Api.Models.Vehicle", b =>
                 {
                     b.HasOne("Yukle.Api.Models.User", "Driver")
-                        .WithMany()
+                        .WithMany("Vehicles")
                         .HasForeignKey("DriverId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Driver");
+                });
+
+            modelBuilder.Entity("Yukle.Api.Models.Load", b =>
+                {
+                    b.Navigation("Bids");
+                });
+
+            modelBuilder.Entity("Yukle.Api.Models.User", b =>
+                {
+                    b.Navigation("Bids");
+
+                    b.Navigation("CarriedLoads");
+
+                    b.Navigation("OwnedLoads");
+
+                    b.Navigation("Vehicles");
                 });
 #pragma warning restore 612, 618
         }

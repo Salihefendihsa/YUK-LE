@@ -25,6 +25,7 @@ public class YukleDbContext : DbContext
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasIndex(u => u.Phone).IsUnique();
+            entity.HasIndex(u => u.Email).IsUnique();
             entity.Property(u => u.WalletBalance).HasPrecision(18, 2);
             entity.Property(u => u.PendingBalance).HasPrecision(18, 2);
         });

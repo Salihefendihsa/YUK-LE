@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Yukle.Api.DTOs;
 using Yukle.Api.Services;
@@ -16,6 +17,7 @@ public class LoadController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Customer")]
     public async Task<IActionResult> CreateLoad([FromBody] CreateLoadDto dto)
     {
         if (!ModelState.IsValid)
@@ -26,6 +28,7 @@ public class LoadController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize]
     public async Task<IActionResult> GetAllLoads()
     {
         var loads = await _loadService.GetAllLoadsAsync();

@@ -44,6 +44,17 @@ public class LoadService
 
     public async Task<List<Load>> GetAllLoadsAsync()
     {
-        return await _context.Loads.ToListAsync();
+        return await _context.Loads.Where(l => l.Status == LoadStatus.Active).ToListAsync();
+    }
+
+    public async Task<List<Load>> GetNearbyLoadsAsync(Point userLoc, double radiusKm)
+    {
+        var radiusMeters = radiusKm * 1000;
+        // KRİTİK: Coordinate 4326 (WGS84) üzerinden kilometre/metre ölçümü yapmak için, geometry kolonlarının geography tipine açıkça (explicit) dönüştürülmesi gereklidir.
+        // Npgsql.EntityFrameworkCore.PostgreSQL ST_DWithin'i doğrudan geography'e çevirmediği için performans ve doğruluk adına en iyi yol parametrik RAW SQL'dir.
+        
+        return await _context.Loads
+            .FromSqlInterpolated($"SELECT * FROM \"Loads\" WHERE \"Status\" = 0 AND ST_DWithin(\"Origin\"::geography, ST_SetSRID(ST_MakePoint({userLoc.X}, {userLoc.Y}), 4326)::geography, {radiusMeters})")
+            .ToListAsync();
     }
 }

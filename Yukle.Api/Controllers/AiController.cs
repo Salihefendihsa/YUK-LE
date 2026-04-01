@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.IO;
@@ -9,13 +10,18 @@ namespace Yukle.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class AiController : ControllerBase
     {
         private readonly GeminiService _geminiService;
+        private readonly AiPricingService _aiPricingService;
+        private readonly Data.YukleDbContext _context;
 
-        public AiController(GeminiService geminiService)
+        public AiController(GeminiService geminiService, AiPricingService aiPricingService, Data.YukleDbContext context)
         {
             _geminiService = geminiService;
+            _aiPricingService = aiPricingService;
+            _context = context;
         }
 
         [HttpPost("ocr-license")]
@@ -42,6 +48,17 @@ namespace Yukle.Api.Controllers
             var result = await _geminiService.AnalyzePriceAsync(request.Distance, request.Weight, request.CargoType);
 
             return Ok(new { EstimatedPriceAnalysis = result });
+        }
+
+        [HttpGet("load/{id}/price-suggestion")]
+        [Authorize(Roles = "Customer")]
+        public async Task<IActionResult> SuggestPriceForLoad(int id)
+        {
+            var load = await _context.Loads.FindAsync(id);
+            if (load == null) return NotFound("Yük bulunamadı.");
+
+            var suggestion = await _aiPricingService.AnalyzePriceAsync(load);
+            return Ok(new { LoadId = id, Suggestion = suggestion });
         }
     }
 }
