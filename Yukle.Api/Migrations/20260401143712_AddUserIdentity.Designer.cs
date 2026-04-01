@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Yukle.Api.Data;
 namespace Yukle.Api.Migrations
 {
     [DbContext(typeof(YukleDbContext))]
-    partial class YukleDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260401143712_AddUserIdentity")]
+    partial class AddUserIdentity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -84,18 +87,34 @@ namespace Yukle.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ApprovalStatus")
-                        .HasColumnType("integer");
+                    b.Property<double>("AverageRating")
+                        .HasColumnType("double precision");
+
+                    b.Property<decimal>("Balance")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("CompanyName")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<bool>("IsCorporate")
+                    b.Property<bool>("IsVerified")
                         .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastLoginDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LicenseClass")
+                        .HasColumnType("text");
 
                     b.Property<byte[]>("PasswordHash")
                         .IsRequired()
@@ -105,82 +124,30 @@ namespace Yukle.Api.Migrations
                         .IsRequired()
                         .HasColumnType("bytea");
 
-                    b.Property<decimal>("PendingBalance")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<string>("Phone")
+                    b.Property<string>("PhoneNumber")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PlateNumber")
                         .HasColumnType("text");
 
                     b.Property<int>("Role")
                         .HasColumnType("integer");
 
-                    b.Property<string>("SubMerchantKey")
+                    b.Property<string>("TaxNumber")
                         .HasColumnType("text");
 
-                    b.Property<string>("TaxNumberOrTCKN")
+                    b.Property<string>("Tckn")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<decimal>("WalletBalance")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Phone")
-                        .IsUnique();
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("Yukle.Api.Models.Vehicle", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<double>("Capacity")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("DriverId")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("LastMaintenanceDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Plate")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DriverId");
-
-                    b.HasIndex("Plate")
-                        .IsUnique();
-
-                    b.ToTable("Vehicles");
-                });
-
-            modelBuilder.Entity("Yukle.Api.Models.Vehicle", b =>
-                {
-                    b.HasOne("Yukle.Api.Models.User", "Driver")
-                        .WithMany()
-                        .HasForeignKey("DriverId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Driver");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Yukle.Api.Data;
+using Yukle.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,7 @@ builder.Services.AddDbContext<YukleDbContext>(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<Yukle.Api.Services.LoadService>();
+builder.Services.AddHttpClient<GeminiService>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
