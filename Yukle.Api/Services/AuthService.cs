@@ -15,92 +15,75 @@ using Yukle.Api.DTOs;
 
 namespace Yukle.Api.Services
 {
-    public class AuthService
+    public class AuthService : IAuthService
     {
         private readonly YukleDbContext _context;
-        private readonly IConfiguration _config;
+        private readonly ITokenService _tokenService;
 
-        public AuthService(YukleDbContext context, IConfiguration config)
+        public AuthService(YukleDbContext context, ITokenService tokenService)
         {
             _context = context;
-            _config = config;
+            _tokenService = tokenService;
         }
 
         public async Task<User> RegisterAsync(UserRegisterDto dto)
         {
-            if (await _context.Users.AnyAsync(u => u.Phone == dto.Phone))
-                throw new ApplicationException("Bu telefon numarası zaten kullanımda.");
-
-            CreatePasswordHash(dto.Password, out byte[] passwordHash, out byte[] passwordSalt);
-
-            var user = new User
+            try
             {
-                FullName = dto.FullName,
-                Phone = dto.Phone,
-                Email = dto.Email,
-                PasswordHash = passwordHash,
-                PasswordSalt = passwordSalt,
-                IsCorporate = dto.IsCorporate,
-                TaxNumberOrTCKN = dto.TaxNumberOrTCKN,
-                Role = Enum.TryParse<UserRole>(dto.Role, out var role) ? role : UserRole.Customer,
-                CreatedAt = DateTime.UtcNow
-            };
+                if (await _context.Users.AnyAsync(u => u.Phone == dto.Phone))
+                    throw new ApplicationException("Bu telefon numarası zaten kullanımda.");
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-            return user;
+                if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
+                    throw new ApplicationException("Bu e-posta adresi zaten kullanımda.");
+
+                string passwordHashString = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+                byte[] passwordHashBytes = Encoding.UTF8.GetBytes(passwordHashString);
+
+                var user = new User
+                {
+                    FullName = dto.FullName,
+                    Phone = dto.Phone,
+                    Email = dto.Email,
+                    PasswordHash = passwordHashBytes,
+                    PasswordSalt = Array.Empty<byte>(), // BCrypt salt'ı hash'in içinde tutar, bu alan geriye dönük uyumluluk veya başka amaçlar için boş bırakılabilir veya kaldırılabilir.
+                    IsCorporate = dto.IsCorporate,
+                    TaxNumberOrTCKN = dto.TaxNumberOrTCKN,
+                    Role = Enum.TryParse<UserRole>(dto.Role, out var role) ? role : UserRole.Customer,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+                return user;
+            }
+            catch (Exception ex)
+            {
+                // TODO: İleride ILogger eklendiğinde loglama yapılabilir.
+                throw new ApplicationException($"Kayıt işlemi sırasında bir hata oluştu: {ex.Message}", ex);
+            }
         }
 
         public async Task<string> LoginAsync(UserLoginDto dto)
         {
-            var user = await _context.Users.SingleOrDefaultAsync(u => u.Phone == dto.Phone)
-                ?? throw new ApplicationException("Geçersiz telefon numarası veya şifre.");
-
-            if (!VerifyPasswordHash(dto.Password, user.PasswordHash, user.PasswordSalt))
-                throw new ApplicationException("Geçersiz telefon numarası veya şifre.");
-
-            return CreateToken(user);
-        }
-
-        private void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
-        {
-            using var hmac = new HMACSHA512();
-            passwordSalt = hmac.Key;
-            passwordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-        }
-
-        private bool VerifyPasswordHash(string password, byte[] passwordHash, byte[] passwordSalt)
-        {
-            using var hmac = new HMACSHA512(passwordSalt);
-            var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return computedHash.SequenceEqual(passwordHash);
-        }
-
-        private string CreateToken(User user)
-        {
-            var claims = new List<Claim>
+            try
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.FullName),
-                new Claim(ClaimTypes.Role, user.Role.ToString())
-            };
+                var user = await _context.Users.SingleOrDefaultAsync(u => u.Phone == dto.Phone)
+                    ?? throw new ApplicationException("Geçersiz telefon numarası veya şifre.");
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"] ?? throw new ArgumentNullException("Jwt:Key is missing")));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+                string storedPasswordHashString = Encoding.UTF8.GetString(user.PasswordHash);
 
-            var tokenDescriptor = new SecurityTokenDescriptor
+                bool isPasswordValid = BCrypt.Net.BCrypt.Verify(dto.Password, storedPasswordHashString);
+
+                if (!isPasswordValid)
+                    throw new ApplicationException("Geçersiz telefon numarası veya şifre.");
+
+                return _tokenService.CreateToken(user);
+            }
+            catch (Exception ex)
             {
-                Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddHours(24),
-                SigningCredentials = creds,
-                Issuer = _config["Jwt:Issuer"],
-                Audience = _config["Jwt:Audience"]
-            };
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-
-            return tokenHandler.WriteToken(token);
+                // TODO: İleride ILogger eklendiğinde loglama yapılabilir.
+                throw new ApplicationException($"Giriş yaparken bir hata oluştu: {ex.Message}", ex);
+            }
         }
     }
 }
