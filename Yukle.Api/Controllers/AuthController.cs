@@ -24,9 +24,9 @@ namespace Yukle.Api.Controllers
             {
                 var user = await _authService.RegisterAsync(request);
                 
-                // Güvenlik açısından hassas alanları (Hash'i vb.) apiye tamamen açık göndermemek adına sıfırlayabilirsiniz
-                // veya ileride bir Response Dto kullanılabilir.
+                // Güvenlik: Hassas alanları istemciye göndermiyoruz
                 user.PasswordHash = Array.Empty<byte>();
+                user.PasswordSalt = Array.Empty<byte>();
 
                 return Ok(user);
             }
@@ -36,7 +36,7 @@ namespace Yukle.Api.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { Message = "Kayıt sırasında beklenmedik bir hata.", Details = ex.Message });
+                return StatusCode(500, new { Message = "Kayıt sırasında beklenmedik bir sunucu hatası oluştu.", Details = ex.Message });
             }
         }
 
@@ -54,7 +54,7 @@ namespace Yukle.Api.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { Message = "Giriş işlemi sırasında beklenmedik bir hata.", Details = ex.Message });
+                return StatusCode(500, new { Message = "Giriş işlemi sırasında beklenmedik bir sunucu hatası oluştu.", Details = ex.Message });
             }
         }
     }
