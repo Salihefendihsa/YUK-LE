@@ -1,3 +1,5 @@
+using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Yukle.Api.DTOs;
@@ -18,20 +20,38 @@ public class LoadController : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = "Customer")]
-    public async Task<IActionResult> CreateLoad([FromBody] CreateLoadDto dto)
+    public async Task<IActionResult> CreateLoad([FromBody] LoadCreateDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var id = await _loadService.CreateLoadAsync(dto);
-        return Ok(new { Message = "Yük veritabanına mühürlendi.", LoadId = id });
+        try
+        {
+            var id = await _loadService.CreateLoadAsync(dto);
+            return Ok(new { Message = "Yük ilanı oluşturuldu.", LoadId = id });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { Message = "Yük oluşturulurken bir hata oluştu.", Details = ex.Message });
+        }
     }
 
     [HttpGet]
     [Authorize]
     public async Task<IActionResult> GetAllLoads()
     {
-        var loads = await _loadService.GetAllLoadsAsync();
+        var loads = await _loadService.GetActiveLoadsAsync();
         return Ok(loads);
+    }
+
+    [HttpGet("{id:guid}")]
+    [Authorize]
+    public async Task<IActionResult> GetLoadById(Guid id)
+    {
+        var load = await _loadService.GetLoadByIdAsync(id);
+        if (load is null)
+            return NotFound(new { Message = "Yük bulunamadı." });
+
+        return Ok(load);
     }
 }

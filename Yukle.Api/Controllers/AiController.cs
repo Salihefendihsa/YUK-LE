@@ -45,14 +45,14 @@ namespace Yukle.Api.Controllers
             if (request == null)
                 return BadRequest("Geçersiz istek parametreleri.");
 
-            var result = await _geminiService.AnalyzePriceAsync(request.Distance, request.Weight, request.CargoType);
+            var result = await _geminiService.AnalyzePriceAsync(request.Route, request.Weight, request.CargoType);
 
             return Ok(new { EstimatedPriceAnalysis = result });
         }
 
-        [HttpGet("load/{id}/price-suggestion")]
+        [HttpGet("load/{id:guid}/price-suggestion")]
         [Authorize(Roles = "Customer")]
-        public async Task<IActionResult> SuggestPriceForLoad(int id)
+        public async Task<IActionResult> SuggestPriceForLoad(Guid id)
         {
             var load = await _context.Loads.FindAsync(id);
             if (load == null) return NotFound("Yük bulunamadı.");

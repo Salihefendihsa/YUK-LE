@@ -1,28 +1,39 @@
-namespace Yukle.Api.Models
+namespace Yukle.Api.Models;
+
+/// <summary>Araç türleri.</summary>
+public enum VehicleType
 {
-    public enum LoadStatus
-    {
-        Active,
-        Assigned,
-        InProgress,
-        Completed,
-        Canceled
-    }
+    TIR,
+    Kamyon,
+    Kamyonet,
+    Panelvan
+}
 
-    public enum CargoType
-    {
-        General,
-        Palletized,
-        Liquid,
-        ColdChain,
-        Heavy
-    }
+/// <summary>Yük türleri.</summary>
+public enum LoadType
+{
+    Paletli,
+    Dökme,
+    SoğukZincir,
+    TehlikeliMadde,
+    Parsiyel
+}
 
-    public enum BidStatus
-    {
-        Pending,
-        Accepted,
-        Rejected,
-        Canceled
-    }
+/// <summary>Yük ilanının yaşam döngüsü.</summary>
+public enum LoadStatus
+{
+    Active,     // İlanda
+    Assigned,   // Atandı
+    OnWay,      // Yolda
+    Delivered,  // Teslim Edildi
+    Cancelled   // İptal
+}
+
+/// <summary>Teklif durumları.</summary>
+public enum BidStatus
+{
+    Pending,
+    Accepted,
+    Rejected,
+    Cancelled
 }

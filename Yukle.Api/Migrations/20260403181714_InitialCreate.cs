@@ -1,6 +1,5 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
-using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
@@ -28,6 +27,9 @@ namespace Yukle.Api.Migrations
                     PasswordHash = table.Column<byte[]>(type: "bytea", nullable: false),
                     PasswordSalt = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    VerificationCode = table.Column<string>(type: "text", nullable: false),
+                    VerificationCodeExpiry = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsPhoneVerified = table.Column<bool>(type: "boolean", nullable: false),
                     Role = table.Column<int>(type: "integer", nullable: false),
                     IsCorporate = table.Column<bool>(type: "boolean", nullable: false),
                     TaxNumberOrTCKN = table.Column<string>(type: "text", nullable: false),
@@ -69,23 +71,25 @@ namespace Yukle.Api.Migrations
                 name: "Loads",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    OwnerId = table.Column<int>(type: "integer", nullable: false),
-                    DriverId = table.Column<int>(type: "integer", nullable: true),
-                    VehicleId = table.Column<int>(type: "integer", nullable: true),
-                    Origin = table.Column<Point>(type: "geometry (point, 4326)", nullable: false),
-                    Destination = table.Column<Point>(type: "geometry (point, 4326)", nullable: false),
-                    OriginAddress = table.Column<string>(type: "text", nullable: false),
-                    DestinationAddress = table.Column<string>(type: "text", nullable: false),
-                    Title = table.Column<string>(type: "text", nullable: false),
-                    Weight = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    Volume = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    Price = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    FromCity = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    FromDistrict = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    ToCity = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    ToDistrict = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    Weight = table.Column<double>(type: "double precision", nullable: false),
+                    Volume = table.Column<double>(type: "double precision", nullable: false),
                     Type = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<int>(type: "integer", nullable: false),
+                    RequiredVehicleType = table.Column<int>(type: "integer", nullable: true),
+                    PickupDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DeliveryDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    PickupDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Price = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    Currency = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false, defaultValue: "TRY"),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    DriverId = table.Column<int>(type: "integer", nullable: true),
+                    VehicleId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -97,8 +101,8 @@ namespace Yukle.Api.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Loads_Users_OwnerId",
-                        column: x => x.OwnerId,
+                        name: "FK_Loads_Users_UserId",
+                        column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -116,7 +120,7 @@ namespace Yukle.Api.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    LoadId = table.Column<int>(type: "integer", nullable: false),
+                    LoadId = table.Column<Guid>(type: "uuid", nullable: false),
                     DriverId = table.Column<int>(type: "integer", nullable: false),
                     Amount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
@@ -151,26 +155,14 @@ namespace Yukle.Api.Migrations
                 column: "LoadId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Loads_Destination",
-                table: "Loads",
-                column: "Destination")
-                .Annotation("Npgsql:IndexMethod", "GIST");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Loads_DriverId",
                 table: "Loads",
                 column: "DriverId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Loads_Origin",
+                name: "IX_Loads_UserId",
                 table: "Loads",
-                column: "Origin")
-                .Annotation("Npgsql:IndexMethod", "GIST");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Loads_OwnerId",
-                table: "Loads",
-                column: "OwnerId");
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Loads_VehicleId",

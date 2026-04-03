@@ -1,0 +1,39 @@
+# YÜK-LE yerel geliştirme: appsettings.json DefaultConnection ile aynı kimlik bilgileri
+# InitialCreate migration PostGIS (geometry) kullandığı için postgis imajı gerekir.
+services:
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: yukle-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: adb16adb
+      POSTGRES_DB: yukledb
+    ports:
+      - "5432:5432"
+    volumes:
+      - yukle_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d yukledb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: yukle-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - yukle_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  yukle_pgdata:
+  yukle_redisdata:

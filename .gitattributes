@@ -1,0 +1,14 @@
+# LF/CRLF normalizasyonu — Windows'ta clone edildiğinde CRLF, repoda LF
+* text=auto eol=lf
+
+# Binary dosyalar değiştirilmeden bırakılır
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.zip  binary
+*.dll  binary
+*.exe  binary
+*.pdb  binary

@@ -27,6 +27,11 @@ namespace Yukle.Api.Models
         public byte[] PasswordSalt { get; set; } = Array.Empty<byte>();
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        // SMS / OTP doğrulama
+        public string VerificationCode { get; set; } = string.Empty;
+        public DateTime? VerificationCodeExpiry { get; set; }
+        public bool IsPhoneVerified { get; set; } = false;
+
         // Rol
         public UserRole Role { get; set; }
 

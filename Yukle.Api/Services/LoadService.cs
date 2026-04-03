@@ -1,5 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using NetTopologySuite.Geometries;
 using Yukle.Api.Data;
 using Yukle.Api.DTOs;
 using Yukle.Api.Models;
@@ -15,46 +17,89 @@ public class LoadService
         _context = context;
     }
 
-    public async Task<int> CreateLoadAsync(CreateLoadDto dto)
+    public async Task<Guid> CreateLoadAsync(LoadCreateDto dto)
     {
-        // SRID 4326 = WGS84 (Standart GPS). Point format: (Longitude, Latitude)
-        var origin = new Point(dto.OriginLng, dto.OriginLat) { SRID = 4326 };
-        var destination = new Point(dto.DestLng, dto.DestLat) { SRID = 4326 };
-
         var load = new Load
         {
-            Title = dto.Title,
-            OwnerId = dto.OwnerId,
-            Weight = dto.Weight,
-            Volume = dto.Volume,
-            Price = dto.Price,
-            Type = dto.Type,
-            Origin = origin,
-            Destination = destination,
-            OriginAddress = dto.OriginAddress,
-            DestinationAddress = dto.DestinationAddress,
-            CreatedAt = DateTime.UtcNow
+            FromCity            = dto.FromCity.Trim(),
+            FromDistrict        = dto.FromDistrict.Trim(),
+            ToCity              = dto.ToCity.Trim(),
+            ToDistrict          = dto.ToDistrict.Trim(),
+            Description         = dto.Description.Trim(),
+            Weight              = dto.Weight,
+            Volume              = dto.Volume,
+            Type                = dto.Type,
+            RequiredVehicleType = dto.RequiredVehicleType,
+            PickupDate          = dto.PickupDate,
+            DeliveryDate        = dto.DeliveryDate,
+            Price               = dto.Price,
+            Currency            = dto.Currency.ToUpperInvariant(),
+            UserId              = dto.UserId,
+            Status              = LoadStatus.Active,
+            CreatedAt           = DateTime.UtcNow
         };
 
-        _context.Loads.Add(load);
+        await _context.Loads.AddAsync(load);
         await _context.SaveChangesAsync();
 
         return load.Id;
     }
 
-    public async Task<List<Load>> GetAllLoadsAsync()
+    public async Task<List<LoadListDto>> GetActiveLoadsAsync()
     {
-        return await _context.Loads.Where(l => l.Status == LoadStatus.Active).ToListAsync();
+        return await _context.Loads
+            .Where(l => l.Status == LoadStatus.Active)
+            .Select(l => new LoadListDto
+            {
+                Id             = l.Id,
+                FromCity       = l.FromCity,
+                FromDistrict   = l.FromDistrict,
+                ToCity         = l.ToCity,
+                ToDistrict     = l.ToDistrict,
+                Description    = l.Description,
+                Weight         = l.Weight,
+                Volume         = l.Volume,
+                Type           = l.Type,
+                PickupDate     = l.PickupDate,
+                DeliveryDate   = l.DeliveryDate,
+                CreatedAt      = l.CreatedAt,
+                Price          = l.Price,
+                Currency       = l.Currency,
+                Status         = l.Status,
+                OwnerId        = l.UserId,
+                OwnerFullName  = l.Owner.FullName,
+                BidCount       = l.Bids.Count
+            })
+            .AsNoTracking()
+            .ToListAsync();
     }
 
-    public async Task<List<Load>> GetNearbyLoadsAsync(Point userLoc, double radiusKm)
+    public async Task<LoadListDto?> GetLoadByIdAsync(Guid id)
     {
-        var radiusMeters = radiusKm * 1000;
-        // KRİTİK: Coordinate 4326 (WGS84) üzerinden kilometre/metre ölçümü yapmak için, geometry kolonlarının geography tipine açıkça (explicit) dönüştürülmesi gereklidir.
-        // Npgsql.EntityFrameworkCore.PostgreSQL ST_DWithin'i doğrudan geography'e çevirmediği için performans ve doğruluk adına en iyi yol parametrik RAW SQL'dir.
-        
         return await _context.Loads
-            .FromSqlInterpolated($"SELECT * FROM \"Loads\" WHERE \"Status\" = 0 AND ST_DWithin(\"Origin\"::geography, ST_SetSRID(ST_MakePoint({userLoc.X}, {userLoc.Y}), 4326)::geography, {radiusMeters})")
-            .ToListAsync();
+            .Where(l => l.Id == id)
+            .Select(l => new LoadListDto
+            {
+                Id             = l.Id,
+                FromCity       = l.FromCity,
+                FromDistrict   = l.FromDistrict,
+                ToCity         = l.ToCity,
+                ToDistrict     = l.ToDistrict,
+                Description    = l.Description,
+                Weight         = l.Weight,
+                Volume         = l.Volume,
+                Type           = l.Type,
+                PickupDate     = l.PickupDate,
+                DeliveryDate   = l.DeliveryDate,
+                CreatedAt      = l.CreatedAt,
+                Price          = l.Price,
+                Currency       = l.Currency,
+                Status         = l.Status,
+                OwnerId        = l.UserId,
+                OwnerFullName  = l.Owner.FullName,
+                BidCount       = l.Bids.Count
+            })
+            .AsNoTracking()
+            .FirstOrDefaultAsync();
     }
 }

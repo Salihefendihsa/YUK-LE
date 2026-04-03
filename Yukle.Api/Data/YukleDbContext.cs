@@ -5,23 +5,18 @@ namespace Yukle.Api.Data;
 
 public class YukleDbContext : DbContext
 {
-    public YukleDbContext(DbContextOptions<YukleDbContext> options) : base(options)
-    {
-    }
+    public YukleDbContext(DbContextOptions<YukleDbContext> options) : base(options) { }
 
-    public DbSet<Load> Loads { get; set; }
-    public DbSet<User> Users { get; set; }
+    public DbSet<User>    Users    { get; set; }
+    public DbSet<Load>    Loads    { get; set; }
     public DbSet<Vehicle> Vehicles { get; set; }
-    public DbSet<Bid> Bids { get; set; }
+    public DbSet<Bid>     Bids     { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        // Map spatial functions
-        modelBuilder.HasPostgresExtension("postgis");
-
-        // User Entity Rules
+        // ── User ──────────────────────────────────────────────────────────────
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasIndex(u => u.Phone).IsUnique();
@@ -30,74 +25,69 @@ public class YukleDbContext : DbContext
             entity.Property(u => u.PendingBalance).HasPrecision(18, 2);
         });
 
-        // Vehicle Entity Rules
-        modelBuilder.Entity<Vehicle>(entity =>
-        {
-            // 1-to-Many: Bir Driver'ın birçok aracı olabilir, ama bir araç bir Driver'a aittir
-            entity.HasOne(v => v.Driver)
-                  .WithMany(u => u.Vehicles)
-                  .HasForeignKey(v => v.DriverId)
-                  .OnDelete(DeleteBehavior.Cascade);
-
-            // Plaka benzersiz ve zorunlu
-            entity.HasIndex(v => v.Plate).IsUnique();
-            entity.Property(v => v.Plate).IsRequired();
-        });
-
-        // Load Entity Rules
+        // ── Load ──────────────────────────────────────────────────────────────
         modelBuilder.Entity<Load>(entity =>
         {
-            // İlişkiler: Owner (zorunlu), Driver (opsiyonel), Vehicle (opsiyonel)
+            entity.HasKey(l => l.Id);
+
+            // Owner: Zorunlu, silinirse yük da silinir
             entity.HasOne(l => l.Owner)
                   .WithMany(u => u.OwnedLoads)
-                  .HasForeignKey(l => l.OwnerId)
+                  .HasForeignKey(l => l.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
 
+            // Driver: Opsiyonel atama (kısıtlı silme)
             entity.HasOne(l => l.Driver)
                   .WithMany(u => u.CarriedLoads)
                   .HasForeignKey(l => l.DriverId)
                   .OnDelete(DeleteBehavior.Restrict);
 
+            // Vehicle: Opsiyonel atama (null bırak)
             entity.HasOne(l => l.Vehicle)
                   .WithMany()
                   .HasForeignKey(l => l.VehicleId)
                   .OnDelete(DeleteBehavior.SetNull);
 
-            // Mekânsal Kolonlar: SRID 4326 (WGS 84 - Standart GPS) zorunlu kılınması
-            // HasColumnType "geometry (point, 4326)" ile SRID veritabanı seviyesinde mühürlenir
-            entity.Property(l => l.Origin)
-                  .HasColumnType("geometry (point, 4326)")
-                  .IsRequired();
-            entity.Property(l => l.Destination)
-                  .HasColumnType("geometry (point, 4326)")
-                  .IsRequired();
-
-            // GIST Indexleri (Mekânsal Sorgu Performansı)
-            entity.HasIndex(l => l.Origin).HasMethod("GIST");
-            entity.HasIndex(l => l.Destination).HasMethod("GIST");
-
-            // Finansal Hassasiyet
-            entity.Property(l => l.Weight).HasPrecision(18, 2);
-            entity.Property(l => l.Volume).HasPrecision(18, 2);
+            // Finansal hassasiyet
             entity.Property(l => l.Price).HasPrecision(18, 2);
+
+            // Para birimi varsayılanı
+            entity.Property(l => l.Currency)
+                  .HasMaxLength(3)
+                  .HasDefaultValue("TRY");
+
+            // Rota alanları
+            entity.Property(l => l.FromCity).HasMaxLength(100).IsRequired();
+            entity.Property(l => l.FromDistrict).HasMaxLength(100).IsRequired();
+            entity.Property(l => l.ToCity).HasMaxLength(100).IsRequired();
+            entity.Property(l => l.ToDistrict).HasMaxLength(100).IsRequired();
         });
 
-        // Bid Entity Rules
+        // ── Vehicle ───────────────────────────────────────────────────────────
+        modelBuilder.Entity<Vehicle>(entity =>
+        {
+            entity.HasOne(v => v.Driver)
+                  .WithMany(u => u.Vehicles)
+                  .HasForeignKey(v => v.DriverId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(v => v.Plate).IsUnique();
+            entity.Property(v => v.Plate).IsRequired();
+        });
+
+        // ── Bid ───────────────────────────────────────────────────────────────
         modelBuilder.Entity<Bid>(entity =>
         {
-            // 1-to-Many: Bir Load'un birçok Bid'i olabilir
             entity.HasOne(b => b.Load)
                   .WithMany(l => l.Bids)
                   .HasForeignKey(b => b.LoadId)
                   .OnDelete(DeleteBehavior.Cascade);
 
-            // 1-to-Many: Bir Driver birçok Bid verebilir
             entity.HasOne(b => b.Driver)
                   .WithMany(u => u.Bids)
                   .HasForeignKey(b => b.DriverId)
                   .OnDelete(DeleteBehavior.Restrict);
 
-            // Finansal Hassasiyet
             entity.Property(b => b.Amount).HasPrecision(18, 2);
         });
     }

@@ -87,3 +87,11 @@ logs/
 coverage/
 *.lcov
 TestResults/
+
+# ---- Cursor AI IDE ----
+.cursor/
+.cursorrules
+.cursor-tutor
+.cursorignore
+.cursorindexingignore
+*.cursor-*

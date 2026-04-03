@@ -1,23 +1,23 @@
 using System;
 
-namespace Yukle.Api.Models
+namespace Yukle.Api.Models;
+
+public class Bid
 {
-    public class Bid
-    {
-        // Kimlik & İlişki
-        public int Id { get; set; }
-        public int LoadId { get; set; }
-        public Load Load { get; set; } = null!;
+    // Kimlik & İlişki
+    public int Id { get; set; }
 
-        public int DriverId { get; set; }
-        public User Driver { get; set; } = null!;
+    public Guid LoadId { get; set; }
+    public Load Load { get; set; } = null!;
 
-        // Finansal Detaylar
-        public decimal Amount { get; set; }
+    public int DriverId { get; set; }
+    public User Driver { get; set; } = null!;
 
-        // Durum ve Zaman
-        public BidStatus Status { get; set; } = BidStatus.Pending;
-        public string? Note { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    }
+    // Finansal Detaylar
+    public decimal Amount { get; set; }
+
+    // Durum ve Zaman
+    public BidStatus Status { get; set; } = BidStatus.Pending;
+    public string? Note { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

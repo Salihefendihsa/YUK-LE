@@ -3,7 +3,6 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Yukle.Api.Data;
 
@@ -42,8 +41,8 @@ namespace Yukle.Api.Migrations
                     b.Property<int>("DriverId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("LoadId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("LoadId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Note")
                         .HasColumnType("text");
@@ -62,78 +61,83 @@ namespace Yukle.Api.Migrations
 
             modelBuilder.Entity("Yukle.Api.Models.Load", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Point>("Destination")
+                    b.Property<string>("Currency")
                         .IsRequired()
-                        .HasColumnType("geometry (point, 4326)");
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasDefaultValue("TRY");
 
-                    b.Property<string>("DestinationAddress")
+                    b.Property<DateTime>("DeliveryDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int?>("DriverId")
                         .HasColumnType("integer");
 
-                    b.Property<Point>("Origin")
+                    b.Property<string>("FromCity")
                         .IsRequired()
-                        .HasColumnType("geometry (point, 4326)");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
-                    b.Property<string>("OriginAddress")
+                    b.Property<string>("FromDistrict")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
-                    b.Property<int>("OwnerId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("PickupDate")
+                    b.Property<DateTime>("PickupDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal>("Price")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
+                    b.Property<int?>("RequiredVehicleType")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Title")
+                    b.Property<string>("ToCity")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ToDistrict")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
                         .HasColumnType("integer");
 
                     b.Property<int?>("VehicleId")
                         .HasColumnType("integer");
 
-                    b.Property<decimal>("Volume")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                    b.Property<double>("Volume")
+                        .HasColumnType("double precision");
 
-                    b.Property<decimal>("Weight")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                    b.Property<double>("Weight")
+                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Destination");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Destination"), "GIST");
-
                     b.HasIndex("DriverId");
 
-                    b.HasIndex("Origin");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Origin"), "GIST");
-
-                    b.HasIndex("OwnerId");
+                    b.HasIndex("UserId");
 
                     b.HasIndex("VehicleId");
 
@@ -165,6 +169,9 @@ namespace Yukle.Api.Migrations
                     b.Property<bool>("IsCorporate")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsPhoneVerified")
+                        .HasColumnType("boolean");
+
                     b.Property<byte[]>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("bytea");
@@ -190,6 +197,13 @@ namespace Yukle.Api.Migrations
                     b.Property<string>("TaxNumberOrTCKN")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("VerificationCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("VerificationCodeExpiry")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal>("WalletBalance")
                         .HasPrecision(18, 2)
@@ -271,7 +285,7 @@ namespace Yukle.Api.Migrations
 
                     b.HasOne("Yukle.Api.Models.User", "Owner")
                         .WithMany("OwnedLoads")
-                        .HasForeignKey("OwnerId")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

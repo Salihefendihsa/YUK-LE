@@ -76,11 +76,12 @@ namespace Yukle.Api.Services
             return JsonSerializer.Deserialize<LicenseOcrResultDto>(textResult, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
 
-        public async Task<string> AnalyzePriceAsync(double distance, double weight, string cargoType)
+        public async Task<string> AnalyzePriceAsync(string route, double weight, string cargoType)
         {
             var url = $"https://generativelanguage.googleapis.com/v1beta/models/{_proModel}:generateContent?key={_apiKey}";
-            
-            var prompt = $"Mesafeye ({distance} km), ağırlığa ({weight} kg) ve yük tipine ({cargoType}) göre piyasa verilerini analiz et ve Tahmini Fiyat Önerisi ver.";
+
+            var prompt = $"Rota: {route} | Ağırlık: {weight} kg | Yük türü: {cargoType}. " +
+                         "Bu veriler ışığında Türkiye lojistik piyasasına uygun tahmini nakliye fiyatı öner.";
 
             var requestBody = new
             {

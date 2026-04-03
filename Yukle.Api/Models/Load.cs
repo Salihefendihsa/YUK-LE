@@ -1,40 +1,48 @@
 using System;
-using NetTopologySuite.Geometries;
+using System.Collections.Generic;
 
-namespace Yukle.Api.Models
+namespace Yukle.Api.Models;
+
+public class Load
 {
-    public class Load
-    {
-        // Kimlik & İlişki
-        public int Id { get; set; }
-        public int OwnerId { get; set; }
-        public User Owner { get; set; } = null!;
+    // ── Kimlik ────────────────────────────────────────────────────────────────
+    public Guid Id { get; set; } = Guid.NewGuid();
 
-        public int? DriverId { get; set; }
-        public User? Driver { get; set; }
+    // ── Rota ──────────────────────────────────────────────────────────────────
+    public string FromCity { get; set; }     = string.Empty;
+    public string FromDistrict { get; set; } = string.Empty;
+    public string ToCity { get; set; }       = string.Empty;
+    public string ToDistrict { get; set; }   = string.Empty;
 
-        public int? VehicleId { get; set; }
-        public Vehicle? Vehicle { get; set; }
+    // ── Özellikler ────────────────────────────────────────────────────────────
+    public string Description { get; set; } = string.Empty;
+    public double Weight { get; set; }
+    public double Volume { get; set; }
+    public LoadType Type { get; set; }
+    public VehicleType? RequiredVehicleType { get; set; }
 
-        // Mekânsal Veriler (PostGIS / NetTopologySuite)
-        public Point Origin { get; set; } = null!;
-        public Point Destination { get; set; } = null!;
-        public string OriginAddress { get; set; } = string.Empty;
-        public string DestinationAddress { get; set; } = string.Empty;
+    // ── Zamanlama ─────────────────────────────────────────────────────────────
+    public DateTime PickupDate { get; set; }
+    public DateTime DeliveryDate { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        // Yük ve Finans
-        public string Title { get; set; } = string.Empty;
-        public decimal Weight { get; set; }
-        public decimal Volume { get; set; }
-        public decimal Price { get; set; }
+    // ── Finansal ──────────────────────────────────────────────────────────────
+    public decimal Price { get; set; }
+    public string Currency { get; set; } = "TRY";
 
-        public CargoType Type { get; set; }
-        public LoadStatus Status { get; set; } = LoadStatus.Active;
+    // ── Durum ─────────────────────────────────────────────────────────────────
+    public LoadStatus Status { get; set; } = LoadStatus.Active;
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime? PickupDate { get; set; }
+    // ── İlişkiler ─────────────────────────────────────────────────────────────
+    public int UserId { get; set; }
+    public User Owner { get; set; } = null!;
 
-        // Navigation Property: Bu yüke gelen teklifler
-        public ICollection<Bid> Bids { get; set; } = new List<Bid>();
-    }
+    public int? DriverId { get; set; }
+    public User? Driver { get; set; }
+
+    public int? VehicleId { get; set; }
+    public Vehicle? Vehicle { get; set; }
+
+    // Navigation: Bu yüke gelen teklifler
+    public ICollection<Bid> Bids { get; set; } = new List<Bid>();
 }
