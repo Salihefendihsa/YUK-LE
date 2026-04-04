@@ -39,6 +39,14 @@ public class LoadListDto
     public int    OwnerId         { get; set; }
     public string OwnerFullName   { get; set; } = string.Empty;
 
+    // Atanan şoför (null → henüz şoför yok)
+    public int?   DriverId        { get; set; }
+
+    // Hedef koordinatlar — Haversine varış hesabı için gerekli
+    // NTS convention: Destination.Y = enlem, Destination.X = boylam
+    public double DestinationLat  { get; set; }
+    public double DestinationLng  { get; set; }
+
     // Teklif sayısı (opsiyonel özet bilgi)
     public int BidCount           { get; set; }
 }

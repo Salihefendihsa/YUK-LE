@@ -3,7 +3,9 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Yukle.Api.DTOs;
+using Yukle.Api.Hubs;
 using Yukle.Api.Services;
 
 namespace Yukle.Api.Controllers;
@@ -11,24 +13,28 @@ namespace Yukle.Api.Controllers;
 /// <summary>
 /// Yük tekliflerini yöneten RESTful controller.
 /// Sınıf seviyesinde JWT zorunludur; her endpoint rol bazında ayrıca kısıtlanır.
+/// Teklif oluşturulduğunda yük sahibine IHubContext üzerinden anlık SignalR bildirimi gönderilir.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public sealed class BidsController : ControllerBase
+public sealed class BidsController(
+    IBidService                        bidService,
+    ILoadService                       loadService,
+    IHubContext<NotificationHub>       hubContext,
+    ILogger<BidsController>            logger) : ControllerBase
 {
-    private readonly IBidService _bidService;
-
-    public BidsController(IBidService bidService)
-    {
-        _bidService = bidService;
-    }
+    private readonly IBidService                  _bidService  = bidService;
+    private readonly ILoadService                 _loadService = loadService;
+    private readonly IHubContext<NotificationHub> _hubContext  = hubContext;
+    private readonly ILogger<BidsController>      _logger      = logger;
 
     // ── POST api/bids/submit ──────────────────────────────────────────────────
 
     /// <summary>
     /// Giriş yapmış şoförün belirtilen yük ilanına teklif vermesini sağlar.
-    /// DriverId JWT claim'lerinden okunur; DTO'dan alınmaz.
+    /// Teklif kaydedildikten sonra yük sahibine SignalR üzerinden anlık bildirim fırlatılır.
+    /// DriverId ve şoför adı JWT claim'lerinden okunur; DTO'dan alınmaz.
     /// </summary>
     [HttpPost("submit")]
     [Authorize(Roles = "Driver")]
@@ -44,13 +50,17 @@ public sealed class BidsController : ControllerBase
         try
         {
             var bid = await _bidService.SubmitBidAsync(dto, driverId);
+
+            // ── Anlık bildirim + UI güncellemesi (paralel, fire-and-forget tarzı) ──
+            await SendBidPushAsync(bid.Id, bid.LoadId, bid.Amount, bid.CreatedAt, driverId);
+
             return CreatedAtAction(nameof(SubmitBid), new { id = bid.Id }, new
             {
-                Message  = "Teklifiniz başarıyla iletildi.",
-                BidId    = bid.Id,
-                LoadId   = bid.LoadId,
-                Amount   = bid.Amount,
-                Status   = bid.Status.ToString(),
+                Message   = "Teklifiniz başarıyla iletildi.",
+                BidId     = bid.Id,
+                LoadId    = bid.LoadId,
+                Amount    = bid.Amount,
+                Status    = bid.Status.ToString(),
                 CreatedAt = bid.CreatedAt
             });
         }
@@ -128,6 +138,85 @@ public sealed class BidsController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, new { Message = "Teklif kabul edilirken bir hata oluştu.", Details = ex.Message });
+        }
+    }
+
+    // =========================================================================
+    // Yardımcı: Çift Kanallı Push (Dual-Track)
+    // =========================================================================
+
+    /// <summary>
+    /// Yeni teklif geldiğinde yük sahibine iki ayrı SignalR event'i paralel olarak fırlatır:
+    /// <list type="bullet">
+    ///   <item><c>ReceiveNotification</c> — popup/sesli uyarı kanalı.</item>
+    ///   <item><c>ReceiveBid</c>          — UI güncelleme kanalı; liste tekrar çekilmeden yeni satır eklenir.</item>
+    /// </list>
+    /// Hata durumunda ana teklif akışı engellenmez; sessizce loglanır.
+    /// </summary>
+    private async Task SendBidPushAsync(
+        int      bidId,
+        Guid     loadId,
+        decimal  amount,
+        DateTime createdAt,
+        int      driverId)
+    {
+        try
+        {
+            var load       = await _loadService.GetLoadByIdAsync(loadId);
+            var driverName = User.FindFirstValue(ClaimTypes.Name) ?? $"Şoför #{driverId}";
+
+            if (load is null)
+            {
+                _logger.LogWarning(
+                    "SendBidPush: Load {LoadId} not found, push skipped.", loadId);
+                return;
+            }
+
+            var ownerGroup = load.OwnerId.ToString();
+
+            // ── Kanal 1: ReceiveNotification — popup/uyarı ────────────────────
+            var notificationPush = _hubContext.Clients
+                .Group(ownerGroup)
+                .SendAsync("ReceiveNotification", new
+                {
+                    Title   = "Yeni Teklif!",
+                    Message = $"{driverName} yükünüze teklif verdi.",
+                    BidId   = bidId,
+                    LoadId  = loadId
+                });
+
+            // ── Kanal 2: ReceiveBid — sessiz UI güncellemesi ──────────────────
+            // DriverRating henüz User modelinde tanımlı değil; rating sistemi
+            // ileride eklendiğinde bu alan otomatik dolacak.
+            var uiPush = _hubContext.Clients
+                .Group(ownerGroup)
+                .SendAsync("ReceiveBid", new
+                {
+                    BidId        = bidId,
+                    Amount       = amount,
+                    DriverName   = driverName,
+                    DriverRating = (double?)null,
+                    LoadId       = loadId,
+                    CreatedAt    = createdAt
+                });
+
+            // İki push paralel; birini diğeri beklemiyor.
+            await Task.WhenAll(notificationPush, uiPush);
+
+            _logger.LogInformation(
+                "Real-time notification sent to Owner {OwnerId} for Load {LoadId}.",
+                load.OwnerId, loadId);
+
+            _logger.LogInformation(
+                "UI Update event 'ReceiveBid' sent to Client {OwnerId}.",
+                load.OwnerId);
+        }
+        catch (Exception ex)
+        {
+            // Bildirim hatası ana teklif akışını asla engellememelidir.
+            _logger.LogError(ex,
+                "Failed to send real-time push for Bid {BidId} / Load {LoadId}.",
+                bidId, loadId);
         }
     }
 }

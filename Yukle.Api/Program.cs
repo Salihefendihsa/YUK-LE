@@ -218,5 +218,6 @@ app.MapControllers();
 // JWT zorunluluğu. /negotiate dahil tüm hub isteklerine çift güvenlik katmanı.
 app.MapHub<Yukle.Api.Hubs.NotificationHub>("/hubs/notifications").RequireAuthorization();
 app.MapHub<Yukle.Api.Hubs.TrackingHub>("/hubs/tracking").RequireAuthorization();
+app.MapHub<Yukle.Api.Hubs.ChatHub>("/hubs/chat").RequireAuthorization();
 
 app.Run();

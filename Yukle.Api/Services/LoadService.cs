@@ -79,9 +79,12 @@ public class LoadService : ILoadService
                 Price          = l.Price,
                 Currency       = l.Currency,
                 Status         = l.Status,
-                OwnerId        = l.UserId,
-                OwnerFullName  = l.Owner.FullName,
-                BidCount       = l.Bids.Count
+                OwnerId         = l.UserId,
+                OwnerFullName   = l.Owner.FullName,
+                DriverId        = l.DriverId,
+                DestinationLat  = l.Destination.Y,
+                DestinationLng  = l.Destination.X,
+                BidCount        = l.Bids.Count
             })
             .AsNoTracking()
             .ToListAsync();
@@ -108,9 +111,12 @@ public class LoadService : ILoadService
                 Price          = l.Price,
                 Currency       = l.Currency,
                 Status         = l.Status,
-                OwnerId        = l.UserId,
-                OwnerFullName  = l.Owner.FullName,
-                BidCount       = l.Bids.Count
+                OwnerId         = l.UserId,
+                OwnerFullName   = l.Owner.FullName,
+                DriverId        = l.DriverId,
+                DestinationLat  = l.Destination.Y,
+                DestinationLng  = l.Destination.X,
+                BidCount        = l.Bids.Count
             })
             .AsNoTracking()
             .FirstOrDefaultAsync();
@@ -161,5 +167,16 @@ public class LoadService : ILoadService
             load.UserId,
             "Yükünüz Teslim Edildi ✅",
             $"Yükünüz başarıyla teslim edildi. İyi işler için teşekkürler!");
+    }
+
+    // ── UpdateStatusAsync ─────────────────────────────────────────────────────
+
+    public async Task UpdateStatusAsync(Guid loadId, LoadStatus newStatus)
+    {
+        var load = await _context.Loads.FindAsync(loadId)
+            ?? throw new InvalidOperationException("Yük bulunamadı.");
+
+        load.Status = newStatus;
+        await _context.SaveChangesAsync();
     }
 }

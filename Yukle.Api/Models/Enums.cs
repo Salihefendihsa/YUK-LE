@@ -25,6 +25,7 @@ public enum LoadStatus
     Active,     // İlanda
     Assigned,   // Atandı
     OnWay,      // Yolda
+    Arrived,    // Hedefe Ulaştı — Haversine ile otomatik algılandı
     Delivered,  // Teslim Edildi
     Cancelled   // İptal
 }

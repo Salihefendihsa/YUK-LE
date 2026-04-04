@@ -30,4 +30,10 @@ public interface ILoadService
     /// Sahiplik ve durum kontrolü yapılır.
     /// </summary>
     Task DeliverAsync(Guid loadId, int driverId);
+
+    /// <summary>
+    /// Yükün durumunu doğrudan günceller.
+    /// TrackingHub içindeki otomatik varış algılama tarafından kullanılır.
+    /// </summary>
+    Task UpdateStatusAsync(Guid loadId, LoadStatus newStatus);
 }
