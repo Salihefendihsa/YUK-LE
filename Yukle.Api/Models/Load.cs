@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using NetTopologySuite.Geometries;
 
 namespace Yukle.Api.Models;
 
@@ -13,6 +14,13 @@ public class Load
     public string FromDistrict { get; set; } = string.Empty;
     public string ToCity { get; set; }       = string.Empty;
     public string ToDistrict { get; set; }   = string.Empty;
+
+    // ── Coğrafi Koordinatlar (PostGIS — SRID 4326) ────────────────────────────
+    /// <summary>Yükün çıkış noktası. geometry(Point, 4326) olarak saklanır.</summary>
+    public Point Origin { get; set; } = null!;
+
+    /// <summary>Yükün varış noktası. geometry(Point, 4326) olarak saklanır.</summary>
+    public Point Destination { get; set; } = null!;
 
     // ── Özellikler ────────────────────────────────────────────────────────────
     public string Description { get; set; } = string.Empty;

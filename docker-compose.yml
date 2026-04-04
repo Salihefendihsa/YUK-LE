@@ -1,10 +1,19 @@
-# YÜK-LE yerel geliştirme: appsettings.json DefaultConnection ile aynı kimlik bilgileri
-# InitialCreate migration PostGIS (geometry) kullandığı için postgis imajı gerekir.
+# YÜK-LE yerel geliştirme ortamı
+# PostGIS + Redis (şifreli) + ASP.NET Core API
+# Tüm servisler aynı "yukle-net" bridge network'ünde çalışır.
+
+networks:
+  yukle-net:
+    driver: bridge
+
 services:
+  # ── PostgreSQL / PostGIS ────────────────────────────────────────────────────
   postgres:
     image: postgis/postgis:16-3.4-alpine
     container_name: yukle-postgres
     restart: unless-stopped
+    networks:
+      - yukle-net
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: adb16adb
@@ -19,20 +28,54 @@ services:
       timeout: 5s
       retries: 10
 
+  # ── Redis (IDistributedCache + SignalR Backplane) ───────────────────────────
   redis:
     image: redis:7-alpine
     container_name: yukle-redis
     restart: unless-stopped
+    networks:
+      - yukle-net
     ports:
       - "6379:6379"
-    command: redis-server --save 60 1 --loglevel warning
+    # --requirepass: Hem uygulama hem SignalR backplane aynı şifreyi kullanır
+    command: >
+      redis-server
+        --requirepass YukleRedis123!
+        --save 60 1
+        --loglevel warning
+    environment:
+      REDIS_PASSWORD: YukleRedis123!
     volumes:
       - yukle_redisdata:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "YukleRedis123!", "ping"]
       interval: 5s
       timeout: 3s
       retries: 10
+
+  # ── YÜK-LE API ─────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./Yukle.Api
+      dockerfile: Dockerfile
+    container_name: yukle-api
+    restart: unless-stopped
+    networks:
+      - yukle-net
+    ports:
+      - "5000:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: >-
+        Host=postgres;Port=5432;Database=yukledb;
+        Username=postgres;Password=adb16adb
+      ConnectionStrings__Redis: >-
+        redis:6379,password=YukleRedis123!,abortConnect=false
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
   yukle_pgdata:

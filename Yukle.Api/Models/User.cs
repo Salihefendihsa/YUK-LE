@@ -39,6 +39,9 @@ namespace Yukle.Api.Models
         public bool IsCorporate { get; set; }
         public string TaxNumberOrTCKN { get; set; } = string.Empty;
 
+        // Firebase Cloud Messaging — mobil push bildirimleri için cihaz token'ı
+        public string? FcmToken { get; set; }
+
         // Iyzico Entegrasyon Katmanı
         public string? SubMerchantKey { get; set; }
 

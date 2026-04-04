@@ -67,9 +67,14 @@ Desktop.ini
 .env
 .env.*
 !.env.example
+appsettings.json
 appsettings.Development.json
 appsettings.Production.json
 secrets.json
+
+# ---- Firebase ----
+firebase-service-account.json
+*-service-account.json
 
 # ---- Database ----
 *.db

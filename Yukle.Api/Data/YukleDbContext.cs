@@ -7,10 +7,11 @@ public class YukleDbContext : DbContext
 {
     public YukleDbContext(DbContextOptions<YukleDbContext> options) : base(options) { }
 
-    public DbSet<User>    Users    { get; set; }
-    public DbSet<Load>    Loads    { get; set; }
-    public DbSet<Vehicle> Vehicles { get; set; }
-    public DbSet<Bid>     Bids     { get; set; }
+    public DbSet<User>         Users         { get; set; }
+    public DbSet<Load>         Loads         { get; set; }
+    public DbSet<Vehicle>      Vehicles      { get; set; }
+    public DbSet<Bid>          Bids          { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -61,6 +62,15 @@ public class YukleDbContext : DbContext
             entity.Property(l => l.FromDistrict).HasMaxLength(100).IsRequired();
             entity.Property(l => l.ToCity).HasMaxLength(100).IsRequired();
             entity.Property(l => l.ToDistrict).HasMaxLength(100).IsRequired();
+
+            // PostGIS coğrafi noktalar — geometry(Point, 4326)
+            entity.Property(l => l.Origin)
+                  .HasColumnType("geometry(Point, 4326)")
+                  .IsRequired();
+
+            entity.Property(l => l.Destination)
+                  .HasColumnType("geometry(Point, 4326)")
+                  .IsRequired();
         });
 
         // ── Vehicle ───────────────────────────────────────────────────────────
@@ -89,6 +99,21 @@ public class YukleDbContext : DbContext
                   .OnDelete(DeleteBehavior.Restrict);
 
             entity.Property(b => b.Amount).HasPrecision(18, 2);
+        });
+
+        // ── Notification ──────────────────────────────────────────────────────
+        modelBuilder.Entity<Notification>(entity =>
+        {
+            entity.HasOne(n => n.User)
+                  .WithMany()
+                  .HasForeignKey(n => n.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(n => n.Title).HasMaxLength(200).IsRequired();
+            entity.Property(n => n.Message).HasMaxLength(1000).IsRequired();
+
+            // Okunmamış bildirimleri hızlı getirmek için bileşik index
+            entity.HasIndex(n => new { n.UserId, n.IsRead });
         });
     }
 }
