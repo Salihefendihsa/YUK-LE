@@ -49,4 +49,17 @@ public class LoadListDto
 
     // Teklif sayısı (opsiyonel özet bilgi)
     public int BidCount           { get; set; }
+
+    // ── Gemini AI Fiyat Analizi ───────────────────────────────────────────────
+    /// <summary>Gemini'nin önerdiği "Adil Navlun" orta noktası. Null = henüz analiz yok.</summary>
+    public decimal? AiSuggestedPrice  { get; set; }
+
+    /// <summary>Gemini'nin hesapladığı şoför kırmızı çizgisi.</summary>
+    public decimal? AiMinPrice        { get; set; }
+
+    /// <summary>Gemini'nin hesapladığı piyasa tavanı.</summary>
+    public decimal? AiMaxPrice        { get; set; }
+
+    /// <summary>Gemini'nin fiyat gerekçesi — yakıt payı, zorluk payı, şoför net karı.</summary>
+    public string?  AiPriceReasoning  { get; set; }
 }

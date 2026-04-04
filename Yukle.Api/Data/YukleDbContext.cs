@@ -12,6 +12,7 @@ public class YukleDbContext : DbContext
     public DbSet<Vehicle>      Vehicles      { get; set; }
     public DbSet<Bid>          Bids          { get; set; }
     public DbSet<Notification> Notifications { get; set; }
+    public DbSet<FuelPrice>    FuelPrices    { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -51,6 +52,11 @@ public class YukleDbContext : DbContext
 
             // Finansal hassasiyet
             entity.Property(l => l.Price).HasPrecision(18, 2);
+
+            // AI fiyat analizi alanları
+            entity.Property(l => l.AiSuggestedPrice).HasPrecision(18, 2);
+            entity.Property(l => l.AiMinPrice).HasPrecision(18, 2);
+            entity.Property(l => l.AiMaxPrice).HasPrecision(18, 2);
 
             // Para birimi varsayılanı
             entity.Property(l => l.Currency)
@@ -114,6 +120,18 @@ public class YukleDbContext : DbContext
 
             // Okunmamış bildirimleri hızlı getirmek için bileşik index
             entity.HasIndex(n => new { n.UserId, n.IsRead });
+        });
+
+        // ── FuelPrice ─────────────────────────────────────────────────────────
+        modelBuilder.Entity<FuelPrice>(entity =>
+        {
+            entity.HasKey(f => f.Id);
+            entity.Property(f => f.City).HasMaxLength(100).IsRequired();
+            entity.Property(f => f.PriceTL).HasPrecision(10, 4);
+            entity.Property(f => f.Source).HasMaxLength(50);
+
+            // En güncel il+yakıt türü fiyatını hızlı getirmek için bileşik index
+            entity.HasIndex(f => new { f.City, f.FuelType, f.Date });
         });
     }
 }

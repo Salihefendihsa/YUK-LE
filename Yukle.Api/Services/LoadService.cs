@@ -32,8 +32,8 @@ public class LoadService : ILoadService
 
         var load = new Load
         {
-            Origin      = origin,
-            Destination = destination,
+            Origin              = origin,
+            Destination         = destination,
             FromCity            = dto.FromCity.Trim(),
             FromDistrict        = dto.FromDistrict.Trim(),
             ToCity              = dto.ToCity.Trim(),
@@ -58,33 +58,55 @@ public class LoadService : ILoadService
         return load.Id;
     }
 
+    public async Task UpdateAiPriceAsync(
+        Guid    loadId,
+        decimal suggested,
+        decimal min,
+        decimal max,
+        string  reasoning)
+    {
+        var load = await _context.Loads.FindAsync(loadId);
+        if (load is null) return;
+
+        load.AiSuggestedPrice  = suggested;
+        load.AiMinPrice        = min;
+        load.AiMaxPrice        = max;
+        load.AiPriceReasoning  = reasoning;
+
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<List<LoadListDto>> GetActiveLoadsAsync()
     {
         return await _context.Loads
             .Where(l => l.Status == LoadStatus.Active)
             .Select(l => new LoadListDto
             {
-                Id             = l.Id,
-                FromCity       = l.FromCity,
-                FromDistrict   = l.FromDistrict,
-                ToCity         = l.ToCity,
-                ToDistrict     = l.ToDistrict,
-                Description    = l.Description,
-                Weight         = l.Weight,
-                Volume         = l.Volume,
-                Type           = l.Type,
-                PickupDate     = l.PickupDate,
-                DeliveryDate   = l.DeliveryDate,
-                CreatedAt      = l.CreatedAt,
-                Price          = l.Price,
-                Currency       = l.Currency,
-                Status         = l.Status,
-                OwnerId         = l.UserId,
-                OwnerFullName   = l.Owner.FullName,
-                DriverId        = l.DriverId,
-                DestinationLat  = l.Destination.Y,
-                DestinationLng  = l.Destination.X,
-                BidCount        = l.Bids.Count
+                Id               = l.Id,
+                FromCity         = l.FromCity,
+                FromDistrict     = l.FromDistrict,
+                ToCity           = l.ToCity,
+                ToDistrict       = l.ToDistrict,
+                Description      = l.Description,
+                Weight           = l.Weight,
+                Volume           = l.Volume,
+                Type             = l.Type,
+                PickupDate       = l.PickupDate,
+                DeliveryDate     = l.DeliveryDate,
+                CreatedAt        = l.CreatedAt,
+                Price            = l.Price,
+                Currency         = l.Currency,
+                Status           = l.Status,
+                OwnerId          = l.UserId,
+                OwnerFullName    = l.Owner.FullName,
+                DriverId         = l.DriverId,
+                DestinationLat   = l.Destination.Y,
+                DestinationLng   = l.Destination.X,
+                BidCount         = l.Bids.Count,
+                AiSuggestedPrice = l.AiSuggestedPrice,
+                AiMinPrice       = l.AiMinPrice,
+                AiMaxPrice       = l.AiMaxPrice,
+                AiPriceReasoning = l.AiPriceReasoning
             })
             .AsNoTracking()
             .ToListAsync();
@@ -96,27 +118,31 @@ public class LoadService : ILoadService
             .Where(l => l.Id == id)
             .Select(l => new LoadListDto
             {
-                Id             = l.Id,
-                FromCity       = l.FromCity,
-                FromDistrict   = l.FromDistrict,
-                ToCity         = l.ToCity,
-                ToDistrict     = l.ToDistrict,
-                Description    = l.Description,
-                Weight         = l.Weight,
-                Volume         = l.Volume,
-                Type           = l.Type,
-                PickupDate     = l.PickupDate,
-                DeliveryDate   = l.DeliveryDate,
-                CreatedAt      = l.CreatedAt,
-                Price          = l.Price,
-                Currency       = l.Currency,
-                Status         = l.Status,
-                OwnerId         = l.UserId,
-                OwnerFullName   = l.Owner.FullName,
-                DriverId        = l.DriverId,
-                DestinationLat  = l.Destination.Y,
-                DestinationLng  = l.Destination.X,
-                BidCount        = l.Bids.Count
+                Id               = l.Id,
+                FromCity         = l.FromCity,
+                FromDistrict     = l.FromDistrict,
+                ToCity           = l.ToCity,
+                ToDistrict       = l.ToDistrict,
+                Description      = l.Description,
+                Weight           = l.Weight,
+                Volume           = l.Volume,
+                Type             = l.Type,
+                PickupDate       = l.PickupDate,
+                DeliveryDate     = l.DeliveryDate,
+                CreatedAt        = l.CreatedAt,
+                Price            = l.Price,
+                Currency         = l.Currency,
+                Status           = l.Status,
+                OwnerId          = l.UserId,
+                OwnerFullName    = l.Owner.FullName,
+                DriverId         = l.DriverId,
+                DestinationLat   = l.Destination.Y,
+                DestinationLng   = l.Destination.X,
+                BidCount         = l.Bids.Count,
+                AiSuggestedPrice = l.AiSuggestedPrice,
+                AiMinPrice       = l.AiMinPrice,
+                AiMaxPrice       = l.AiMaxPrice,
+                AiPriceReasoning = l.AiPriceReasoning
             })
             .AsNoTracking()
             .FirstOrDefaultAsync();

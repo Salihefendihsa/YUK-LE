@@ -38,3 +38,11 @@ public enum BidStatus
     Rejected,
     Cancelled
 }
+
+/// <summary>Yakıt türleri — <c>FuelPrice</c> tablosunda kullanılır.</summary>
+public enum FuelType
+{
+    Motorin,
+    Benzin,
+    Lpg
+}

@@ -38,6 +38,19 @@ public class Load
     public decimal Price { get; set; }
     public string Currency { get; set; } = "TRY";
 
+    // ── Gemini AI Fiyat Analizi ───────────────────────────────────────────────
+    /// <summary>Gemini'nin önerdiği "Adil Navlun" orta noktası. Null = henüz analiz yapılmadı.</summary>
+    public decimal? AiSuggestedPrice { get; set; }
+
+    /// <summary>Gemini'nin hesapladığı şoför kırmızı çizgisi (MinPrice).</summary>
+    public decimal? AiMinPrice { get; set; }
+
+    /// <summary>Gemini'nin hesapladığı piyasa tavanı (MaxPrice).</summary>
+    public decimal? AiMaxPrice { get; set; }
+
+    /// <summary>Gemini'nin fiyat gerekçesi — yakıt payı, zorluk payı, şoför net karı.</summary>
+    public string? AiPriceReasoning { get; set; }
+
     // ── Durum ─────────────────────────────────────────────────────────────────
     public LoadStatus Status { get; set; } = LoadStatus.Active;
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Yukle.Api.DTOs;
+using Yukle.Api.Models;
 
 namespace Yukle.Api.Services;
 
@@ -36,4 +37,16 @@ public interface ILoadService
     /// TrackingHub içindeki otomatik varış algılama tarafından kullanılır.
     /// </summary>
     Task UpdateStatusAsync(Guid loadId, LoadStatus newStatus);
+
+    /// <summary>
+    /// Gemini AI analiz sonucunu yüke mühürler.
+    /// Yük oluşturulduktan sonra fiyatlandırma pipeline'ı tamamlandığında çağrılır.
+    /// Yük bulunamazsa sessizce döner — ana iş akışını engellememeli.
+    /// </summary>
+    Task UpdateAiPriceAsync(
+        Guid    loadId,
+        decimal suggested,
+        decimal min,
+        decimal max,
+        string  reasoning);
 }
