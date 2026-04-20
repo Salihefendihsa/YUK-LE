@@ -8,8 +8,10 @@ namespace Yukle.Api.Services;
 /// <summary>
 /// Gemini Generative AI API ile tüm iletişimi yöneten merkezi istemci.
 /// <list type="bullet">
-///   <item><b>Fiyat Analizi</b> — Gemini Flash · Structured Prompting · Adil Navlun Uzmanı.</item>
-///   <item><b>Evrak OCR</b>    — Gemini Flash · Multimodal · Ehliyet / SRC / Ruhsat.</item>
+///   <item><b>Fiyat Analizi</b>  — Gemini Flash · Structured Prompting · Adil Navlun Uzmanı.</item>
+///   <item><b>Evrak Denetimi</b> — Gemini <b>Pro Vision</b> · Multimodal NLP · Mühür/İmza/Hologram
+///                                  tespiti ve hukuki geçerlilik analizi (v2.5.0).</item>
+///   <item><b>Smart Matching</b> — Gemini Flash · Lojistik İK ve Operasyon Uzmanı.</item>
 /// </list>
 /// <para>
 /// HttpClient, <c>Program.cs</c>'te Polly resilience pipeline ile sarmalanmıştır
@@ -25,7 +27,12 @@ public sealed class GeminiServiceClient(
     private readonly string _apiKey     = configuration["GeminiAI:ApiKey"]
                                           ?? throw new ArgumentException("GeminiAI:ApiKey eksik.");
     private readonly string _flashModel = configuration["GeminiAI:Model"]        ?? "gemini-1.5-flash";
-    private readonly string _proModel   = configuration["GeminiAI:HighProModel"] ?? "gemini-1.5-pro";
+
+    // 2.5.0 — Evrak denetiminde mühür/imza/hologram tespiti ve mantıksal çıkarım
+    // yapılabilmesi için API'deki en üst düzey vizyon modeli zorunludur.
+    // Konfigürasyonda daha üst bir sürüm (gemini-2-pro vb.) tanımlıysa o kullanılır,
+    // aksi halde fallback olarak gemini-1.5-pro-latest devreye girer.
+    private readonly string _proModel   = configuration["GeminiAI:HighProModel"] ?? "gemini-1.5-pro-latest";
 
     // JSON seçenekleri: Gemini camelCase döner, DTO PascalCase — her ikisini eşle.
     private static readonly JsonSerializerOptions JsonOpts = new()
@@ -247,12 +254,18 @@ public sealed class GeminiServiceClient(
         => CalculateFairPriceAsync(distance, vehicleType, fuelPrice, weight / 1000.0, route);
 
     // =========================================================================
-    // Evrak OCR (Multimodal · Flash Model)
+    // Evrak Denetimi — AnalyzeDocumentAsync (Multimodal · Pro Vision · v2.5.0)
     // =========================================================================
 
     /// <summary>
-    /// Sürücü belgesi, SRC sertifikası veya araç ruhsatı görselini analiz ederek
-    /// yapılandırılmış JSON döner. Görsel base64 olarak Gemini Flash'a gönderilir.
+    /// Şoför belgelerinin (Ehliyet, SRC, Psikoteknik, Ruhsat) gerçekliğini, geçerliliğini
+    /// ve sınıf uyumluluğunu Gemini'nin en üst düzey <b>Pro Vision</b> modeli ile NLP tabanlı
+    /// olarak analiz eder.
+    /// <para>
+    /// Klasik OCR'ın aksine; mühür/imza/hologram tespiti, geçerlilik tarihi çıkarımı ve
+    /// mantıksal tutarlılık denetimi yapılır. Çıktı <see cref="DocumentOcrResultDto"/>
+    /// şemasına birebir uyan JSON'dır (responseMimeType = application/json).
+    /// </para>
     /// </summary>
     public async Task<DocumentOcrResultDto> AnalyzeDocumentAsync(
         byte[]       imageBytes,
@@ -261,13 +274,43 @@ public sealed class GeminiServiceClient(
     {
         try
         {
-            var base64 = Convert.ToBase64String(imageBytes);
+            var base64   = Convert.ToBase64String(imageBytes);
+            var docLabel = DocumentTypeLabel(documentType);
+
+            // Belge tipine özgü ek odak talimatı — Pro modelin kararlarını yönlendirir.
+            var typeHint = documentType switch
+            {
+                DocumentType.DriverLicense =>
+                    "Belge türü: EHLİYET. 'documentClasses' alanında kişinin yetkili olduğu " +
+                    "TÜM araç sınıflarını liste olarak dön (ör: [\"B\", \"C\", \"CE\"]).",
+                DocumentType.SrcCertificate =>
+                    "Belge türü: SRC MESLEKİ YETERLİLİK BELGESİ. 'documentClasses' alanında " +
+                    "SRC türünü liste olarak dön (ör: [\"SRC1\", \"SRC2\"]). Bakanlık mührü kritik.",
+                DocumentType.Psychotechnical =>
+                    "Belge türü: PSİKOTEKNİK DEĞERLENDİRME RAPORU. Yetkili kurum mührü ve " +
+                    "doktor imzası zorunludur; 'documentClasses' boş dizi olarak dön.",
+                DocumentType.VehicleRegistration =>
+                    "Belge türü: ARAÇ TESCİL BELGESİ (RUHSAT). 'documentClasses' boş dizi olarak dön; " +
+                    "tescil tarihi ve plaka tutarlılığını kontrol et.",
+                _ => "Belge türü tanımsız; mevcut metinlere göre en doğru analizi yap."
+            };
+
+            var userPrompt =
+                $"Yüklenen görsel bir {docLabel} olduğu iddiasıyla gönderildi.\n" +
+                $"{typeHint}\n\n" +
+                "Görevin:\n" +
+                "1) Belgedeki tüm kimlik ve belge metinlerini çıkar.\n" +
+                "2) Mühür, imza veya hologram varlığını fiziksel orijinallik göstergesi olarak denetle.\n" +
+                "3) Geçerlilik tarihini YYYY-MM-DD formatında 'expiryDate' alanına yaz.\n" +
+                "4) Belgenin genel kullanılabilirliğini 'isValid' olarak karara bağla.\n" +
+                "5) Kararının gerekçesini 'validationMessage' alanında profesyonel dille açıkla.\n\n" +
+                "Çıktı SADECE DocumentOcrResultDto JSON şemasına uygun olmalı.";
 
             var requestBody = new
             {
                 system_instruction = new
                 {
-                    parts = new[] { new { text = GetDocumentSystemInstruction(documentType) } }
+                    parts = new[] { new { text = DocumentAuditSystemInstruction } }
                 },
                 contents = new[]
                 {
@@ -275,7 +318,7 @@ public sealed class GeminiServiceClient(
                     {
                         parts = new object[]
                         {
-                            new { text = $"Bu {DocumentTypeLabel(documentType)} görselindeki bilgileri çıkar." },
+                            new { text = userPrompt },
                             new { inlineData = new { mimeType = mimeType, data = base64 } }
                         }
                     }
@@ -283,43 +326,136 @@ public sealed class GeminiServiceClient(
                 generationConfig = new
                 {
                     responseMimeType = "application/json",
-                    temperature      = 0.1   // OCR deterministik olmalı
+                    temperature      = 0.1  // Denetim deterministik olmalı
                 }
             };
 
-            var response = await httpClient.PostAsJsonAsync(BuildUrl(_flashModel), requestBody);
+            // Karmaşık belge analizi, mühür tespiti ve mantıksal çıkarım için
+            // API'deki en yetenekli vizyon modeli (Pro) zorunludur.
+            var response = await httpClient.PostAsJsonAsync(BuildUrl(_proModel), requestBody);
             response.EnsureSuccessStatusCode();
 
             var jsonText = await ExtractGeminiTextAsync(response);
 
             if (string.IsNullOrWhiteSpace(jsonText))
             {
-                logger.LogWarning("Gemini OCR returned empty text for {DocType}.", documentType);
-                return new DocumentOcrResultDto();
+                logger.LogWarning(
+                    "Gemini Pro Vision boş yanıt döndü — {DocType}. Belge okunamadı.", documentType);
+                return BuildUnreadableResult(documentType);
             }
 
             var result = JsonSerializer.Deserialize<DocumentOcrResultDto>(
                 CleanJson(jsonText), JsonOpts);
 
-            logger.LogInformation(
-                "Gemini OCR completed for {DocType}. Name: {Name}",
-                documentType, result?.FullName ?? "N/A");
+            if (result is null)
+            {
+                logger.LogWarning(
+                    "Gemini Pro Vision yanıtı DTO'ya serialize edilemedi — {DocType}.", documentType);
+                return BuildUnreadableResult(documentType);
+            }
 
-            return result ?? new DocumentOcrResultDto();
+            // Null-safe default: documentClasses serialize edilmediyse boş dizi
+            result.DocumentClasses ??= Array.Empty<string>();
+
+            logger.LogInformation(
+                "Evrak denetimi tamamlandı — {DocType} | IsValid={IsValid} | Seal={Seal} | " +
+                "Expiry={Expiry:yyyy-MM-dd} | Classes=[{Classes}] | {Name}",
+                documentType,
+                result.IsValid,
+                result.IsSealDetected,
+                result.ExpiryDate,
+                string.Join(",", result.DocumentClasses),
+                result.FullName ?? "N/A");
+
+            return result;
         }
         catch (Polly.CircuitBreaker.BrokenCircuitException ex)
         {
             logger.LogWarning(
-                "Gemini circuit breaker OPEN — OCR skipped for {DocType}. Reason: {R}",
+                "Gemini circuit breaker AÇIK — evrak denetimi atlandı. {DocType}. {R}",
                 documentType, ex.Message);
-            return new DocumentOcrResultDto();
+            return BuildUnreadableResult(documentType, "AI servisi şu anda erişilemez, lütfen tekrar deneyin.");
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Gemini OCR call failed for {DocType}.", documentType);
-            return new DocumentOcrResultDto();
+            logger.LogError(ex, "Gemini Pro Vision evrak denetimi başarısız — {DocType}.", documentType);
+            return BuildUnreadableResult(documentType);
         }
     }
+
+    // ── Evrak Denetim System Instruction (v2.5.0 · Pro Vision) ───────────────
+    private const string DocumentAuditSystemInstruction =
+        "Sen profesyonel bir Lojistik Evrak Denetim ve Güvenlik Uzmanısın.\n" +
+        "Türkiye Karayolu Taşımacılığı mevzuatına ve güncel belge standartlarına tam hâkimsin.\n\n" +
+
+        "═══ GÖREV ═══════════════════════════════════════════════════════════\n" +
+        "Yüklenen belgedeki (Ehliyet, SRC, Psikoteknik, Ruhsat) metinleri okumakla kalmayıp,\n" +
+        "belgenin orijinalliğini (mühür, imza, hologram, standart format) ve hukuki\n" +
+        "geçerlilik tarihini en yüksek hassasiyetle kontrol etmektir.\n\n" +
+
+        "═══ DENETİM KRİTERLERİ (Her biri ZORUNLU) ═════════════════════════\n" +
+        "1. FİZİKSEL ORİJİNALLİK — Resmi mühür, ıslak/dijital imza veya hologram var mı?\n" +
+        "   → 'isSealDetected' alanına true/false olarak işle.\n" +
+        "2. HUKUKİ GEÇERLİLİK  — Belgenin son kullanma tarihi bugünden sonra mı?\n" +
+        "   → 'expiryDate' alanına YYYY-MM-DD formatında yaz.\n" +
+        "3. FORMAT UYUMU      — Belge, TC resmi formatına (şablon, yazı tipi, layout) uyuyor mu?\n" +
+        "4. OKUNABİLİRLİK     — Belge deforme, kesik, bulanık veya manipüle edilmiş mi?\n" +
+        "5. SINIF ANALİZİ     — Belge bir ehliyet ise, hangi araçları (B, C, CE, D, E vb.)\n" +
+        "                       kullanmaya yetkili olduğunu tespit et ve 'documentClasses'\n" +
+        "                       alanına liste olarak ekle.\n\n" +
+
+        "═══ KARAR KURALLARI (IsValid = false dön EĞER) ════════════════════\n" +
+        "• Belge süresi geçmişse            → \"Geçerlilik tarihi dolmuş (YYYY-MM-DD).\"\n" +
+        "• Mühür/imza tespit edilemezse     → \"Mühür tespit edilemedi, fiziksel doğrulama gerektirir.\"\n" +
+        "• Belge okunamayacak kadar deforme → \"Belge kalitesi yetersiz, yeniden fotoğraflanmalı.\"\n" +
+        "• Format şüpheli/sahte izlenimli   → \"Format standardı sapmaları tespit edildi, manuel kontrol şart.\"\n" +
+        "Aksi halde 'isValid: true' dön ve 'validationMessage' alanında kısa onay notu bırak.\n\n" +
+
+        "═══ STİL ══════════════════════════════════════════════════════════\n" +
+        "'validationMessage' alanı daima profesyonel, açık ve aksiyon odaklı olmalı.\n" +
+        "Bir evrakın reddedilme nedeni belgesel olarak kayda geçecek kalitede yazılmalı.\n\n" +
+
+        "═══ ÇIKTI ═════════════════════════════════════════════════════════\n" +
+        "Sadece JSON dön, başka HİÇBİR şey yazma. Aşağıdaki şemaya birebir uy:\n" +
+        "{\n" +
+        "  \"fullName\": \"\",\n" +
+        "  \"tcIdentityNumber\": \"\",\n" +
+        "  \"documentNumber\": \"\",\n" +
+        "  \"documentType\": \"\",\n" +
+        "  \"licenseClass\": \"\",\n" +
+        "  \"birthDate\": \"\",\n" +
+        "  \"validUntil\": \"\",\n" +
+        "  \"issuingAuthority\": \"\",\n" +
+        "  \"isValid\": false,\n" +
+        "  \"isSealDetected\": false,\n" +
+        "  \"expiryDate\": \"YYYY-MM-DD\",\n" +
+        "  \"documentClasses\": [],\n" +
+        "  \"validationMessage\": \"\"\n" +
+        "}\n" +
+        "Okunamayan alanları boş string (\"\") veya null bırak; tarih alanları için ISO 8601 kullan.";
+
+    /// <summary>
+    /// Gemini Pro Vision erişilemediğinde ya da belge okunamadığında dönülen
+    /// güvenli varsayılan yanıt. Controller/Background job için non-null kontrat sağlar.
+    /// </summary>
+    private static DocumentOcrResultDto BuildUnreadableResult(
+        DocumentType documentType,
+        string?      reason               = null,
+        bool         requiresManualReview = true)
+        => new()
+        {
+            DocumentType         = DocumentTypeLabel(documentType),
+            IsValid              = false,
+            IsSealDetected       = false,
+            ExpiryDate           = null,
+            DocumentClasses      = Array.Empty<string>(),
+            ValidationMessage    = reason
+                ?? "Belge otomatik olarak denetlenemedi; lütfen daha net bir görsel yükleyin " +
+                   "veya manuel kontrol için destek ekibine başvurun.",
+            // v2.5.1: Tüm "okunamaz" varsayılanlar teknik hata sayılır — AuthService
+            // hesabı ManualApprovalRequired'a alır ve IsActive=true yapmaz.
+            RequiresManualReview = requiresManualReview
+        };
 
     // =========================================================================
     // Smart Matching — AnalyzeDriverMatchAsync (Lojistik İK Uzmanı · Flash)
@@ -708,40 +844,12 @@ public sealed class GeminiServiceClient(
             .GetString();
     }
 
-    private static string GetDocumentSystemInstruction(DocumentType docType) => docType switch
-    {
-        DocumentType.DriverLicense =>
-            "Sen bir lojistik evrak uzmanısın. " +
-            "Gönderilen görseldeki sürücü belgesinden (Ad Soyad, TC Kimlik No, Belge No, " +
-            "Ehliyet Sınıfı, Doğum Tarihi, Geçerlilik Tarihi, Düzenleyen Kurum) " +
-            "bilgilerini ayıkla ve sadece JSON dön, başka hiçbir şey yazma. " +
-            "Şema: { \"fullName\": \"\", \"tcIdentityNumber\": \"\", \"documentNumber\": \"\", " +
-            "\"licenseClass\": \"\", \"birthDate\": \"\", \"validUntil\": \"\", \"issuingAuthority\": \"\" }",
-
-        DocumentType.SrcCertificate =>
-            "Sen bir lojistik evrak uzmanısın. " +
-            "Gönderilen görseldeki SRC belgesinden (Ad Soyad, TC Kimlik No, Belge No, " +
-            "Belge Türü, Geçerlilik Tarihi) bilgilerini ayıkla ve sadece JSON dön. " +
-            "Şema: { \"fullName\": \"\", \"tcIdentityNumber\": \"\", \"documentNumber\": \"\", " +
-            "\"documentType\": \"SRC\", \"validUntil\": \"\" }",
-
-        DocumentType.VehicleRegistration =>
-            "Sen bir lojistik evrak uzmanısın. " +
-            "Gönderilen görseldeki araç ruhsatından (Ad Soyad, Plaka, Marka/Model, " +
-            "Motor No, Şasi No, Tescil Tarihi) bilgilerini ayıkla ve sadece JSON dön. " +
-            "Şema: { \"fullName\": \"\", \"documentNumber\": \"\", " +
-            "\"documentType\": \"Ruhsat\", \"issuingAuthority\": \"\" }",
-
-        _ =>
-            "Sen bir evrak analiz uzmanısın. " +
-            "Görseldeki tüm metin bilgilerini JSON formatında döndür."
-    };
-
     private static string DocumentTypeLabel(DocumentType docType) => docType switch
     {
-        DocumentType.DriverLicense       => "sürücü belgesi",
-        DocumentType.SrcCertificate      => "SRC sertifikası",
-        DocumentType.VehicleRegistration => "araç ruhsatı",
+        DocumentType.DriverLicense       => "sürücü belgesi (ehliyet)",
+        DocumentType.SrcCertificate      => "SRC mesleki yeterlilik belgesi",
+        DocumentType.VehicleRegistration => "araç tescil belgesi (ruhsat)",
+        DocumentType.Psychotechnical     => "psikoteknik değerlendirme raporu",
         _                                => "belge"
     };
 

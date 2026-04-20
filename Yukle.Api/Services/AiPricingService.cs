@@ -123,6 +123,7 @@ public class AiPricingService(
         {
             DocumentType.SrcCertificate      => "SRC belgesi",
             DocumentType.VehicleRegistration => "araç ruhsatı",
+            DocumentType.Psychotechnical     => "psikoteknik raporu",
             _                                => "ehliyet"
         };
 
