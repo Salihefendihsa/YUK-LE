@@ -10,9 +10,30 @@ namespace Yukle.Api.Services
     /// </summary>
     public interface IAuthService
     {
-        Task<User>   RegisterAsync(UserRegisterDto dto);
-        Task<string> LoginAsync(UserLoginDto dto);
-        Task         VerifyOtpAsync(VerifyOtpDto dto);
+        Task<User>              RegisterAsync(UserRegisterDto dto);
+
+        /// <summary>
+        /// Telefon + şifre ile oturum açar. <see cref="LoginResponseDto"/> içinde JWT'ye ek
+        /// olarak <c>IsActive</c> ve <c>ApprovalStatus</c> döner; böylece mobil istemci
+        /// 403 beklemeden kullanıcıyı doğru akışa (evrak onay / ana ekran) yönlendirebilir.
+        /// </summary>
+        Task<LoginResponseDto>  LoginAsync(UserLoginDto dto);
+
+        Task                    VerifyOtpAsync(VerifyOtpDto dto);
+
+        /// <summary>
+        /// <b>v2.5.4 — Refresh Token Akışı.</b>
+        /// İstemciden gelen (süresi dolmuş) access token ile hâlâ geçerli refresh
+        /// token'ı alır; doğruladıktan sonra yepyeni bir access+refresh çifti
+        /// üretir. Rotation: eski refresh token DB'de üzerine yazılır, çalınmış
+        /// bir refresh token böylece ikinci kez kullanılamaz.
+        /// <para>
+        /// Önemli yan etki: yeni access token, kullanıcının <b>güncel</b> DB
+        /// durumunu (özellikle <c>IsActive</c> ve <c>ApprovalStatus</c>) taşır —
+        /// şoför evrak onayı aldıktan sonra re-login olmadan session tazelenir.
+        /// </para>
+        /// </summary>
+        Task<LoginResponseDto>  RefreshTokenAsync(RefreshTokenRequestDto dto);
 
         // ── v2.5.1 · Şoför Belge Onay Akışı ───────────────────────────────────
 

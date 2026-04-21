@@ -16,7 +16,7 @@ namespace Yukle.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Driver")]
+[Authorize(Policy = "RequireActiveDriver")]   // v2.5.3 — Sadece AI onaylı şoförler eşleşme görebilir
 public sealed class MatchingController(
     YukleDbContext               db,
     IGeminiService               geminiService,

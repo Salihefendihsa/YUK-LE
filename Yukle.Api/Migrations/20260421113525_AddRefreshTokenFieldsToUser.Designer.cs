@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Yukle.Api.Data;
 namespace Yukle.Api.Migrations
 {
     [DbContext(typeof(YukleDbContext))]
-    partial class YukleDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260421113525_AddRefreshTokenFieldsToUser")]
+    partial class AddRefreshTokenFieldsToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -248,13 +251,6 @@ namespace Yukle.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AdminReviewNote")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("AiInferenceDetails")
-                        .HasColumnType("text");
-
                     b.Property<int>("ApprovalStatus")
                         .HasColumnType("integer");
 
@@ -355,9 +351,6 @@ namespace Yukle.Api.Migrations
 
                     b.HasIndex("Phone")
                         .IsUnique();
-
-                    b.HasIndex("Role", "ApprovalStatus")
-                        .HasDatabaseName("IX_Users_Role_ApprovalStatus");
 
                     b.ToTable("Users");
                 });

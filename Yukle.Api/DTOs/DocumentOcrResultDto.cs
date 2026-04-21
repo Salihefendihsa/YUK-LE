@@ -33,6 +33,19 @@ public sealed class DocumentOcrResultDto
     [JsonPropertyName("tcIdentityNumber")]
     public string? TcIdentityNumber { get; set; }
 
+    /// <summary>
+    /// <b>v2.5.2 — Kimlik Uyuşmazlık Kontrolü</b> için ülkeden bağımsız kimlik numarası
+    /// alias'ı. <see cref="TcIdentityNumber"/> ile aynı değeri tutar; Gemini JSON şeması
+    /// bozulmasın diye ayrıca serialize edilmez. <c>AuthService</c> karşılaştırmasında
+    /// bu isim üzerinden okunur (daha jenerik bir arayüz için).
+    /// </summary>
+    [JsonIgnore]
+    public string? IdNumber
+    {
+        get => TcIdentityNumber;
+        set => TcIdentityNumber = value;
+    }
+
     /// <summary>Belge seri/kayıt numarası.</summary>
     [JsonPropertyName("documentNumber")]
     public string? DocumentNumber { get; set; }
@@ -97,6 +110,19 @@ public sealed class DocumentOcrResultDto
     /// </summary>
     [JsonPropertyName("validationMessage")]
     public string? ValidationMessage { get; set; }
+
+    /// <summary>
+    /// <b>v2.5.6 — Gri Alan Metriği.</b> Gemini'nin kararına olan kendi öz-güveni (0-100).
+    /// <list type="bullet">
+    ///   <item>&gt;= 85 → karar netliği yüksek, <see cref="IsValid"/> doğrudan uygulanır.</item>
+    ///   <item>50-85 (dahil) → gri alan; hesap PendingReview'a alınır, admin incelemesi gerekir.</item>
+    ///   <item>&lt; 50 → AI belge okunaksız / sahte demek; <see cref="IsValid"/>=false net reddir.</item>
+    /// </list>
+    /// Null değer (legacy/prompt henüz dönmediyse) grilik testi için yok sayılır; yalnızca
+    /// <see cref="ValidationMessage"/> anahtar kelime kontrolü uygulanır.
+    /// </summary>
+    [JsonPropertyName("confidenceScore")]
+    public double? ConfidenceScore { get; set; }
 
     /// <summary>
     /// <b>Dahili sinyal (v2.5.1)</b> — Gemini servisi zaman aşımına uğradığında

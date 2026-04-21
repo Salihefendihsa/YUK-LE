@@ -17,22 +17,67 @@ namespace Yukle.Api.Services;
 /// HttpClient, <c>Program.cs</c>'te Polly resilience pipeline ile sarmalanmıştır
 /// (Retry × 3 Exponential Backoff + Circuit Breaker 5/30s + Timeout 10s).
 /// </para>
-/// Tüm hatalar fallback ile karşılanır — kullanıcıya asla ham exception yansımaz.
+/// Çalışma zamanındaki çoğu API hatası fallback ile karşılanır; <c>GeminiAI:Model</c> ve
+/// <c>GeminiAI:HighProModel</c> eksik veya geçersizse ise uygulama başlatılmaz (fail-fast).
 /// </summary>
-public sealed class GeminiServiceClient(
-    HttpClient                   httpClient,
-    IConfiguration               configuration,
-    ILogger<GeminiServiceClient> logger) : IGeminiService
+/// <remarks>
+/// <b>KVKK Notice (v2.5.5):</b> Bu servis Google Cloud Generative Language API'sini
+/// kullanmaktadır. Google Cloud Enterprise tier (paid) API key kullanıldığında,
+/// gönderilen görseller (şoför ehliyet/SRC/psikoteknik belgeleri) ve prompt içerikleri
+/// model eğitiminde (training data) <b>KULLANILMAZ</b> — Privacy Mode default: ON.
+/// <para>
+/// Ücretsiz (unpaid) AI Studio API key'leri model eğitimine dahil olabilir; bu
+/// nedenle production ortamında KESİNLİKLE <b>paid Vertex AI / Gemini Enterprise</b>
+/// anahtarı ile çalıştırılmalıdır. Dev key'leri KVKK Madde 9 anlamında hassas veriyle
+/// birlikte kullanılmamalıdır.
+/// </para>
+/// <para>
+/// Bu sınıf ayrıca <b>Data Masking</b> uygular: hiçbir log kaydında belge üzerinden
+/// okunan Ad-Soyad, TCKN veya Base64 görsel verisi düz metin olarak yazılmaz.
+/// </para>
+/// </remarks>
+public sealed class GeminiServiceClient : IGeminiService
 {
-    private readonly string _apiKey     = configuration["GeminiAI:ApiKey"]
-                                          ?? throw new ArgumentException("GeminiAI:ApiKey eksik.");
-    private readonly string _flashModel = configuration["GeminiAI:Model"]        ?? "gemini-1.5-flash";
+    private readonly HttpClient                   _httpClient;
+    private readonly ILogger<GeminiServiceClient> _logger;
+    private readonly string                       _apiKey;
+    private readonly string                       _flashModel;
+    private readonly string                       _proModel;
 
-    // 2.5.0 — Evrak denetiminde mühür/imza/hologram tespiti ve mantıksal çıkarım
-    // yapılabilmesi için API'deki en üst düzey vizyon modeli zorunludur.
-    // Konfigürasyonda daha üst bir sürüm (gemini-2-pro vb.) tanımlıysa o kullanılır,
-    // aksi halde fallback olarak gemini-1.5-pro-latest devreye girer.
-    private readonly string _proModel   = configuration["GeminiAI:HighProModel"] ?? "gemini-1.5-pro-latest";
+    public GeminiServiceClient(
+        HttpClient                   httpClient,
+        IConfiguration               configuration,
+        ILogger<GeminiServiceClient> logger)
+    {
+        _httpClient = httpClient;
+        _logger     = logger;
+
+        _apiKey = configuration["GeminiAI:ApiKey"]
+                  ?? throw new ArgumentException("GeminiAI:ApiKey eksik.");
+
+        var flashModel = configuration["GeminiAI:Model"];
+        var proModel   = configuration["GeminiAI:HighProModel"];
+
+        if (!IsValidGeminiModelName(flashModel) || !IsValidGeminiModelName(proModel))
+        {
+            _logger.LogCritical(
+                "FATAL CONFIG ERROR: Gemini model configuration is missing or invalid. Application cannot process documents without a valid model name.");
+            throw new InvalidOperationException(
+                "FATAL CONFIG ERROR: Gemini model configuration is missing or invalid. Application cannot process documents without a valid model name.");
+        }
+
+        _flashModel = flashModel!;
+        _proModel   = proModel!;
+    }
+
+    /// <summary>
+    /// Geçerli Google Generative Language model adı: boş olmamalı ve <c>gemini-</c> önekiyle başlamalıdır.
+    /// </summary>
+    private static bool IsValidGeminiModelName(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return false;
+        return value.Trim().StartsWith("gemini-", StringComparison.OrdinalIgnoreCase);
+    }
 
     // JSON seçenekleri: Gemini camelCase döner, DTO PascalCase — her ikisini eşle.
     private static readonly JsonSerializerOptions JsonOpts = new()
@@ -109,14 +154,14 @@ public sealed class GeminiServiceClient(
                 }
             };
 
-            var response = await httpClient.PostAsJsonAsync(BuildUrl(_flashModel), requestBody);
+            var response = await _httpClient.PostAsJsonAsync(BuildUrl(_flashModel), requestBody);
             response.EnsureSuccessStatusCode();
 
             var jsonText = await ExtractGeminiTextAsync(response);
 
             if (string.IsNullOrWhiteSpace(jsonText))
             {
-                logger.LogWarning("Gemini Flash returned empty price text. Falling back.");
+                _logger.LogWarning("Gemini Flash returned empty price text. Falling back.");
                 return FallbackPriceSuggestion(distance, vehicleType, fuelPrice, weightTon);
             }
 
@@ -125,7 +170,7 @@ public sealed class GeminiServiceClient(
 
             if (suggestion is null)
             {
-                logger.LogWarning("Gemini Flash price deserialized as null. Falling back.");
+                _logger.LogWarning("Gemini Flash price deserialized as null. Falling back.");
                 return FallbackPriceSuggestion(distance, vehicleType, fuelPrice, weightTon);
             }
 
@@ -152,12 +197,12 @@ public sealed class GeminiServiceClient(
                 finalAmort = Math.Round((decimal)distance * GetAmortPerKm(vehicleType), 2);
                 finalNet   = Math.Round(suggestion.RecommendedPrice - finalFuel - finalToll - finalAmort, 2);
 
-                logger.LogDebug(
+                _logger.LogDebug(
                     "Gemini breakdown tutarsız (gap %{Gap:F1}); matematiksel breakdown uygulandı.",
                     gapRatio * 100);
             }
 
-            logger.LogInformation(
+            _logger.LogInformation(
                 "Gemini Flash (Adil Fiyat): {Rec} TL (min {Min} / max {Max}) | " +
                 "Yakıt: {Fuel} TL, Otoyol: {Toll} TL, Amortisman: {Amort} TL, Net: {Net} TL — " +
                 "{Dist}km {Vehicle} {WeightTon}t{RouteCtx}.",
@@ -178,14 +223,14 @@ public sealed class GeminiServiceClient(
         }
         catch (Polly.CircuitBreaker.BrokenCircuitException ex)
         {
-            logger.LogWarning(
+            _logger.LogWarning(
                 "Gemini circuit breaker OPEN — serving fallback for {Dist}km {Vehicle}. Reason: {R}",
                 distance, vehicleType, ex.Message);
             return FallbackPriceSuggestion(distance, vehicleType, fuelPrice, weightTon);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Gemini Flash price call failed. Applying fallback.");
+            _logger.LogError(ex, "Gemini Flash price call failed. Applying fallback.");
             return FallbackPriceSuggestion(distance, vehicleType, fuelPrice, weightTon);
         }
     }
@@ -274,6 +319,12 @@ public sealed class GeminiServiceClient(
     {
         try
         {
+            // ── KVKK Process & Delete (v2.5.5) ────────────────────────────────
+            // imageBytes controller katmanında MemoryStream üzerinden üretilmiş RAM-only
+            // veridir; buraya kadar hiçbir disk I/O yapılmadı. Base64 dönüşümü burada
+            // yalnızca Gemini API'ye inline data olarak gönderilmek için yapılır. Base64
+            // string ASLA log'lanmaz; bu metot başarılı/başarısız sonlandığında hem bytes
+            // hem base64 string GC için aday olur.
             var base64   = Convert.ToBase64String(imageBytes);
             var docLabel = DocumentTypeLabel(documentType);
 
@@ -332,14 +383,14 @@ public sealed class GeminiServiceClient(
 
             // Karmaşık belge analizi, mühür tespiti ve mantıksal çıkarım için
             // API'deki en yetenekli vizyon modeli (Pro) zorunludur.
-            var response = await httpClient.PostAsJsonAsync(BuildUrl(_proModel), requestBody);
+            var response = await _httpClient.PostAsJsonAsync(BuildUrl(_proModel), requestBody);
             response.EnsureSuccessStatusCode();
 
             var jsonText = await ExtractGeminiTextAsync(response);
 
             if (string.IsNullOrWhiteSpace(jsonText))
             {
-                logger.LogWarning(
+                _logger.LogWarning(
                     "Gemini Pro Vision boş yanıt döndü — {DocType}. Belge okunamadı.", documentType);
                 return BuildUnreadableResult(documentType);
             }
@@ -349,7 +400,7 @@ public sealed class GeminiServiceClient(
 
             if (result is null)
             {
-                logger.LogWarning(
+                _logger.LogWarning(
                     "Gemini Pro Vision yanıtı DTO'ya serialize edilemedi — {DocType}.", documentType);
                 return BuildUnreadableResult(documentType);
             }
@@ -357,28 +408,33 @@ public sealed class GeminiServiceClient(
             // Null-safe default: documentClasses serialize edilmediyse boş dizi
             result.DocumentClasses ??= Array.Empty<string>();
 
-            logger.LogInformation(
+            // ── KVKK Data Masking (v2.5.5) ───────────────────────────────────
+            // Log'larda belge üzerinden okunan Ad-Soyad ya da TCKN asla düz metin
+            // yazılmaz. Sadece var/yok bilgisi ve maskelenmiş isim (A**** Y*****)
+            // kayda geçer — iz sürme için yeterli, kimlik inference için yetersiz.
+            _logger.LogInformation(
                 "Evrak denetimi tamamlandı — {DocType} | IsValid={IsValid} | Seal={Seal} | " +
-                "Expiry={Expiry:yyyy-MM-dd} | Classes=[{Classes}] | {Name}",
+                "Expiry={Expiry:yyyy-MM-dd} | Classes=[{Classes}] | Name={MaskedName} | HasTckn={HasTckn}",
                 documentType,
                 result.IsValid,
                 result.IsSealDetected,
                 result.ExpiryDate,
                 string.Join(",", result.DocumentClasses),
-                result.FullName ?? "N/A");
+                AuthService.MaskPii(result.FullName),
+                !string.IsNullOrWhiteSpace(result.TcIdentityNumber));
 
             return result;
         }
         catch (Polly.CircuitBreaker.BrokenCircuitException ex)
         {
-            logger.LogWarning(
+            _logger.LogWarning(
                 "Gemini circuit breaker AÇIK — evrak denetimi atlandı. {DocType}. {R}",
                 documentType, ex.Message);
             return BuildUnreadableResult(documentType, "AI servisi şu anda erişilemez, lütfen tekrar deneyin.");
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Gemini Pro Vision evrak denetimi başarısız — {DocType}.", documentType);
+            _logger.LogError(ex, "Gemini Pro Vision evrak denetimi başarısız — {DocType}.", documentType);
             return BuildUnreadableResult(documentType);
         }
     }
@@ -411,6 +467,15 @@ public sealed class GeminiServiceClient(
         "• Format şüpheli/sahte izlenimli   → \"Format standardı sapmaları tespit edildi, manuel kontrol şart.\"\n" +
         "Aksi halde 'isValid: true' dön ve 'validationMessage' alanında kısa onay notu bırak.\n\n" +
 
+        "═══ CONFIDENCE SCORE (v2.5.6 — Gri Alan Mantığı için ZORUNLU) ═════\n" +
+        "'confidenceScore' alanına kararına olan öz-güvenini 0-100 arası TAM SAYI yaz.\n" +
+        "Kılavuz:\n" +
+        "• >=85 → Karar kesin (belge net okundu, mühür açık, süre kontrol edilebildi).\n" +
+        "• 50-84 → Karar kararsız (görsel bulanık, mühür tam seçilemedi, bir veya daha fazla\n" +
+        "          alan okunamadı, format kısmen şüpheli). Manuel inceleme sinyali üret.\n" +
+        "• <50 → Belge okunamıyor veya sahte izlenimi çok güçlü.\n" +
+        "Bu puan İSTİSNASIZ her çağrıda dönmelidir; karar kesin olsa bile puanını yaz.\n\n" +
+
         "═══ STİL ══════════════════════════════════════════════════════════\n" +
         "'validationMessage' alanı daima profesyonel, açık ve aksiyon odaklı olmalı.\n" +
         "Bir evrakın reddedilme nedeni belgesel olarak kayda geçecek kalitede yazılmalı.\n\n" +
@@ -430,7 +495,8 @@ public sealed class GeminiServiceClient(
         "  \"isSealDetected\": false,\n" +
         "  \"expiryDate\": \"YYYY-MM-DD\",\n" +
         "  \"documentClasses\": [],\n" +
-        "  \"validationMessage\": \"\"\n" +
+        "  \"validationMessage\": \"\",\n" +
+        "  \"confidenceScore\": 0\n" +
         "}\n" +
         "Okunamayan alanları boş string (\"\") veya null bırak; tarih alanları için ISO 8601 kullan.";
 
@@ -473,9 +539,10 @@ public sealed class GeminiServiceClient(
         // Yeni şoför veya aday yük yoksa → fallback
         if (context.IsNewDriver || context.CandidateLoads.Count == 0)
         {
-            logger.LogInformation(
+            // KVKK: şoför ismi log'a maskelenerek yazılır.
+            _logger.LogInformation(
                 "Smart Matching: Yeni şoför ({Name}) veya aday yük yok — fallback uygulandı.",
-                context.DriverName);
+                AuthService.MaskPii(context.DriverName));
             return MatchingFallback(context);
         }
 
@@ -500,7 +567,7 @@ public sealed class GeminiServiceClient(
                 }
             };
 
-            var response = await httpClient.PostAsJsonAsync(
+            var response = await _httpClient.PostAsJsonAsync(
                 BuildUrl(_flashModel), requestBody, ct);
             response.EnsureSuccessStatusCode();
 
@@ -508,7 +575,7 @@ public sealed class GeminiServiceClient(
 
             if (string.IsNullOrWhiteSpace(jsonText))
             {
-                logger.LogWarning("Smart Matching: Gemini boş yanıt döndü — fallback uygulandı.");
+                _logger.LogWarning("Smart Matching: Gemini boş yanıt döndü — fallback uygulandı.");
                 return MatchingFallback(context);
             }
 
@@ -517,7 +584,7 @@ public sealed class GeminiServiceClient(
 
             if (raw is not { Count: > 0 })
             {
-                logger.LogWarning("Smart Matching: Gemini yanıtı parse edilemedi — fallback uygulandı.");
+                _logger.LogWarning("Smart Matching: Gemini yanıtı parse edilemedi — fallback uygulandı.");
                 return MatchingFallback(context);
             }
 
@@ -543,24 +610,24 @@ public sealed class GeminiServiceClient(
                 results.Add(BuildFallbackEntry(candidate, context, isAi: false));
             }
 
-            logger.LogInformation(
+            _logger.LogInformation(
                 "Smart Matching tamamlandı: {Count} yük puanlandı — şoför: {Name}",
-                results.Count, context.DriverName);
+                results.Count, AuthService.MaskPii(context.DriverName));
 
             return results.OrderByDescending(r => r.MatchScore).ToList();
         }
         catch (Polly.CircuitBreaker.BrokenCircuitException ex)
         {
-            logger.LogWarning(
+            _logger.LogWarning(
                 "Smart Matching: Circuit breaker AÇIK — fallback uygulandı. Şoför: {Name}. {R}",
-                context.DriverName, ex.Message);
+                AuthService.MaskPii(context.DriverName), ex.Message);
             return MatchingFallback(context);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex,
+            _logger.LogError(ex,
                 "Smart Matching: Gemini çağrısı başarısız — fallback uygulandı. Şoför: {Name}",
-                context.DriverName);
+                AuthService.MaskPii(context.DriverName));
             return MatchingFallback(context);
         }
     }

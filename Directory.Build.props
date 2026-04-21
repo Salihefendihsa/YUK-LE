@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <Version>1.0.0</Version>
+    <Authors>Salih Altinisik</Authors>
+    <Company>YÜK-LE Logistics Technology</Company>
+    <Description>YÜK-LE AI-Powered Logistics Platform Backend</Description>
+  </PropertyGroup>
+</Project>

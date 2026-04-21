@@ -1,11 +1,24 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Yukle.Api.Models;
+using Yukle.Api.Services;
 
 namespace Yukle.Api.Data;
 
 public class YukleDbContext : DbContext
 {
-    public YukleDbContext(DbContextOptions<YukleDbContext> options) : base(options) { }
+    // v2.5.5 — KVKK AES-256 şifreleme için singleton servis.
+    // ValueConverter OnModelCreating içinde construct edildiğinde bu delegate'i
+    // yakalar; DbContext cache'lenen modelle birlikte aynı servis referansını kullanır.
+    private readonly IEncryptionService _encryptionService;
+
+    public YukleDbContext(
+        DbContextOptions<YukleDbContext> options,
+        IEncryptionService               encryptionService)
+        : base(options)
+    {
+        _encryptionService = encryptionService;
+    }
 
     public DbSet<User>         Users         { get; set; }
     public DbSet<Load>         Loads         { get; set; }
@@ -18,6 +31,20 @@ public class YukleDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        // ── v2.5.5 · KVKK AES-256 Value Converter ────────────────────────────
+        //
+        // Bu converter, TaxNumberOrTCKN alanının DB'ye yazılırken otomatik olarak
+        // Encrypt edilmesini, okunurken otomatik olarak Decrypt edilmesini sağlar.
+        // C# kodundaki sorgular ("u.TaxNumberOrTCKN == tckn") açık metinle yazılır;
+        // EF bu karşılaştırmayı ciphertext'e dönüştürerek SQL'e gönderir. Deterministik
+        // IV sayesinde aynı TCKN daima aynı ciphertext üretir, eşitlik filtreleri çalışır.
+        //
+        // Güvenlik notu: Anahtar yalnızca config'ten okunur; bellekte saklanır, DB'ye
+        // kesinlikle sızmaz. DB kaçağı durumunda TCKN kolonu anahtarsız anlamsızdır.
+        var tcknEncryptionConverter = new ValueConverter<string, string>(
+            plainText  => _encryptionService.Encrypt(plainText)  ?? string.Empty,
+            cipherText => _encryptionService.Decrypt(cipherText) ?? string.Empty);
+
         // ── User ──────────────────────────────────────────────────────────────
         modelBuilder.Entity<User>(entity =>
         {
@@ -25,6 +52,30 @@ public class YukleDbContext : DbContext
             entity.HasIndex(u => u.Email).IsUnique();
             entity.Property(u => u.WalletBalance).HasPrecision(18, 2);
             entity.Property(u => u.PendingBalance).HasPrecision(18, 2);
+
+            // KVKK: TCKN alanı AES-256-CBC şifreli saklanır.
+            // Base64 ciphertext ~24-44 karakter uzunluğundadır; text kolonu uygun.
+            entity.Property(u => u.TaxNumberOrTCKN)
+                  .HasConversion(tcknEncryptionConverter);
+
+            // ── v2.5.6 · Admin Dashboard "Bekleyen Onaylar" Kuyruğu İndeksi ──
+            //
+            // Faz 4.5.5'te admin paneli şu sorguyu yapacak:
+            //   SELECT * FROM users
+            //   WHERE role = 1 /* Driver */ AND approvalstatus IN (4, 5)
+            //   ORDER BY createdat ASC;
+            //
+            // (4 = ManualApprovalRequired, 5 = PendingReview)
+            // Aşağıdaki bileşik index bu queue sorgusu için sıralı I/O sağlar.
+            // Küçük kardinaliteli (Role) + filtrelenebilir (ApprovalStatus) alan dizilimi
+            // PostgreSQL'de optimal seek yapısı oluşturur.
+            entity.HasIndex(u => new { u.Role, u.ApprovalStatus })
+                  .HasDatabaseName("IX_Users_Role_ApprovalStatus");
+
+            // AiInferenceDetails potansiyel olarak uzun JSON içerir; explicit text tipi,
+            // PostgreSQL varchar(max) yerine native text kolonunu zorlar.
+            entity.Property(u => u.AiInferenceDetails).HasColumnType("text");
+            entity.Property(u => u.AdminReviewNote).HasMaxLength(500);
         });
 
         // ── Load ──────────────────────────────────────────────────────────────

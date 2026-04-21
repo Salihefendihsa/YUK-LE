@@ -1,63 +1,61 @@
 # YÜK-LE — Sistem Mimarisi Genel Bakış
 
-## 🏛 Katmanlı Mimari (Clean Architecture)
+## Mevcut yapı (v2.5.6+): Modüler monolit
 
-YÜK-LE projesi, **Clean Architecture** prensipleri üzerine inşa edilmiştir:
+Backend **tek bir ASP.NET Core 9** projesi (`Yukle.Api`) olarak geliştirilir: **Single Project / Modular Monolith-ready**. İş mantığı `Services/`, HTTP yüzeyi `Controllers/` ve `Hubs/`, kalıcılık `Data/` (EF Core) ve `Migrations/` altında gruplanır. İleride ayrı `Application` / `Infrastructure` projelerine bölünmeye uygun sınırlar korunur; şu an **Clean Architecture ile çoklu proje** yapısı **kullanılmıyor**.
 
-### Katmanlar
+### Öne çıkan bileşenler
 
-1. **Domain Layer** — İş kuralları, entity'ler, value object'ler
-2. **Application Layer** — CQRS (Command/Query), use case'ler, DTO'lar
-3. **Infrastructure Layer** — Veritabanı, dış servis entegrasyonları
-4. **API Layer** — HTTP endpoint'leri, SignalR Hub'ları, middleware'ler
-5. **Mobile (Flutter)** — Cross-platform mobil uygulama
+| Bileşen | Açıklama |
+|--------|----------|
+| **Kimlik** | JWT access token + refresh token (DB’de rotation), rol ve `RequireActiveDriver` policy |
+| **Evrak** | Gemini Vision OCR, kimlik eşleştirme, gri alan → `PendingReview`, KVKK AES-256 (TCKN) |
+| **Fiyatlandırma** | Gemini + OSRM + yakıt fiyatı tablosu; Polly ile HTTP dayanıklılığı |
+| **Eşleştirme** | PostGIS yük konumları + Gemini skorlama |
+| **Gerçek zamanlı** | SignalR hub’ları + Redis backplane |
+| **Hatalar** | `IExceptionHandler` + RFC 7807 `ProblemDetails` |
 
-## 🔄 Veri Akışı
+## Veri akışı (özet)
 
 ```
-Fabrika/Şoför (Flutter App)
+İstemci (Flutter / SPA)
         │
-        ▼
-   API Gateway (.NET 8 Web API)
+        ▼  HTTPS
+   Yukle.Api (Kestrel)
         │
-   ┌────┼────────────────┐
-   ▼    ▼                ▼
- CQRS  SignalR Hub    Middleware
-   │    (Gerçek         (Auth, Logging,
-   │     Zamanlı)        Rate Limiting)
-   ▼
-Application Layer (MediatR)
+   ┌────┼────────────────────┐
+   ▼    ▼                    ▼
+Controllers            SignalR Hubs
+   │                        │
+   ▼                        ▼
+ Services              Redis (backplane)
    │
-   ├─► Domain Events
-   ├─► Validators (FluentValidation)
-   │
-   ▼
-Infrastructure Layer
-   │
-   ├─► PostgreSQL + PostGIS (EF Core)
-   ├─► Redis (Cache + Queue)
-   ├─► Gemini AI (Fiyat + Evrak)
-   ├─► İyzico (Escrow Ödeme)
-   └─► U-ETDS (Outbox Pattern)
+   ├─► EF Core → PostgreSQL + PostGIS
+   ├─► Redis (cache, OTP, rate limit)
+   └─► HttpClient → Gemini API, OSRM, CollectAPI
 ```
 
-## 🗄 Veritabanı Şeması (Temel Tablolar)
+## Veritabanı (EF Core — ana tablolar)
 
-- `users` — Kullanıcılar (fabrika, şoför, admin)
-- `drivers` — Şoför profilleri, araç bilgileri
-- `factories` — Fabrika profilleri
-- `loads` — Yük ilanları
-- `bids` — Teklifler
-- `shipments` — Taşıma süreçleri
-- `payments` — Ödeme kayıtları
-- `documents` — Evrak kayıtları
-- `locations` — PostGIS konum verileri
-- `outbox_messages` — U-ETDS bildirim kuyruğu
+Gerçek şema `YukleDbContext` ve migration’larla uyumludur; örnek tablolar:
 
-## 🔐 Güvenlik
+- **`Users`** — Fabrika / şoför / roller, onay durumu, refresh token, FCM, KVKK alanları
+- **`Loads`** — İlan, rota (PostGIS noktaları), AI fiyat alanları, durum
+- **`Bids`** — Teklifler
+- **`Vehicles`** — Şoför araçları
+- **`Notifications`** — Uygulama içi bildirimler
+- **`FuelPrices`** — İl bazlı yakıt fiyatı (worker ile güncellenir)
 
-- JWT + Refresh Token kimlik doğrulama
-- Role-based authorization (Fabrika, Şoför, Admin)
-- Rate limiting ve API throttling
-- Escrow ile güvenli ödeme
-- HTTPS/TLS zorunlu
+*(Ayrı `drivers` / `factories` tabloları yok; roller `Users` üzerinde tutulur.)*
+
+## Güvenlik (uygulanan)
+
+- JWT + refresh token rotasyonu
+- Policy tabanlı yetkilendirme (`RequireActiveDriver`)
+- TCKN için AES-256 EF `ValueConverter`
+- Merkezi exception → istemciye teknik sızıntı olmadan RFC 7807 yanıtları
+
+## Gelecek (dokümante edilmiş hedefler)
+
+- İyzico escrow, U-ETDS outbox, QR teslimat
+- İsteğe bağlı: MediatR/CQRS, FluentValidation, Serilog sink’leri, ayrı katman projeleri

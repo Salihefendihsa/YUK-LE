@@ -1,4 +1,3 @@
-using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -37,7 +36,7 @@ public sealed class BidsController(
     /// DriverId ve şoför adı JWT claim'lerinden okunur; DTO'dan alınmaz.
     /// </summary>
     [HttpPost("submit")]
-    [Authorize(Roles = "Driver")]
+    [Authorize(Policy = "RequireActiveDriver")]   // v2.5.3 — Teklif vermek için AI onayı zorunlu
     public async Task<IActionResult> SubmitBid([FromBody] CreateBidDto dto)
     {
         if (!ModelState.IsValid)
@@ -47,31 +46,19 @@ public sealed class BidsController(
         if (!int.TryParse(driverIdClaim, out var driverId))
             return Unauthorized(new { Message = "Geçerli bir sürücü kimliği bulunamadı." });
 
-        try
-        {
-            var bid = await _bidService.SubmitBidAsync(dto, driverId);
+        var bid = await _bidService.SubmitBidAsync(dto, driverId);
 
-            // ── Anlık bildirim + UI güncellemesi (paralel, fire-and-forget tarzı) ──
-            await SendBidPushAsync(bid.Id, bid.LoadId, bid.Amount, bid.CreatedAt, driverId);
+        await SendBidPushAsync(bid.Id, bid.LoadId, bid.Amount, bid.CreatedAt, driverId);
 
-            return CreatedAtAction(nameof(SubmitBid), new { id = bid.Id }, new
-            {
-                Message   = "Teklifiniz başarıyla iletildi.",
-                BidId     = bid.Id,
-                LoadId    = bid.LoadId,
-                Amount    = bid.Amount,
-                Status    = bid.Status.ToString(),
-                CreatedAt = bid.CreatedAt
-            });
-        }
-        catch (InvalidOperationException ex)
+        return CreatedAtAction(nameof(SubmitBid), new { id = bid.Id }, new
         {
-            return BadRequest(new { Message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { Message = "Teklif gönderilirken bir hata oluştu.", Details = ex.Message });
-        }
+            Message   = "Teklifiniz başarıyla iletildi.",
+            BidId     = bid.Id,
+            LoadId    = bid.LoadId,
+            Amount    = bid.Amount,
+            Status    = bid.Status.ToString(),
+            CreatedAt = bid.CreatedAt
+        });
     }
 
     // ── GET api/bids/load/{loadId} ────────────────────────────────────────────
@@ -88,23 +75,8 @@ public sealed class BidsController(
         if (!int.TryParse(customerIdClaim, out var customerId))
             return Unauthorized(new { Message = "Geçerli bir kullanıcı kimliği bulunamadı." });
 
-        try
-        {
-            var bids = await _bidService.GetBidsByLoadIdAsync(loadId, customerId);
-            return Ok(bids);
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return NotFound(new { Message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { Message = "Teklifler listelenirken bir hata oluştu.", Details = ex.Message });
-        }
+        var bids = await _bidService.GetBidsByLoadIdAsync(loadId, customerId);
+        return Ok(bids);
     }
 
     // ── POST api/bids/{id}/accept ─────────────────────────────────────────────
@@ -122,23 +94,8 @@ public sealed class BidsController(
         if (!int.TryParse(customerIdClaim, out var customerId))
             return Unauthorized(new { Message = "Geçerli bir kullanıcı kimliği bulunamadı." });
 
-        try
-        {
-            await _bidService.AcceptBidAsync(id, customerId);
-            return Ok(new { Message = "Teklif kabul edildi, yük şoföre atandı." });
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { Message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { Message = "Teklif kabul edilirken bir hata oluştu.", Details = ex.Message });
-        }
+        await _bidService.AcceptBidAsync(id, customerId);
+        return Ok(new { Message = "Teklif kabul edildi, yük şoföre atandı." });
     }
 
     // =========================================================================

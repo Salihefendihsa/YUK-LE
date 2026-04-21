@@ -38,18 +38,11 @@ public sealed class DashboardController : ControllerBase
 
         var role = User.FindFirstValue(ClaimTypes.Role);
 
-        try
+        return role switch
         {
-            return role switch
-            {
-                "Customer" => Ok(await _dashboardService.GetCustomerStatsAsync(userId)),
-                "Driver"   => Ok(await _dashboardService.GetDriverStatsAsync(userId)),
-                _          => BadRequest(new { Message = $"'{role}' rolü için dashboard tanımlanmamış." })
-            };
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { Message = "Dashboard verileri alınırken bir hata oluştu.", Details = ex.Message });
-        }
+            "Customer" => Ok(await _dashboardService.GetCustomerStatsAsync(userId)),
+            "Driver"   => Ok(await _dashboardService.GetDriverStatsAsync(userId)),
+            _          => BadRequest(new { Message = $"'{role}' rolü için dashboard tanımlanmamış." })
+        };
     }
 }

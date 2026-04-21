@@ -40,21 +40,14 @@ public sealed class UsersController : ControllerBase
         if (!int.TryParse(userIdClaim, out var userId))
             return Unauthorized(new { Message = "Geçerli bir kullanıcı kimliği bulunamadı." });
 
-        try
-        {
-            var user = await _context.Users.FindAsync(userId);
-            if (user is null)
-                return NotFound(new { Message = "Kullanıcı bulunamadı." });
+        var user = await _context.Users.FindAsync(userId);
+        if (user is null)
+            return NotFound(new { Message = "Kullanıcı bulunamadı." });
 
-            user.FcmToken = request.Token.Trim();
-            await _context.SaveChangesAsync();
+        user.FcmToken = request.Token.Trim();
+        await _context.SaveChangesAsync();
 
-            return Ok(new { Message = "FCM token güncellendi." });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { Message = "Token güncellenirken bir hata oluştu.", Details = ex.Message });
-        }
+        return Ok(new { Message = "FCM token güncellendi." });
     }
 }
 

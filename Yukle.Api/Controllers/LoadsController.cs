@@ -43,16 +43,7 @@ public sealed class LoadsController(
             return Unauthorized(new { Message = "Geçerli bir kullanıcı kimliği bulunamadı." });
 
         // ── 1. Yükü DB'ye kaydet ─────────────────────────────────────────────
-        Guid newId;
-        try
-        {
-            newId = await loadService.CreateLoadAsync(dto, userId);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Yük oluşturulurken DB hatası.");
-            return StatusCode(500, new { Message = "Yük oluşturulurken bir hata oluştu.", Details = ex.Message });
-        }
+        var newId = await loadService.CreateLoadAsync(dto, userId);
 
         // ── 2. Gemini AI fiyat analizi ────────────────────────────────────────
         // Hata olursa yük zaten kaydedildi; analiz sonucu null olacak ama yük hayatta.
@@ -155,42 +146,37 @@ public sealed class LoadsController(
 
     /// <summary>
     /// Durumu Active olan tüm yük ilanlarını (AI fiyat alanları dahil) özet bilgiyle listeler.
+    /// <para>
+    /// <b>v2.5.3 Yetki Bariyeri:</b> Yalnızca AI onayından geçmiş (<c>IsActive=true</c>)
+    /// şoförler erişebilir. Evrakı eksik/reddedilmiş şoförler 403 Forbidden alır.
+    /// </para>
     /// </summary>
     [HttpGet("active")]
+    [Authorize(Policy = "RequireActiveDriver")]
     public async Task<IActionResult> GetActiveLoads()
     {
-        try
-        {
-            var loads = await loadService.GetActiveLoadsAsync();
-            return Ok(loads);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { Message = "Yükler listelenirken bir hata oluştu.", Details = ex.Message });
-        }
+        var loads = await loadService.GetActiveLoadsAsync();
+        return Ok(loads);
     }
 
     // ── GET api/loads/{id} ─────────────────────────────────────────────────────
 
     /// <summary>
     /// Belirtilen ID'ye sahip yük ilanının detayını döner (AI fiyat alanları dahil).
+    /// <para>
+    /// <b>v2.5.3 Yetki Bariyeri:</b> Sadece aktif şoförler detay sayfasına ulaşabilir.
+    /// </para>
     /// </summary>
     [HttpGet("{id:guid}")]
+    [Authorize(Policy = "RequireActiveDriver")]
     public async Task<IActionResult> GetLoadById(Guid id)
     {
-        try
-        {
-            var load = await loadService.GetLoadByIdAsync(id);
+        var load = await loadService.GetLoadByIdAsync(id);
 
-            if (load is null)
-                return NotFound(new { Message = $"'{id}' ID'sine sahip yük ilanı bulunamadı." });
+        if (load is null)
+            return NotFound(new { Message = $"'{id}' ID'sine sahip yük ilanı bulunamadı." });
 
-            return Ok(load);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { Message = "Yük detayı alınırken bir hata oluştu.", Details = ex.Message });
-        }
+        return Ok(load);
     }
 
     // ── POST api/loads/{id}/pickup ─────────────────────────────────────────────
@@ -200,30 +186,15 @@ public sealed class LoadsController(
     /// Yalnızca yüke atanmış şoför çağırabilir.
     /// </summary>
     [HttpPost("{id:guid}/pickup")]
-    [Authorize(Roles = "Driver")]
+    [Authorize(Policy = "RequireActiveDriver")]
     public async Task<IActionResult> Pickup(Guid id)
     {
         var driverIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!int.TryParse(driverIdClaim, out var driverId))
             return Unauthorized(new { Message = "Geçerli bir sürücü kimliği bulunamadı." });
 
-        try
-        {
-            await loadService.PickupAsync(id, driverId);
-            return Ok(new { Message = "Yük teslim alındı. İyi yolculuklar!" });
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { Message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { Message = "Durum güncellenirken bir hata oluştu.", Details = ex.Message });
-        }
+        await loadService.PickupAsync(id, driverId);
+        return Ok(new { Message = "Yük teslim alındı. İyi yolculuklar!" });
     }
 
     // ── POST api/loads/{id}/deliver ────────────────────────────────────────────
@@ -233,30 +204,15 @@ public sealed class LoadsController(
     /// Yalnızca yüke atanmış ve yolda olan şoför çağırabilir.
     /// </summary>
     [HttpPost("{id:guid}/deliver")]
-    [Authorize(Roles = "Driver")]
+    [Authorize(Policy = "RequireActiveDriver")]
     public async Task<IActionResult> Deliver(Guid id)
     {
         var driverIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!int.TryParse(driverIdClaim, out var driverId))
             return Unauthorized(new { Message = "Geçerli bir sürücü kimliği bulunamadı." });
 
-        try
-        {
-            await loadService.DeliverAsync(id, driverId);
-            return Ok(new { Message = "Yük başarıyla teslim edildi. Teşekkürler!" });
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { Message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { Message = "Durum güncellenirken bir hata oluştu.", Details = ex.Message });
-        }
+        await loadService.DeliverAsync(id, driverId);
+        return Ok(new { Message = "Yük başarıyla teslim edildi. Teşekkürler!" });
     }
 
     // ── Yardımcı ─────────────────────────────────────────────────────────────

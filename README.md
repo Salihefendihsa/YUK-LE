@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="#"><img src="https://img.shields.io/badge/.NET-8.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white" alt=".NET 8"/></a>
+  <a href="#"><img src="https://img.shields.io/badge/.NET-9.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white" alt=".NET 9"/></a>
   <a href="#"><img src="https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter"/></a>
   <a href="#"><img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL"/></a>
   <a href="#"><img src="https://img.shields.io/badge/PostGIS-3.4-5CAE58?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostGIS"/></a>
@@ -33,206 +33,169 @@
 
 ## 📖 Proje Hakkında
 
-**YÜK-LE**, endüstriyel yük taşımacılığını dijitalleştiren, uçtan uca otonom, B2B/B2C lojistik pazaryeri ve escrow ödeme platformudur. Fabrikalar yük ilanı oluşturur, yapay zeka ile hesaplanan adil fiyat üzerinden şoförler teklif verir ve tüm süreç — ödeme, evrak onayı, canlı takip, teslimat kanıtı ve vergi hesaplaması dahil — tamamen otonom çalışır.
+**YÜK-LE**, endüstriyel yük taşımacılığını dijitalleştiren, B2B/B2C lojistik pazaryeri vizyonudur. Fabrikalar yük ilanı oluşturur, yapay zeka ile hesaplanan adil fiyat üzerinden şoförler teklif verir; tam teşekküllü ödeme (escrow), U-ETDS ve teslimat kanıtı gibi katmanlar **yol haritasında** tanımlıdır; backend şu an **tek bir ASP.NET Core** projesinde (`Yukle.Api`) modüler monolit olarak geliştirilmektedir.
 
 ### 🎯 Çözdüğümüz Problem
 
 | Geleneksel Yöntem | YÜK-LE ile |
 |---|---|
-| ❌ Telefon/WhatsApp ile şoför arama | ✅ Konum bazlı anlık eşleştirme |
+| ❌ Telefon/WhatsApp ile şoför arama | ✅ Konum bazlı anlık eşleştirme (PostGIS + OSRM) |
 | ❌ Pazarlık ve güvensiz fiyatlama | ✅ AI destekli adil taban fiyat |
-| ❌ Nakit ödeme riski | ✅ Escrow ile güvenli ödeme |
-| ❌ Evrak kontrolü manuel | ✅ Gemini Vision ile otonom onay |
-| ❌ Takip yok, belirsizlik | ✅ Gerçek zamanlı canlı takip |
-| ❌ Vergi/fatura karmaşası | ✅ Otomatik stopaj ve komisyon |
-| ❌ U-ETDS'ye manuel bildirim | ✅ Outbox Pattern ile otonom iletim |
+| ❌ Nakit ödeme riski | ✅ Escrow ile güvenli ödeme *(yol haritası)* |
+| ❌ Evrak kontrolü manuel | ✅ Gemini Vision ile otonom onay + KVKK uyumlu şifreleme |
+| ❌ Takip yok, belirsizlik | ✅ Gerçek zamanlı canlı takip (SignalR) |
+| ❌ Vergi/fatura karmaşası | ✅ Otomatik stopaj ve komisyon *(yol haritası)* |
+| ❌ U-ETDS'ye manuel bildirim | ✅ Outbox Pattern ile otonom iletim *(yol haritası)* |
 
 ---
 
 ## 🌟 Temel Özellikler
 
-### 🤖 Yapay Zeka Motoru (Gemini 1.5 Flash & Vision)
+### 🤖 Yapay Zeka Motoru (Gemini 1.5 Flash & Pro Vision)
 
 - **Dinamik Adil Taban Fiyat:** Güncel yakıt fiyatları + mesafe + araç tipi + güzergah zorluğu analiz edilerek piyasa koşullarına uygun fiyat hesaplanır
-- **Otonom Evrak Onayı:** Şoför ehliyeti, araç ruhsatı, K1/K2 belgesi gibi evraklar Gemini Vision ile analiz edilip otomatik onaylanır
-- **Akıllı Eşleştirme:** Fabrika lokasyonuna en yakın, uygun araç tipine sahip şoförler önceliklendirilir
+- **Otonom Evrak Onayı:** Şoför ehliyeti, SRC, psikoteknik vb. evraklar Gemini Vision ile analiz edilir; kimlik doğrulama, gri alan (manuel inceleme) ve KVKK maskeleme kuralları backend’de uygulanır
+- **Akıllı Eşleştirme:** Aktif yükler ve şoför bağlamı için Gemini ile uyumluluk skoru
 
 ### 📍 Coğrafi Bilgi Sistemi (PostGIS)
 
-- **Konum Bazlı Eşleştirme:** Yarıçap tabanlı şoför keşfi
-- **Rota Optimizasyonu:** Gerçek yol mesafesi hesaplama
-- **Adaptif GPS Frekansı:** İvmeölçer + 500m geofencing kurallarıyla şoför telefon bataryası korunur
+- **Konum Bazlı Veri:** Yük çıkış/varış noktaları `geometry(Point, 4326)` olarak saklanır
+- **Rota Optimizasyonu:** OSRM ile gerçek karayolu mesafesi (fallback: Haversine)
+- **Adaptif GPS & Geofencing:** *(yol haritası — mobil taraf)*
 
 ### ⚡ Gerçek Zamanlı İşlemler (SignalR)
 
-- **Canlı Konum Takibi:** Yükün anlık konumunu harita üzerinde izleme
-- **Anlık Teklifleşme:** Şoförler ilanı gördüğü anda fiyat teklifi gönderir
-- **Durum Bildirimleri:** Yükleme, taşıma, teslimat aşamalarında push bildirim
+- **Canlı Konum Takibi:** Yükün anlık konumu (harita entegrasyonu istemci tarafında)
+- **Anlık Teklifleşme:** Teklif bildirimleri SignalR + DB bildirimleri
+- **Durum Bildirimleri:** FCM push *(Firebase yapılandırması gerekir)*
 
-### 💰 Finansal Altyapı
+### 💰 Finansal Altyapı *(yol haritası)*
 
-- **İyzico Escrow:** Ödeme güvenli havuzda tutulur, teslimat kanıtıyla serbest bırakılır
-- **QR Kodlu Teslimat Kanıtı:** Alıcı QR okutarak teslimatı onaylar
-- **Otomatik Hakediş:** Kurumsal → fatura bazlı, bireysel → stopaj vergisi kesilmiş net ödeme
-- **Platform Komisyonu:** Her işlemden otomatik ayrıştırma
+- **İyzico Escrow**, **QR teslimat kanıtı**, **otomatik hakediş** — henüz backend’de tam entegre değildir; README’deki “Gelecek Planları” bölümüne bakın.
 
-### 📋 Yasal Uyumluluk
+### 📋 Yasal Uyumluluk *(yol haritası)*
 
-- **U-ETDS Entegrasyonu:** Ulaştırma Bakanlığı'na Outbox Pattern ile kesintisiz, garantili veri iletimi
-- **K Belgesi Takibi:** Şoför yetki belgelerinin geçerlilik kontrolü
-- **Dijital Taşıma Senedi:** Tüm taşıma işlemleri dijital senet ile kayıt altına alınır
+- **U-ETDS Outbox**, **dijital taşıma senedi** — planlanmıştır.
 
 ---
 
 ## 🏗 Sistem Mimarisi
 
+**Gerçek yapı (v2.5.6+):** Tek bir **.NET 9** Web API projesi (`Yukle.Api`) — **modüler monolit** (ileride katmanlara bölünmeye uygun klasörler: `Controllers/`, `Services/`, `Data/`, `Hubs/`, `Infrastructure/`, `Exceptions/`). Ayrı `Domain` / `Application` / `Infrastructure` projeleri **yok**.
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│                        📱 FLUTTER MOBİL APP                      │
-│              (Fabrika Paneli / Şoför Paneli / Admin)             │
+│              📱 Mobil / Web İstemciler (Flutter / SPA)              │
 └──────────────────────┬───────────────────────────────────────────┘
                        │ HTTPS / WSS (SignalR)
                        ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│                    🌐 API GATEWAY / LOAD BALANCER                │
+│                    Yukle.Api (.NET 9)                             │
+│   Controllers · Services · EF Core · SignalR Hubs · Background    │
+│   Jobs · Gemini · JWT + Policy (RequireActiveDriver) · RFC 7807   │
 └──────────────────────┬───────────────────────────────────────────┘
                        │
         ┌──────────────┼──────────────┐
         ▼              ▼              ▼
 ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-│  📦 Yük &    │ │  🚛 Şoför &  │ │  💳 Ödeme &  │
-│  İlan Servisi │ │  Konum Srv.  │ │  Finans Srv. │
-└──────┬───────┘ └──────┬───────┘ └──────┬───────┘
-       │                │                │
-       ▼                ▼                ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                    🐘 PostgreSQL + PostGIS                        │
-│                    📨 Outbox Pattern (U-ETDS)                    │
-│                    🔴 Redis Cache & Queue                        │
-└──────────────────────────────────────────────────────────────────┘
-        │                │                │
-        ▼                ▼                ▼
-┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-│  🤖 Gemini   │ │  💰 İyzico   │ │  🏛 U-ETDS   │
-│  AI Engine   │ │  Payment     │ │  Gov. API    │
+│ PostgreSQL   │ │ Redis        │ │ Google Gemini │
+│ + PostGIS    │ │ Cache+SignalR│ │ Generative API│
 └──────────────┘ └──────────────┘ └──────────────┘
 ```
+
+Üretimde önüne **reverse proxy** (Nginx, Traefik) ve **API Gateway** eklenebilir; şu an doğrudan Kestrel veya Docker üzerinden servis edilir.
 
 ---
 
 ## 🛠 Teknoloji Yığını
 
-### Backend
+### Backend (mevcut)
 
 | Teknoloji | Kullanım Amacı |
 |---|---|
-| **.NET 8 Web API** | Ana uygulama sunucusu, RESTful API |
-| **Entity Framework Core** | ORM, veritabanı yönetimi |
-| **PostgreSQL 16** | İlişkisel veritabanı |
-| **PostGIS 3.4** | Coğrafi sorgular, konum hesaplama |
-| **SignalR** | Gerçek zamanlı iletişim (canlı takip, teklifleşme) |
-| **Redis** | Önbellekleme, kuyruk yönetimi |
-| **MediatR** | CQRS pattern, domain event yönetimi |
-| **FluentValidation** | Giriş doğrulama |
-| **Serilog** | Yapılandırılmış loglama |
+| **.NET 9 Web API** | Ana uygulama sunucusu, RESTful API |
+| **Entity Framework Core 9** | ORM, PostgreSQL + EF migrations |
+| **PostgreSQL 16 + PostGIS** | İlişkisel veri + coğrafi tipler |
+| **SignalR + Redis backplane** | Gerçek zamanlı hub’lar |
+| **Redis** | `IDistributedCache`, OTP, rate limit |
+| **JWT Bearer + Refresh Token** | Kimlik doğrulama ve oturum yenileme |
+| **Google Gemini API** | Fiyat önerisi, evrak OCR, eşleştirme |
+| **Polly (Http.Resilience)** | Gemini HTTP istemcisi dayanıklılığı |
+| **BCrypt** | Şifre hash |
+| **ASP.NET Core IExceptionHandler** | Merkezi hata yönetimi, **RFC 7807 ProblemDetails** |
+| **AES-256 (KVKK)** | TCKN alanı için şifreli saklama (EF `ValueConverter`) |
 
-### Mobil
+### Mobil *(planlanan / ayrı repo olabilir)*
 
 | Teknoloji | Kullanım Amacı |
 |---|---|
 | **Flutter 3.x** | Cross-platform mobil uygulama |
-| **Dart** | Uygulama programlama dili |
+| **Dart** | Uygulama dili |
 | **Google Maps SDK** | Harita ve konum servisleri |
-| **Geolocator** | GPS konum takibi |
-| **flutter_local_notifications** | Push bildirimleri |
 
 ### Yapay Zeka & Dış Servisler
 
 | Teknoloji | Kullanım Amacı |
 |---|---|
-| **Google Gemini 1.5 Flash** | Dinamik fiyat hesaplama, akıllı eşleştirme |
-| **Google Gemini Vision** | Evrak analizi, OCR doğrulama |
-| **İyzico** | Escrow ödeme, alt üye işyeri yönetimi |
-| **U-ETDS API** | Ulaştırma Bakanlığı yasal bildirim |
+| **Google Gemini 1.5 Flash** | Dinamik fiyat, akıllı eşleştirme |
+| **Google Gemini Vision (Pro)** | Evrak analizi, OCR |
+| **CollectAPI** *(yakıt fiyat worker)* | günlük mazot fiyatı çekimi |
+| **OSRM** *(public router)* | Rota mesafesi |
 
 ### DevOps & Altyapı
 
 | Teknoloji | Kullanım Amacı |
 |---|---|
-| **Docker & Docker Compose** | Konteynerleştirme |
-| **GitHub Actions** | CI/CD pipeline |
-| **Nginx** | Reverse proxy, SSL |
+| **Docker & Docker Compose** | PostgreSQL + Redis + API (bkz. `docker-compose.yml`) |
+| **Directory.Build.props** | Merkezi sürüm, `Authors`, `Company` |
 
 ---
 
-## 📁 Proje Yapısı
+## 🔮 Gelecek Planları (henüz kodda yok)
+
+Aşağıdakiler README veya erken mimari taslaklarında geçmiş olabilir; **şu anki repoda yok** veya **sadece plan**:
+
+- **Clean Architecture** ile ayrılmış `Domain` / `Application` / `Infrastructure` projeleri
+- **MediatR** (CQRS), **FluentValidation**, **Serilog** (veya merkezi log sink)
+- **İyzico** escrow, **U-ETDS** outbox, **QR** teslimat kanıtı
+- **GitHub Actions** CI/CD, **Nginx** production SSL
+
+---
+
+## 📁 Proje Yapısı (gerçek)
 
 ```
 YÜK-LE/
-├── src/
-│   ├── YukLe.API/                    # .NET 8 Web API katmanı
-│   │   ├── Controllers/             # API endpoint'leri
-│   │   ├── Hubs/                    # SignalR Hub'ları
-│   │   ├── Middleware/              # Custom middleware'ler
-│   │   └── Filters/                 # Action & Exception filtreleri
-│   │
-│   ├── YukLe.Application/           # İş mantığı katmanı (CQRS)
-│   │   ├── Commands/               # Yazma işlemleri
-│   │   ├── Queries/                # Okuma işlemleri
-│   │   ├── DTOs/                   # Veri transfer nesneleri
-│   │   └── Validators/            # FluentValidation kuralları
-│   │
-│   ├── YukLe.Domain/                # Domain modelleri
-│   │   ├── Entities/               # Domain entity'leri
-│   │   ├── Enums/                  # Enum tanımları
-│   │   ├── Events/                 # Domain event'leri
-│   │   └── ValueObjects/          # Value object'ler
-│   │
-│   ├── YukLe.Infrastructure/        # Altyapı katmanı
-│   │   ├── Data/                   # EF Core DbContext & Migration
-│   │   ├── Repositories/          # Repository implementasyonları
-│   │   ├── Services/              # Dış servis entegrasyonları
-│   │   │   ├── GeminiAI/         # Gemini API istemcisi
-│   │   │   ├── Iyzico/           # İyzico ödeme servisi
-│   │   │   └── UETDS/            # U-ETDS bildirimleri
-│   │   └── Outbox/               # Outbox pattern implementasyonu
-│   │
-│   └── yukle_mobile/                # Flutter mobil uygulama
-│       ├── lib/
-│       │   ├── core/              # Ortak bileşenler
-│       │   ├── features/          # Özellik modülleri
-│       │   │   ├── auth/         # Kimlik doğrulama
-│       │   │   ├── loads/        # Yük ilanları
-│       │   │   ├── bidding/      # Teklifleşme
-│       │   │   ├── tracking/     # Canlı takip
-│       │   │   ├── payments/     # Ödeme yönetimi
-│       │   │   └── documents/    # Evrak yönetimi
-│       │   └── shared/           # Paylaşılan widget'lar
-│       └── pubspec.yaml
-│
-├── tests/
-│   ├── YukLe.UnitTests/            # Birim testleri
-│   ├── YukLe.IntegrationTests/     # Entegrasyon testleri
-│   └── YukLe.E2ETests/            # Uçtan uca testler
-│
-├── docs/
-│   ├── api/                        # API dokümantasyonu
-│   ├── architecture/               # Mimari diyagramlar
-│   └── assets/                     # Görseller, banner
-│
-├── docker/
-│   ├── Dockerfile                  # API container
-│   ├── docker-compose.yml         # Tüm servisler
-│   └── docker-compose.dev.yml    # Geliştirme ortamı
-│
-├── .github/
-│   └── workflows/                 # CI/CD pipeline'ları
-│
-├── .gitignore
+├── Directory.Build.props          # Merkezi Version / Authors / Company
+├── docker-compose.yml             # postgres + redis + api (Dockerfile: Yukle.Api)
 ├── README.md
 ├── LICENSE
-└── YukLe.sln                     # Solution dosyası
+├── docs/
+│   ├── architecture/
+│   │   └── system-overview.md
+│   └── assets/
+├── Yukle.Api/
+│   ├── Dockerfile
+│   ├── Yukle.Api.sln              # Solution: Yukle.Api + Yukle.Tests
+│   ├── Yukle.Api.csproj
+│   ├── Program.cs
+│   ├── appsettings.json
+│   ├── appsettings.Development.json
+│   ├── Controllers/
+│   ├── Data/
+│   ├── DTOs/
+│   ├── Hubs/
+│   ├── Infrastructure/            # GlobalExceptionHandler (RFC 7807)
+│   ├── Exceptions/                  # DomainException vb.
+│   ├── Migrations/
+│   ├── Models/
+│   ├── Services/
+│   └── BackgroundServices/
+└── Yukle.Tests/
+    └── Yukle.Tests.csproj
 ```
+
+Flutter mobil uygulama bu monorepo içinde **zorunlu değildir**; ayrı bir depoda tutulabilir.
 
 ---
 
@@ -240,50 +203,72 @@ YÜK-LE/
 
 ### Ön Gereksinimler
 
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- [Flutter 3.x](https://flutter.dev/docs/get-started/install)
-- [PostgreSQL 16](https://www.postgresql.org/download/) + PostGIS
-- [Docker](https://docs.docker.com/get-docker/) (opsiyonel)
-- [Redis](https://redis.io/download) (opsiyonel)
+- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- [Docker Desktop](https://docs.docker.com/get-docker/) (PostgreSQL + Redis + isteğe bağlı API)
+- [PostgreSQL 16 + PostGIS](https://postgis.net/) (Docker kullanmıyorsanız)
+- [Redis](https://redis.io/) (Docker kullanmıyorsanız)
 
-### Hızlı Başlangıç
+### Güvenlik: `appsettings` ve `user-secrets`
+
+`appsettings.json` ve `appsettings.Development.json` **örnek / yerel geliştirme** içindir. **Üretim** veya **paylaşılan repoda** gerçek şifreler, JWT anahtarları, Gemini API anahtarları ve AES şifreleme anahtarları **tutulmamalıdır**.
+
+- Geliştirme için: `dotnet user-secrets` (proje `UserSecretsId` ile `Yukle.Api.csproj` içinde tanımlıdır) veya ortam değişkenleri kullanın.
+- Örnek: `cd Yukle.Api` → `dotnet user-secrets set "GeminiAI:ApiKey" "YOUR_KEY"`
+
+### Hızlı Başlangıç (Docker ile tam yığın)
+
+Depo kökünden:
 
 ```bash
-# 1. Repoyu klonlayın
 git clone https://github.com/Salihefendihsa/YUK-LE.git
 cd YUK-LE
 
-# 2. Docker ile başlatın (önerilen)
-docker-compose up -d
+# PostgreSQL + PostGIS, Redis ve API konteynerini başlatır
+docker compose up -d --build
 
-# 3. veya manuel kurulum
-cd src/YukLe.API
+# API varsayılan olarak http://localhost:5000 (Kestrel 8080 → 5000 map)
+```
+
+`docker-compose.yml` içindeki `api` servisi `Yukle.Api/Dockerfile` ile derlenir. Veritabanı migration’ları konteyner ilk çalıştırmada **otomatik uygulanmaz**; yerel geliştirmede aşağıdaki adımı kullanın.
+
+### Yerel geliştirme (sadece veritabanı + Redis Docker’da)
+
+```bash
+cd YUK-LE
+docker compose up -d postgres redis
+
+cd Yukle.Api
 dotnet restore
 dotnet ef database update
 dotnet run
+```
 
-# 4. Flutter mobil uygulamayı çalıştırın
-cd src/yukle_mobile
+`ConnectionStrings:DefaultConnection` ve `ConnectionStrings:Redis` değerlerinin `appsettings.Development.json` veya `user-secrets` ile `localhost` üzerindeki Docker portlarına (5432, 6379) uyduğundan emin olun.
+
+### Manuel kurulum (Docker yok)
+
+```bash
+cd Yukle.Api
+dotnet restore
+dotnet ef database update
+dotnet run
+```
+
+`flutter` ile mobil uygulama ayrı bir projede ise:
+
+```bash
+cd yukle_mobile
 flutter pub get
 flutter run
 ```
 
-### Ortam Değişkenleri
+### Ortam değişkenleri (örnek)
+
+Üretimde yapılandırma genelde `ConnectionStrings__*`, `Jwt__Key`, `GeminiAI__ApiKey`, `Encryption__Key` vb. **ortam değişkenleri** ile verilir.
 
 ```env
-# Database
-DATABASE_URL=Host=localhost;Database=yukle;Username=postgres;Password=***
-
-# Gemini AI
-GEMINI_API_KEY=your_gemini_api_key
-
-# İyzico
-IYZICO_API_KEY=your_iyzico_api_key
-IYZICO_SECRET_KEY=your_iyzico_secret_key
-
-# U-ETDS
-UETDS_USERNAME=your_username
-UETDS_PASSWORD=your_password
+ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=yukledb;Username=postgres;Password=***
+ConnectionStrings__Redis=localhost:6379,password=***,abortConnect=false
 ```
 
 ---
@@ -296,21 +281,40 @@ UETDS_PASSWORD=your_password
 
 ## 🗺 Yol Haritası
 
-- [x] Proje mimarisi tasarımı
+**Tamamlanan çekirdek özellikler (v2.5.6 / Phase 1.2 ile uyumlu):**
+
+- [x] JWT + Refresh Token Auth
+- [x] Gemini AI Document Analysis (Ehliyet/SRC)
+- [x] KVKK Data Encryption (AES-256)
+- [x] Global Exception Handling (RFC 7807)
+- [x] AI-Powered Pricing Engine
+- [x] Location-Based Matching Base (PostGIS)
+
+---
+
+- [x] Proje mimarisi tasarımı (modüler monolit — `Yukle.Api`)
 - [x] Veritabanı şema tasarımı (PostgreSQL + PostGIS)
-- [ ] Kullanıcı kimlik doğrulama sistemi (JWT + Refresh Token)
-- [ ] Yük ilan oluşturma ve listeleme API'leri
-- [ ] Gemini AI ile dinamik fiyat hesaplama motoru
-- [ ] Konum bazlı şoför eşleştirme (PostGIS)
-- [ ] SignalR ile gerçek zamanlı teklifleşme
+- [x] Kullanıcı kimlik doğrulama sistemi (JWT + Refresh Token)
+- [x] Yük ilan oluşturma ve listeleme API'leri
+- [x] Gemini AI ile dinamik fiyat hesaplama motoru
+- [x] Konum bazlı şoför eşleştirme (PostGIS + OSRM tabanlı)
+- [x] SignalR ile gerçek zamanlı teklifleşme / bildirimler
 - [ ] İyzico Escrow ödeme entegrasyonu
 - [ ] QR kodlu teslimat kanıt sistemi
 - [ ] U-ETDS Outbox Pattern entegrasyonu
-- [ ] Gemini Vision ile evrak analizi
+- [x] Gemini Vision ile evrak analizi (Ehliyet / SRC / psikoteknik vb.)
+- [x] KVKK veri şifreleme (AES-256 TCKN)
+- [x] Global Exception Handling (RFC 7807 ProblemDetails)
 - [ ] Adaptif GPS & Geofencing
 - [ ] Flutter mobil uygulama (Fabrika & Şoför)
 - [ ] CI/CD pipeline (GitHub Actions)
 - [ ] Canlı ortam deployment
+
+---
+
+## 🤝 Katkıda bulunma
+
+İç kullanım / tescilli proje kapsamında katkı süreçleri proje sahibi ile iletişimle yürütülür.
 
 ---
 

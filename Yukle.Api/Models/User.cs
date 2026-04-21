@@ -27,7 +27,14 @@ namespace Yukle.Api.Models
         Active,
 
         /// <summary>AI servisi zaman aşımına uğradı veya teknik hata döndü; operatörün manuel gözden geçirmesi gerekiyor.</summary>
-        ManualApprovalRequired
+        ManualApprovalRequired,
+
+        /// <summary>
+        /// <b>v2.5.6 — Gri Alan.</b> AI servisi çalıştı ancak kararı %100 net değil
+        /// (düşük çözünürlük, mühür belirsizliği, confidence 50-85 arası).
+        /// Otomatik red yerine admin panelinden manuel inceleme kuyruğuna alınır.
+        /// </summary>
+        PendingReview
     }
 
     public class User
@@ -45,6 +52,30 @@ namespace Yukle.Api.Models
         public string VerificationCode { get; set; } = string.Empty;
         public DateTime? VerificationCodeExpiry { get; set; }
         public bool IsPhoneVerified { get; set; } = false;
+
+        // ── v2.5.4 · Refresh Token Mekanizması ────────────────────────────────
+        //
+        // Access token kısa ömürlü (7 gün) ve içinde IsActive claim'i olduğu için,
+        // şoför evrak onayından sonra yeni bir access token almadan operasyonel
+        // uç noktalara erişemez (bkz. 2.5.3 RequireActiveDriver policy).
+        //
+        // Refresh token burada saklanır ve her /auth/refresh-token çağrısında
+        // rotation ile yenilenir (eski token üzerine yazılır → çalınmış bir refresh
+        // token en fazla bir kez kullanılabilir). Null ise kullanıcı "oturumu kapalı"
+        // sayılır ve yeniden login gerekir.
+
+        /// <summary>
+        /// Son login'de (veya son refresh'te) üretilen base64 encoded kriptografik
+        /// rastgele dizge. Veritabanında düz metin saklanır çünkü şifre değildir;
+        /// çalınması halinde rotation sayesinde tek kullanımlıktır.
+        /// </summary>
+        public string? RefreshToken { get; set; }
+
+        /// <summary>
+        /// Refresh token'ın UTC son geçerlilik zamanı. Aşıldığında refresh isteği
+        /// 401 ile reddedilir ve kullanıcı yeniden şifre girmek zorundadır.
+        /// </summary>
+        public DateTime? RefreshTokenExpiryTime { get; set; }
 
         // Rol
         public UserRole Role { get; set; }
@@ -72,6 +103,27 @@ namespace Yukle.Api.Models
 
         /// <summary>Son AI denetiminin şoföre döndürdüğü sebep mesajı (reddedilirse dolu olur).</summary>
         public string? LastValidationMessage { get; set; }
+
+        // ── v2.5.6 · Manuel Onay & Gri Alan Alanları ──────────────────────────
+        //
+        // Gemini kararsız kaldığında (düşük çözünürlük, mühür belirsizliği, düşük
+        // confidence), hesap Rejected yerine PendingReview statüsüne alınır. Aşağıdaki
+        // iki alan admin dashboard'unun (Faz 4.5.5) kullanımı içindir.
+
+        /// <summary>
+        /// Operatörün/admin'in manuel inceleme sırasında bırakacağı not.
+        /// PendingReview durumu oluştuğunda AI'ın belirsizlik gerekçesi (kullanıcı dostu
+        /// özet metin) buraya ön değer olarak yazılır; admin üzerine yazabilir.
+        /// </summary>
+        public string? AdminReviewNote { get; set; }
+
+        /// <summary>
+        /// Gemini'nin kararsız kalma nedenine dair yapılandırılmış detaylar (JSON).
+        /// Şema: <c>{ isValid, isSealDetected, confidenceScore, validationMessage,
+        /// documentType, timestampUtc }</c>. Admin panelinde teknik delil olarak gösterilir
+        /// ve sonraki AI eğitim döngülerinde (evaluation dataset) kullanılabilir.
+        /// </summary>
+        public string? AiInferenceDetails { get; set; }
 
         // ── Şoför Belgeleri: Bireysel Onay Durumu ─────────────────────────────
         public bool IsDriverLicenseApproved { get; set; }

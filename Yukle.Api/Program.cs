@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
 using Yukle.Api.Data;
+using Yukle.Api.Infrastructure;
 using Yukle.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -77,6 +78,10 @@ builder.Services.AddStackExchangeRedisCache(options =>
 
 builder.Services.AddControllers();
 
+// ── Phase 1.2 · Merkezi hata yönetimi (RFC 7807 ProblemDetails + IExceptionHandler) ──
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
 // SignalR + Redis Backplane — çok sunucu ortamında mesajları tüm node'lara iletir
 builder.Services.AddSignalR(hubOptions =>
 {
@@ -100,6 +105,13 @@ builder.Services.AddSignalR(hubOptions =>
 });
 
 // Projede bulunan özel servisler buraya ekleniyor.
+// ── v2.5.5 · KVKK AES-256 Şifreleme Servisi ───────────────────────────────
+// Singleton: anahtar ve IV yapılandırmadan tek seferlik okunur; stateless kalır.
+// EF Core ValueConverter cached model'de sabitlendiği için servisin yaşam döngüsü
+// DbContext (scoped) ömründen DAHA GENİŞ olmalıdır → singleton zorunlu.
+builder.Services.AddSingleton<Yukle.Api.Services.IEncryptionService,
+                              Yukle.Api.Services.EncryptionService>();
+
 builder.Services.AddScoped<Yukle.Api.Services.ITokenService,        Yukle.Api.Services.TokenService>();
 builder.Services.AddScoped<Yukle.Api.Services.ILoadService,         Yukle.Api.Services.LoadService>();
 builder.Services.AddScoped<Yukle.Api.Services.IAuthService,         Yukle.Api.Services.AuthService>();
@@ -272,7 +284,27 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             }
         };
     });
-builder.Services.AddAuthorization();
+// ── v2.5.3 · Policy-Based Authorization (RequireActiveDriver) ─────────────
+//
+// JWT imzası geçerli olsa bile, Gemini AI belgeleri onaylamadığı sürece şoförün
+// operasyonel uç noktalara erişmesini 403 Forbidden ile engelleriz. 401 değil 403
+// dönmesi iş mantığı açısından kritik: "kimliği tanıyoruz ama yetkin yok" semantiği.
+//
+// ASP.NET Core davranışı:
+//   • Token yoksa / imza bozuksa → JwtBearer middleware 401 Unauthorized üretir.
+//   • Token geçerli ama policy şartlarını sağlamıyorsa → 403 Forbidden üretir.
+//
+// Şartlar:
+//   1) Rol = "Driver"
+//   2) "IsActive" custom claim değeri kesinlikle "True" olmalı.
+//      (bool.ToString() "True"/"False" üretir; RequireClaim ordinal karşılaştırır.)
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireActiveDriver", policy =>
+        policy.RequireAuthenticatedUser()
+              .RequireRole("Driver")
+              .RequireClaim("IsActive", "True"));
+});
 
 // =============== 4. SWAGGER (OPENAPI) & JWT SECURITY ===============
 // .NET 9'un standart OpenAPI konfigürasyonuna JWT Bearer Authorization ekliyoruz
@@ -314,6 +346,9 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+// Merkezi exception → ProblemDetails (controller try-catch'lerinden önce)
+app.UseExceptionHandler();
 
 // HTTPS zorunlu — HTTP bağlantıları HTTPS'e yönlendirilir (WSS güvencesi)
 app.UseHttpsRedirection();
