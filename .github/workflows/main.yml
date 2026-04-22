@@ -1,0 +1,42 @@
+name: YUK-LE CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+
+jobs:
+  build_and_test:
+    name: Build & Test Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 9
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Restore Dependencies
+      run: dotnet restore apps/api/Yukle.Api/Yukle.Api.csproj
+
+    - name: Build
+      run: dotnet build apps/api/Yukle.Api/Yukle.Api.csproj --configuration Release --no-restore
+      
+  docker_validation:
+    name: Validate Docker Compose
+    runs-on: ubuntu-latest
+    needs: build_and_test
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Build Docker Services
+      run: |
+        cd infra
+        docker-compose config
+        docker-compose build

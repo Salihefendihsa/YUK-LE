@@ -50,6 +50,12 @@ build/
 .flutter-plugins-dependencies
 .metadata
 
+# ---- Web / Node ----
+node_modules/
+dist/
+dist-ssr/
+*.local
+
 # ---- IDE ----
 .idea/
 .vscode/
@@ -71,6 +77,14 @@ appsettings.json
 appsettings.Development.json
 appsettings.Production.json
 secrets.json
+
+# appsettings.example.json repo'ya GİTMELİDİR (gerçek değer içermez)
+!appsettings.example.json
+
+# ---- .NET User Secrets (dotnet user-secrets) ----
+# Yerel secrets store: %APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json
+# Bu dosya zaten workspace dışında olduğu için .gitignore'a eklenmesi gerekmez.
+# dotnet user-secrets set "Key" "Value" ile ayarlanır.
 
 # ---- Firebase ----
 firebase-service-account.json
