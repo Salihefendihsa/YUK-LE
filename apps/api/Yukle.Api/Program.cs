@@ -54,6 +54,11 @@ var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
     .Get<string[]>() ?? [];
 
+if (!allowedOrigins.Contains("http://localhost:5173", StringComparer.OrdinalIgnoreCase))
+{
+    allowedOrigins = [.. allowedOrigins, "http://localhost:5173"];
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("YuklePolicy", policy =>
@@ -76,18 +81,8 @@ builder.Services.AddDbContext<YukleDbContext>(options =>
         }));
 
 // =============== 2. DEPENDENCY INJECTION (DI) ===============
-var redisConn = builder.Configuration.GetConnectionString("Redis")
-    ?? throw new InvalidOperationException(
-        "[FATAL] ConnectionStrings:Redis appsettings.json içinde bulunamadı.");
-
-// Distributed cache (IDistributedCache — rate limiting, OTP, session)
-builder.Services.AddStackExchangeRedisCache(options =>
-{
-    options.Configuration        = redisConn;
-    options.InstanceName         = "yukle:";
-    options.ConfigurationOptions = StackExchange.Redis.ConfigurationOptions.Parse(redisConn);
-    options.ConfigurationOptions.AbortOnConnectFail = false;
-});
+// Distributed cache — geliştirme ortamında in-memory, production'da Redis ile değiştirilmeli
+builder.Services.AddDistributedMemoryCache();
 
 builder.Services.AddControllers();
 
@@ -95,26 +90,13 @@ builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
-// SignalR + Redis Backplane — çok sunucu ortamında mesajları tüm node'lara iletir
+// SignalR — geliştirme ortamında in-memory, production'da Redis backplane eklenmeli
 builder.Services.AddSignalR(hubOptions =>
 {
-    // Production'da hata detayları istemciye gitmesin (bilgi sızıntısı riski)
     hubOptions.EnableDetailedErrors  = builder.Environment.IsDevelopment();
-
-    // İstemci, handshake'i 15 s içinde tamamlayamazsa bağlantı kesilir
     hubOptions.HandshakeTimeout      = TimeSpan.FromSeconds(15);
-
-    // Sunucu, bağlantının canlı olduğunu 15 s'de bir doğrular
     hubOptions.KeepAliveInterval     = TimeSpan.FromSeconds(15);
-
-    // İstemciden 30 s içinde yanıt gelmezse bağlantı ölü sayılır
     hubOptions.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
-})
-.AddStackExchangeRedis(redisConn, options =>
-{
-    options.Configuration.ChannelPrefix =
-        new StackExchange.Redis.RedisChannel("yukle-signalr",
-            StackExchange.Redis.RedisChannel.PatternMode.Literal);
 });
 
 // Projede bulunan özel servisler buraya ekleniyor.

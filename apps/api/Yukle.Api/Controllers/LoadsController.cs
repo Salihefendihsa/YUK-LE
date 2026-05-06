@@ -154,7 +154,7 @@ public sealed class LoadsController(
     /// </para>
     /// </summary>
     [HttpGet("active")]
-    [Authorize(Policy = "RequireActiveDriver")]
+    [Authorize(Roles = "Customer,Driver,Admin")]
     public async Task<IActionResult> GetActiveLoads()
     {
         var loads = await loadService.GetActiveLoadsAsync();
@@ -170,7 +170,7 @@ public sealed class LoadsController(
     /// </para>
     /// </summary>
     [HttpGet("{id:guid}")]
-    [Authorize(Policy = "RequireActiveDriver")]
+    [Authorize(Roles = "Customer,Driver,Admin")]
     public async Task<IActionResult> GetLoadById(Guid id)
     {
         var load = await loadService.GetLoadByIdAsync(id);

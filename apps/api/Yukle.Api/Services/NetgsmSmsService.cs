@@ -9,6 +9,15 @@ public class NetgsmSmsService : ISmsService
 {
     public string GenerateSixDigitOtp()
     {
+        if (string.Equals(
+                Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"),
+                "Development",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            // Development ortaminda E2E testin deterministik calismasi icin sabit OTP.
+            return "123456";
+        }
+
         int value = RandomNumberGenerator.GetInt32(0, 1_000_000);
         return value.ToString("D6");
     }

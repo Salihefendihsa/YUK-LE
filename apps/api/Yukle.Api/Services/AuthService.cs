@@ -247,8 +247,10 @@ public class AuthService : IAuthService
     // ──────────────────────────────────────────────────────────────────────────
     public async Task<LoginResponseDto> LoginAsync(UserLoginDto dto)
     {
+        string loginInput = dto.Phone.Trim();
+
         var user = await _context.Users
-            .SingleOrDefaultAsync(u => u.Phone == dto.Phone);
+            .SingleOrDefaultAsync(u => u.Phone == loginInput || u.Email == loginInput);
 
         if (user is null)
             throw new ApplicationException("Telefon numarası veya şifre hatalı aga!");

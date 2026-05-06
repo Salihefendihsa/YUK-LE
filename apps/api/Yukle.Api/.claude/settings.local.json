@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(winget install *)",
+      "PowerShell(winget search *)",
+      "PowerShell(Head-Object *)",
+      "PowerShell(Get-Service *)",
+      "Bash(tasklist)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(Get-WmiObject *)",
+      "Bash(wmic process *)",
+      "PowerShell(Get-CimInstance *)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(choco *)",
+      "PowerShell($response = Invoke-WebRequest -Uri \"https://download.osgeo.org/postgis/windows/pg17/\" -UseBasicParsing -ErrorAction Stop; Write-Output \"Status: $\\($response.StatusCode\\)\"; $response.Content | Select-String \"\\\\.zip|\\\\.exe\" | Select-Object -First 10)",
+      "PowerShell(Get-Item *)",
+      "PowerShell(& \"$env:TEMP\\\\postgis-setup.exe\" /? 2>&1 | Select-Object -First 20)",
+      "PowerShell($env:PGPASSWORD = \"adb16adb\"; & \"C:\\\\Program Files\\\\PostgreSQL\\\\17\\\\bin\\\\psql.exe\" -U postgres -d yukledb -c \"CREATE EXTENSION IF NOT EXISTS postgis;\" 2>&1)",
+      "PowerShell(Stop-Process *)"
+    ]
+  }
+}
