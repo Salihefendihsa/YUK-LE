@@ -26,12 +26,14 @@ const DRIVER_NAV: NavItem[] = [
 ]
 
 const ADMIN_NAV: NavItem[] = [
-  { label: 'Dashboard',  path: '/admin/dashboard', icon: '⊞' },
-  { label: 'Incelemeler',path: '/admin/reviews',   icon: '✅' },
-  { label: 'Kullanıcılar',path: '/admin/users',   icon: '👥' },
-  { label: 'Belgeler',   path: '/admin/documents', icon: '📄' },
-  { label: 'İlanlar',    path: '/admin/loads',     icon: '📦' },
-  { label: 'Loglar',     path: '/admin/logs',      icon: '📋' },
+  { label: '📊 Genel Bakış', path: '/admin/dashboard', icon: '⊞' },
+  { label: '📄 Belge Kuyruğu', path: '/admin/reviews', icon: '✅' },
+  { label: '🚛 Şoförler', path: '/admin/drivers', icon: '🚛' },
+  { label: '🏭 Müşteriler', path: '/admin/customers', icon: '🏭' },
+  { label: '📦 İlanlar', path: '/admin/loads', icon: '📦' },
+  { label: '💳 Ödemeler', path: '/admin/payments', icon: '💳' },
+  { label: '🔧 Sistem Durumu', path: '/admin/system', icon: '🔧' },
+  { label: '📋 Loglar', path: '/admin/logs', icon: '📋' },
 ]
 
 const BOTTOM_NAV: NavItem[] = [

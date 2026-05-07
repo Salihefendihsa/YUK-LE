@@ -5,8 +5,10 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Google.Apis.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Configuration;
 using Yukle.Api.Data;
 using Yukle.Api.DTOs;
 using Yukle.Api.Models;
@@ -17,14 +19,14 @@ public class AuthService : IAuthService
 {
     // ── SMS / Kara Liste Limitleri ─────────────────────────────────────────────
     private const int    SmsCounterLimit    = 3;
-    private const string MsgBlacklisted     = "Bot şüphesiyle 15 dakika boyunca engellendiniz aga!";
-    private const string MsgCounterExceeded = "Çok fazla istek yaptın, 15 dakika boyunca kara listeye alındın!";
+    private const string MsgBlacklisted     = "Bot şüphesi nedeniyle 15 dakika süreyle erişiminiz engellendi.";
+    private const string MsgCounterExceeded = "Çok fazla istek gönderildi. Güvenlik nedeniyle 15 dakika süreyle engellendiniz.";
     private static readonly TimeSpan SmsCounterWindow   = TimeSpan.FromMinutes(1);
     private static readonly TimeSpan SmsBlacklistWindow = TimeSpan.FromMinutes(15);
 
     // ── OTP Brute-Force Limitleri ──────────────────────────────────────────────
     private const int    OtpFailLimit    = 3;
-    private const string MsgOtpLocked   = "Çok fazla hatalı deneme yaptın aga! 1 dakika bekle sonra tekrar dene.";
+    private const string MsgOtpLocked   = "Çok fazla hatalı doğrulama denemesi yapıldı. Lütfen 1 dakika sonra tekrar deneyin.";
     private static readonly TimeSpan OtpBruteWindow = TimeSpan.FromMinutes(1);
 
     // ── v2.5.2 · Şoför Kimlik Uyuşmazlık / Geçerlilik Mesajları ───────────────
@@ -87,6 +89,7 @@ public class AuthService : IAuthService
     private readonly IDistributedCache  _cache;
     private readonly IGeminiService     _geminiService;   // v2.5.1 — Evrak Denetim AI
     private readonly ILogger<AuthService> _logger;
+    private readonly IConfiguration     _configuration;
 
     public AuthService(
         YukleDbContext       context,
@@ -94,7 +97,8 @@ public class AuthService : IAuthService
         ISmsService          smsService,
         IDistributedCache    cache,
         IGeminiService       geminiService,
-        ILogger<AuthService> logger)
+        ILogger<AuthService> logger,
+        IConfiguration       configuration)
     {
         _context       = context;
         _tokenService  = tokenService;
@@ -102,6 +106,7 @@ public class AuthService : IAuthService
         _cache         = cache;
         _geminiService = geminiService;
         _logger        = logger;
+        _configuration = configuration;
     }
 
     // ── Yardımcı: Redis'ten int sayaç oku ─────────────────────────────────────
@@ -159,7 +164,7 @@ public class AuthService : IAuthService
             .AnyAsync(u => u.Phone == phone || u.Email == dto.Email);
 
         if (isDuplicate)
-            throw new ApplicationException("Bu telefon/email ile daha önce kayıt olunmuş aga!");
+            throw new ApplicationException("Bu telefon numarası veya e-posta adresi ile daha önce kayıt oluşturulmuştur.");
 
         byte[] passwordHash = Encoding.UTF8.GetBytes(
             BCrypt.Net.BCrypt.HashPassword(dto.Password));
@@ -208,22 +213,22 @@ public class AuthService : IAuthService
             .SingleOrDefaultAsync(u => u.Phone == phone);
 
         if (user is null)
-            throw new ApplicationException("Telefon numarası veya kod hatalı aga!");
+            throw new ApplicationException("Telefon numarası veya doğrulama kodu hatalı.");
 
         if (user.IsPhoneVerified)
-            throw new ApplicationException("Bu telefon numarası zaten doğrulanmış aga!");
+            throw new ApplicationException("Bu telefon numarası zaten doğrulanmıştır.");
 
         if (string.IsNullOrEmpty(user.VerificationCode) || user.VerificationCodeExpiry is null)
-            throw new ApplicationException("Geçerli bir doğrulama kodu talebi bulunamadı aga!");
+            throw new ApplicationException("Geçerli bir doğrulama kodu talebi bulunamadı.");
 
         if (DateTime.UtcNow > user.VerificationCodeExpiry.Value)
-            throw new ApplicationException("Doğrulama kodunun süresi dolmuş aga!");
+            throw new ApplicationException("Doğrulama kodunun süresi dolmuştur.");
 
         // Yanlış kod: sayacı artır
         if (!string.Equals(dto.Code.Trim(), user.VerificationCode, StringComparison.Ordinal))
         {
             await SetCounterAsync(bruteKey, failCount + 1, OtpBruteWindow);
-            throw new ApplicationException("Telefon numarası veya kod hatalı aga!");
+            throw new ApplicationException("Telefon numarası veya doğrulama kodu hatalı.");
         }
 
         // ── Başarılı doğrulama ─────────────────────────────────────────────────
@@ -253,11 +258,60 @@ public class AuthService : IAuthService
             .SingleOrDefaultAsync(u => u.Phone == loginInput || u.Email == loginInput);
 
         if (user is null)
-            throw new ApplicationException("Telefon numarası veya şifre hatalı aga!");
+            throw new ApplicationException("Telefon numarası/e-posta veya şifre hatalı.");
 
         string storedHash = Encoding.UTF8.GetString(user.PasswordHash);
         if (!BCrypt.Net.BCrypt.Verify(dto.Password, storedHash))
-            throw new ApplicationException("Telefon numarası veya şifre hatalı aga!");
+            throw new ApplicationException("Telefon numarası/e-posta veya şifre hatalı.");
+
+        return await IssueTokensAsync(user);
+    }
+
+    public async Task<LoginResponseDto> LoginWithGoogleAsync(GoogleLoginDto dto)
+    {
+        var googleClientId = _configuration["Google:ClientId"];
+        if (string.IsNullOrWhiteSpace(googleClientId))
+            throw new ApplicationException("Google ile giriş yapılandırması eksik. Lütfen yönetici ile iletişime geçin.");
+
+        GoogleJsonWebSignature.Payload payload;
+        try
+        {
+            payload = await GoogleJsonWebSignature.ValidateAsync(dto.IdToken, new GoogleJsonWebSignature.ValidationSettings
+            {
+                Audience = [googleClientId]
+            });
+        }
+        catch
+        {
+            throw new ApplicationException("Google kimlik doğrulaması başarısız oldu.");
+        }
+
+        var email = payload.Email?.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(email))
+            throw new ApplicationException("Google hesabından geçerli bir e-posta bilgisi alınamadı.");
+
+        var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
+        if (user is null)
+        {
+            var syntheticPhone = $"google-{payload.Subject[..Math.Min(20, payload.Subject.Length)]}";
+            var passwordHash = Encoding.UTF8.GetBytes(BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString("N")));
+            user = new User
+            {
+                FullName = string.IsNullOrWhiteSpace(payload.Name) ? "Google Kullanıcısı" : payload.Name!,
+                Email = email,
+                Phone = syntheticPhone,
+                PasswordHash = passwordHash,
+                PasswordSalt = Array.Empty<byte>(),
+                Role = UserRole.Customer,
+                IsActive = true,
+                IsPhoneVerified = true,
+                ApprovalStatus = ApprovalStatus.Active,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _context.Users.AddAsync(user);
+            await _context.SaveChangesAsync();
+        }
 
         return await IssueTokensAsync(user);
     }
@@ -410,14 +464,14 @@ public class AuthService : IAuthService
     {
         // ── 0. Ön koşul: kullanıcı var mı ve şoför rolünde mi ────────────────
         var user = await _context.Users.SingleOrDefaultAsync(u => u.Id == userId)
-                   ?? throw new ApplicationException("Kullanıcı bulunamadı aga!");
+                   ?? throw new ApplicationException("Kullanıcı bulunamadı.");
 
         if (user.Role != UserRole.Driver)
-            throw new ApplicationException("Yalnızca şoför rolündeki hesaplar belge yükleyebilir aga!");
+            throw new ApplicationException("Yalnızca şoför rolündeki hesaplar belge yükleyebilir.");
 
         if (!user.IsPhoneVerified)
             throw new ApplicationException(
-                "Belge yüklemeden önce telefon numaranı OTP ile doğrulaman gerekiyor aga!");
+                "Belge yüklemeden önce telefon numaranızı OTP ile doğrulamanız gerekir.");
 
         // ── 1. Gemini Pro Vision ile evrak denetimi ──────────────────────────
         DocumentOcrResultDto ocr;

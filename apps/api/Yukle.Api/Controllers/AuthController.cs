@@ -50,6 +50,18 @@ namespace Yukle.Api.Controllers
         }
 
         [AllowAnonymous]
+        [EnableRateLimiting("login-policy")]
+        [HttpPost("google")]
+        public async Task<IActionResult> LoginWithGoogle([FromBody] GoogleLoginDto request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var response = await _authService.LoginWithGoogleAsync(request);
+            return Ok(response);
+        }
+
+        [AllowAnonymous]
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto request)
         {
@@ -69,7 +81,7 @@ namespace Yukle.Api.Controllers
                 return BadRequest(ModelState);
 
             await _authService.VerifyOtpAsync(request);
-            return Ok(new { Message = "Telefon numarası başarıyla doğrulandı aga!", IsPhoneVerified = true });
+            return Ok(new { Message = "Telefon numarası başarıyla doğrulandı.", IsPhoneVerified = true });
         }
 
         [Authorize(Roles = "Driver")]

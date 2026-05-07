@@ -19,6 +19,6 @@ export async function verifyOtp(data: VerifyOtpRequest) {
 }
 
 export async function refreshToken(token: string, refreshToken: string) {
-  const res = await apiClient.post('/Auth/refresh-token', { token, refreshToken })
+  const res = await apiClient.post('/Auth/refresh-token', { accessToken: token, refreshToken })
   return res.data
 }

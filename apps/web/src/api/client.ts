@@ -101,7 +101,7 @@ apiClient.interceptors.response.use(
       const { token, refreshToken } = store?.state ?? {}
       if (!token || !refreshToken) throw new Error('Missing tokens')
 
-      const { data } = await axios.post(`${BASE_URL}/Auth/refresh-token`, { token, refreshToken })
+      const { data } = await axios.post(`${BASE_URL}/Auth/refresh-token`, { accessToken: token, refreshToken })
       const newToken: string = data.token
 
       // Update store

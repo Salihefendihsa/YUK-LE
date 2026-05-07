@@ -8,6 +8,7 @@ export default function AdminReviewsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [reasonMap, setReasonMap] = useState<Record<number, string>>({})
 
   async function fetchQueue() {
     const data = await getPendingReviews()
@@ -24,7 +25,12 @@ export default function AdminReviewsPage() {
     setMessage('')
     setError('')
     try {
-      await decideReview(userId, isApproved, isApproved ? 'Manuel olarak onaylandi.' : 'Manuel olarak reddedildi.')
+      const reason = reasonMap[userId]?.trim()
+      await decideReview(
+        userId,
+        isApproved,
+        reason || (isApproved ? 'Belgeler manuel olarak onaylandı.' : 'Belgeler manuel olarak reddedildi.')
+      )
       setMessage('Karar kaydedildi.')
       await fetchQueue()
     } catch (e: unknown) {
@@ -53,6 +59,25 @@ export default function AdminReviewsPage() {
             <p className="muted" style={{ marginTop: 8 }}>
               {review.adminReviewNote || 'Not yok'}
             </p>
+            <p className="muted">
+              AI Güven Skoru:{' '}
+              {(() => {
+                if (!review.aiInferenceDetails) return 'N/A'
+                try {
+                  const parsed = JSON.parse(review.aiInferenceDetails) as { ConfidenceScore?: number }
+                  return parsed.ConfidenceScore ?? 'N/A'
+                } catch {
+                  return 'N/A'
+                }
+              })()}
+            </p>
+            <input
+              className="form-input"
+              placeholder="Red nedeni / inceleme notu"
+              value={reasonMap[review.id] ?? ''}
+              onChange={(e) => setReasonMap((prev) => ({ ...prev, [review.id]: e.target.value }))}
+              style={{ marginTop: 8 }}
+            />
             <div className="item-row" style={{ marginTop: 12 }}>
               <button className="btn btn-primary btn-sm" onClick={() => decide(review.id, true)}>
                 Onayla

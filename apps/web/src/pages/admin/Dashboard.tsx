@@ -1,22 +1,17 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getDashboard } from '../../api/dashboard'
-import { getPendingReviews } from '../../api/admin'
+import { getAdminDashboard } from '../../api/admin'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
 import './Dashboard.css'
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<Record<string, number>>({})
-  const [pendingCount, setPendingCount] = useState(0)
+  const [stats, setStats] = useState<Record<string, unknown>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    Promise.all([getDashboard(), getPendingReviews()])
-      .then(([dashboard, pending]) => {
-        setStats((dashboard as unknown) as Record<string, number>)
-        setPendingCount(pending.length)
-      })
+    getAdminDashboard()
+      .then((dashboard) => setStats((dashboard as unknown) as Record<string, unknown>))
       .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'Admin verileri yuklenemedi.'))
       .finally(() => setLoading(false))
   }, [])
@@ -36,10 +31,10 @@ export default function AdminDashboard() {
 
       <div className="stat-grid">
         {[
-          { label: 'Aktif Ilanlar', value: stats.activeLoadCount ?? 0, icon: '📦', color: 'var(--color-brand)' },
-          { label: 'Yolda', value: stats.onWayLoadCount ?? 0, icon: '🚛', color: 'var(--color-info)' },
-          { label: 'Teslim', value: stats.deliveredLoadCount ?? 0, icon: '✅', color: 'var(--color-success)' },
-          { label: 'Bekleyen Belgeler', value: pendingCount, icon: '📄', color: 'var(--color-warning)' },
+          { label: 'Toplam Kullanıcı', value: Number(stats.totalUsers ?? 0), icon: '👥', color: 'var(--color-brand)' },
+          { label: 'Aktif İlanlar', value: Number(stats.activeLoadCount ?? 0), icon: '📦', color: 'var(--color-info)' },
+          { label: 'Bekleyen Belge Onayı', value: Number(stats.pendingReviewCount ?? 0), icon: '📄', color: 'var(--color-danger)' },
+          { label: 'Toplam İşlem Hacmi', value: `${Number(stats.totalTransactionVolume ?? 0).toFixed(2)} ₺`, icon: '💳', color: 'var(--color-success)' },
         ].map((s) => (
           <div key={s.label} className="stat-card card">
             <div className="stat-icon" style={{ background: `${s.color}15`, color: s.color }}>{s.icon}</div>
@@ -47,6 +42,13 @@ export default function AdminDashboard() {
             <p className="stat-label">{s.label}</p>
           </div>
         ))}
+      </div>
+
+      <div className="card" style={{ marginTop: 16 }}>
+        <h3 style={{ marginBottom: 10 }}>Sistem Durumu</h3>
+        <p>API: {String((stats.systemStatus as Record<string, string> | undefined)?.api ?? '-')}</p>
+        <p>DB: {String((stats.systemStatus as Record<string, string> | undefined)?.db ?? '-')}</p>
+        <p>Redis: {String((stats.systemStatus as Record<string, string> | undefined)?.redis ?? '-')}</p>
       </div>
     </div>
   )

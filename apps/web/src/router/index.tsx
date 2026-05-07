@@ -20,9 +20,11 @@ import DriverTrackPage from '../pages/driver/Track'
 import DriverHistoryPage from '../pages/driver/History'
 import AdminDashboard from '../pages/admin/Dashboard'
 import AdminReviewsPage from '../pages/admin/Reviews'
-import AdminUsersPage from '../pages/admin/Users'
-import AdminDocumentsPage from '../pages/admin/Documents'
+import AdminDriversPage from '../pages/admin/Drivers'
+import AdminCustomersPage from '../pages/admin/Customers'
 import AdminLoadsPage from '../pages/admin/Loads'
+import AdminPaymentsPage from '../pages/admin/Payments'
+import AdminSystemPage from '../pages/admin/System'
 import AdminLogsPage from '../pages/admin/Logs'
 
 function RootRedirect() {
@@ -93,9 +95,11 @@ const router = createBrowserRouter([
         children: [
           { path: 'dashboard', element: <AdminDashboard /> },
           { path: 'reviews', element: <AdminReviewsPage /> },
-          { path: 'users', element: <AdminUsersPage /> },
-          { path: 'documents', element: <AdminDocumentsPage /> },
+          { path: 'drivers', element: <AdminDriversPage /> },
+          { path: 'customers', element: <AdminCustomersPage /> },
           { path: 'loads', element: <AdminLoadsPage /> },
+          { path: 'payments', element: <AdminPaymentsPage /> },
+          { path: 'system', element: <AdminSystemPage /> },
           { path: 'logs', element: <AdminLogsPage /> },
         ],
       },

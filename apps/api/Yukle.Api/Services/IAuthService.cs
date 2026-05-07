@@ -18,6 +18,7 @@ namespace Yukle.Api.Services
         /// 403 beklemeden kullanıcıyı doğru akışa (evrak onay / ana ekran) yönlendirebilir.
         /// </summary>
         Task<LoginResponseDto>  LoginAsync(UserLoginDto dto);
+        Task<LoginResponseDto>  LoginWithGoogleAsync(GoogleLoginDto dto);
 
         Task                    VerifyOtpAsync(VerifyOtpDto dto);
 

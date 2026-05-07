@@ -24,7 +24,7 @@ export interface RefreshTokenRequest {
   refreshToken: string
 }
 
-export type ApprovalStatus = 'Pending' | 'Active' | 'Rejected' | 'ManualApprovalRequired'
+export type ApprovalStatus = 'Pending' | 'Approved' | 'Active' | 'Rejected' | 'ManualApprovalRequired' | 'PendingReview'
 
 export interface LoginResponse {
   token: string

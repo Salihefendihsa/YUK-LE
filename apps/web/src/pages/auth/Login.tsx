@@ -4,7 +4,7 @@ import { login } from '../../api/auth'
 import { useAuthStore } from '../../store/auth.store'
 import './Login.css'
 
-type RoleOption = 'Customer' | 'Driver'
+type RoleOption = 'Customer' | 'Driver' | 'Admin'
 
 export default function Login() {
   const [selectedRole, setSelectedRole] = useState<RoleOption>('Customer')
@@ -27,7 +27,9 @@ export default function Login() {
         setError(
           selectedRole === 'Customer'
             ? 'Bu hesap sofor hesabı olarak gorunuyor. Lutfen Sofor kartini secin.'
-            : 'Bu hesap fabrika hesabı olarak gorunuyor. Lutfen Fabrika kartini secin.'
+            : selectedRole === 'Driver'
+              ? 'Bu hesap fabrika hesabı olarak görünüyor. Lütfen Fabrika kartını seçin.'
+              : 'Bu hesap yönetici hesabı olarak görünmüyor. Lütfen doğru rolü seçin.'
         )
         return
       }
@@ -104,16 +106,24 @@ export default function Login() {
               <span className="role-icon">🚛</span>
               <strong>Sofor</strong>
             </button>
+            <button
+              type="button"
+              className={`login-role-card ${selectedRole === 'Admin' ? 'active' : ''}`}
+              onClick={() => setSelectedRole('Admin')}
+            >
+              <span className="role-icon">🛡️</span>
+              <strong>Admin</strong>
+            </button>
           </div>
 
           <form onSubmit={handleSubmit} noValidate>
             <div className="form-group">
-              <label className="form-label" htmlFor="phone">Telefon</label>
+              <label className="form-label" htmlFor="phone">Telefon veya E-posta</label>
               <input
                 id="phone"
                 type="tel"
                 className="form-input"
-                placeholder="5XXXXXXXXX"
+                placeholder="5XXXXXXXXX veya e-posta"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 autoComplete="tel"
@@ -158,18 +168,6 @@ export default function Login() {
               {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
             </button>
           </form>
-
-          <div className="divider">veya</div>
-
-          <button className="btn btn-ghost btn-full google-btn">
-            <svg width="18" height="18" viewBox="0 0 48 48">
-              <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.1 29.2 35 24 35c-6.1 0-11-4.9-11-11s4.9-11 11-11c2.8 0 5.3 1 7.2 2.7l5.7-5.7C33.5 7.1 28.9 5 24 5 12.9 5 4 13.9 4 25s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z" />
-              <path fill="#FF3D00" d="M6.3 15.1l6.6 4.8C14.7 17 19 14 24 14c2.8 0 5.3 1 7.2 2.7l5.7-5.7C33.5 7.1 28.9 5 24 5c-7.7 0-14.4 4.4-17.7 10.1z" />
-              <path fill="#4CAF50" d="M24 45c4.8 0 9.2-1.8 12.5-4.8l-5.8-4.9C28.8 36.8 26.5 38 24 38c-5.1 0-9.6-2.9-11.3-7h-.1l-6.8 5.3C8.8 41.5 16 45 24 45z" />
-              <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.4l5.8 4.9c-.4.4 6-4.4 6-13.3 0-1.3-.1-2.6-.4-3.9z" />
-            </svg>
-            Google ile Devam Et
-          </button>
 
           <p className="login-register-link">
             Hesabınız yok mu?{' '}

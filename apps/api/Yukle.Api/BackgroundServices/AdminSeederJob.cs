@@ -30,40 +30,33 @@ public sealed class AdminSeederJob(
             using var scope = scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<YukleDbContext>();
 
-            // 1. Admin varlık kontrolü (Performance: Sadece Role=Admin olan kayıt var mı)
-            bool adminExists = await db.Users.AnyAsync(u => u.Role == UserRole.Admin, cancellationToken);
-            if (adminExists)
+            string adminPassword = "Admin123!";
+            byte[] adminPasswordHash = Encoding.UTF8.GetBytes(BCrypt.Net.BCrypt.HashPassword(adminPassword));
+
+            var adminUser = await db.Users.SingleOrDefaultAsync(u => u.Email == "admin@yuk-le.com", cancellationToken);
+            if (adminUser is null)
             {
-                logger.LogInformation("AdminSeeder: Sistemde Admin kullanıcısı mevcuttur, seeding atlandı.");
-                return;
+                adminUser = new User
+                {
+                    FullName = "System Administrator",
+                    Email = "admin@yuk-le.com",
+                    Phone = "+900000000000",
+                    Role = UserRole.Admin,
+                    CreatedAt = DateTime.UtcNow
+                };
+                await db.Users.AddAsync(adminUser, cancellationToken);
             }
 
-            // 2. İlk Admin'in oluşturulması
-            logger.LogWarning("AdminSeeder: Sistemde hiç Admin bulunamadı. Varsayılan süper admin oluşturuluyor...");
+            adminUser.PasswordHash = adminPasswordHash;
+            adminUser.PasswordSalt = Array.Empty<byte>();
+            adminUser.IsActive = true;
+            adminUser.IsPhoneVerified = true;
+            adminUser.ApprovalStatus = ApprovalStatus.Active;
 
-            string rawPassword = "Admin123!";
-            byte[] passwordHash = Encoding.UTF8.GetBytes(BCrypt.Net.BCrypt.HashPassword(rawPassword));
-
-            var adminUser = new User
-            {
-                FullName        = "System Administrator",
-                Email           = "admin@yuk-le.com",
-                Phone           = "+900000000000",   // Standart bir placeholder
-                Role            = UserRole.Admin,
-                IsActive        = true,              // Admin otomatik aktiftir
-                ApprovalStatus  = ApprovalStatus.Active,
-                PasswordHash    = passwordHash,
-                PasswordSalt    = Array.Empty<byte>(),
-                CreatedAt       = DateTime.UtcNow,
-                IsPhoneVerified = true               // OTP'ye takılmamak için
-            };
-
-            await db.Users.AddAsync(adminUser, cancellationToken);
+            await UpsertTestUsersAsync(db, cancellationToken);
             await db.SaveChangesAsync(cancellationToken);
 
-            logger.LogWarning(
-                "AdminSeeder: Başarıyla oluşturuldu! [Email: {Email}] — Lütfen production ortamında şifreyi değiştirin.",
-                adminUser.Email);
+            logger.LogWarning("AdminSeeder: Admin ve test kullanıcıları başarıyla güncellendi.");
         }
         catch (Exception ex)
         {
@@ -72,4 +65,49 @@ public sealed class AdminSeederJob(
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    private static async Task UpsertTestUsersAsync(YukleDbContext db, CancellationToken cancellationToken)
+    {
+        byte[] testPasswordHash = Encoding.UTF8.GetBytes(BCrypt.Net.BCrypt.HashPassword("Test123!"));
+
+        var testCustomer = await db.Users.SingleOrDefaultAsync(u => u.Email == "test@yukle.com", cancellationToken);
+        if (testCustomer is null)
+        {
+            testCustomer = new User
+            {
+                FullName = "Test Müşteri",
+                Email = "test@yukle.com",
+                Phone = "5000000001",
+                Role = UserRole.Customer,
+                CreatedAt = DateTime.UtcNow
+            };
+            await db.Users.AddAsync(testCustomer, cancellationToken);
+        }
+
+        testCustomer.PasswordHash = testPasswordHash;
+        testCustomer.PasswordSalt = Array.Empty<byte>();
+        testCustomer.IsActive = true;
+        testCustomer.IsPhoneVerified = true;
+        testCustomer.ApprovalStatus = ApprovalStatus.Active;
+
+        var testDriver = await db.Users.SingleOrDefaultAsync(u => u.Email == "sofor@yukle.com", cancellationToken);
+        if (testDriver is null)
+        {
+            testDriver = new User
+            {
+                FullName = "Test Şoför",
+                Email = "sofor@yukle.com",
+                Phone = "5000000002",
+                Role = UserRole.Driver,
+                CreatedAt = DateTime.UtcNow
+            };
+            await db.Users.AddAsync(testDriver, cancellationToken);
+        }
+
+        testDriver.PasswordHash = testPasswordHash;
+        testDriver.PasswordSalt = Array.Empty<byte>();
+        testDriver.IsActive = true;
+        testDriver.IsPhoneVerified = true;
+        testDriver.ApprovalStatus = ApprovalStatus.Active;
+    }
 }
