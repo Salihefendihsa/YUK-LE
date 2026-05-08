@@ -55,6 +55,6 @@ export const useAuthStore = create<AuthState>()(
       updateTokens: (token, refreshToken) =>
         set({ token, refreshToken }),
     }),
-    { name: 'yukle-auth' }
+    { name: 'yükle-auth' }
   )
 )

@@ -1,5 +1,5 @@
 import PlaceholderPage from '../shared/PlaceholderPage'
 
 export default function DriverBidsPage() {
-  return <PlaceholderPage title="Sofor Tekliflerim" description="Gonderilen teklifler burada listelenecek." />
+  return <PlaceholderPage title="Şoför Tekliflerim" description="Gonderilen teklifler burada listelenecek." />
 }

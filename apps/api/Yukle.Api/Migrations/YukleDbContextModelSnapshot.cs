@@ -95,6 +95,111 @@ namespace Yukle.Api.Migrations
                     b.ToTable("Bids");
                 });
 
+            modelBuilder.Entity("Yukle.Api.Models.ChatMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BlockReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateTime?>("BlockedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsBlocked")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("LoadId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("SenderName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int>("SenderUserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LoadId", "CreatedAt");
+
+                    b.ToTable("ChatMessages");
+                });
+
+            modelBuilder.Entity("Yukle.Api.Models.DeliveryAddress", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("CompanyName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ContactPerson")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("ContactPhone")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("District")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("DeliveryAddresses");
+                });
+
             modelBuilder.Entity("Yukle.Api.Models.FuelPrice", b =>
                 {
                     b.Property<int>("Id")
@@ -199,6 +304,9 @@ namespace Yukle.Api.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
+                    b.Property<bool>("ProximityNotified")
+                        .HasColumnType("boolean");
+
                     b.Property<int?>("RequiredVehicleType")
                         .HasColumnType("integer");
 
@@ -260,10 +368,16 @@ namespace Yukle.Api.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<Guid?>("RelatedEntityId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
@@ -307,6 +421,47 @@ namespace Yukle.Api.Migrations
                     b.HasIndex("LoadId");
 
                     b.ToTable("PaymentTransactions");
+                });
+
+            modelBuilder.Entity("Yukle.Api.Models.Rating", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("GivenByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("GivenToUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("LoadId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RaterRole")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GivenByUserId");
+
+                    b.HasIndex("GivenToUserId");
+
+                    b.HasIndex("LoadId", "GivenByUserId")
+                        .IsUnique();
+
+                    b.ToTable("Ratings");
                 });
 
             modelBuilder.Entity("Yukle.Api.Models.UetdsOutbox", b =>
@@ -363,6 +518,9 @@ namespace Yukle.Api.Migrations
                     b.Property<int>("ApprovalStatus")
                         .HasColumnType("integer");
 
+                    b.Property<double>("AverageRating")
+                        .HasColumnType("double precision");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -397,6 +555,15 @@ namespace Yukle.Api.Migrations
 
                     b.Property<bool>("IsSrcApproved")
                         .HasColumnType("boolean");
+
+                    b.Property<double?>("LastKnownLatitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("LastKnownLongitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime?>("LastLocationUpdate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastValidationMessage")
                         .HasColumnType("text");
@@ -441,6 +608,9 @@ namespace Yukle.Api.Migrations
                     b.Property<string>("TaxNumberOrTCKN")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("TotalRatingCount")
+                        .HasColumnType("integer");
 
                     b.Property<string>("VerificationCode")
                         .IsRequired()
@@ -542,6 +712,17 @@ namespace Yukle.Api.Migrations
                     b.Navigation("Load");
                 });
 
+            modelBuilder.Entity("Yukle.Api.Models.DeliveryAddress", b =>
+                {
+                    b.HasOne("Yukle.Api.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Yukle.Api.Models.Load", b =>
                 {
                     b.HasOne("Yukle.Api.Models.User", "Driver")
@@ -585,6 +766,33 @@ namespace Yukle.Api.Migrations
                         .HasForeignKey("LoadId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Load");
+                });
+
+            modelBuilder.Entity("Yukle.Api.Models.Rating", b =>
+                {
+                    b.HasOne("Yukle.Api.Models.User", "GivenByUser")
+                        .WithMany()
+                        .HasForeignKey("GivenByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Yukle.Api.Models.User", "GivenToUser")
+                        .WithMany()
+                        .HasForeignKey("GivenToUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Yukle.Api.Models.Load", "Load")
+                        .WithMany()
+                        .HasForeignKey("LoadId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GivenByUser");
+
+                    b.Navigation("GivenToUser");
 
                     b.Navigation("Load");
                 });

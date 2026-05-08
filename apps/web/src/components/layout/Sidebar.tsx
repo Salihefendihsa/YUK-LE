@@ -14,6 +14,8 @@ const CUSTOMER_NAV: NavItem[] = [
   { label: 'Teklifler',   path: '/customer/bids',      icon: '💼' },
   { label: 'Canlı Harita',path: '/customer/track',     icon: '🗺️' },
   { label: 'Geçmiş',     path: '/customer/history',   icon: '📋' },
+  { label: 'Adreslerim', path: '/customer/addresses', icon: '📍' },
+  { label: 'Profil', path: '/customer/profile', icon: '👤' },
 ]
 
 const DRIVER_NAV: NavItem[] = [
@@ -23,30 +25,37 @@ const DRIVER_NAV: NavItem[] = [
   { label: 'Takip',     path: '/driver/track',     icon: '🗺️' },
   { label: 'Belgeler',  path: '/driver/documents', icon: '📄' },
   { label: 'Geçmişim',  path: '/driver/history',   icon: '📋' },
+  { label: 'Aktif Sefer', path: '/driver/active-load', icon: '📡' },
+  { label: 'Cüzdan', path: '/driver/wallet', icon: '💰' },
+  { label: 'Profil', path: '/driver/profile', icon: '👤' },
 ]
 
 const ADMIN_NAV: NavItem[] = [
-  { label: '📊 Genel Bakış', path: '/admin/dashboard', icon: '⊞' },
-  { label: '📄 Belge Kuyruğu', path: '/admin/reviews', icon: '✅' },
+  { label: '📊 Genel Bakış', path: '/admin/dashboard', icon: '📊' },
+  { label: '📄 Belge Kuyruğu', path: '/admin/reviews', icon: '📄' },
   { label: '🚛 Şoförler', path: '/admin/drivers', icon: '🚛' },
   { label: '🏭 Müşteriler', path: '/admin/customers', icon: '🏭' },
   { label: '📦 İlanlar', path: '/admin/loads', icon: '📦' },
+  { label: '💬 Sohbetler', path: '/admin/chats', icon: '💬' },
   { label: '💳 Ödemeler', path: '/admin/payments', icon: '💳' },
+  { label: '👥 Tüm Kullanıcılar', path: '/admin/users', icon: '👥' },
   { label: '🔧 Sistem Durumu', path: '/admin/system', icon: '🔧' },
   { label: '📋 Loglar', path: '/admin/logs', icon: '📋' },
+  { label: '📡 Canlı Takip', path: '/admin/tracking', icon: '📡' },
+  { label: '⭐ Puanlar', path: '/admin/ratings', icon: '⭐' },
 ]
 
 const BOTTOM_NAV: NavItem[] = [
-  { label: 'Profil',  path: '#profile',  icon: '👤' },
-  { label: 'Ayarlar', path: '#settings', icon: '⚙️' },
+  { label: 'Ayarlar', path: '/admin/settings', icon: '⚙️' },
 ]
 
 interface SidebarProps {
   collapsed: boolean
+  mobileOpen: boolean
   onToggle: () => void
 }
 
-export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
+export default function Sidebar({ collapsed, mobileOpen, onToggle }: SidebarProps) {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
 
@@ -65,12 +74,12 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   }
 
   return (
-    <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+    <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''} ${user?.role === 'Admin' ? 'admin-mode' : ''}`}>
       {/* Logo */}
       <div className="sidebar-logo">
         <div className="logo-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M3 12L12 4L21 12V20H15V15H9V20H3V12Z" fill="var(--color-brand)" />
+            <path d="M3 12L12 4L21 12V20H15V15H9V20H3V12Z" fill={user?.role === 'Admin' ? '#EF4444' : 'var(--color-brand)'} />
           </svg>
         </div>
         {!collapsed && <span className="logo-text">YÜK-LE</span>}

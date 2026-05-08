@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { login, verifyOtp } from '../../api/auth'
-import { useAuthStore } from '../../store/auth.store'
+import { verifyOtp } from '../../api/auth'
 import './VerifyPhone.css'
 
 const OTP_LENGTH = 6
@@ -15,7 +14,6 @@ export default function VerifyPhone() {
   const [secondsLeft, setSecondsLeft] = useState(60)
   const refs = useRef<(HTMLInputElement | null)[]>([])
   const navigate = useNavigate()
-  const setAuth = useAuthStore((s) => s.setAuth)
 
   useEffect(() => {
     refs.current[0]?.focus()
@@ -51,27 +49,11 @@ export default function VerifyPhone() {
     setError('')
     try {
       await verifyOtp({ phone, code })
-
-      const pendingAuthRaw = sessionStorage.getItem('yukle-pending-auth')
-      if (pendingAuthRaw) {
-        const pendingAuth = JSON.parse(pendingAuthRaw) as {
-          phone?: string
-          password?: string
-        }
-
-        if (pendingAuth.phone && pendingAuth.password) {
-          const data = await login({ phone: pendingAuth.phone, password: pendingAuth.password })
-          setAuth(data)
-          sessionStorage.removeItem('yukle-pending-auth')
-
-          if (data.role === 'Customer') navigate('/customer/dashboard')
-          else if (data.role === 'Driver') navigate('/driver/dashboard')
-          else navigate('/admin/dashboard')
-          return
-        }
-      }
-
-      navigate('/login?verified=1')
+      const pendingAuthRaw = sessionStorage.getItem('yükle-pending-auth')
+      const pendingAuth = pendingAuthRaw ? JSON.parse(pendingAuthRaw) as { phone?: string } : null
+      const loginPhone = pendingAuth?.phone || phone
+      sessionStorage.removeItem('yükle-pending-auth')
+      navigate(`/login?verified=1&phone=${encodeURIComponent(loginPhone)}`)
     } catch (err: unknown) {
       const msg = (err as { uiMessage?: string; response?: { data?: { message?: string } } })?.uiMessage
         ?? (err as { response?: { data?: { message?: string } } })?.response?.data?.message

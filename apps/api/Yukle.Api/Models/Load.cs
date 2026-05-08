@@ -53,6 +53,7 @@ public class Load
 
     // ── Durum ─────────────────────────────────────────────────────────────────
     public LoadStatus Status { get; set; } = LoadStatus.Active;
+    public bool ProximityNotified { get; set; } = false;
 
     // ── İlişkiler ─────────────────────────────────────────────────────────────
     public int UserId { get; set; }

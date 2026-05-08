@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getLoad } from '../../api/loads'
 import { acceptBid, getBidsForLoad } from '../../api/bids'
+import { getDriverLocation } from '../../api/location'
+import { submitRating } from '../../api/ratings'
 import type { Bid, Load } from '../../api/types'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
 import '../shared/Page.css'
@@ -13,6 +15,10 @@ export default function CustomerLoadDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [actionMsg, setActionMsg] = useState('')
+  const [loc, setLoc] = useState<{ latitude?: number; longitude?: number } | null>(null)
+  const [showRating, setShowRating] = useState(false)
+  const [score, setScore] = useState(5)
+  const [comment, setComment] = useState('')
 
   useEffect(() => {
     Promise.all([getLoad(id), getBidsForLoad(id)])
@@ -20,15 +26,23 @@ export default function CustomerLoadDetailPage() {
         setLoad(loadData)
         setBids(bidData)
       })
-      .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'Ilan detayi yuklenemedi.'))
+      .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'İlan detayi yüklenemedi.'))
       .finally(() => setLoading(false))
   }, [id])
+
+  useEffect(() => {
+    if (!load || (load.status !== 'OnWay' && load.status !== 'Assigned')) return
+    const timer = setInterval(() => {
+      void getDriverLocation(id).then((x) => setLoc(x)).catch(() => null)
+    }, 10000)
+    return () => clearInterval(timer)
+  }, [id, load])
 
   async function onAccept(bidId: number) {
     setActionMsg('')
     try {
       await acceptBid(bidId)
-      setActionMsg('Teklif kabul edildi, yuk durumu guncellendi.')
+      setActionMsg('Teklif kabul edildi, yük durumu güncellendi.')
       const refreshed = await getBidsForLoad(id)
       setBids(refreshed)
     } catch (e: unknown) {
@@ -41,7 +55,7 @@ export default function CustomerLoadDetailPage() {
   return (
     <div className="page-wrap">
       <div>
-        <h1 className="page-title">Ilan Detayi</h1>
+        <h1 className="page-title">İlan Detayi</h1>
         <p className="page-sub">
           {load ? `${load.fromCity} → ${load.toCity}` : ''}
         </p>
@@ -62,6 +76,8 @@ export default function CustomerLoadDetailPage() {
           <p className="muted" style={{ marginTop: 8 }}>
             {load.description}
           </p>
+          {loc ? <p className="muted">Canlı Konum: {loc.latitude?.toFixed(5)}, {loc.longitude?.toFixed(5)}</p> : null}
+          {load.status === 'Delivered' ? <button className="btn btn-primary btn-sm" onClick={() => setShowRating(true)}>Teslimatı Puanla</button> : null}
         </div>
       ) : null}
 
@@ -85,6 +101,24 @@ export default function CustomerLoadDetailPage() {
           {bids.length === 0 ? <p className="muted">Henuz teklif yok.</p> : null}
         </div>
       </div>
+      {showRating ? (
+        <div className="modal-backdrop">
+          <div className="modal-card">
+            <h3>Teslimat Puanı</h3>
+            <input className="form-input" type="number" min={1} max={5} value={score} onChange={(e) => setScore(Number(e.target.value))} />
+            <textarea className="form-input" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Yorumunuz" />
+            <div className="item-row">
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowRating(false)}>Kapat</button>
+              <button className="btn btn-primary btn-sm" onClick={async () => {
+                if (!load?.driverId) return
+                await submitRating({ loadId: id, givenToUserId: load.driverId, score, comment })
+                setShowRating(false)
+                setActionMsg('Puanınız kaydedildi.')
+              }}>Kaydet</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

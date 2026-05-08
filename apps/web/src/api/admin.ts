@@ -28,6 +28,11 @@ export async function getAdminDashboard() {
   return res.data
 }
 
+export async function getAdminBlockedMessages() {
+  const res = await apiClient.get('/Admin/blocked-messages')
+  return res.data
+}
+
 export async function getDrivers(status?: string) {
   const res = await apiClient.get('/Admin/drivers', { params: { status } })
   return res.data
@@ -69,6 +74,17 @@ export async function getAdminLogs() {
 }
 
 export async function getAdminSystemStatus() {
-  const res = await apiClient.get('/Admin/system')
-  return res.data
+  const [adminRes, systemRes] = await Promise.all([
+    apiClient.get('/Admin/system'),
+    apiClient.get('/System/status'),
+  ])
+  return { ...adminRes.data, external: systemRes.data }
+}
+
+export async function getAdminUsers() {
+  const [drivers, customers] = await Promise.all([getDrivers(), getCustomers()])
+  return [
+    ...drivers.map((d: Record<string, unknown>) => ({ ...d, role: 'Driver' })),
+    ...customers.map((c: Record<string, unknown>) => ({ ...c, role: 'Customer' })),
+  ]
 }

@@ -3,15 +3,15 @@ import { Link } from 'react-router-dom'
 import { getCustomerDashboard } from '../../api/dashboard'
 import { getActiveLoads } from '../../api/loads'
 import type { CustomerDashboard as Stats, Load } from '../../api/types'
-import { PageError, PageSkeleton } from '../../components/common/PageStates'
+import { PageEmpty, PageError, PageSkeleton } from '../../components/common/PageStates'
 import './Dashboard.css'
 
 const STATUS_LABEL: Record<string, string> = {
   Active: 'Aktif',
-  Assigned: 'Atandi',
+  Assigned: 'Atandı',
   OnWay: 'Yolda',
   Delivered: 'Teslim',
-  Cancelled: 'Iptal',
+  Cancelled: 'İptal',
 }
 
 const STATUS_CLASS: Record<string, string> = {
@@ -35,32 +35,32 @@ export default function CustomerDashboard() {
         setLoads(activeLoads.slice(0, 5))
       })
       .catch((e: { uiMessage?: string }) => {
-        setError(e.uiMessage ?? 'Dashboard verileri yuklenemedi.')
+        setError(e.uiMessage ?? 'Dashboard verileri yüklenemedi.')
       })
       .finally(() => setLoading(false))
   }, [])
 
   if (loading) {
-    return <PageSkeleton rows={6} />
+    return <PageSkeleton rows={6} variant="table" />
   }
 
   return (
     <div className="dashboard">
       <div className="dashboard-header">
         <div>
-          <h1 className="page-title">Musteri Dashboard</h1>
-          <p className="page-sub">Canli istatistikler ve son ilanlar</p>
+          <h1 className="page-title">Müşteri Paneli</h1>
+          <p className="page-sub">Canlı istatistikler ve son ilanlar</p>
         </div>
         <Link to="/customer/loads/create" className="btn btn-primary">
-          + Ilan Olustur
+          + İlan Oluştur
         </Link>
       </div>
 
       {error ? <PageError message={error} /> : null}
 
       <div className="stat-grid">
-        <StatCard label="Aktif Ilanlar" value={stats?.activeLoadCount ?? 0} icon="📦" color="var(--color-brand)" />
-        <StatCard label="Yolda Yukler" value={stats?.onWayLoadCount ?? 0} icon="🚛" color="var(--color-info)" />
+        <StatCard label="Aktif İlanlar" value={stats?.activeLoadCount ?? 0} icon="📦" color="var(--color-brand)" />
+        <StatCard label="Yolda Yükler" value={stats?.onWayLoadCount ?? 0} icon="🚛" color="var(--color-info)" />
         <StatCard label="Teslim Edilen" value={stats?.deliveredLoadCount ?? 0} icon="✅" color="var(--color-success)" />
         <StatCard
           label="Toplam Harcama"
@@ -72,19 +72,25 @@ export default function CustomerDashboard() {
 
       <div className="card loads-card">
         <div className="card-header">
-          <h2>Son Ilanlar</h2>
+          <h2>Son İlanlar</h2>
           <Link to="/customer/loads" className="view-all">
-            Tumunu Gor
+            Tümünü Gör
           </Link>
         </div>
 
         {loads.length === 0 ? (
-          <p className="page-sub">Liste gosterilecek aktif ilan bulunamadi.</p>
+          <PageEmpty
+            icon="📭"
+            title="Aktif ilan bulunamadı"
+            description="Yeni bir ilan oluşturduğunuzda burada listelenecek."
+            actionLabel="İlan Oluştur"
+            onAction={() => { window.location.href = '/customer/loads/create' }}
+          />
         ) : (
           <table className="loads-table">
             <thead>
               <tr>
-                <th>Guzergah</th>
+                <th>Güzergah</th>
                 <th>Durum</th>
                 <th>Fiyat</th>
                 <th>Tarih</th>

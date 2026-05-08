@@ -23,7 +23,22 @@
   overflow-y: auto;
 }
 
+.mobile-overlay {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .app-main { margin-left: 0; }
   .app-content { padding: var(--space-4); }
+  .mobile-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 50;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .app-content { padding: var(--space-5); }
 }

@@ -144,6 +144,11 @@ namespace Yukle.Api.Models
         // Cüzdan ve Finansal Takip
         public decimal WalletBalance { get; set; }
         public decimal PendingBalance { get; set; }
+        public double AverageRating { get; set; }
+        public int TotalRatingCount { get; set; }
+        public double? LastKnownLatitude { get; set; }
+        public double? LastKnownLongitude { get; set; }
+        public DateTime? LastLocationUpdate { get; set; }
 
         // Navigation Properties (İlişkisel Koleksiyonlar)
         public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();

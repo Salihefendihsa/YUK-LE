@@ -11,6 +11,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Yukle.Api.Data;
 using Yukle.Api.DTOs;
+using Yukle.Api.Exceptions;
 using Yukle.Api.Models;
 
 namespace Yukle.Api.Services;
@@ -179,8 +180,10 @@ public class AuthService : IAuthService
             Email                  = dto.Email,
             PasswordHash           = passwordHash,
             PasswordSalt           = Array.Empty<byte>(),
-            IsCorporate            = dto.IsCorporate,
-            TaxNumberOrTCKN        = dto.TaxNumberOrTCKN,
+            IsCorporate            = dto.IsCorporate || string.Equals(dto.Role, "Customer", StringComparison.OrdinalIgnoreCase),
+            TaxNumberOrTCKN        = string.Equals(dto.Role, "Driver", StringComparison.OrdinalIgnoreCase)
+                                        ? dto.TcIdentityNumber
+                                        : dto.TaxNumber,
             Role                   = Enum.TryParse<UserRole>(dto.Role, out var parsedRole)
                                          ? parsedRole
                                          : UserRole.Customer,
@@ -263,6 +266,13 @@ public class AuthService : IAuthService
         string storedHash = Encoding.UTF8.GetString(user.PasswordHash);
         if (!BCrypt.Net.BCrypt.Verify(dto.Password, storedHash))
             throw new ApplicationException("Telefon numarası/e-posta veya şifre hatalı.");
+
+        if (!user.IsPhoneVerified)
+        {
+            throw new PhoneVerificationRequiredException(
+                "Telefon numaranız doğrulanmamış. Lütfen doğrulama kodunu giriniz.",
+                user.Phone);
+        }
 
         return await IssueTokensAsync(user);
     }
@@ -604,10 +614,10 @@ public class AuthService : IAuthService
         }
         else
         {
-            // Ara durum: en az bir belge onaylı ama tümü değil → Approved (aktif değil)
-            user.ApprovalStatus = ApprovalStatus.Approved;
+            // Ara durum: belge kaydedildi fakat hesap henüz aktifleşmedi → manuel inceleme kuyruğu
+            user.ApprovalStatus = ApprovalStatus.PendingReview;
             user.IsActive       = false;
-            user.LastValidationMessage = BuildPendingDocumentsMessage(user);
+            user.LastValidationMessage = "Belgeniz incelemeye alındı.";
         }
 
         await _context.SaveChangesAsync();

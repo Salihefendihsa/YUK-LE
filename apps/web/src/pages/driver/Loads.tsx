@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getActiveLoads } from '../../api/loads'
 import type { Load } from '../../api/types'
-import { PageError, PageSkeleton } from '../../components/common/PageStates'
+import { PageEmpty, PageError, PageSkeleton } from '../../components/common/PageStates'
 import '../shared/Page.css'
 
 export default function DriverLoadsPage() {
@@ -16,7 +16,7 @@ export default function DriverLoadsPage() {
   useEffect(() => {
     getActiveLoads()
       .then(setLoads)
-      .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'Yuk panosu yuklenemedi.'))
+      .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'Yük panosu yüklenemedi.'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -31,18 +31,18 @@ export default function DriverLoadsPage() {
     [loads, city, vehicle, date]
   )
 
-  if (loading) return <PageSkeleton rows={7} />
+  if (loading) return <PageSkeleton rows={7} variant="card" />
 
   return (
     <div className="page-wrap">
       <div>
-        <h1 className="page-title">Yuk Panosu</h1>
-        <p className="page-sub">Aktif yukleri filtreleyip inceleyin</p>
+        <h1 className="page-title">Yük Panosu</h1>
+          <p className="page-sub">Aktif yükleri filtreleyip inceleyin</p>
       </div>
       {error ? <PageError message={error} /> : null}
       <div className="card filters">
-        <input className="form-input" placeholder="Sehir" value={city} onChange={(e) => setCity(e.target.value)} />
-        <input className="form-input" placeholder="Arac tipi" value={vehicle} onChange={(e) => setVehicle(e.target.value)} />
+        <input className="form-input" placeholder="Şehir" value={city} onChange={(e) => setCity(e.target.value)} />
+        <input className="form-input" placeholder="Araç tipi" value={vehicle} onChange={(e) => setVehicle(e.target.value)} />
         <input className="form-input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         <button className="btn btn-ghost" onClick={() => { setCity(''); setVehicle(''); setDate('') }}>
           Filtreleri Temizle
@@ -63,7 +63,15 @@ export default function DriverLoadsPage() {
             </div>
           </Link>
         ))}
-        {filtered.length === 0 ? <div className="card muted">Filtreye uygun yuk bulunamadi.</div> : null}
+        {filtered.length === 0 ? (
+          <PageEmpty
+            icon="🔎"
+            title="Uygun yük bulunamadı"
+            description="Filtreleri temizleyip tekrar deneyin."
+            actionLabel="Filtreleri Temizle"
+            onAction={() => { setCity(''); setVehicle(''); setDate('') }}
+          />
+        ) : null}
       </div>
     </div>
   )

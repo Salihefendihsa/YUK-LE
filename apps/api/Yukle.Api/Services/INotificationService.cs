@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 
 namespace Yukle.Api.Services;
 
+using Yukle.Api.Models;
+
 /// <summary>
 /// Kullanıcıya bildirim gönderme sözleşmesi.
 /// DB kaydı + SignalR push + FCM push (uygulama kapalıyken) üçlüsünü kapsar.
@@ -14,6 +16,7 @@ public interface INotificationService
     /// Kullanıcının kayıtlı FcmToken'ı varsa FCM push da tetiklenir.
     /// </summary>
     Task SendAsync(int userId, string title, string message);
+    Task SendNotificationAsync(int userId, string title, string message, NotificationType type, Guid? relatedId = null);
 
     /// <summary>
     /// Belirli bir FCM token'ına doğrudan push bildirimi gönderir.

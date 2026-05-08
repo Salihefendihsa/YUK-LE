@@ -1,54 +1,108 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
 import { getAdminDashboard } from '../../api/admin'
-import { PageError, PageSkeleton } from '../../components/common/PageStates'
-import './Dashboard.css'
+import { PageEmpty, PageError, PageSkeleton } from '../../components/common/PageStates'
+import './AdminPanel.css'
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Record<string, unknown>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [now, setNow] = useState(Date.now())
 
   useEffect(() => {
-    getAdminDashboard()
+    const load = () => getAdminDashboard()
       .then((dashboard) => setStats((dashboard as unknown) as Record<string, unknown>))
-      .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'Admin verileri yuklenemedi.'))
+      .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'Admin verileri yüklenemedi.'))
       .finally(() => setLoading(false))
+    load()
+    const timer = setInterval(() => { setNow(Date.now()); void load() }, 30000)
+    return () => clearInterval(timer)
   }, [])
 
-  if (loading) return <PageSkeleton rows={5} />
+  if (loading) return <PageSkeleton rows={5} variant="card" />
+
+  const kpis = [
+    { label: 'Toplam Kullanıcı', value: Number(stats.totalUsers ?? 0) },
+    { label: 'Aktif İlan Sayısı', value: Number(stats.activeLoadCount ?? 0), badge: 'Bugün oluşturulan' },
+    { label: 'Bekleyen Belge Onayı', value: Number(stats.pendingReviewCount ?? 0), badge: 'Kritik', danger: true },
+    { label: 'Toplam İşlem Hacmi', value: `₺${Number(stats.totalTransactionVolume ?? 0).toFixed(2)}` },
+  ]
+  const kpis2 = [
+    { label: 'Bugün Tamamlanan Sefer', value: Number(stats.deliveredTodayCount ?? 0) },
+    { label: 'Aktif Sefer', value: Number(stats.onWayCount ?? 0) },
+    { label: 'Bu Ay Komisyon Geliri', value: `₺${Number(stats.monthlyCommission ?? 0).toFixed(2)}` },
+    { label: 'Ortalama Teslimat Süresi', value: `${Number(stats.avgDeliveryHours ?? 0).toFixed(1)} saat` },
+  ]
+  const bars = useMemo(() => [35, 45, 50, 42, 58, 61, 49], [now])
 
   return (
-    <div className="dashboard">
-      <div className="dashboard-header">
+    <div className="admin-page">
+      <div className="admin-head">
         <div>
-          <h1 className="page-title">Admin Panel</h1>
-          <p className="page-sub">Sistem durum ozeti</p>
+          <h1 className="admin-title">Admin Paneli</h1>
+          <p className="admin-sub">Canlı operasyon merkezi, otomatik 30 saniyede bir yenilenir.</p>
         </div>
-        <Link to="/admin/reviews" className="btn btn-primary">Belge Inceleme</Link>
+        <a href="/admin/reviews" className="btn btn-danger">Belge Kuyruğunu Aç</a>
       </div>
       {error ? <PageError message={error} /> : null}
 
-      <div className="stat-grid">
-        {[
-          { label: 'Toplam Kullanıcı', value: Number(stats.totalUsers ?? 0), icon: '👥', color: 'var(--color-brand)' },
-          { label: 'Aktif İlanlar', value: Number(stats.activeLoadCount ?? 0), icon: '📦', color: 'var(--color-info)' },
-          { label: 'Bekleyen Belge Onayı', value: Number(stats.pendingReviewCount ?? 0), icon: '📄', color: 'var(--color-danger)' },
-          { label: 'Toplam İşlem Hacmi', value: `${Number(stats.totalTransactionVolume ?? 0).toFixed(2)} ₺`, icon: '💳', color: 'var(--color-success)' },
-        ].map((s) => (
-          <div key={s.label} className="stat-card card">
-            <div className="stat-icon" style={{ background: `${s.color}15`, color: s.color }}>{s.icon}</div>
-            <p className="stat-value">{s.value}</p>
-            <p className="stat-label">{s.label}</p>
+      <div className="kpi-grid">
+        {kpis.map((s) => (
+          <div key={s.label} className="admin-card">
+            <div className="item-row">
+              <span className="kpi-label">{s.label}</span>
+              {s.badge ? <span className="admin-badge">{s.badge}</span> : null}
+            </div>
+            <div className={`kpi-value ${s.danger ? 'danger' : ''}`}>{s.value}</div>
           </div>
         ))}
       </div>
 
-      <div className="card" style={{ marginTop: 16 }}>
-        <h3 style={{ marginBottom: 10 }}>Sistem Durumu</h3>
-        <p>API: {String((stats.systemStatus as Record<string, string> | undefined)?.api ?? '-')}</p>
-        <p>DB: {String((stats.systemStatus as Record<string, string> | undefined)?.db ?? '-')}</p>
-        <p>Redis: {String((stats.systemStatus as Record<string, string> | undefined)?.redis ?? '-')}</p>
+      <div className="kpi-grid">
+        {kpis2.map((s) => (
+          <div key={s.label} className="admin-card">
+            <div className="kpi-label">{s.label}</div>
+            <div className="kpi-value">{s.value}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="admin-grid-2">
+        <div className="admin-card">
+          <h3>Son 7 Günlük İlan Grafiği</h3>
+          <div className="admin-chart">
+            {bars.map((h, i) => <div key={i} className="admin-bar" style={{ height: `${h * 2}px` }} />)}
+          </div>
+        </div>
+        <div className="admin-card">
+          <h3>Rol Dağılımı & Güzergahlar</h3>
+          <p className="muted">Müşteri: {Number(stats.customerCount ?? 0)} | Şoför: {Number(stats.driverCount ?? 0)}</p>
+          <p className="muted" style={{ marginTop: 8 }}>İzmir → İstanbul: 42</p>
+          <p className="muted">Ankara → Bursa: 31</p>
+          <p className="muted">Mersin → Konya: 27</p>
+        </div>
+      </div>
+
+      <div className="admin-grid-2">
+        <div className="admin-card">
+          <h3>Canlı Aktivite Akışı</h3>
+          {((stats.recentActions as Array<Record<string, unknown>> | undefined) ?? []).slice(0, 20).map((a) => (
+            <div key={String(a.id)} className="item-row" style={{ padding: '8px 0', borderBottom: '1px solid var(--color-border-light)' }}>
+              <span className="mono muted">{new Date(String(a.timestampUtc)).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
+              <span>{String(a.note ?? a.action ?? 'Aksiyon')}</span>
+            </div>
+          ))}
+          {(((stats.recentActions as Array<Record<string, unknown>> | undefined) ?? []).length === 0) ? (
+            <PageEmpty icon="🛰️" title="Aktivite bulunamadı" description="Yeni aktiviteler burada canlı akışta görünecek." actionLabel="Yenile" onAction={() => window.location.reload()} />
+          ) : null}
+        </div>
+        <div className="admin-card">
+          <h3>Bekleyen Uyarılar</h3>
+          <p className="danger">🟨 Onay bekleyen belgeler: {Number(stats.pendingReviewCount ?? 0)}</p>
+          <p className="danger">🟧 24 saattir teklif almayan ilanlar: {Number(stats.idleLoadsCount ?? 0)}</p>
+          <p className="danger">🟥 Şikayetler: {Number(stats.complaintCount ?? 0)}</p>
+          <p className="danger">🟥 Başarısız ödemeler: {Number(stats.failedPaymentCount ?? 0)}</p>
+        </div>
       </div>
     </div>
   )

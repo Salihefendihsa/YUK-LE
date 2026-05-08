@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Yukle.Api.Data;
 using Yukle.Api.DTOs;
 using Yukle.Api.Models;
+using Yukle.Api.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 
@@ -25,12 +26,18 @@ public class AdminController : ControllerBase
     private readonly YukleDbContext _context;
     private readonly ILogger<AdminController> _logger;
     private readonly IDistributedCache _cache;
+    private readonly IChatModerationService _chatModerationService;
 
-    public AdminController(YukleDbContext context, ILogger<AdminController> logger, IDistributedCache cache)
+    public AdminController(
+        YukleDbContext context,
+        ILogger<AdminController> logger,
+        IDistributedCache cache,
+        IChatModerationService chatModerationService)
     {
         _context = context;
         _logger = logger;
         _cache = cache;
+        _chatModerationService = chatModerationService;
     }
 
     [HttpGet("dashboard")]
@@ -334,6 +341,119 @@ public class AdminController : ControllerBase
         });
     }
 
+    [HttpGet("blocked-messages")]
+    public IActionResult GetBlockedMessages()
+    {
+        var data = _chatModerationService.GetBlockedMessages(200);
+        return Ok(data);
+    }
+
+    [HttpGet("stats")]
+    public async Task<IActionResult> GetStats()
+    {
+        var today = DateTime.UtcNow.Date;
+        var monthStart = new DateTime(today.Year, today.Month, 1);
+        var users = await _context.Users.GroupBy(u => u.Role).Select(g => new { Role = g.Key.ToString(), Count = g.Count() }).ToListAsync();
+        var totalVolume = await _context.PaymentTransactions.SumAsync(p => (decimal?)p.Amount) ?? 0m;
+        var monthCommission = await _context.PaymentTransactions.Where(p => p.CreatedAt >= monthStart && p.Status == PaymentStatus.Released).SumAsync(p => (decimal?)p.Amount) ?? 0m;
+        return Ok(new
+        {
+            Users = users,
+            NewToday = await _context.Users.CountAsync(u => u.CreatedAt >= today),
+            ActiveLoads = await _context.Loads.CountAsync(l => l.Status == LoadStatus.Active),
+            DeliveredToday = await _context.Loads.CountAsync(l => l.Status == LoadStatus.Delivered && l.DeliveryDate >= today),
+            TotalVolume = totalVolume,
+            MonthlyCommission = monthCommission * 0.1m,
+            PendingReviews = await _context.Users.CountAsync(u => u.ApprovalStatus == ApprovalStatus.PendingReview),
+            ReportedChats = _chatModerationService.GetBlockedMessages(500).Count
+        });
+    }
+
+    [HttpGet("users")]
+    public async Task<IActionResult> GetUsers([FromQuery] string? role = null, [FromQuery] string? status = null, [FromQuery] string? q = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    {
+        var query = _context.Users.AsNoTracking().AsQueryable();
+        if (!string.IsNullOrWhiteSpace(role) && Enum.TryParse<UserRole>(role, true, out var parsedRole)) query = query.Where(u => u.Role == parsedRole);
+        if (!string.IsNullOrWhiteSpace(status))
+            query = status.ToLowerInvariant() switch
+            {
+                "active" => query.Where(u => u.IsActive),
+                "suspended" => query.Where(u => !u.IsActive),
+                _ => query
+            };
+        if (!string.IsNullOrWhiteSpace(q))
+            query = query.Where(u => u.FullName.Contains(q) || u.Email.Contains(q) || u.Phone.Contains(q));
+        var total = await query.CountAsync();
+        var items = await query.OrderByDescending(u => u.CreatedAt).Skip((Math.Max(page, 1) - 1) * Math.Max(pageSize, 1)).Take(Math.Max(pageSize, 1)).Select(u => new
+        {
+            u.Id, u.FullName, u.Email, u.Phone, Role = u.Role.ToString(), u.IsActive, u.CreatedAt
+        }).ToListAsync();
+        return Ok(new { Total = total, Items = items });
+    }
+
+    [HttpPut("users/{userId:int}/suspend")]
+    public async Task<IActionResult> SuspendUser(int userId, [FromBody] SuspendRequest request)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user is null) return NotFound();
+        if (string.IsNullOrWhiteSpace(request.Reason)) return BadRequest(new { Message = "Askıya alma sebebi zorunludur." });
+        user.IsActive = false;
+        await _context.SaveChangesAsync();
+        return Ok(new { Message = "Kullanıcı askıya alındı." });
+    }
+
+    [HttpPut("users/{userId:int}/activate")]
+    public async Task<IActionResult> ActivateUser(int userId)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user is null) return NotFound();
+        user.IsActive = true;
+        await _context.SaveChangesAsync();
+        return Ok(new { Message = "Kullanıcı aktif edildi." });
+    }
+
+    [HttpGet("chats")]
+    public IActionResult GetChats()
+    {
+        var blocked = _chatModerationService.GetBlockedMessages(500);
+        var grouped = blocked.GroupBy(x => x.LoadId).Select(g => new { LoadId = g.Key, MessageCount = g.Count(), LastMessageAt = g.Max(x => x.TimestampUtc) }).OrderByDescending(x => x.MessageCount);
+        return Ok(grouped);
+    }
+
+    [HttpGet("chats/{loadId:guid}")]
+    public async Task<IActionResult> GetChatByLoad(Guid loadId)
+    {
+        var messages = await _context.ChatMessages.Where(c => c.LoadId == loadId).OrderBy(c => c.CreatedAt).ToListAsync();
+        var blocked = _chatModerationService.GetBlockedMessages(500).Where(x => Guid.TryParse(x.LoadId, out var gid) && gid == loadId);
+        return Ok(new { Messages = messages, BlockedMessages = blocked });
+    }
+
+    [HttpGet("drivers/{id:int}/stats")]
+    public async Task<IActionResult> DriverStats(int id)
+    {
+        var delivered = await _context.Loads.Where(l => l.DriverId == id && l.Status == LoadStatus.Delivered).ToListAsync();
+        return Ok(new
+        {
+            TotalTrips = delivered.Count,
+            TotalWeight = delivered.Sum(l => l.Weight),
+            TotalEarnings = delivered.Sum(l => l.Price),
+            TopRoutes = delivered.GroupBy(l => $"{l.FromCity}->{l.ToCity}").Select(g => new { Route = g.Key, Count = g.Count() }).OrderByDescending(x => x.Count).Take(5)
+        });
+    }
+
+    [HttpGet("customers/{id:int}/stats")]
+    public async Task<IActionResult> CustomerStats(int id)
+    {
+        var loads = await _context.Loads.Where(l => l.UserId == id).ToListAsync();
+        return Ok(new
+        {
+            TotalLoads = loads.Count,
+            Delivered = loads.Count(x => x.Status == LoadStatus.Delivered),
+            Cancelled = loads.Count(x => x.Status == LoadStatus.Cancelled),
+            TotalSpend = loads.Sum(x => x.Price)
+        });
+    }
+
     /// <summary>
     /// PendingReview statüsündeki kullanıcı hakkında son kararı verip kaydeder.
     /// </summary>
@@ -410,4 +530,9 @@ public class AdminController : ControllerBase
             throw new ApplicationException("Kayıt işlemi sırasında bir hata oluştu, geri alındı.");
         }
     }
+}
+
+public sealed class SuspendRequest
+{
+    public string Reason { get; set; } = string.Empty;
 }

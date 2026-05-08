@@ -1,10 +1,10 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { login } from '../../api/auth'
 import { useAuthStore } from '../../store/auth.store'
 import './Login.css'
 
-type RoleOption = 'Customer' | 'Driver' | 'Admin'
+type RoleOption = 'Customer' | 'Driver'
 
 export default function Login() {
   const [selectedRole, setSelectedRole] = useState<RoleOption>('Customer')
@@ -13,12 +13,29 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [toast, setToast] = useState('')
+  const [params] = useSearchParams()
   const navigate = useNavigate()
   const setAuth = useAuthStore((s) => s.setAuth)
 
+  useEffect(() => {
+    const verified = params.get('verified')
+    const prefillPhone = params.get('phone')
+
+    if (prefillPhone) {
+      setPhone(prefillPhone)
+    }
+
+    if (verified === '1') {
+      setToast('Kayıt başarılı, lütfen giriş yapın')
+      const timer = setTimeout(() => setToast(''), 3500)
+      return () => clearTimeout(timer)
+    }
+  }, [params])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!phone || !password) { setError('Lutfen tum alanlari doldurun'); return }
+    if (!phone || !password) { setError('Lütfen tum alanlari doldurun'); return }
     setLoading(true)
     setError('')
     try {
@@ -26,7 +43,7 @@ export default function Login() {
       if (selectedRole && data.role !== selectedRole) {
         setError(
           selectedRole === 'Customer'
-            ? 'Bu hesap sofor hesabı olarak gorunuyor. Lutfen Sofor kartini secin.'
+            ? 'Bu hesap şoför hesabı olarak gorunuyor. Lütfen Şoför kartini secin.'
             : selectedRole === 'Driver'
               ? 'Bu hesap fabrika hesabı olarak görünüyor. Lütfen Fabrika kartını seçin.'
               : 'Bu hesap yönetici hesabı olarak görünmüyor. Lütfen doğru rolü seçin.'
@@ -36,11 +53,23 @@ export default function Login() {
       setAuth(data)
       if (data.role === 'Customer') navigate('/customer/dashboard')
       else if (data.role === 'Driver') navigate('/driver/dashboard')
-      else navigate('/admin/dashboard')
+      else navigate('/driver/dashboard')
     } catch (err: unknown) {
+      const verificationPayload = (err as {
+        response?: { status?: number; data?: { requiresVerification?: boolean; phone?: string } }
+      })?.response?.data
+      const statusCode = (err as { response?: { status?: number } })?.response?.status
+
+      if (statusCode === 403 && verificationPayload?.requiresVerification) {
+        setToast('Telefon doğrulama gerekiyor')
+        setTimeout(() => setToast(''), 3000)
+        navigate(`/verify-phone?phone=${encodeURIComponent(verificationPayload.phone || phone.replace(/\D/g, ''))}`)
+        return
+      }
+
       const msg = (err as { uiMessage?: string; response?: { data?: { message?: string } } })?.uiMessage
         ?? (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      setError(msg || 'Telefon numarasi veya sifre hatali. Tekrar deneyin.')
+      setError(msg || 'Telefon numarasi veya şifre hatali. Tekrar deneyin.')
     } finally {
       setLoading(false)
     }
@@ -84,6 +113,7 @@ export default function Login() {
       {/* ── Right Panel ───────────────────────────────────── */}
       <div className="login-right">
         <div className="login-form-wrap">
+          {toast && <div className="success-banner" role="status">{toast}</div>}
           <h2 className="login-title">Tekrar hoşgeldiniz</h2>
           <p className="login-subtitle">Hesabınıza girin</p>
 
@@ -104,15 +134,7 @@ export default function Login() {
               onClick={() => setSelectedRole('Driver')}
             >
               <span className="role-icon">🚛</span>
-              <strong>Sofor</strong>
-            </button>
-            <button
-              type="button"
-              className={`login-role-card ${selectedRole === 'Admin' ? 'active' : ''}`}
-              onClick={() => setSelectedRole('Admin')}
-            >
-              <span className="role-icon">🛡️</span>
-              <strong>Admin</strong>
+              <strong>Şoför</strong>
             </button>
           </div>
 
@@ -134,7 +156,7 @@ export default function Login() {
             <div className="form-group" style={{ marginTop: 16 }}>
               <div className="password-label-row">
                 <label className="form-label" htmlFor="password">Şifre</label>
-                <a href="#forgot" className="forgot-link">Şifremi Unuttum</a>
+                <Link to="/forgot-password" className="forgot-link">Şifremi Unuttum</Link>
               </div>
               <div className="input-wrapper">
                 <input
@@ -172,6 +194,9 @@ export default function Login() {
           <p className="login-register-link">
             Hesabınız yok mu?{' '}
             <Link to="/register">Kayıt Olun</Link>
+          </p>
+          <p className="login-register-link" style={{ marginTop: 6, opacity: 0.7 }}>
+            <Link to="/admin/login">Yönetici girişi →</Link>
           </p>
         </div>
       </div>

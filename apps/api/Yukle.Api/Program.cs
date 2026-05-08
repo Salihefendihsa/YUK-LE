@@ -117,6 +117,7 @@ builder.Services.AddScoped<Yukle.Api.Services.IDashboardService,    Yukle.Api.Se
 builder.Services.AddScoped<Yukle.Api.Services.AiPricingService>();
 builder.Services.AddScoped<Yukle.Api.Services.PricingService>();
 builder.Services.AddScoped<Yukle.Api.Services.IPaymentService,      Yukle.Api.Services.MockPaymentService>();
+builder.Services.AddSingleton<Yukle.Api.Services.IChatModerationService, Yukle.Api.Services.ChatModerationService>();
 
 // ── Rota Servisi (OSRM) ────────────────────────────────────────────────────
 // Named HttpClient: zaman aşımı kısa tutulur (OSRM yavaş cevap verirse Haversine'e düşsün).

@@ -17,11 +17,13 @@ namespace Yukle.Api.Hubs;
 public sealed class ChatHub(
     ILogger<ChatHub>     logger,
     IDistributedCache    cache,
-    ILoadService         loadService) : Hub
+    ILoadService         loadService,
+    IChatModerationService moderationService) : Hub
 {
     private readonly ILogger<ChatHub>     _logger      = logger;
     private readonly IDistributedCache    _cache       = cache;
     private readonly ILoadService         _loadService = loadService;
+    private readonly IChatModerationService _moderationService = moderationService;
 
     // Bağlantı izleme kayıtları için TTL — aktif oturum süresiyle uyumlu.
     private static readonly DistributedCacheEntryOptions CacheOptions = new()
@@ -136,6 +138,23 @@ public sealed class ChatHub(
     {
         if (string.IsNullOrWhiteSpace(message))
             throw new HubException("Mesaj boş gönderilemez.");
+
+        if (_moderationService.ContainsBlockedContent(message))
+        {
+            var blockedSenderId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier)
+                           ?? Context.ConnectionId;
+            var blockedSenderName = Context.User?.FindFirstValue(ClaimTypes.Name)
+                             ?? $"Kullanıcı #{blockedSenderId}";
+
+            _moderationService.AddBlockedMessage(new BlockedMessageRecord(
+                SenderId: blockedSenderId,
+                SenderName: blockedSenderName,
+                LoadId: loadId,
+                Message: message,
+                TimestampUtc: DateTime.UtcNow));
+
+            throw new HubException("Uygunsuz içerik tespit edildi. Lütfen saygılı bir dil kullanınız.");
+        }
 
         var senderId   = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier)
                          ?? Context.ConnectionId;

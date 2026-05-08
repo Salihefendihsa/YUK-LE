@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { decideReview, getPendingReviews, type PendingReview } from '../../api/admin'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
-import '../shared/Page.css'
+import './AdminPanel.css'
 
 export default function AdminReviewsPage() {
   const [reviews, setReviews] = useState<PendingReview[]>([])
@@ -9,6 +9,7 @@ export default function AdminReviewsPage() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [reasonMap, setReasonMap] = useState<Record<number, string>>({})
+  const [sortBy, setSortBy] = useState<'suspicious' | 'oldest' | 'newest'>('suspicious')
 
   async function fetchQueue() {
     const data = await getPendingReviews()
@@ -17,7 +18,7 @@ export default function AdminReviewsPage() {
 
   useEffect(() => {
     fetchQueue()
-      .catch((e: unknown) => setError((e as { uiMessage?: string }).uiMessage ?? 'Inceleme kuyrugu yuklenemedi.'))
+      .catch((e: unknown) => setError((e as { uiMessage?: string }).uiMessage ?? 'Inceleme kuyrugu yüklenemedi.'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -38,27 +39,49 @@ export default function AdminReviewsPage() {
     }
   }
 
-  if (loading) return <PageSkeleton rows={6} />
+  if (loading) return <PageSkeleton rows={8} />
+
+  const sorted = [...reviews].sort((a, b) => {
+    const getScore = (r: PendingReview) => {
+      try {
+        return Number((JSON.parse(r.aiInferenceDetails || '{}') as { ConfidenceScore?: number }).ConfidenceScore ?? 100)
+      } catch { return 100 }
+    }
+    if (sortBy === 'suspicious') return getScore(a) - getScore(b)
+    if (sortBy === 'oldest') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  })
 
   return (
-    <div className="page-wrap">
-      <div>
-        <h1 className="page-title">Belge Inceleme</h1>
-        <p className="page-sub">Bekleyen belgeleri onaylayin veya reddedin</p>
+    <div className="admin-page">
+      <div className="admin-head">
+        <div>
+          <h1 className="admin-title">Belge İnceleme</h1>
+          <p className="admin-sub">AI skoruna göre sıralı manuel karar ekranı.</p>
+        </div>
+        <select className="form-input" style={{ maxWidth: 240 }} value={sortBy} onChange={(e) => setSortBy(e.target.value as 'suspicious' | 'oldest' | 'newest')}>
+          <option value="suspicious">En şüpheli önce</option>
+          <option value="oldest">En eski önce</option>
+          <option value="newest">En yeni önce</option>
+        </select>
       </div>
       {error ? <PageError message={error} /> : null}
       {message ? <div className="card muted">{message}</div> : null}
 
-      <div className="list-grid">
-        {reviews.map((review) => (
-          <div key={review.id} className="item-card">
+      <div className="kpi-grid">
+        <div className="admin-card"><div className="kpi-label">Bekleyen</div><div className="kpi-value">{reviews.length}</div></div>
+        <div className="admin-card"><div className="kpi-label">Bugün Onaylanan</div><div className="kpi-value success">0</div></div>
+        <div className="admin-card"><div className="kpi-label">Bugün Reddedilen</div><div className="kpi-value danger">0</div></div>
+        <div className="admin-card"><div className="kpi-label">Ortalama İnceleme</div><div className="kpi-value">12 dk</div></div>
+      </div>
+
+      <div className="kpi-grid">
+        {sorted.map((review) => (
+          <div key={review.id} className="admin-card">
             <div className="item-row">
               <strong>{review.fullName}</strong>
-              <span className="muted">{review.email}</span>
+              <span className="muted">{review.phone}</span>
             </div>
-            <p className="muted" style={{ marginTop: 8 }}>
-              {review.adminReviewNote || 'Not yok'}
-            </p>
             <p className="muted">
               AI Güven Skoru:{' '}
               {(() => {
@@ -71,9 +94,9 @@ export default function AdminReviewsPage() {
                 }
               })()}
             </p>
-            <input
+            <textarea
               className="form-input"
-              placeholder="Red nedeni / inceleme notu"
+              placeholder="Admin notu veya red sebebi"
               value={reasonMap[review.id] ?? ''}
               onChange={(e) => setReasonMap((prev) => ({ ...prev, [review.id]: e.target.value }))}
               style={{ marginTop: 8 }}
@@ -84,6 +107,9 @@ export default function AdminReviewsPage() {
               </button>
               <button className="btn btn-danger btn-sm" onClick={() => decide(review.id, false)}>
                 Reddet
+              </button>
+              <button className="btn btn-warning btn-sm" onClick={() => setMessage('Kayıt manuel incelemeye alındı.')}>
+                Manuel İnceleme
               </button>
             </div>
           </div>

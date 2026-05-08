@@ -26,7 +26,7 @@ function getTurkishErrorMessage(error: AxiosError<ApiErrorPayload>) {
   const payload = error.response?.data
 
   if (!error.response) {
-    return 'Sunucuya baglanilamadi. Lutfen backend servisinin acik oldugunu kontrol edin.'
+    return 'Sunucuya bağlanılamadı. Lütfen backend servisinin açık olduğunu kontrol edin.'
   }
 
   const validationErrors = collectValidationErrors(payload)
@@ -38,18 +38,18 @@ function getTurkishErrorMessage(error: AxiosError<ApiErrorPayload>) {
   if (payload?.detail) return payload.detail
   if (payload?.title) return payload.title
 
-  if (error.response.status === 401) return 'Kullanici adi veya sifre hatali.'
-  if (error.response.status === 403) return 'Bu islem icin yetkiniz yok.'
-  if (error.response.status === 404) return 'Istenen kaynak bulunamadi.'
-  if (error.response.status === 429) return 'Cok fazla istek gonderdiniz. Lutfen biraz bekleyin.'
-  if (error.response.status >= 500) return 'Sunucuda bir hata olustu. Lutfen tekrar deneyin.'
+  if (error.response.status === 401) return 'Kullanıcı adı veya şifre hatalı.'
+  if (error.response.status === 403) return 'Bu işlem için yetkiniz yok.'
+  if (error.response.status === 404) return 'İstenen kaynak bulunamadı.'
+  if (error.response.status === 429) return 'Çok fazla istek gönderdiniz. Lütfen biraz bekleyin.'
+  if (error.response.status >= 500) return 'Sunucuda bir hata oluştu. Lütfen tekrar deneyin.'
 
-  return 'Islem sirasinda bir hata olustu. Lutfen tekrar deneyin.'
+  return 'İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.'
 }
 
 // ── Request interceptor: inject JWT ───────────────────────────────────
 apiClient.interceptors.request.use((config) => {
-  const raw = localStorage.getItem('yukle-auth')
+  const raw = localStorage.getItem('yükle-auth')
   if (raw) {
     try {
       const store = JSON.parse(raw)
@@ -95,7 +95,7 @@ apiClient.interceptors.response.use(
     isRefreshing = true
 
     try {
-      const raw = localStorage.getItem('yukle-auth')
+      const raw = localStorage.getItem('yükle-auth')
       if (!raw) throw new Error('No auth data')
       const store = JSON.parse(raw)
       const { token, refreshToken } = store?.state ?? {}
@@ -107,15 +107,15 @@ apiClient.interceptors.response.use(
       // Update store
       store.state.token = newToken
       store.state.refreshToken = data.refreshToken
-      localStorage.setItem('yukle-auth', JSON.stringify(store))
+      localStorage.setItem('yükle-auth', JSON.stringify(store))
 
       processQueue(null, newToken)
       original.headers!.Authorization = `Bearer ${newToken}`
       return apiClient(original)
     } catch (refreshErr) {
       processQueue(refreshErr, null)
-      localStorage.removeItem('yukle-auth')
-      window.location.href = '/login'
+      localStorage.removeItem('yükle-auth')
+      window.location.href = window.location.pathname.startsWith('/admin') ? '/admin/login' : '/login'
       const refreshAxiosErr = refreshErr as AxiosError<ApiErrorPayload>
       ;(refreshAxiosErr as AxiosError<ApiErrorPayload> & { uiMessage?: string; uiDetails?: string[] }).uiMessage =
         getTurkishErrorMessage(refreshAxiosErr)

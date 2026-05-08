@@ -155,10 +155,41 @@ public sealed class LoadsController(
     /// </summary>
     [HttpGet("active")]
     [Authorize(Roles = "Customer,Driver,Admin")]
-    public async Task<IActionResult> GetActiveLoads()
+    public async Task<IActionResult> GetActiveLoads(
+        [FromQuery] string? fromCity = null,
+        [FromQuery] string? toCity = null,
+        [FromQuery] string? vehicleType = null,
+        [FromQuery] decimal? minPrice = null,
+        [FromQuery] decimal? maxPrice = null,
+        [FromQuery] double? minWeight = null,
+        [FromQuery] double? maxWeight = null,
+        [FromQuery] DateTime? dateFrom = null,
+        [FromQuery] DateTime? dateTo = null,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
     {
         var loads = await loadService.GetActiveLoadsAsync();
-        return Ok(loads);
+        var query = loads.AsQueryable();
+        if (!string.IsNullOrWhiteSpace(fromCity)) query = query.Where(x => x.FromCity.Contains(fromCity, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(toCity)) query = query.Where(x => x.ToCity.Contains(toCity, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(vehicleType)) query = query.Where(x => string.Equals(x.Type.ToString(), vehicleType, StringComparison.OrdinalIgnoreCase));
+        if (minPrice.HasValue) query = query.Where(x => x.Price >= minPrice.Value);
+        if (maxPrice.HasValue) query = query.Where(x => x.Price <= maxPrice.Value);
+        if (minWeight.HasValue) query = query.Where(x => x.Weight >= minWeight.Value);
+        if (maxWeight.HasValue) query = query.Where(x => x.Weight <= maxWeight.Value);
+        if (dateFrom.HasValue) query = query.Where(x => x.PickupDate >= dateFrom.Value);
+        if (dateTo.HasValue) query = query.Where(x => x.PickupDate <= dateTo.Value);
+
+        query = (sortBy ?? "date").ToLowerInvariant() switch
+        {
+            "price" => query.OrderBy(x => x.Price),
+            _ => query.OrderByDescending(x => x.CreatedAt)
+        };
+
+        var total = query.Count();
+        var items = query.Skip((Math.Max(page, 1) - 1) * Math.Max(pageSize, 1)).Take(Math.Max(pageSize, 1)).ToList();
+        return Ok(new { Total = total, Items = items });
     }
 
     // ── GET api/loads/{id} ─────────────────────────────────────────────────────

@@ -2,15 +2,15 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getActiveLoads } from '../../api/loads'
 import type { Load } from '../../api/types'
-import { PageError, PageSkeleton } from '../../components/common/PageStates'
+import { PageEmpty, PageError, PageSkeleton } from '../../components/common/PageStates'
 import '../shared/Page.css'
 
 const STATUS: Record<string, string> = {
   Active: 'Aktif',
   OnWay: 'Yolda',
   Delivered: 'Teslim',
-  Cancelled: 'Iptal',
-  Assigned: 'Atandi',
+  Cancelled: 'İptal',
+  Assigned: 'Atandı',
 }
 
 export default function CustomerLoadsPage() {
@@ -21,21 +21,21 @@ export default function CustomerLoadsPage() {
   useEffect(() => {
     getActiveLoads()
       .then((data) => setLoads(data))
-      .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'Ilanlar yuklenemedi.'))
+      .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'İlanlar yüklenemedi.'))
       .finally(() => setLoading(false))
   }, [])
 
-  if (loading) return <PageSkeleton rows={6} />
+  if (loading) return <PageSkeleton rows={6} variant="card" />
 
   return (
     <div className="page-wrap">
       <div className="page-head">
         <div>
-          <h1 className="page-title">Ilanlarim</h1>
-          <p className="page-sub">Aktif ilanlar ve durumlari</p>
+          <h1 className="page-title">İlanlarım</h1>
+          <p className="page-sub">Aktif ilanlar ve durumları</p>
         </div>
         <Link className="btn btn-primary" to="/customer/loads/create">
-          + Yeni Ilan
+          + Yeni İlan
         </Link>
       </div>
       {error ? <PageError message={error} /> : null}
@@ -54,7 +54,15 @@ export default function CustomerLoadsPage() {
             </div>
           </Link>
         ))}
-        {loads.length === 0 ? <div className="card muted">Gosterilecek ilan yok.</div> : null}
+        {loads.length === 0 ? (
+          <PageEmpty
+            icon="📦"
+            title="Henüz ilan yok"
+            description="Yeni bir ilan oluşturarak teklif toplamaya başlayabilirsiniz."
+            actionLabel="İlan Oluştur"
+            onAction={() => { window.location.href = '/customer/loads/create' }}
+          />
+        ) : null}
       </div>
     </div>
   )

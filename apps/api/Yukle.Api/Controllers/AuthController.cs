@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using System.Linq;
 using System.Security.Claims;
 using Yukle.Api.DTOs;
+using Yukle.Api.Exceptions;
 using Yukle.Api.Services;
 
 namespace Yukle.Api.Controllers
@@ -44,9 +46,20 @@ namespace Yukle.Api.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
-            var response = await _authService.LoginAsync(request);
-            return Ok(response);
+            try
+            {
+                var response = await _authService.LoginAsync(request);
+                return Ok(response);
+            }
+            catch (PhoneVerificationRequiredException ex)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    message = ex.Message,
+                    requiresVerification = true,
+                    phone = MaskPhoneForVerification(ex.Phone)
+                });
+            }
         }
 
         [AllowAnonymous]
@@ -129,6 +142,23 @@ namespace Yukle.Api.Controllers
             }
 
             return Ok(result);
+        }
+
+        private static string MaskPhoneForVerification(string? phone)
+        {
+            if (string.IsNullOrWhiteSpace(phone))
+                return "5XXXXXXXXX";
+
+            var digits = new string(phone.Where(char.IsDigit).ToArray());
+            if (digits.StartsWith("90") && digits.Length == 12)
+                digits = digits[2..];
+            else if (digits.StartsWith("0") && digits.Length == 11)
+                digits = digits[1..];
+
+            if (digits.Length != 10)
+                return "5XXXXXXXXX";
+
+            return $"{digits[0]}XXXXXXXXX";
         }
     }
 }

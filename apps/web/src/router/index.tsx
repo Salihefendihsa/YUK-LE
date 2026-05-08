@@ -3,7 +3,11 @@ import { useAuthStore } from '../store/auth.store'
 import AppLayout from '../components/layout/AppLayout'
 import Login from '../pages/auth/Login'
 import Register from '../pages/auth/Register'
+import ForgotPasswordPage from '../pages/auth/ForgotPassword'
 import VerifyPhone from '../pages/auth/VerifyPhone'
+import KvkkPage from '../pages/legal/Kvkk'
+import KullanimKosullariPage from '../pages/legal/KullanimKosullari'
+import GizlilikPage from '../pages/legal/Gizlilik'
 import CustomerDashboard from '../pages/customer/Dashboard'
 import CustomerLoadsPage from '../pages/customer/Loads'
 import CustomerLoadCreatePage from '../pages/customer/LoadCreate'
@@ -11,6 +15,8 @@ import CustomerLoadDetailPage from '../pages/customer/LoadDetail'
 import CustomerBidsPage from '../pages/customer/Bids'
 import CustomerTrackPage from '../pages/customer/Track'
 import CustomerHistoryPage from '../pages/customer/History'
+import CustomerAddressesPage from '../pages/customer/Addresses'
+import CustomerProfilePage from '../pages/customer/Profile'
 import DriverDashboard from '../pages/driver/Dashboard'
 import DriverLoadsPage from '../pages/driver/Loads'
 import DriverLoadDetailPage from '../pages/driver/LoadDetail'
@@ -18,6 +24,9 @@ import DriverDocumentsPage from '../pages/driver/Documents'
 import DriverBidsPage from '../pages/driver/Bids'
 import DriverTrackPage from '../pages/driver/Track'
 import DriverHistoryPage from '../pages/driver/History'
+import DriverWalletPage from '../pages/driver/Wallet'
+import DriverActiveLoadPage from '../pages/driver/ActiveLoad'
+import DriverProfilePage from '../pages/driver/Profile'
 import AdminDashboard from '../pages/admin/Dashboard'
 import AdminReviewsPage from '../pages/admin/Reviews'
 import AdminDriversPage from '../pages/admin/Drivers'
@@ -26,6 +35,17 @@ import AdminLoadsPage from '../pages/admin/Loads'
 import AdminPaymentsPage from '../pages/admin/Payments'
 import AdminSystemPage from '../pages/admin/System'
 import AdminLogsPage from '../pages/admin/Logs'
+import AdminUsersPage from '../pages/admin/Users'
+import AdminDocumentsPage from '../pages/admin/Documents'
+import AdminChatsPage from '../pages/admin/Chats'
+import AdminSettingsPage from '../pages/admin/Settings'
+import AdminDriverDetailPage from '../pages/admin/DriverDetail'
+import AdminCustomerDetailPage from '../pages/admin/CustomerDetail'
+import AdminLoadDetailPage from '../pages/admin/LoadDetail'
+import AdminTrackingPage from '../pages/admin/Tracking'
+import AdminRatingsPage from '../pages/admin/Ratings'
+import AdminLoginPage from '../pages/admin/AdminLogin'
+import { NotFoundPage, ServerErrorPage, UnauthorizedPage } from '../pages/system/ErrorPages'
 
 function RootRedirect() {
   const { isAuthenticated, user } = useAuthStore()
@@ -48,8 +68,15 @@ function ProtectedRoute({ allowedRoles }: { allowedRoles?: string[] }) {
 const router = createBrowserRouter([
   { path: '/', element: <RootRedirect /> },
   { path: '/login',        element: <Login /> },
+  { path: '/admin/login',  element: <AdminLoginPage /> },
   { path: '/register',     element: <Register /> },
+  { path: '/forgot-password', element: <ForgotPasswordPage /> },
   { path: '/verify-phone', element: <VerifyPhone /> },
+  { path: '/kvkk',         element: <KvkkPage /> },
+  { path: '/kullanim-kosullari', element: <KullanimKosullariPage /> },
+  { path: '/gizlilik', element: <GizlilikPage /> },
+  { path: '/unauthorized', element: <UnauthorizedPage /> },
+  { path: '/500', element: <ServerErrorPage /> },
   {
     element: <ProtectedRoute allowedRoles={['Customer']} />,
     children: [
@@ -64,6 +91,8 @@ const router = createBrowserRouter([
           { path: 'bids', element: <CustomerBidsPage /> },
           { path: 'track', element: <CustomerTrackPage /> },
           { path: 'history', element: <CustomerHistoryPage /> },
+          { path: 'addresses', element: <CustomerAddressesPage /> },
+          { path: 'profile', element: <CustomerProfilePage /> },
         ],
       },
     ],
@@ -82,6 +111,9 @@ const router = createBrowserRouter([
           { path: 'bids', element: <DriverBidsPage /> },
           { path: 'track', element: <DriverTrackPage /> },
           { path: 'history', element: <DriverHistoryPage /> },
+          { path: 'wallet', element: <DriverWalletPage /> },
+          { path: 'active-load', element: <DriverActiveLoadPage /> },
+          { path: 'profile', element: <DriverProfilePage /> },
         ],
       },
     ],
@@ -96,15 +128,25 @@ const router = createBrowserRouter([
           { path: 'dashboard', element: <AdminDashboard /> },
           { path: 'reviews', element: <AdminReviewsPage /> },
           { path: 'drivers', element: <AdminDriversPage /> },
+          { path: 'drivers/:id', element: <AdminDriverDetailPage /> },
           { path: 'customers', element: <AdminCustomersPage /> },
+          { path: 'customers/:id', element: <AdminCustomerDetailPage /> },
           { path: 'loads', element: <AdminLoadsPage /> },
+          { path: 'loads/:id', element: <AdminLoadDetailPage /> },
+          { path: 'documents', element: <AdminDocumentsPage /> },
+          { path: 'chats', element: <AdminChatsPage /> },
           { path: 'payments', element: <AdminPaymentsPage /> },
+          { path: 'users', element: <AdminUsersPage /> },
           { path: 'system', element: <AdminSystemPage /> },
           { path: 'logs', element: <AdminLogsPage /> },
+          { path: 'settings', element: <AdminSettingsPage /> },
+          { path: 'tracking', element: <AdminTrackingPage /> },
+          { path: 'ratings', element: <AdminRatingsPage /> },
         ],
       },
     ],
   },
+  { path: '*', element: <NotFoundPage /> },
 ])
 
 export default function AppRouter() {

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Yukle.Api.Data;
 using Yukle.Api.Hubs;
+using Yukle.Api.Models;
 using AppNotification = Yukle.Api.Models.Notification;
 
 namespace Yukle.Api.Services;
@@ -62,6 +63,32 @@ public class NotificationService : INotificationService
 
         if (!string.IsNullOrWhiteSpace(fcmToken))
             await SendPushAsync(fcmToken, title, message);
+    }
+
+    public async Task SendNotificationAsync(int userId, string title, string message, NotificationType type, Guid? relatedId = null)
+    {
+        var notification = new AppNotification
+        {
+            UserId = userId,
+            Title = title,
+            Message = message,
+            Type = type,
+            RelatedEntityId = relatedId,
+            IsRead = false,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _context.Notifications.AddAsync(notification);
+        await _context.SaveChangesAsync();
+
+        await _hub.Clients.Group(userId.ToString()).SendAsync("ReceiveNotification", new
+        {
+            notification.Id,
+            notification.Title,
+            notification.Message,
+            notification.Type,
+            notification.CreatedAt
+        });
     }
 
     // ── SendPushAsync ─────────────────────────────────────────────────────────

@@ -15,7 +15,19 @@ public class Notification
 
     public string   Title     { get; set; } = string.Empty;
     public string   Message   { get; set; } = string.Empty;
+    public NotificationType Type { get; set; } = NotificationType.System;
+    public Guid? RelatedEntityId { get; set; }
 
     public bool     IsRead    { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+public enum NotificationType
+{
+    Load = 0,
+    Bid = 1,
+    Payment = 2,
+    System = 3,
+    Document = 4,
+    Proximity = 5
 }

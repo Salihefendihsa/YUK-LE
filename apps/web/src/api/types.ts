@@ -11,6 +11,17 @@ export interface RegisterRequest {
   password: string
   role: 'Customer' | 'Driver'
   isCorporate: boolean
+  companyName: string
+  taxNumber: string
+  companyAddress: string
+  tcIdentityNumber: string
+  birthDate: string
+  iban: string
+  address: string
+  licenseClass: string
+  acceptedKvkk: boolean
+  acceptedTerms: boolean
+  acceptedLocationTracking: boolean
   taxNumberOrTCKN: string
 }
 

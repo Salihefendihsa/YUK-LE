@@ -25,6 +25,9 @@ public class YukleDbContext : DbContext
     public DbSet<Vehicle>      Vehicles      { get; set; }
     public DbSet<Bid>          Bids          { get; set; }
     public DbSet<Notification> Notifications { get; set; }
+    public DbSet<Rating> Ratings { get; set; }
+    public DbSet<DeliveryAddress> DeliveryAddresses { get; set; }
+    public DbSet<ChatMessage> ChatMessages { get; set; }
     public DbSet<FuelPrice>    FuelPrices    { get; set; }
     public DbSet<AdminActionLog> AdminActionLogs { get; set; }
 
@@ -201,6 +204,38 @@ public class YukleDbContext : DbContext
 
             // Okunmamış bildirimleri hızlı getirmek için bileşik index
             entity.HasIndex(n => new { n.UserId, n.IsRead });
+        });
+
+        modelBuilder.Entity<Rating>(entity =>
+        {
+            entity.HasKey(r => r.Id);
+            entity.Property(r => r.Comment).HasMaxLength(500);
+            entity.HasOne(r => r.Load).WithMany().HasForeignKey(r => r.LoadId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(r => r.GivenByUser).WithMany().HasForeignKey(r => r.GivenByUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(r => r.GivenToUser).WithMany().HasForeignKey(r => r.GivenToUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(r => new { r.LoadId, r.GivenByUserId }).IsUnique();
+        });
+
+        modelBuilder.Entity<DeliveryAddress>(entity =>
+        {
+            entity.HasKey(d => d.Id);
+            entity.Property(d => d.Title).HasMaxLength(100).IsRequired();
+            entity.Property(d => d.CompanyName).HasMaxLength(200).IsRequired();
+            entity.Property(d => d.ContactPerson).HasMaxLength(150).IsRequired();
+            entity.Property(d => d.ContactPhone).HasMaxLength(20).IsRequired();
+            entity.Property(d => d.Address).HasMaxLength(500).IsRequired();
+            entity.Property(d => d.City).HasMaxLength(100).IsRequired();
+            entity.Property(d => d.District).HasMaxLength(100).IsRequired();
+            entity.HasOne(d => d.User).WithMany().HasForeignKey(d => d.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ChatMessage>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+            entity.Property(c => c.SenderName).HasMaxLength(150).IsRequired();
+            entity.Property(c => c.Message).HasMaxLength(2000).IsRequired();
+            entity.Property(c => c.BlockReason).HasMaxLength(300);
+            entity.HasIndex(c => new { c.LoadId, c.CreatedAt });
         });
 
         // ── AdminActionLog ────────────────────────────────────────────────────

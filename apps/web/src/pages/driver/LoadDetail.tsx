@@ -22,7 +22,7 @@ export default function DriverLoadDetailPage() {
         setLoad(loadData)
         setMatch(matchData)
       })
-      .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'Yuk detayi yuklenemedi.'))
+      .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'Yük detayi yüklenemedi.'))
       .finally(() => setLoading(false))
   }, [id])
 
@@ -42,7 +42,7 @@ export default function DriverLoadDetailPage() {
   return (
     <div className="page-wrap">
       <div>
-        <h1 className="page-title">Yuk Detayi</h1>
+        <h1 className="page-title">Yük Detayi</h1>
         <p className="page-sub">
           {load ? `${load.fromCity} → ${load.toCity}` : ''}
         </p>
@@ -61,7 +61,7 @@ export default function DriverLoadDetailPage() {
             <span>{load.weight} kg</span>
           </div>
           <div className="item-row" style={{ marginTop: 8 }}>
-            <strong>Yuk turu</strong>
+            <strong>Yük turu</strong>
             <span>{load.type}</span>
           </div>
         </div>

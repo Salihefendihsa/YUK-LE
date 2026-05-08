@@ -5,8 +5,26 @@ import './Register.css'
 
 type Role = 'Customer' | 'Driver'
 
+function isAdult(dateIso: string) {
+  const birth = new Date(dateIso)
+  const minDate = new Date()
+  minDate.setFullYear(minDate.getFullYear() - 18)
+  return birth <= minDate
+}
+
+function isValidTcIdentity(tc: string) {
+  if (!/^\d{11}$/.test(tc) || tc[0] === '0') return false
+  const digits = tc.split('').map(Number)
+  const odd = digits[0] + digits[2] + digits[4] + digits[6] + digits[8]
+  const even = digits[1] + digits[3] + digits[5] + digits[7]
+  const d10 = ((odd * 7) - even) % 10
+  const d11 = (digits.slice(0, 10).reduce((a, b) => a + b, 0)) % 10
+  return d10 === digits[9] && d11 === digits[10]
+}
+
 export default function Register() {
   const [role, setRole] = useState<Role | null>(null)
+  const [step, setStep] = useState(1)
   const [form, setForm] = useState({
     fullName: '',
     phone: '',
@@ -15,6 +33,17 @@ export default function Register() {
     confirmPassword: '',
     taxNumberOrTCKN: '',
     isCorporate: false,
+    companyName: '',
+    taxNumber: '',
+    companyAddress: '',
+    tcIdentityNumber: '',
+    birthDate: '',
+    iban: '',
+    address: '',
+    licenseClass: 'B',
+    acceptedKvkk: false,
+    acceptedTerms: false,
+    acceptedLocationTracking: false,
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -40,13 +69,54 @@ export default function Register() {
       setError('Telefon numarasi yalnizca rakamlardan olusmali ve 10-15 hane arasinda olmalidir.')
       return
     }
-    const taxDigits = form.taxNumberOrTCKN.replace(/\D/g, '')
-    if (role === 'Customer' && taxDigits.length < 10) {
-      setError('Vergi numarasi en az 10 hane olmali.')
+    const taxDigits = form.taxNumber.replace(/\D/g, '')
+    const tcDigits = form.tcIdentityNumber.replace(/\D/g, '')
+    const iban = form.iban.trim().toUpperCase()
+
+    if (!form.acceptedKvkk || !form.acceptedTerms) {
+      setError('KVKK ve Kullanım Koşulları onayları zorunludur.')
       return
     }
-    if (role === 'Driver' && taxDigits.length !== 11) {
-      setError('TCKN 11 hane olmali.')
+
+    if (role === 'Customer' && form.companyName.trim().length < 2) {
+      setError('Şirket adı en az 2 karakter olmalıdır.')
+      return
+    }
+    if (role === 'Customer' && !/^\d{10}$/.test(taxDigits)) {
+      setError('Vergi numarası tam 10 hane olmalıdır.')
+      return
+    }
+    if (role === 'Customer' && form.companyAddress.trim().length < 10) {
+      setError('Şirket adresi en az 10 karakter olmalıdır.')
+      return
+    }
+
+    if (role === 'Driver' && !/^\d{11}$/.test(tcDigits)) {
+      setError('T.C. kimlik numarası tam 11 hane olmalıdır.')
+      return
+    }
+    if (role === 'Driver' && !isValidTcIdentity(tcDigits)) {
+      setError('T.C. kimlik numarası doğrulaması başarısız.')
+      return
+    }
+    if (role === 'Driver' && !form.birthDate) {
+      setError('Doğum tarihi zorunludur.')
+      return
+    }
+    if (role === 'Driver' && !isAdult(form.birthDate)) {
+      setError('Şoför kaydı için 18 yaşından büyük olmalısınız.')
+      return
+    }
+    if (role === 'Driver' && !/^TR\d{24}$/.test(iban)) {
+      setError('IBAN TR ile başlayan 26 karakter formatında olmalıdır.')
+      return
+    }
+    if (role === 'Driver' && form.address.trim().length < 10) {
+      setError('İkametgah adresi en az 10 karakter olmalıdır.')
+      return
+    }
+    if (role === 'Driver' && !form.acceptedLocationTracking) {
+      setError('Konum verisi onayı zorunludur.')
       return
     }
     setLoading(true)
@@ -58,15 +128,24 @@ export default function Register() {
         email: form.email,
         password: form.password,
         role,
-        isCorporate: form.isCorporate,
-        taxNumberOrTCKN: taxDigits,
+        isCorporate: role === 'Customer' || form.isCorporate,
+        taxNumberOrTCKN: role === 'Driver' ? tcDigits : taxDigits,
+        companyName: form.companyName,
+        taxNumber: taxDigits,
+        companyAddress: form.companyAddress,
+        tcIdentityNumber: tcDigits,
+        birthDate: form.birthDate,
+        iban,
+        address: form.address,
+        licenseClass: form.licenseClass,
+        acceptedKvkk: form.acceptedKvkk,
+        acceptedTerms: form.acceptedTerms,
+        acceptedLocationTracking: form.acceptedLocationTracking,
       })
       sessionStorage.setItem(
-        'yukle-pending-auth',
+        'yükle-pending-auth',
         JSON.stringify({
-          role,
           phone: normalizedPhone,
-          password: form.password,
         })
       )
       navigate(`/verify-phone?phone=${encodeURIComponent(normalizedPhone)}`)
@@ -121,10 +200,16 @@ export default function Register() {
               <span>{role === 'Customer' ? '🏭 Fabrika Hesabı' : '🚛 Şoför Hesabı'}</span>
               <button onClick={() => setRole(null)} className="change-role-btn">Değiştir</button>
             </div>
+            <div className="item-row" style={{ marginTop: 12 }}>
+              <span className={`badge ${step === 1 ? 'badge-info' : 'badge-muted'}`}>1) Hesap</span>
+              <span className={`badge ${step === 2 ? 'badge-info' : 'badge-muted'}`}>2) Rol Bilgileri</span>
+              <span className={`badge ${step === 3 ? 'badge-info' : 'badge-muted'}`}>3) Güvenlik ve Onay</span>
+            </div>
 
             {error && <div className="error-banner" role="alert">{error}</div>}
 
             <form onSubmit={handleSubmit} noValidate>
+              {step === 1 ? (<>
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label" htmlFor="fullName">Ad Soyad *</label>
@@ -152,19 +237,72 @@ export default function Register() {
                   onChange={(e) => update('email', e.target.value)}
                   required />
               </div>
+              <div className="item-row" style={{ marginTop: 16 }}>
+                <span />
+                <button type="button" className="btn btn-primary" onClick={() => setStep(2)}>İleri</button>
+              </div>
+              </>) : null}
 
+              {step === 2 ? (<>
               <div className="form-group" style={{ marginTop: 16 }}>
                 <label className="form-label" htmlFor="taxTCKN">
-                  {role === 'Customer' ? 'Vergi Numarası *' : 'TCKN *'}
-                  {role === 'Driver' && <span className="secure-hint" title="AES şifrelemesi ile güvenle saklanır"> 🔒 Güvenli</span>}
+                  {role === 'Customer' ? 'Vergi Numarası *' : 'T.C. Kimlik No *'}
                 </label>
                 <input id="taxTCKN" type="text" className="form-input"
                   placeholder={role === 'Customer' ? '1234567890' : '12345678901'}
-                  value={form.taxNumberOrTCKN}
-                  onChange={(e) => update('taxNumberOrTCKN', e.target.value)}
+                  value={role === 'Customer' ? form.taxNumber : form.tcIdentityNumber}
+                  onChange={(e) => update(role === 'Customer' ? 'taxNumber' : 'tcIdentityNumber', e.target.value)}
                   required />
               </div>
 
+              {role === 'Customer' && (
+                <>
+                  <div className="form-group" style={{ marginTop: 16 }}>
+                    <label className="form-label" htmlFor="companyName">Şirket Adı *</label>
+                    <input id="companyName" type="text" className="form-input" value={form.companyName} onChange={(e) => update('companyName', e.target.value)} required />
+                  </div>
+                  <div className="form-group" style={{ marginTop: 16 }}>
+                    <label className="form-label" htmlFor="companyAddress">Şirket Adresi *</label>
+                    <input id="companyAddress" type="text" className="form-input" value={form.companyAddress} onChange={(e) => update('companyAddress', e.target.value)} required />
+                  </div>
+                  <div className="form-group" style={{ marginTop: 16 }}>
+                    <label className="form-label" htmlFor="authorizedPerson">Yetkili Kişi Adı</label>
+                    <input id="authorizedPerson" type="text" className="form-input" value={form.fullName} disabled />
+                  </div>
+                </>
+              )}
+
+              {role === 'Driver' && (
+                <>
+                  <div className="form-row" style={{ marginTop: 16 }}>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="birthDate">Doğum Tarihi *</label>
+                      <input id="birthDate" type="date" className="form-input" value={form.birthDate} onChange={(e) => update('birthDate', e.target.value)} required />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="licenseClass">Ehliyet Sınıfı *</label>
+                      <select id="licenseClass" className="form-input" value={form.licenseClass} onChange={(e) => update('licenseClass', e.target.value)}>
+                        {['B', 'C', 'CE', 'D', 'E'].map((c) => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="form-group" style={{ marginTop: 16 }}>
+                    <label className="form-label" htmlFor="iban">IBAN *</label>
+                    <input id="iban" type="text" className="form-input" placeholder="TR000000000000000000000000" value={form.iban} onChange={(e) => update('iban', e.target.value)} required />
+                  </div>
+                  <div className="form-group" style={{ marginTop: 16 }}>
+                    <label className="form-label" htmlFor="address">İkametgah Adresi *</label>
+                    <input id="address" type="text" className="form-input" value={form.address} onChange={(e) => update('address', e.target.value)} required />
+                  </div>
+                </>
+              )}
+              <div className="item-row" style={{ marginTop: 16 }}>
+                <button type="button" className="btn btn-ghost" onClick={() => setStep(1)}>Geri</button>
+                <button type="button" className="btn btn-primary" onClick={() => setStep(3)}>İleri</button>
+              </div>
+              </>) : null}
+
+              {step === 3 ? (<>
               <div className="form-row" style={{ marginTop: 16 }}>
                 <div className="form-group">
                   <label className="form-label" htmlFor="password">Şifre *</label>
@@ -184,12 +322,18 @@ export default function Register() {
                 </div>
               </div>
 
-              {role === 'Customer' && (
-                <label className="checkbox-row" style={{ marginTop: 16 }}>
-                  <input type="checkbox"
-                    checked={form.isCorporate}
-                    onChange={(e) => update('isCorporate', e.target.checked)} />
-                  <span>Kurumsal hesap (KDV faturası için)</span>
+              <label className="checkbox-row" style={{ marginTop: 16 }}>
+                <input type="checkbox" checked={form.acceptedKvkk} onChange={(e) => update('acceptedKvkk', e.target.checked)} />
+                <span>KVKK Aydınlatma Metni'ni okudum, anladım ve kabul ediyorum. <a href="/kvkk" target="_blank" rel="noreferrer">Metni aç</a></span>
+              </label>
+              <label className="checkbox-row" style={{ marginTop: 10 }}>
+                <input type="checkbox" checked={form.acceptedTerms} onChange={(e) => update('acceptedTerms', e.target.checked)} />
+                <span>Kullanım Koşulları'nı okudum ve kabul ediyorum. <a href="/kullanim-kosullari" target="_blank" rel="noreferrer">Metni aç</a></span>
+              </label>
+              {role === 'Driver' && (
+                <label className="checkbox-row" style={{ marginTop: 10 }}>
+                  <input type="checkbox" checked={form.acceptedLocationTracking} onChange={(e) => update('acceptedLocationTracking', e.target.checked)} />
+                  <span>Konum verilerimin aktif sefer sırasında işlenmesine onay veriyorum.</span>
                 </label>
               )}
 
@@ -198,6 +342,8 @@ export default function Register() {
                 {loading ? <span className="spinner" /> : null}
                 {loading ? 'Kayıt yapılıyor...' : 'Hesap Oluştur'}
               </button>
+              <button type="button" className="btn btn-ghost btn-full" style={{ marginTop: 8 }} onClick={() => setStep(2)}>Geri</button>
+              </>) : null}
             </form>
           </>
         )}
