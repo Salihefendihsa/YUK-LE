@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { getPayments, releasePayment } from '../../api/admin'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
 import './AdminPanel.css'
+import { formatCurrencyTRY, normalizeArray } from '../../utils/format'
 
 export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState<Array<Record<string, string | number>>>([])
@@ -10,7 +11,7 @@ export default function AdminPaymentsPage() {
 
   async function fetchPayments() {
     const data = await getPayments()
-    setPayments(data)
+    setPayments(normalizeArray<Record<string, string | number>>(data))
   }
 
   useEffect(() => {
@@ -25,17 +26,18 @@ export default function AdminPaymentsPage() {
   }
 
   if (loading) return <PageSkeleton rows={8} />
-  const totalVolume = payments.reduce((a, b) => a + Number(b.amount ?? 0), 0)
-  const failedCount = payments.filter((p) => String(p.status).toLowerCase().includes('fail')).length
+  const paymentList = Array.isArray(payments) ? payments : []
+  const totalVolume = paymentList.reduce((a, b) => a + Number(b.amount ?? 0), 0)
+  const failedCount = paymentList.filter((p) => String(p.status).toLowerCase().includes('fail')).length
 
   return (
     <div className="admin-page">
       <h1 className="admin-title">Ödeme & Finans</h1>
       {error ? <PageError message={error} /> : null}
       <div className="kpi-grid">
-        <div className="admin-card"><div className="kpi-label">Toplam İşlem Hacmi</div><div className="kpi-value">₺{totalVolume.toFixed(2)}</div></div>
-        <div className="admin-card"><div className="kpi-label">Escrow Bekleyen</div><div className="kpi-value">₺{(totalVolume * 0.3).toFixed(2)}</div></div>
-        <div className="admin-card"><div className="kpi-label">Bu Ay Komisyon</div><div className="kpi-value">₺{(totalVolume * 0.1).toFixed(2)}</div></div>
+        <div className="admin-card"><div className="kpi-label">Toplam İşlem Hacmi</div><div className="kpi-value">{formatCurrencyTRY(totalVolume)}</div></div>
+        <div className="admin-card"><div className="kpi-label">Escrow Bekleyen</div><div className="kpi-value">{formatCurrencyTRY(totalVolume * 0.3)}</div></div>
+        <div className="admin-card"><div className="kpi-label">Bu Ay Komisyon</div><div className="kpi-value">{formatCurrencyTRY(totalVolume * 0.1)}</div></div>
         <div className="admin-card"><div className="kpi-label">Başarısız İşlem</div><div className="kpi-value danger">{failedCount}</div></div>
       </div>
       <div className="admin-filters">
@@ -49,13 +51,13 @@ export default function AdminPaymentsPage() {
         <table className="admin-table">
           <thead><tr><th>İşlem ID</th><th>Yük ID</th><th>Tutar</th><th>Komisyon</th><th>Net</th><th>Durum</th><th>İşlem</th></tr></thead>
           <tbody>
-            {payments.map((payment) => (
+            {paymentList.map((payment) => (
               <tr key={String(payment.id)}>
                 <td className="mono">{String(payment.transactionId)}</td>
                 <td className="mono">{String(payment.loadId)}</td>
-                <td>₺{Number(payment.amount).toFixed(2)}</td>
-                <td>₺{(Number(payment.amount) * 0.1).toFixed(2)} (%10)</td>
-                <td>₺{(Number(payment.amount) * 0.9).toFixed(2)}</td>
+                <td>{formatCurrencyTRY(payment.amount)}</td>
+                <td>{formatCurrencyTRY(Number(payment.amount) * 0.1)} (%10)</td>
+                <td>{formatCurrencyTRY(Number(payment.amount) * 0.9)}</td>
                 <td>{String(payment.status)}</td>
                 <td>
                   <button className="btn btn-primary btn-sm" onClick={() => {
@@ -67,7 +69,7 @@ export default function AdminPaymentsPage() {
           </tbody>
         </table>
       </div>
-      {payments.length === 0 ? <div className="admin-card empty-state">💳 Ödeme kaydı yok.</div> : null}
+      {paymentList.length === 0 ? <div className="admin-card empty-state">💳 Ödeme kaydı yok.</div> : null}
     </div>
   )
 }

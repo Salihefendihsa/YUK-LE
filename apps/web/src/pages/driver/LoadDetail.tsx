@@ -4,7 +4,10 @@ import { getLoad } from '../../api/loads'
 import { getLoadMatch } from '../../api/matching'
 import { submitBid } from '../../api/bids'
 import type { Load, MatchedLoad } from '../../api/types'
+import LoadChatPanel from '../../components/chat/LoadChatPanel'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
+import { formatCurrencyTRY } from '../../utils/format'
+import { formatCurrency } from '../../utils/validators'
 import '../shared/Page.css'
 
 export default function DriverLoadDetailPage() {
@@ -15,6 +18,7 @@ export default function DriverLoadDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [showChat, setShowChat] = useState(false)
 
   useEffect(() => {
     Promise.all([getLoad(id), getLoadMatch(id)])
@@ -28,8 +32,13 @@ export default function DriverLoadDetailPage() {
 
   async function onSubmitBid() {
     setMessage('')
+    const numericAmount = Number(amount)
+    if (Number.isNaN(numericAmount) || numericAmount < 100 || numericAmount > 9999999) {
+      setError('Fiyat 100 ₺ ile 9.999.999 ₺ arasında olmalıdır')
+      return
+    }
     try {
-      await submitBid({ loadId: id, amount: Number(amount) })
+      await submitBid({ loadId: id, amount: numericAmount })
       setMessage('Teklifiniz basariyla gonderildi.')
       setAmount('')
     } catch (e: unknown) {
@@ -54,7 +63,7 @@ export default function DriverLoadDetailPage() {
         <div className="card">
           <div className="item-row">
             <strong>Fiyat</strong>
-            <span>₺{load.price.toLocaleString('tr-TR')}</span>
+            <span>{formatCurrencyTRY(load.price)}</span>
           </div>
           <div className="item-row" style={{ marginTop: 8 }}>
             <strong>Agirlik</strong>
@@ -82,6 +91,8 @@ export default function DriverLoadDetailPage() {
           <input
             className="form-input"
             type="number"
+            min={100}
+            max={9999999}
             placeholder="Teklif tutari"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
@@ -91,6 +102,13 @@ export default function DriverLoadDetailPage() {
           </button>
         </div>
       </div>
+      {amount ? <p className="muted">Teklif önizleme: {formatCurrency(Number(amount))}</p> : null}
+      {load && (load.status === 'Assigned' || load.status === 'OnWay' || load.status === 'Delivered') ? (
+        <div className="card">
+          <button className="btn btn-secondary btn-sm" onClick={() => setShowChat((v) => !v)}>Müşteriyle Sohbet</button>
+        </div>
+      ) : null}
+      {showChat ? <LoadChatPanel loadId={id} /> : null}
     </div>
   )
 }

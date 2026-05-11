@@ -6,6 +6,8 @@ import { getDriverLocation } from '../../api/location'
 import { submitRating } from '../../api/ratings'
 import type { Bid, Load } from '../../api/types'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
+import LoadChatPanel from '../../components/chat/LoadChatPanel'
+import { formatCurrencyTRY, normalizeArray } from '../../utils/format'
 import '../shared/Page.css'
 
 export default function CustomerLoadDetailPage() {
@@ -17,6 +19,7 @@ export default function CustomerLoadDetailPage() {
   const [actionMsg, setActionMsg] = useState('')
   const [loc, setLoc] = useState<{ latitude?: number; longitude?: number } | null>(null)
   const [showRating, setShowRating] = useState(false)
+  const [showChat, setShowChat] = useState(false)
   const [score, setScore] = useState(5)
   const [comment, setComment] = useState('')
 
@@ -24,7 +27,7 @@ export default function CustomerLoadDetailPage() {
     Promise.all([getLoad(id), getBidsForLoad(id)])
       .then(([loadData, bidData]) => {
         setLoad(loadData)
-        setBids(bidData)
+        setBids(normalizeArray<Bid>(bidData))
       })
       .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'İlan detayi yüklenemedi.'))
       .finally(() => setLoading(false))
@@ -67,7 +70,7 @@ export default function CustomerLoadDetailPage() {
         <div className="card">
           <div className="item-row">
             <strong>Fiyat</strong>
-            <span>₺{load.price.toLocaleString('tr-TR')}</span>
+            <span>{formatCurrencyTRY(load.price)}</span>
           </div>
           <div className="item-row" style={{ marginTop: 8 }}>
             <strong>Agirlik</strong>
@@ -77,9 +80,11 @@ export default function CustomerLoadDetailPage() {
             {load.description}
           </p>
           {loc ? <p className="muted">Canlı Konum: {loc.latitude?.toFixed(5)}, {loc.longitude?.toFixed(5)}</p> : null}
+          {load.driverId ? <button className="btn btn-secondary btn-sm" onClick={() => setShowChat((v) => !v)}>Şoförle Yaz</button> : null}
           {load.status === 'Delivered' ? <button className="btn btn-primary btn-sm" onClick={() => setShowRating(true)}>Teslimatı Puanla</button> : null}
         </div>
       ) : null}
+      {showChat ? <LoadChatPanel loadId={id} /> : null}
 
       <div className="card">
         <h2 style={{ marginBottom: 12 }}>Gelen Teklifler</h2>
@@ -88,7 +93,7 @@ export default function CustomerLoadDetailPage() {
             <div key={bid.id} className="item-card">
               <div className="item-row">
                 <strong>{bid.driverFullName}</strong>
-                <strong>₺{bid.amount.toLocaleString('tr-TR')}</strong>
+                <strong>{formatCurrencyTRY(bid.amount)}</strong>
               </div>
               <div className="item-row" style={{ marginTop: 8 }}>
                 <span className="muted">Puan: -</span>

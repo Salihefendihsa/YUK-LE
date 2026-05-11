@@ -43,7 +43,7 @@ export default function TopBar({ onMenuToggle }: TopBarProps) {
           ☰
         </button>
         <p className="topbar-greeting">
-          {greeting()}, <strong>{user?.fullName?.split(' ')[0] ?? 'Kullanıcı'}</strong>
+          {greeting()}, <strong>{user?.fullName ?? 'Kullanıcı'}</strong>
         </p>
       </div>
 

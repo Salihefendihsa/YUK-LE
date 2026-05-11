@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getActiveLoads } from '../../api/loads'
+import { getLoads } from '../../api/loads'
 import type { Load } from '../../api/types'
 import { PageEmpty, PageError, PageSkeleton } from '../../components/common/PageStates'
+import TurkishDateTimePicker from '../../components/common/TurkishDateTimePicker'
 import '../shared/Page.css'
 
 export default function DriverLoadsPage() {
@@ -14,15 +15,20 @@ export default function DriverLoadsPage() {
   const [date, setDate] = useState('')
 
   useEffect(() => {
-    getActiveLoads()
-      .then(setLoads)
-      .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'Yük panosu yüklenemedi.'))
+    getLoads()
+      .then((data) => {
+        setLoads(Array.isArray(data) ? data : [])
+      })
+      .catch((e: { uiMessage?: string }) => {
+        setError(e.uiMessage ?? 'Yük panosu yüklenemedi.')
+        setLoads([])
+      })
       .finally(() => setLoading(false))
   }, [])
 
   const filtered = useMemo(
     () =>
-      loads.filter((l) => {
+      (Array.isArray(loads) ? loads : []).filter((l) => {
         const cityOk = !city || l.fromCity.toLowerCase().includes(city.toLowerCase()) || l.toCity.toLowerCase().includes(city.toLowerCase())
         const vehicleOk = !vehicle || (l.requiredVehicleType ?? '').toLowerCase().includes(vehicle.toLowerCase())
         const dateOk = !date || new Date(l.pickupDate).toDateString() === new Date(date).toDateString()
@@ -43,7 +49,7 @@ export default function DriverLoadsPage() {
       <div className="card filters">
         <input className="form-input" placeholder="Şehir" value={city} onChange={(e) => setCity(e.target.value)} />
         <input className="form-input" placeholder="Araç tipi" value={vehicle} onChange={(e) => setVehicle(e.target.value)} />
-        <input className="form-input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        <TurkishDateTimePicker value={date || undefined} onChange={(iso) => setDate(iso)} onClear={() => setDate('')} />
         <button className="btn btn-ghost" onClick={() => { setCity(''); setVehicle(''); setDate('') }}>
           Filtreleri Temizle
         </button>

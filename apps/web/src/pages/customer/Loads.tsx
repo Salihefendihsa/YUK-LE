@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getActiveLoads } from '../../api/loads'
+import { getLoads } from '../../api/loads'
 import type { Load } from '../../api/types'
 import { PageEmpty, PageError, PageSkeleton } from '../../components/common/PageStates'
 import '../shared/Page.css'
@@ -19,13 +19,19 @@ export default function CustomerLoadsPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    getActiveLoads()
-      .then((data) => setLoads(data))
-      .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'İlanlar yüklenemedi.'))
+    getLoads()
+      .then((data) => {
+        setLoads(Array.isArray(data) ? data : [])
+      })
+      .catch((e: { uiMessage?: string }) => {
+        setError(e.uiMessage ?? 'İlanlar yüklenemedi.')
+        setLoads([])
+      })
       .finally(() => setLoading(false))
   }, [])
 
   if (loading) return <PageSkeleton rows={6} variant="card" />
+  const loadList = Array.isArray(loads) ? loads : []
 
   return (
     <div className="page-wrap">
@@ -40,7 +46,7 @@ export default function CustomerLoadsPage() {
       </div>
       {error ? <PageError message={error} /> : null}
       <div className="list-grid">
-        {loads.map((load) => (
+        {loadList.map((load) => (
           <Link key={load.id} className="item-card" to={`/customer/loads/${load.id}`}>
             <div className="item-row">
               <span className="item-route">
@@ -54,7 +60,7 @@ export default function CustomerLoadsPage() {
             </div>
           </Link>
         ))}
-        {loads.length === 0 ? (
+        {loadList.length === 0 ? (
           <PageEmpty
             icon="📦"
             title="Henüz ilan yok"

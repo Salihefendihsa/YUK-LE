@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { decideReview, getPendingReviews, type PendingReview } from '../../api/admin'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
 import './AdminPanel.css'
+import { normalizeArray } from '../../utils/format'
 
 export default function AdminReviewsPage() {
   const [reviews, setReviews] = useState<PendingReview[]>([])
@@ -13,7 +14,7 @@ export default function AdminReviewsPage() {
 
   async function fetchQueue() {
     const data = await getPendingReviews()
-    setReviews(data)
+    setReviews(normalizeArray<PendingReview>(data))
   }
 
   useEffect(() => {
@@ -40,8 +41,9 @@ export default function AdminReviewsPage() {
   }
 
   if (loading) return <PageSkeleton rows={8} />
+  const reviewList = Array.isArray(reviews) ? reviews : []
 
-  const sorted = [...reviews].sort((a, b) => {
+  const sorted = [...reviewList].sort((a, b) => {
     const getScore = (r: PendingReview) => {
       try {
         return Number((JSON.parse(r.aiInferenceDetails || '{}') as { ConfidenceScore?: number }).ConfidenceScore ?? 100)
@@ -69,7 +71,7 @@ export default function AdminReviewsPage() {
       {message ? <div className="card muted">{message}</div> : null}
 
       <div className="kpi-grid">
-        <div className="admin-card"><div className="kpi-label">Bekleyen</div><div className="kpi-value">{reviews.length}</div></div>
+        <div className="admin-card"><div className="kpi-label">Bekleyen</div><div className="kpi-value">{reviewList.length}</div></div>
         <div className="admin-card"><div className="kpi-label">Bugün Onaylanan</div><div className="kpi-value success">0</div></div>
         <div className="admin-card"><div className="kpi-label">Bugün Reddedilen</div><div className="kpi-value danger">0</div></div>
         <div className="admin-card"><div className="kpi-label">Ortalama İnceleme</div><div className="kpi-value">12 dk</div></div>
@@ -114,7 +116,7 @@ export default function AdminReviewsPage() {
             </div>
           </div>
         ))}
-        {reviews.length === 0 ? <div className="card muted">Bekleyen inceleme bulunmuyor.</div> : null}
+        {reviewList.length === 0 ? <div className="card muted">Bekleyen inceleme bulunmuyor.</div> : null}
       </div>
     </div>
   )

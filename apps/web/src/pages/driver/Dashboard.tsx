@@ -4,6 +4,7 @@ import { getDriverDashboard } from '../../api/dashboard'
 import { getRecommendedLoads } from '../../api/matching'
 import type { DriverDashboard as Stats, MatchedLoad } from '../../api/types'
 import { PageEmpty, PageError, PageSkeleton } from '../../components/common/PageStates'
+import { formatCurrencyTRY, normalizeArray } from '../../utils/format'
 import './Dashboard.css'
 
 export default function DriverDashboard() {
@@ -16,7 +17,7 @@ export default function DriverDashboard() {
     Promise.all([getDriverDashboard(), getRecommendedLoads()])
       .then(([dashboardData, recLoads]) => {
         setStats(dashboardData)
-        setRecommended(recLoads)
+        setRecommended(normalizeArray<MatchedLoad>(recLoads))
       })
       .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'Şoför panel verileri yüklenemedi.'))
       .finally(() => setLoading(false))
@@ -41,7 +42,7 @@ export default function DriverDashboard() {
         {[
           { label: 'Aktif Teklif', value: stats?.activeOffersCount ?? 0, icon: '💼', color: 'var(--color-brand)' },
           { label: 'Tamamlanan Sefer', value: stats?.completedLoadsCount ?? 0, icon: '✅', color: 'var(--color-success)' },
-          { label: 'Toplam Kazanc', value: `₺${(stats?.totalEarned ?? 0).toLocaleString('tr-TR')}`, icon: '💰', color: 'var(--color-warning)' },
+          { label: 'Toplam Kazanç', value: formatCurrencyTRY(stats?.totalEarned ?? 0), icon: '💰', color: 'var(--color-warning)' },
           { label: 'Degerlendirme', value: `⭐ ${stats?.rating?.toFixed(1) ?? '0.0'}`, icon: '⭐', color: 'var(--color-ai)' },
         ].map((s) => (
           <div key={s.label} className="stat-card card">
@@ -54,7 +55,7 @@ export default function DriverDashboard() {
 
       <div className="card">
         <div className="card-header">
-          <h2>AI Onerilen Yükler</h2>
+          <h2>🤖 AI Önerilen Yükler</h2>
         </div>
         <div className="driver-loads">
           {recommended.map((row) => (
@@ -101,7 +102,7 @@ function DriverLoadCard({ row }: { row: MatchedLoad }) {
           </div>
         </div>
         <div className="driver-load-footer" style={{ marginTop: 10 }}>
-          <strong>₺{load.price.toLocaleString('tr-TR')}</strong>
+          <strong>{formatCurrencyTRY(load.price)}</strong>
           <span className="page-sub">{row.match.personalizedReason}</span>
         </div>
       </div>

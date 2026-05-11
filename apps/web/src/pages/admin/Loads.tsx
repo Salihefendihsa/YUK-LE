@@ -3,6 +3,7 @@ import { cancelAdminLoad, getAdminLoads } from '../../api/admin'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
 import './AdminPanel.css'
 import { Link } from 'react-router-dom'
+import { formatCurrencyTRY, normalizeArray } from '../../utils/format'
 
 export default function AdminLoadsPage() {
   const [loads, setLoads] = useState<Array<Record<string, string | number>>>([])
@@ -13,7 +14,7 @@ export default function AdminLoadsPage() {
 
   async function loadData() {
     const data = await getAdminLoads(status || undefined, search || undefined)
-    setLoads(data)
+    setLoads(normalizeArray<Record<string, string | number>>(data))
   }
 
   useEffect(() => {
@@ -28,6 +29,7 @@ export default function AdminLoadsPage() {
   }
 
   if (loading) return <PageSkeleton rows={8} />
+  const loadList = Array.isArray(loads) ? loads : []
 
   return (
     <div className="admin-page">
@@ -47,13 +49,13 @@ export default function AdminLoadsPage() {
             <tr><th>İlan ID</th><th>Güzergah</th><th>Durum</th><th>Anlaşılan Fiyat</th><th>AI Önerilen</th><th>İşlemler</th></tr>
           </thead>
           <tbody>
-            {loads.map((load) => (
+            {loadList.map((load) => (
               <tr key={String(load.id)}>
                 <td className="mono"><Link to={`/admin/loads/${String(load.id)}`}>{String(load.id).slice(0, 8)}</Link></td>
                 <td>{String(load.fromCity)} → {String(load.toCity)}</td>
                 <td>{String(load.status)}</td>
-                <td>₺{Number(load.price).toFixed(2)}</td>
-                <td>₺{Number(load.price).toFixed(2)}</td>
+                <td>{formatCurrencyTRY(load.price)}</td>
+                <td>{formatCurrencyTRY(load.price)}</td>
                 <td>
                   <button className="btn btn-danger btn-sm" onClick={() => {
                     if (window.confirm('Bu işlem geri alınamaz. İlan iptal edilsin mi?')) void cancelLoad(String(load.id))
@@ -64,7 +66,7 @@ export default function AdminLoadsPage() {
           </tbody>
         </table>
       </div>
-      {loads.length === 0 ? <div className="admin-card empty-state">📦 İlan bulunamadı.</div> : null}
+      {loadList.length === 0 ? <div className="admin-card empty-state">📦 İlan bulunamadı.</div> : null}
     </div>
   )
 }

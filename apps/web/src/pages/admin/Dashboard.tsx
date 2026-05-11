@@ -20,9 +20,7 @@ export default function AdminDashboard() {
   }, [])
 
   const bars = useMemo(() => [35, 45, 50, 42, 58, 61, 49], [now])
-
-  if (loading) return <PageSkeleton rows={5} variant="card" />
-
+  const recentActions = Array.isArray(stats.recentActions) ? (stats.recentActions as Array<Record<string, unknown>>) : []
   const kpis = [
     { label: 'Toplam Kullanıcı', value: Number(stats.totalUsers ?? 0) },
     { label: 'Aktif İlan Sayısı', value: Number(stats.activeLoadCount ?? 0), badge: 'Bugün oluşturulan' },
@@ -35,6 +33,8 @@ export default function AdminDashboard() {
     { label: 'Bu Ay Komisyon Geliri', value: `₺${Number(stats.monthlyCommission ?? 0).toFixed(2)}` },
     { label: 'Ortalama Teslimat Süresi', value: `${Number(stats.avgDeliveryHours ?? 0).toFixed(1)} saat` },
   ]
+
+  if (loading) return <PageSkeleton rows={5} variant="card" />
   return (
     <div className="admin-page">
       <div className="admin-head">
@@ -86,13 +86,13 @@ export default function AdminDashboard() {
       <div className="admin-grid-2">
         <div className="admin-card">
           <h3>Canlı Aktivite Akışı</h3>
-          {((stats.recentActions as Array<Record<string, unknown>> | undefined) ?? []).slice(0, 20).map((a) => (
+          {recentActions.slice(0, 20).map((a) => (
             <div key={String(a.id)} className="item-row" style={{ padding: '8px 0', borderBottom: '1px solid var(--color-border-light)' }}>
               <span className="mono muted">{new Date(String(a.timestampUtc)).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
               <span>{String(a.note ?? a.action ?? 'Aksiyon')}</span>
             </div>
           ))}
-          {(((stats.recentActions as Array<Record<string, unknown>> | undefined) ?? []).length === 0) ? (
+          {recentActions.length === 0 ? (
             <PageEmpty icon="🛰️" title="Aktivite bulunamadı" description="Yeni aktiviteler burada canlı akışta görünecek." actionLabel="Yenile" onAction={() => window.location.reload()} />
           ) : null}
         </div>

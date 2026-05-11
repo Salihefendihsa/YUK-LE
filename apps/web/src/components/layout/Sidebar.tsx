@@ -19,15 +19,12 @@ const CUSTOMER_NAV: NavItem[] = [
 ]
 
 const DRIVER_NAV: NavItem[] = [
-  { label: 'Ana Sayfa',  path: '/driver/dashboard', icon: '⊞' },
-  { label: 'Yükler',    path: '/driver/loads',     icon: '📦' },
-  { label: 'Tekliflerim',path: '/driver/bids',     icon: '💼' },
-  { label: 'Takip',     path: '/driver/track',     icon: '🗺️' },
-  { label: 'Belgeler',  path: '/driver/documents', icon: '📄' },
-  { label: 'Geçmişim',  path: '/driver/history',   icon: '📋' },
-  { label: 'Aktif Sefer', path: '/driver/active-load', icon: '📡' },
-  { label: 'Cüzdan', path: '/driver/wallet', icon: '💰' },
-  { label: 'Profil', path: '/driver/profile', icon: '👤' },
+  { label: 'Ana Ekran', path: '/driver/dashboard', icon: '🏠' },
+  { label: 'Yük Panosu', path: '/driver/loads', icon: '📦' },
+  { label: 'Aktif Seferim', path: '/driver/active-load', icon: '🚛' },
+  { label: 'Belgelerim', path: '/driver/documents', icon: '📄' },
+  { label: 'Cüzdanım', path: '/driver/wallet', icon: '💰' },
+  { label: 'Profilim', path: '/driver/profile', icon: '👤' },
 ]
 
 const ADMIN_NAV: NavItem[] = [
@@ -110,10 +107,14 @@ export default function Sidebar({ collapsed, mobileOpen, onToggle }: SidebarProp
         <ul>
           {BOTTOM_NAV.map((item) => (
             <li key={item.path}>
-              <a href={item.path} className="nav-item" title={collapsed ? item.label : undefined}>
+              <NavLink
+                to={item.path}
+                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                title={collapsed ? item.label : undefined}
+              >
                 <span className="nav-icon">{item.icon}</span>
                 {!collapsed && <span className="nav-label">{item.label}</span>}
-              </a>
+              </NavLink>
             </li>
           ))}
         </ul>

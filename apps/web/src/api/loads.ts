@@ -1,9 +1,18 @@
 import { apiClient } from './client'
 import type { Load, CreateLoadRequest, CreateLoadResponse } from './types'
 
+export async function getLoads(params?: Record<string, string | number | boolean | undefined>): Promise<Load[]> {
+  const res = await apiClient.get('/Loads/active', { params })
+  const data = res.data as { items?: unknown; data?: unknown; result?: unknown } | unknown
+  if (Array.isArray(data)) return data as Load[]
+  if (Array.isArray((data as { items?: unknown })?.items)) return (data as { items: Load[] }).items
+  if (Array.isArray((data as { data?: unknown })?.data)) return (data as { data: Load[] }).data
+  if (Array.isArray((data as { result?: unknown })?.result)) return (data as { result: Load[] }).result
+  return []
+}
+
 export async function getActiveLoads(): Promise<Load[]> {
-  const res = await apiClient.get<Load[]>('/Loads/active')
-  return res.data
+  return getLoads()
 }
 
 export async function getLoad(id: string): Promise<Load> {

@@ -3,6 +3,7 @@ import { getCustomers, toggleUserActive } from '../../api/admin'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
 import './AdminPanel.css'
 import { Link } from 'react-router-dom'
+import { formatCurrencyTRY, normalizeArray } from '../../utils/format'
 
 export default function AdminCustomersPage() {
   const [customers, setCustomers] = useState<Array<Record<string, string | number | boolean>>>([])
@@ -12,7 +13,7 @@ export default function AdminCustomersPage() {
 
   async function fetchCustomers() {
     const data = await getCustomers()
-    setCustomers(data)
+    setCustomers(normalizeArray<Record<string, string | number | boolean>>(data))
   }
 
   useEffect(() => {
@@ -27,7 +28,8 @@ export default function AdminCustomersPage() {
   }
 
   if (loading) return <PageSkeleton rows={8} />
-  const filtered = customers.filter((c) => JSON.stringify(c).toLowerCase().includes(query.toLowerCase()))
+  const customerList = Array.isArray(customers) ? customers : []
+  const filtered = customerList.filter((c) => JSON.stringify(c).toLowerCase().includes(query.toLowerCase()))
 
   return (
     <div className="admin-page">
@@ -51,7 +53,7 @@ export default function AdminCustomersPage() {
                 <td>{String(customer.fullName)}</td>
                 <td>{String(customer.email)} / {String(customer.phone)}</td>
                 <td>{String(customer.totalLoadCount)}</td>
-                <td>₺{Number(customer.totalSpent).toFixed(2)}</td>
+                <td>{formatCurrencyTRY(Number(customer.totalSpent ?? 0))}</td>
                 <td>{Boolean(customer.isActive) ? 'Aktif' : 'Askıda'}</td>
                 <td>
                   <Link to={`/admin/customers/${String(customer.id)}`} className="btn btn-ghost btn-sm">Detay</Link>{' '}

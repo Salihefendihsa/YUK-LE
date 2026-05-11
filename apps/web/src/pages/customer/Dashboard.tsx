@@ -4,6 +4,7 @@ import { getCustomerDashboard } from '../../api/dashboard'
 import { getActiveLoads } from '../../api/loads'
 import type { CustomerDashboard as Stats, Load } from '../../api/types'
 import { PageEmpty, PageError, PageSkeleton } from '../../components/common/PageStates'
+import { formatCurrencyTRY, formatDateTR, normalizeArray } from '../../utils/format'
 import './Dashboard.css'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -32,7 +33,7 @@ export default function CustomerDashboard() {
     Promise.all([getCustomerDashboard(), getActiveLoads()])
       .then(([dashboardData, activeLoads]) => {
         setStats(dashboardData)
-        setLoads(activeLoads.slice(0, 5))
+        setLoads(normalizeArray<Load>(activeLoads).slice(0, 5))
       })
       .catch((e: { uiMessage?: string }) => {
         setError(e.uiMessage ?? 'Dashboard verileri yüklenemedi.')
@@ -64,7 +65,7 @@ export default function CustomerDashboard() {
         <StatCard label="Teslim Edilen" value={stats?.deliveredLoadCount ?? 0} icon="✅" color="var(--color-success)" />
         <StatCard
           label="Toplam Harcama"
-          value={`₺${(stats?.totalSpent ?? 0).toLocaleString('tr-TR')}`}
+          value={formatCurrencyTRY(stats?.totalSpent ?? 0)}
           icon="💰"
           color="var(--color-warning)"
         />
@@ -110,8 +111,8 @@ export default function CustomerDashboard() {
                       {STATUS_LABEL[load.status] ?? load.status}
                     </span>
                   </td>
-                  <td className="price-cell">₺{load.price.toLocaleString('tr-TR')}</td>
-                  <td className="date-cell">{new Date(load.createdAt).toLocaleDateString('tr-TR')}</td>
+                  <td className="price-cell">{formatCurrencyTRY(load.price)}</td>
+                  <td className="date-cell">{formatDateTR(load.createdAt)}</td>
                   <td>
                     <Link to={`/customer/loads/${load.id}`} className="btn btn-ghost btn-sm">
                       Detay

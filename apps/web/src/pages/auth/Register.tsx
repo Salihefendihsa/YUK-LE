@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { register } from '../../api/auth'
+import { digitsOnly, formatIBAN, formatPhone, validateEmail, validateIBAN, validatePassword, validatePhone, validateTC, validateTaxNumber } from '../../utils/validators'
 import './Register.css'
 
 type Role = 'Customer' | 'Driver'
@@ -10,16 +11,6 @@ function isAdult(dateIso: string) {
   const minDate = new Date()
   minDate.setFullYear(minDate.getFullYear() - 18)
   return birth <= minDate
-}
-
-function isValidTcIdentity(tc: string) {
-  if (!/^\d{11}$/.test(tc) || tc[0] === '0') return false
-  const digits = tc.split('').map(Number)
-  const odd = digits[0] + digits[2] + digits[4] + digits[6] + digits[8]
-  const even = digits[1] + digits[3] + digits[5] + digits[7]
-  const d10 = ((odd * 7) - even) % 10
-  const d11 = (digits.slice(0, 10).reduce((a, b) => a + b, 0)) % 10
-  return d10 === digits[9] && d11 === digits[10]
 }
 
 export default function Register() {
@@ -48,30 +39,33 @@ export default function Register() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
+  const passwordState = validatePassword(form.password)
 
   function update(field: string, value: string | boolean) {
     setForm((f) => ({ ...f, [field]: value }))
-  }
-
-  function normalizePhone(rawPhone: string) {
-    const digits = rawPhone.replace(/\D/g, '')
-    if (digits.startsWith('90') && digits.length === 12) return digits
-    if (digits.startsWith('0') && digits.length === 11) return digits.slice(1)
-    return digits
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!role) { setError('Lütfen hesap türü seçin'); return }
     if (form.password !== form.confirmPassword) { setError('Şifreler eşleşmiyor'); return }
-    const normalizedPhone = normalizePhone(form.phone)
-    if (normalizedPhone.length < 10 || normalizedPhone.length > 15) {
-      setError('Telefon numarasi yalnizca rakamlardan olusmali ve 10-15 hane arasinda olmalidir.')
+    const normalizedPhone = digitsOnly(form.phone).slice(0, 10)
+    const taxDigits = digitsOnly(form.taxNumber).slice(0, 10)
+    const tcDigits = digitsOnly(form.tcIdentityNumber).slice(0, 11)
+    const iban = form.iban.replace(/\s/g, '').toUpperCase()
+    if (!validatePhone(normalizedPhone)) {
+      setError('Telefon numarası 5 ile başlayan 10 haneli olmalıdır')
       return
     }
-    const taxDigits = form.taxNumber.replace(/\D/g, '')
-    const tcDigits = form.tcIdentityNumber.replace(/\D/g, '')
-    const iban = form.iban.trim().toUpperCase()
+    if (!validateEmail(form.email)) {
+      setError('Geçerli bir e-posta adresi giriniz')
+      return
+    }
+    if (!passwordState.valid) {
+      setError('Şifre en az 8 karakter, büyük-küçük harf ve rakam içermelidir')
+      return
+    }
+
 
     if (!form.acceptedKvkk || !form.acceptedTerms) {
       setError('KVKK ve Kullanım Koşulları onayları zorunludur.')
@@ -82,8 +76,8 @@ export default function Register() {
       setError('Şirket adı en az 2 karakter olmalıdır.')
       return
     }
-    if (role === 'Customer' && !/^\d{10}$/.test(taxDigits)) {
-      setError('Vergi numarası tam 10 hane olmalıdır.')
+    if (role === 'Customer' && !validateTaxNumber(taxDigits)) {
+      setError('Vergi numarası 10 haneli olmalıdır')
       return
     }
     if (role === 'Customer' && form.companyAddress.trim().length < 10) {
@@ -91,12 +85,8 @@ export default function Register() {
       return
     }
 
-    if (role === 'Driver' && !/^\d{11}$/.test(tcDigits)) {
-      setError('T.C. kimlik numarası tam 11 hane olmalıdır.')
-      return
-    }
-    if (role === 'Driver' && !isValidTcIdentity(tcDigits)) {
-      setError('T.C. kimlik numarası doğrulaması başarısız.')
+    if (role === 'Driver' && !validateTC(tcDigits)) {
+      setError('TC Kimlik No 11 haneli olmalıdır')
       return
     }
     if (role === 'Driver' && !form.birthDate) {
@@ -107,8 +97,8 @@ export default function Register() {
       setError('Şoför kaydı için 18 yaşından büyük olmalısınız.')
       return
     }
-    if (role === 'Driver' && !/^TR\d{24}$/.test(iban)) {
-      setError('IBAN TR ile başlayan 26 karakter formatında olmalıdır.')
+    if (role === 'Driver' && !validateIBAN(iban)) {
+      setError('IBAN TR ile başlayan 26 karakter olmalıdır')
       return
     }
     if (role === 'Driver' && form.address.trim().length < 10) {
@@ -224,7 +214,8 @@ export default function Register() {
                   <input id="phone" type="tel" className="form-input"
                     placeholder="05XX XXX XX XX"
                     value={form.phone}
-                    onChange={(e) => update('phone', e.target.value)}
+                    maxLength={10}
+                    onChange={(e) => update('phone', formatPhone(e.target.value))}
                     required />
                 </div>
               </div>
@@ -251,7 +242,8 @@ export default function Register() {
                 <input id="taxTCKN" type="text" className="form-input"
                   placeholder={role === 'Customer' ? '1234567890' : '12345678901'}
                   value={role === 'Customer' ? form.taxNumber : form.tcIdentityNumber}
-                  onChange={(e) => update(role === 'Customer' ? 'taxNumber' : 'tcIdentityNumber', e.target.value)}
+                  maxLength={role === 'Customer' ? 10 : 11}
+                  onChange={(e) => update(role === 'Customer' ? 'taxNumber' : 'tcIdentityNumber', digitsOnly(e.target.value))}
                   required />
               </div>
 
@@ -282,13 +274,13 @@ export default function Register() {
                     <div className="form-group">
                       <label className="form-label" htmlFor="licenseClass">Ehliyet Sınıfı *</label>
                       <select id="licenseClass" className="form-input" value={form.licenseClass} onChange={(e) => update('licenseClass', e.target.value)}>
-                        {['B', 'C', 'CE', 'D', 'E'].map((c) => <option key={c} value={c}>{c}</option>)}
+                        {['B', 'C', 'CE', 'D', 'DE', 'E'].map((c) => <option key={c} value={c}>{c}</option>)}
                       </select>
                     </div>
                   </div>
                   <div className="form-group" style={{ marginTop: 16 }}>
                     <label className="form-label" htmlFor="iban">IBAN *</label>
-                    <input id="iban" type="text" className="form-input" placeholder="TR000000000000000000000000" value={form.iban} onChange={(e) => update('iban', e.target.value)} required />
+                    <input id="iban" type="text" className="form-input" placeholder="TR00 0000 0000 0000 0000 0000 00" maxLength={32} value={form.iban} onChange={(e) => update('iban', formatIBAN(e.target.value).slice(0, 32))} required />
                   </div>
                   <div className="form-group" style={{ marginTop: 16 }}>
                     <label className="form-label" htmlFor="address">İkametgah Adresi *</label>
@@ -307,10 +299,13 @@ export default function Register() {
                 <div className="form-group">
                   <label className="form-label" htmlFor="password">Şifre *</label>
                   <input id="password" type="password" className="form-input"
-                    placeholder="En az 6 karakter"
+                    placeholder="En az 8 karakter"
                     value={form.password}
                     onChange={(e) => update('password', e.target.value)}
                     required />
+                  <span className="muted" style={{ color: passwordState.strength === 'Zayıf' ? '#ef4444' : passwordState.strength === 'Orta' ? '#f59e0b' : passwordState.strength === 'Güçlü' ? '#22c55e' : '#3b82f6' }}>
+                    Şifre gücü: {passwordState.strength}
+                  </span>
                 </div>
                 <div className="form-group">
                   <label className="form-label" htmlFor="confirmPassword">Şifre Tekrar *</label>

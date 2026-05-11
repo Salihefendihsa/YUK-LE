@@ -22,7 +22,6 @@ import DriverLoadsPage from '../pages/driver/Loads'
 import DriverLoadDetailPage from '../pages/driver/LoadDetail'
 import DriverDocumentsPage from '../pages/driver/Documents'
 import DriverBidsPage from '../pages/driver/Bids'
-import DriverTrackPage from '../pages/driver/Track'
 import DriverHistoryPage from '../pages/driver/History'
 import DriverWalletPage from '../pages/driver/Wallet'
 import DriverActiveLoadPage from '../pages/driver/ActiveLoad'
@@ -45,7 +44,7 @@ import AdminLoadDetailPage from '../pages/admin/LoadDetail'
 import AdminTrackingPage from '../pages/admin/Tracking'
 import AdminRatingsPage from '../pages/admin/Ratings'
 import AdminLoginPage from '../pages/admin/AdminLogin'
-import { NotFoundPage, ServerErrorPage, UnauthorizedPage } from '../pages/system/ErrorPages'
+import { NotFoundPage, RouteErrorPage, ServerErrorPage, UnauthorizedPage } from '../pages/system/ErrorPages'
 
 function RootRedirect() {
   const { isAuthenticated, user } = useAuthStore()
@@ -66,7 +65,7 @@ function ProtectedRoute({ allowedRoles }: { allowedRoles?: string[] }) {
 }
 
 const router = createBrowserRouter([
-  { path: '/', element: <RootRedirect /> },
+  { path: '/', element: <RootRedirect />, errorElement: <RouteErrorPage /> },
   { path: '/login',        element: <Login /> },
   { path: '/admin/login',  element: <AdminLoginPage /> },
   { path: '/register',     element: <Register /> },
@@ -109,7 +108,6 @@ const router = createBrowserRouter([
           { path: 'loads/:id', element: <DriverLoadDetailPage /> },
           { path: 'documents', element: <DriverDocumentsPage /> },
           { path: 'bids', element: <DriverBidsPage /> },
-          { path: 'track', element: <DriverTrackPage /> },
           { path: 'history', element: <DriverHistoryPage /> },
           { path: 'wallet', element: <DriverWalletPage /> },
           { path: 'active-load', element: <DriverActiveLoadPage /> },

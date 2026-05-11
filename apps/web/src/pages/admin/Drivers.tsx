@@ -3,6 +3,7 @@ import { getDrivers, toggleUserActive } from '../../api/admin'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
 import './AdminPanel.css'
 import { Link } from 'react-router-dom'
+import { normalizeArray } from '../../utils/format'
 
 export default function AdminDriversPage() {
   const [drivers, setDrivers] = useState<Array<Record<string, string | number | boolean>>>([])
@@ -16,7 +17,7 @@ export default function AdminDriversPage() {
 
   async function fetchDrivers() {
     const data = await getDrivers(status === 'all' ? undefined : status)
-    setDrivers(data)
+    setDrivers(normalizeArray<Record<string, string | number | boolean>>(data))
   }
 
   useEffect(() => {
@@ -32,7 +33,8 @@ export default function AdminDriversPage() {
 
   if (loading) return <PageSkeleton rows={8} />
 
-  const filtered = drivers.filter((d) => JSON.stringify(d).toLowerCase().includes(search.toLowerCase()))
+  const driverList = Array.isArray(drivers) ? drivers : []
+  const filtered = driverList.filter((d) => JSON.stringify(d).toLowerCase().includes(search.toLowerCase()))
   const sorted = [...filtered].sort((a, b) => {
     const av = String(a[sortKey] ?? '')
     const bv = String(b[sortKey] ?? '')
