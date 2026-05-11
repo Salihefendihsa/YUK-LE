@@ -1,18 +1,21 @@
+import Footer from '../../components/layout/Footer'
+
 export default function KvkkPage() {
   return (
-    <div style={{ minHeight: '100vh', background: '#090B0E', color: '#E5E7EB', padding: '32px 16px' }}>
-      <div
-        style={{
-          maxWidth: 900,
-          margin: '0 auto',
-          background: '#1C2029',
-          border: '1px solid #272D3A',
-          borderRadius: 14,
-          padding: 24,
-        }}
-      >
-        <h1 style={{ marginBottom: 8 }}>YÜK-LE KİŞİSEL VERİLERİN KORUNMASI KANUNU (KVKK)</h1>
-        <h2 style={{ fontSize: 18, marginBottom: 20 }}>AYDINLATMA METNİ</h2>
+    <div style={{ minHeight: '100vh', background: '#090B0E', color: '#E5E7EB', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: '32px 16px' }}>
+        <div
+          style={{
+            maxWidth: 900,
+            margin: '0 auto',
+            background: '#1C2029',
+            border: '1px solid #272D3A',
+            borderRadius: 14,
+            padding: 24,
+          }}
+        >
+          <h1 style={{ marginBottom: 8 }}>YÜK-LE KİŞİSEL VERİLERİN KORUNMASI KANUNU (KVKK)</h1>
+          <h2 style={{ fontSize: 18, marginBottom: 20 }}>AYDINLATMA METNİ</h2>
 
         <p><strong>1. Veri Sorumlusu</strong><br />YÜK-LE Lojistik Teknolojileri A.Ş. olarak...</p>
 
@@ -66,8 +69,10 @@ export default function KvkkPage() {
           <li>Zararın giderilmesini talep etme</li>
         </ul>
 
-        <p><strong>7. İletişim</strong><br />KVKK haklarınız için: kvkk@yük-le.com</p>
+          <p><strong>7. İletişim</strong><br />KVKK haklarınız için: kvkk@yük-le.com</p>
+        </div>
       </div>
+      <Footer />
     </div>
   )
 }

@@ -19,6 +19,8 @@ export default function AdminDashboard() {
     return () => clearInterval(timer)
   }, [])
 
+  const bars = useMemo(() => [35, 45, 50, 42, 58, 61, 49], [now])
+
   if (loading) return <PageSkeleton rows={5} variant="card" />
 
   const kpis = [
@@ -33,8 +35,6 @@ export default function AdminDashboard() {
     { label: 'Bu Ay Komisyon Geliri', value: `₺${Number(stats.monthlyCommission ?? 0).toFixed(2)}` },
     { label: 'Ortalama Teslimat Süresi', value: `${Number(stats.avgDeliveryHours ?? 0).toFixed(1)} saat` },
   ]
-  const bars = useMemo(() => [35, 45, 50, 42, 58, 61, 49], [now])
-
   return (
     <div className="admin-page">
       <div className="admin-head">

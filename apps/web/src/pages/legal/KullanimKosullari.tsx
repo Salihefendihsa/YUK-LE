@@ -1,17 +1,20 @@
+import Footer from '../../components/layout/Footer'
+
 export default function KullanimKosullariPage() {
   return (
-    <div style={{ minHeight: '100vh', background: '#090B0E', color: '#E5E7EB', padding: '32px 16px' }}>
-      <div
-        style={{
-          maxWidth: 900,
-          margin: '0 auto',
-          background: '#1C2029',
-          border: '1px solid #272D3A',
-          borderRadius: 14,
-          padding: 24,
-        }}
-      >
-        <h1 style={{ marginBottom: 20 }}>YÜK-LE KULLANIM KOŞULLARI</h1>
+    <div style={{ minHeight: '100vh', background: '#090B0E', color: '#E5E7EB', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: '32px 16px' }}>
+        <div
+          style={{
+            maxWidth: 900,
+            margin: '0 auto',
+            background: '#1C2029',
+            border: '1px solid #272D3A',
+            borderRadius: 14,
+            padding: 24,
+          }}
+        >
+          <h1 style={{ marginBottom: 20 }}>YÜK-LE KULLANIM KOŞULLARI</h1>
 
         <p><strong>1. Taraflar ve Kapsam</strong><br />
           YÜK-LE platformu; yük sahipleri (fabrika/müşteri) ile tır/kamyon şoförlerini dijital olarak buluşturan bir
@@ -79,8 +82,10 @@ export default function KullanimKosullariPage() {
           YÜK-LE bu koşulları önceden bildirerek değiştirme hakkını saklı tutar.
         </p>
 
-        <p>Son güncelleme: Mayıs 2026</p>
+          <p>Son güncelleme: Mayıs 2026</p>
+        </div>
       </div>
+      <Footer />
     </div>
   )
 }
