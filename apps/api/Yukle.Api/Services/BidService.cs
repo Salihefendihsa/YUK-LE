@@ -92,6 +92,29 @@ public class BidService : IBidService
             .ToListAsync();
     }
 
+    public async Task<List<BidListDto>> GetBidsByLoadIdForAdminAsync(Guid loadId)
+    {
+        _ = await _context.Loads.AsNoTracking().FirstOrDefaultAsync(l => l.Id == loadId)
+            ?? throw new InvalidOperationException("Belirtilen yük ilanı bulunamadı.");
+
+        return await _context.Bids
+            .Where(b => b.LoadId == loadId)
+            .Include(b => b.Driver)
+            .AsNoTracking()
+            .OrderByDescending(b => b.CreatedAt)
+            .Select(b => new BidListDto
+            {
+                Id             = b.Id,
+                Amount         = b.Amount,
+                Note           = b.Note,
+                OfferDate      = b.CreatedAt,
+                Status         = b.Status.ToString(),
+                DriverFullName = b.Driver.FullName,
+                DriverPhone    = b.Driver.Phone
+            })
+            .ToListAsync();
+    }
+
     // ── AcceptBidAsync ────────────────────────────────────────────────────────
 
     public async Task AcceptBidAsync(int bidId, int customerId)

@@ -1,44 +1,37 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
+using Yukle.Api.Data;
+using Yukle.Api.Models;
 using Yukle.Api.Services;
 
 namespace Yukle.Api.Hubs;
 
 /// <summary>
 /// Yük özelinde şoför–müşteri anlık mesajlaşma hub'ı.
-/// Her yük için izole bir sohbet odası (chat:{loadId}) açılır; mesajlar
-/// yalnızca o odadaki iki tarafa iletilir — başka hiç kimse okuyamaz.
-/// Oda üyeliği yük sahibi ve atanmış şoförle kısıtlıdır; yetkisiz girişimde
-/// HubException fırlatılır.
+/// SignalR grup adı = loadId (GUID string).
 /// </summary>
 [Authorize]
 public sealed class ChatHub(
-    ILogger<ChatHub>     logger,
-    IDistributedCache    cache,
-    ILoadService         loadService,
-    IChatModerationService moderationService) : Hub
+    ILogger<ChatHub>           logger,
+    IDistributedCache          cache,
+    ILoadService               loadService,
+    IChatModerationService     moderationService,
+    YukleDbContext             db) : Hub
 {
-    private readonly ILogger<ChatHub>     _logger      = logger;
-    private readonly IDistributedCache    _cache       = cache;
-    private readonly ILoadService         _loadService = loadService;
-    private readonly IChatModerationService _moderationService = moderationService;
+    private readonly ILogger<ChatHub>           _logger              = logger;
+    private readonly IDistributedCache          _cache               = cache;
+    private readonly ILoadService               _loadService         = loadService;
+    private readonly IChatModerationService     _moderationService   = moderationService;
+    private readonly YukleDbContext             _db                  = db;
 
-    // Bağlantı izleme kayıtları için TTL — aktif oturum süresiyle uyumlu.
     private static readonly DistributedCacheEntryOptions CacheOptions = new()
     {
         AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24)
     };
 
-    // =========================================================================
-    // Bağlantı Yaşam Döngüsü
-    // =========================================================================
-
-    /// <summary>
-    /// Bağlantı kurulduğunda kullanıcıyı kendi userId grubuyla eşleştirir.
-    /// Bu sayede ileride sunucu tarafından başlatılan direkt mesajlar (DM) gönderilebilir.
-    /// </summary>
     public override async Task OnConnectedAsync()
     {
         var userId = Context.UserIdentifier;
@@ -49,10 +42,6 @@ public sealed class ChatHub(
         await base.OnConnectedAsync();
     }
 
-    /// <summary>
-    /// Bağlantı koptuğunda Redis bağlantı kaydını temizler ve kanalı loglar.
-    /// SignalR grup üyeliklerini otomatik kaldırır; bu override loglama içindir.
-    /// </summary>
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         var loadId = await _cache.GetStringAsync(GetConnectionKey(Context.ConnectionId));
@@ -71,19 +60,8 @@ public sealed class ChatHub(
         await base.OnDisconnectedAsync(exception);
     }
 
-    // =========================================================================
-    // Oda Yönetimi
-    // =========================================================================
-
-    /// <summary>
-    /// Kullanıcıyı belirtilen yüke ait sohbet odasına dahil eder.
-    /// Yalnızca o yükün sahibi (Owner) veya atanmış şoförü (Driver) odaya girebilir.
-    /// </summary>
-    /// <param name="loadId">Sohbetin ilişkilendirileceği yükün Guid kimliği.</param>
-    /// <exception cref="HubException">Kullanıcı yetkisiz ya da yük bulunamazsa.</exception>
     public async Task JoinChatGroup(string loadId)
     {
-        // ── 1. Kimlik doğrulama ────────────────────────────────────────────────
         if (!int.TryParse(
                 Context.User?.FindFirstValue(ClaimTypes.NameIdentifier),
                 out var userId))
@@ -92,7 +70,6 @@ public sealed class ChatHub(
         if (!Guid.TryParse(loadId, out var loadGuid))
             throw new HubException("Geçersiz yük kimliği formatı.");
 
-        // ── 2. Yük erişim yetkisi kontrolü ────────────────────────────────────
         var load = await _loadService.GetLoadByIdAsync(loadGuid)
             ?? throw new HubException("Yük bulunamadı.");
 
@@ -108,11 +85,9 @@ public sealed class ChatHub(
             throw new HubException("Bu yüke ait sohbet odasına giriş yetkiniz bulunmuyor.");
         }
 
-        // ── 3. Sohbet odasına ekle ────────────────────────────────────────────
         var roomName = GetRoomName(loadId);
         await Groups.AddToGroupAsync(Context.ConnectionId, roomName);
 
-        // ── 4. Bağlantı → oda eşleşmesini Redis'e yaz (cleanup için) ──────────
         await _cache.SetStringAsync(
             GetConnectionKey(Context.ConnectionId),
             loadId,
@@ -123,66 +98,103 @@ public sealed class ChatHub(
             userId, isDriver ? "Driver" : "Owner", roomName);
     }
 
-    // =========================================================================
-    // Mesajlaşma
-    // =========================================================================
-
-    /// <summary>
-    /// Gönderenin mesajını yük sohbet odasındaki diğer tarafa iletir.
-    /// Gönderen kendi mesajını almaz (<c>OthersInGroup</c>); UI optimistic update uygular.
-    /// </summary>
-    /// <param name="loadId">Mesajın ait olduğu yükün kimliği.</param>
-    /// <param name="message">Gönderilecek mesaj metni.</param>
-    /// <exception cref="HubException">Mesaj boşsa veya kimlik doğrulaması başarısızsa.</exception>
     public async Task SendMessage(string loadId, string message)
     {
         if (string.IsNullOrWhiteSpace(message))
             throw new HubException("Mesaj boş gönderilemez.");
 
-        if (_moderationService.ContainsBlockedContent(message))
-        {
-            var blockedSenderId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier)
-                           ?? Context.ConnectionId;
-            var blockedSenderName = Context.User?.FindFirstValue(ClaimTypes.Name)
-                             ?? $"Kullanıcı #{blockedSenderId}";
+        if (!int.TryParse(
+                Context.User?.FindFirstValue(ClaimTypes.NameIdentifier),
+                out var senderUserId))
+            throw new HubException("Kimlik doğrulaması başarısız.");
 
+        if (!Guid.TryParse(loadId, out var loadGuid))
+            throw new HubException("Geçersiz yük kimliği formatı.");
+
+        var load = await _loadService.GetLoadByIdAsync(loadGuid)
+            ?? throw new HubException("Yük bulunamadı.");
+
+        var isOwner  = load.OwnerId  == senderUserId;
+        var isDriver = load.DriverId == senderUserId;
+
+        if (!isOwner && !isDriver)
+            throw new HubException("Bu yüke mesaj gönderme yetkiniz yok.");
+
+        var senderName = Context.User?.FindFirstValue(ClaimTypes.Name)
+                         ?? $"Kullanıcı #{senderUserId}";
+
+        var roleClaim = Context.User?.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+        var senderRole = roleClaim switch
+        {
+            nameof(UserRole.Driver)   => "Driver",
+            nameof(UserRole.Customer) => "Customer",
+            _                         => roleClaim
+        };
+
+        var trimmed = message.Trim();
+        var blocked = _moderationService.ContainsBlockedContent(trimmed);
+
+        if (blocked)
+        {
+            var entity = new ChatMessage
+            {
+                Id            = Guid.NewGuid(),
+                LoadId        = loadGuid,
+                SenderUserId  = senderUserId,
+                SenderName    = senderName,
+                SenderRole    = senderRole,
+                Message       = trimmed,
+                CreatedAt     = DateTime.UtcNow,
+                IsBlocked     = true,
+                BlockReason   = "Uygunsuz içerik filtresi",
+                BlockedAt     = DateTime.UtcNow
+            };
+            _db.ChatMessages.Add(entity);
+            await _db.SaveChangesAsync();
+
+            var blockedSenderId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier)
+                                  ?? Context.ConnectionId;
             _moderationService.AddBlockedMessage(new BlockedMessageRecord(
                 SenderId: blockedSenderId,
-                SenderName: blockedSenderName,
+                SenderName: senderName,
                 LoadId: loadId,
-                Message: message,
+                Message: trimmed,
                 TimestampUtc: DateTime.UtcNow));
 
             throw new HubException("Uygunsuz içerik tespit edildi. Lütfen saygılı bir dil kullanınız.");
         }
 
-        var senderId   = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier)
-                         ?? Context.ConnectionId;
-        var senderName = Context.User?.FindFirstValue(ClaimTypes.Name)
-                         ?? $"Kullanıcı #{senderId}";
+        var saved = new ChatMessage
+        {
+            Id            = Guid.NewGuid(),
+            LoadId        = loadGuid,
+            SenderUserId  = senderUserId,
+            SenderName    = senderName,
+            SenderRole    = senderRole,
+            Message       = trimmed,
+            CreatedAt     = DateTime.UtcNow,
+            IsBlocked     = false
+        };
+        _db.ChatMessages.Add(saved);
+        await _db.SaveChangesAsync();
 
-        _logger.LogDebug(
-            "ChatHub: User {SenderId} sent message to Load {LoadId} room.",
-            senderId, loadId);
+        var room = GetRoomName(loadId);
+        await Clients.Group(room).SendAsync("ReceiveMessage", new
+        {
+            id          = saved.Id,
+            senderId    = saved.SenderUserId,
+            senderName  = saved.SenderName,
+            senderRole  = saved.SenderRole,
+            message     = saved.Message,
+            timestamp   = saved.CreatedAt,
+            timestampUtc = saved.CreatedAt
+        });
 
-        await Clients
-            .OthersInGroup(GetRoomName(loadId))
-            .SendAsync("ReceiveMessage", new
-            {
-                SenderId   = senderId,
-                SenderName = senderName,
-                Message    = message,
-                Timestamp  = DateTime.UtcNow
-            });
+        _logger.LogDebug("ChatHub: User {SenderId} sent message to Load {LoadId} room.", senderUserId, loadId);
     }
 
-    // =========================================================================
-    // İsim / Anahtar Fabrikaları — merkezi, typo-proof
-    // =========================================================================
+    /// <summary>SignalR grup adı = yük GUID string (istenen sözleşme).</summary>
+    private static string GetRoomName(string loadId) => loadId;
 
-    // SignalR sohbet odası adı  →  chat:{loadId}
-    private static string GetRoomName(string loadId)      => $"chat:{loadId}";
-
-    // Redis: bağlantı → oda eşleşmesi  →  chat_conn:{connectionId}
     private static string GetConnectionKey(string connId) => $"chat_conn:{connId}";
 }

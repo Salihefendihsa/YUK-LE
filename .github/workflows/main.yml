@@ -1,42 +1,26 @@
-name: YUK-LE CI/CD Pipeline
+name: YÜK-LE CI
 
-on:
-  push:
-    branches: [ "master", "main" ]
-  pull_request:
-    branches: [ "master", "main" ]
+on: [push]
 
 jobs:
-  build_and_test:
-    name: Build & Test Backend
+  build-api:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      - name: Restore API
+        run: dotnet restore apps/api/Yukle.Api/Yukle.Api.sln
+      - name: Build API
+        run: dotnet build apps/api/Yukle.Api/Yukle.Api.sln -c Release --no-restore
 
-    - name: Setup .NET 9
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '9.0.x'
-
-    - name: Restore Dependencies
-      run: dotnet restore apps/api/Yukle.Api/Yukle.Api.csproj
-
-    - name: Build
-      run: dotnet build apps/api/Yukle.Api/Yukle.Api.csproj --configuration Release --no-restore
-      
-  docker_validation:
-    name: Validate Docker Compose
+  build-web:
     runs-on: ubuntu-latest
-    needs: build_and_test
-    
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
-
-    - name: Build Docker Services
-      run: |
-        cd infra
-        docker-compose config
-        docker-compose build
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install and build web
+        run: cd apps/web && npm install && npm run build

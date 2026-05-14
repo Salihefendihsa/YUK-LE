@@ -30,6 +30,8 @@ public class AuthService : IAuthService
     private const string MsgOtpLocked   = "Çok fazla hatalı doğrulama denemesi yapıldı. Lütfen 1 dakika sonra tekrar deneyin.";
     private static readonly TimeSpan OtpBruteWindow = TimeSpan.FromMinutes(1);
 
+    private const string PwdResetOtpCachePrefix = "pwd_reset_otp:";
+
     // ── v2.5.2 · Şoför Kimlik Uyuşmazlık / Geçerlilik Mesajları ───────────────
     private const string MsgIdentityMismatch =
         "Yüklediğiniz belgedeki kimlik bilgileri, kayıtlı profil bilgilerinizle uyuşmuyor.";
@@ -204,6 +206,12 @@ public class AuthService : IAuthService
     // ──────────────────────────────────────────────────────────────────────────
     public async Task VerifyOtpAsync(VerifyOtpDto dto)
     {
+        if (string.Equals(dto.Purpose, "PasswordReset", StringComparison.OrdinalIgnoreCase))
+        {
+            await VerifyPasswordResetOtpAsync(dto);
+            return;
+        }
+
         string phone    = dto.Phone.Trim();
         string bruteKey = $"VerifyLimit_{phone}";
 
@@ -241,6 +249,79 @@ public class AuthService : IAuthService
         user.VerificationCode       = string.Empty;  // kodu tek kullanımlık kıl
         user.VerificationCodeExpiry = null;
 
+        await _context.SaveChangesAsync();
+    }
+
+    private async Task VerifyPasswordResetOtpAsync(VerifyOtpDto dto)
+    {
+        var phone    = dto.Phone.Trim();
+        var bruteKey = $"VerifyLimit_pwd_{phone}";
+
+        var failCount = await GetCounterAsync(bruteKey);
+        if (failCount >= OtpFailLimit)
+            throw new ApplicationException(MsgOtpLocked);
+
+        var user = await _context.Users.SingleOrDefaultAsync(u => u.Phone == phone);
+        if (user is null)
+            throw new ApplicationException("Telefon numarası veya doğrulama kodu hatalı.");
+
+        var cached = await _cache.GetStringAsync($"{PwdResetOtpCachePrefix}{user.Phone}");
+        if (cached is null)
+            throw new ApplicationException("Şifre sıfırlama kodu bulunamadı veya süresi dolmuştur.");
+
+        if (!string.Equals(dto.Code.Trim(), cached, StringComparison.Ordinal))
+        {
+            await SetCounterAsync(bruteKey, failCount + 1, OtpBruteWindow);
+            throw new ApplicationException("Telefon numarası veya doğrulama kodu hatalı.");
+        }
+
+        await _cache.RemoveAsync(bruteKey);
+    }
+
+    public async Task ForgotPasswordAsync(ForgotPasswordRequest dto)
+    {
+        var phone = dto.Phone.Trim();
+        await EnforceSmsRateLimitAsync(phone);
+
+        var user = await _context.Users.SingleOrDefaultAsync(u => u.Phone == phone)
+            ?? throw new ApplicationException("Bu telefon numarasıyla kayıtlı kullanıcı bulunamadı.");
+
+        var otp = _smsService.GenerateSixDigitOtp();
+        await _cache.SetStringAsync(
+            $"{PwdResetOtpCachePrefix}{user.Phone}",
+            otp,
+            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10) });
+
+        await _smsService.SendOtpAsync(user.Phone, otp);
+    }
+
+    public async Task ResetPasswordAsync(ResetPasswordRequest dto)
+    {
+        var phone = dto.Phone.Trim();
+        var user = await _context.Users.SingleOrDefaultAsync(u => u.Phone == phone)
+            ?? throw new ApplicationException("Kullanıcı bulunamadı.");
+
+        var cached = await _cache.GetStringAsync($"{PwdResetOtpCachePrefix}{user.Phone}");
+        if (cached is null || !string.Equals(cached, dto.OtpCode.Trim(), StringComparison.Ordinal))
+            throw new ApplicationException("OTP kodu geçersiz veya süresi dolmuş.");
+
+        user.PasswordHash = Encoding.UTF8.GetBytes(
+            BCrypt.Net.BCrypt.HashPassword(dto.NewPassword));
+
+        await _cache.RemoveAsync($"{PwdResetOtpCachePrefix}{user.Phone}");
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task ChangePasswordAsync(int userId, ChangePasswordRequest dto)
+    {
+        var user = await _context.Users.FindAsync(userId)
+            ?? throw new ApplicationException("Kullanıcı bulunamadı.");
+
+        var storedHash = Encoding.UTF8.GetString(user.PasswordHash);
+        if (!BCrypt.Net.BCrypt.Verify(dto.CurrentPassword, storedHash))
+            throw new ApplicationException("Mevcut şifre hatalı.");
+
+        user.PasswordHash = Encoding.UTF8.GetBytes(BCrypt.Net.BCrypt.HashPassword(dto.NewPassword));
         await _context.SaveChangesAsync();
     }
 

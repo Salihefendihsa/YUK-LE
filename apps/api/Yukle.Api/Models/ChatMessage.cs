@@ -6,6 +6,8 @@ public class ChatMessage
     public Guid LoadId { get; set; }
     public int SenderUserId { get; set; }
     public string SenderName { get; set; } = string.Empty;
+    /// <summary>Müşteri veya Şoför — istemci gösterimi.</summary>
+    public string SenderRole { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public bool IsBlocked { get; set; } = false;

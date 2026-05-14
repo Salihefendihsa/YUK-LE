@@ -25,7 +25,65 @@ namespace Yukle.Api.Controllers
         }
 
         [AllowAnonymous]
-        [EnableRateLimiting("login-policy")]   // Phase 2.2: 5 istek/dk, IP bazlı
+        [EnableRateLimiting("login-policy")]
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            try
+            {
+                await _authService.ForgotPasswordAsync(request);
+                return Ok(new { success = true });
+            }
+            catch (ApplicationException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+        [AllowAnonymous]
+        [EnableRateLimiting("login-policy")]
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            try
+            {
+                await _authService.ResetPasswordAsync(request);
+                return Ok(new { success = true });
+            }
+            catch (ApplicationException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+        [Authorize]
+        [EnableRateLimiting("global-policy")]
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+                return Unauthorized(new { message = "Oturum doğrulanamadı." });
+
+            try
+            {
+                await _authService.ChangePasswordAsync(userId, request);
+                return Ok(new { success = true, message = "Şifre güncellendi." });
+            }
+            catch (ApplicationException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+        [AllowAnonymous]
+        [EnableRateLimiting("login-policy")]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserRegisterDto request)
         {
@@ -93,7 +151,18 @@ namespace Yukle.Api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            await _authService.VerifyOtpAsync(request);
+            try
+            {
+                await _authService.VerifyOtpAsync(request);
+            }
+            catch (ApplicationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+
+            if (string.Equals(request.Purpose, "PasswordReset", StringComparison.OrdinalIgnoreCase))
+                return Ok(new { success = true, message = "OTP doğrulandı." });
+
             return Ok(new { Message = "Telefon numarası başarıyla doğrulandı.", IsPhoneVerified = true });
         }
 

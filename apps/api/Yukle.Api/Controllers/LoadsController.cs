@@ -2,7 +2,10 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
+using Yukle.Api.Data;
 using Yukle.Api.DTOs;
+using Yukle.Api.Models;
 using Yukle.Api.Services;
 
 namespace Yukle.Api.Controllers;
@@ -16,8 +19,9 @@ namespace Yukle.Api.Controllers;
 [Authorize]
 [EnableRateLimiting("global-policy")]   // Phase 2.2: TokenBucket, 10 istek/sn
 public sealed class LoadsController(
-    ILoadService   loadService,
-    PricingService pricingService,
+    ILoadService        loadService,
+    YukleDbContext      db,
+    PricingService      pricingService,
     ILogger<LoadsController> logger) : ControllerBase
 {
     // ── POST api/loads ─────────────────────────────────────────────────────────
@@ -244,8 +248,8 @@ public sealed class LoadsController(
         var load = await loadService.GetLoadByIdAsync(id);
         if (load == null) return NotFound(new { Message = "Yük bulunamadı." });
 
-        if (load.Status != Yukle.Api.Models.LoadStatus.OnWay)
-            return BadRequest(new { Message = "Yalnızca 'OnWay' (Yolda) durumundaki yükler için teslimat QR kod üretilebilir." });
+        if (load.Status != LoadStatus.OnWay && load.Status != LoadStatus.Assigned)
+            return BadRequest(new { Message = "QR kod yalnızca atanmış veya yoldaki yükler için üretilebilir." });
 
         var qrToken = tokenService.GenerateDeliveryQrToken(id);
         return Ok(new { LoadId = id, Token = qrToken, ExpiresInMinutes = 15 });
@@ -289,6 +293,78 @@ public sealed class LoadsController(
         await loadService.DeliverAsync(id, driverId);
         
         return Ok(new { Message = "Yük başarıyla teslim edildi. Ödeme şoför cüzdanına aktarıldı. Teşekkürler!" });
+    }
+
+    // ── GET api/loads/history (müşteri — teslim edilen yükler) ───────────────
+
+    [HttpGet("history")]
+    [Authorize(Roles = "Customer")]
+    public async Task<IActionResult> GetCustomerHistory([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return Unauthorized();
+
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
+        var q = db.Loads.AsNoTracking()
+            .Where(l => l.UserId == userId && l.Status == LoadStatus.Delivered)
+            .OrderByDescending(l => l.DeliveryDate);
+
+        var total = await q.CountAsync();
+        var items = await q.Skip((page - 1) * pageSize).Take(pageSize)
+            .Select(l => new
+            {
+                l.Id,
+                l.FromCity,
+                l.ToCity,
+                l.DeliveryDate,
+                l.Price,
+                DriverName = db.Users.Where(u => u.Id == l.DriverId).Select(u => u.FullName).FirstOrDefault()
+            })
+            .ToListAsync();
+
+        var totalSpend = await db.Loads.AsNoTracking()
+            .Where(l => l.UserId == userId && l.Status == LoadStatus.Delivered)
+            .SumAsync(l => (decimal?)l.Price) ?? 0m;
+
+        return Ok(new { Total = total, Page = page, PageSize = pageSize, TotalSpend = totalSpend, Items = items });
+    }
+
+    // ── GET api/loads/driver-history (şoför — teslim edilen yükler) ───────────
+
+    [HttpGet("driver-history")]
+    [Authorize(Roles = "Driver")]
+    public async Task<IActionResult> GetDriverHistory([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var driverId))
+            return Unauthorized();
+
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
+        var q = db.Loads.AsNoTracking()
+            .Where(l => l.DriverId == driverId && l.Status == LoadStatus.Delivered)
+            .OrderByDescending(l => l.DeliveryDate);
+
+        var total = await q.CountAsync();
+        var items = await q.Skip((page - 1) * pageSize).Take(pageSize)
+            .Select(l => new
+            {
+                l.Id,
+                l.FromCity,
+                l.ToCity,
+                l.DeliveryDate,
+                l.Price,
+                CustomerName = db.Users.Where(u => u.Id == l.UserId).Select(u => u.FullName).FirstOrDefault()
+            })
+            .ToListAsync();
+
+        var totalEarn = await db.Loads.AsNoTracking()
+            .Where(l => l.DriverId == driverId && l.Status == LoadStatus.Delivered)
+            .SumAsync(l => (decimal?)l.Price) ?? 0m;
+
+        return Ok(new { Total = total, Page = page, PageSize = pageSize, TotalEarn = totalEarn, TripCount = total, Items = items });
     }
 
     // ── Yardımcı ─────────────────────────────────────────────────────────────

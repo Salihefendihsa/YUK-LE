@@ -64,5 +64,11 @@ namespace Yukle.Api.Services
             DocumentType documentType,
             byte[]       imageBytes,
             string       mimeType);
+
+        Task ForgotPasswordAsync(ForgotPasswordRequest dto);
+
+        Task ResetPasswordAsync(ResetPasswordRequest dto);
+
+        Task ChangePasswordAsync(int userId, ChangePasswordRequest dto);
     }
 }

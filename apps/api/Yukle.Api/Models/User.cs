@@ -150,6 +150,12 @@ namespace Yukle.Api.Models
         public double? LastKnownLongitude { get; set; }
         public DateTime? LastLocationUpdate { get; set; }
 
+        /// <summary>Şoför ikametgah adresi (profil).</summary>
+        public string? HomeAddress { get; set; }
+
+        /// <summary>Şoför banka IBAN (TR…).</summary>
+        public string? BankIban { get; set; }
+
         // Navigation Properties (İlişkisel Koleksiyonlar)
         public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
         public ICollection<Load> OwnedLoads { get; set; } = new List<Load>();

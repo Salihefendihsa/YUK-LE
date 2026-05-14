@@ -11,4 +11,7 @@ public class VerifyOtpDto
     [Required(ErrorMessage = "Doğrulama kodu zorunludur.")]
     [RegularExpression(@"^\d{6}$", ErrorMessage = "Kod 6 haneli rakam olmalıdır.")]
     public string Code { get; set; } = string.Empty;
+
+    /// <summary>Boş veya "PhoneVerification" = kayıt doğrulama; "PasswordReset" = şifre sıfırlama OTP kontrolü.</summary>
+    public string? Purpose { get; set; }
 }

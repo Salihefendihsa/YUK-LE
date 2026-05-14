@@ -7,6 +7,7 @@ import { submitRating } from '../../api/ratings'
 import type { Bid, Load } from '../../api/types'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
 import LoadChatPanel from '../../components/chat/LoadChatPanel'
+import DeliveryQrSection from '../../components/delivery/DeliveryQrSection'
 import { formatCurrencyTRY, normalizeArray } from '../../utils/format'
 import '../shared/Page.css'
 
@@ -29,7 +30,7 @@ export default function CustomerLoadDetailPage() {
         setLoad(loadData)
         setBids(normalizeArray<Bid>(bidData))
       })
-      .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'İlan detayi yüklenemedi.'))
+      .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'İlan detayı yüklenemedi.'))
       .finally(() => setLoading(false))
   }, [id])
 
@@ -58,7 +59,7 @@ export default function CustomerLoadDetailPage() {
   return (
     <div className="page-wrap">
       <div>
-        <h1 className="page-title">İlan Detayi</h1>
+        <h1 className="page-title">İlan Detayı</h1>
         <p className="page-sub">
           {load ? `${load.fromCity} → ${load.toCity}` : ''}
         </p>
@@ -73,13 +74,19 @@ export default function CustomerLoadDetailPage() {
             <span>{formatCurrencyTRY(load.price)}</span>
           </div>
           <div className="item-row" style={{ marginTop: 8 }}>
-            <strong>Agirlik</strong>
+            <strong>Ağırlık</strong>
             <span>{load.weight} kg</span>
           </div>
           <p className="muted" style={{ marginTop: 8 }}>
             {load.description}
           </p>
-          {loc ? <p className="muted">Canlı Konum: {loc.latitude?.toFixed(5)}, {loc.longitude?.toFixed(5)}</p> : null}
+          {loc ? <p className="muted">Canlı konum: {loc.latitude?.toFixed(5)}, {loc.longitude?.toFixed(5)}</p> : null}
+          {(load.status === 'Assigned' || load.status === 'OnWay') ? (
+            <div className="card" style={{ marginTop: 12, borderColor: '#f97316' }}>
+              <h3>Teslimat QR</h3>
+              <DeliveryQrSection loadId={id} />
+            </div>
+          ) : null}
           {load.driverId ? <button className="btn btn-secondary btn-sm" onClick={() => setShowChat((v) => !v)}>Şoförle Yaz</button> : null}
           {load.status === 'Delivered' ? <button className="btn btn-primary btn-sm" onClick={() => setShowRating(true)}>Teslimatı Puanla</button> : null}
         </div>
@@ -103,7 +110,7 @@ export default function CustomerLoadDetailPage() {
               </div>
             </div>
           ))}
-          {bids.length === 0 ? <p className="muted">Henuz teklif yok.</p> : null}
+          {bids.length === 0 ? <p className="muted">Henüz teklif yok.</p> : null}
         </div>
       </div>
       {showRating ? (

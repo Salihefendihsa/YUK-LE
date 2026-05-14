@@ -1,13 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import * as signalR from '@microsoft/signalr'
+import { apiClient } from '../../api/client'
 import { useAuthStore } from '../../store/auth.store'
 import { formatTimeTR } from '../../utils/format'
+import { getAccessTokenForHub } from '../../utils/signalrToken'
 
 type ChatMessage = {
+  id?: string
   senderId?: number
   senderName?: string
+  senderRole?: string
   message: string
   timestampUtc?: string
+  timestamp?: string
 }
 
 type Props = {
@@ -23,23 +28,62 @@ export default function LoadChatPanel({ loadId }: Props) {
 
   useEffect(() => {
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl('http://localhost:5151/chatHub')
+      .withUrl('http://localhost:5151/hubs/chat', {
+        accessTokenFactory: () => getAccessTokenForHub(),
+      })
       .withAutomaticReconnect()
       .build()
 
     connection.on('ReceiveMessage', (payload: ChatMessage) => {
-      setMessages((prev) => [...prev, payload])
+      setMessages((prev) => {
+        if (payload.id && prev.some((m) => m.id === payload.id)) return prev
+        return [...prev, payload]
+      })
     })
 
-    connection.start()
+    let cancelled = false
+    void (async () => {
+      try {
+        type Row = {
+          id: string
+          senderId: number
+          senderName?: string
+          senderRole?: string
+          message: string
+          sentAt: string
+        }
+        const { data } = await apiClient.get<Row[]>(`/Chat/${loadId}/messages`)
+        if (!cancelled) {
+          setMessages(
+            (data ?? []).map((r) => ({
+              id: r.id,
+              senderId: r.senderId,
+              senderName: r.senderName,
+              senderRole: r.senderRole,
+              message: r.message,
+              timestampUtc: r.sentAt,
+            })),
+          )
+        }
+      } catch {
+        /* geçmiş mesajlar yoksa sessiz */
+      }
+    })()
+
+    connection
+      .start()
       .then(async () => {
+        if (cancelled) return
         setConnected(true)
         await connection.invoke('JoinChatGroup', loadId)
       })
-      .catch(() => setConnected(false))
+      .catch(() => {
+        if (!cancelled) setConnected(false)
+      })
 
     setConn(connection)
     return () => {
+      cancelled = true
       void connection.stop()
     }
   }, [loadId])
@@ -64,7 +108,7 @@ export default function LoadChatPanel({ loadId }: Props) {
               <div style={{ maxWidth: '80%', background: mine ? '#f97316' : '#374151', color: '#fff', borderRadius: 12, padding: '8px 10px' }}>
                 <p style={{ fontWeight: 600, marginBottom: 4 }}>{m.senderName ?? (mine ? 'Sen' : 'Karşı taraf')}</p>
                 <p>{m.message}</p>
-                <span style={{ fontSize: 11, opacity: 0.8 }}>{formatTimeTR(m.timestampUtc ?? new Date().toISOString())}</span>
+                <span style={{ fontSize: 11, opacity: 0.8 }}>{formatTimeTR(m.timestampUtc ?? m.timestamp ?? new Date().toISOString())}</span>
               </div>
             </div>
           )

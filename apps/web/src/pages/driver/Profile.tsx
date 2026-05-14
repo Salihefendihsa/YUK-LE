@@ -1,42 +1,159 @@
 import { useEffect, useState } from 'react'
+import { apiClient } from '../../api/client'
+import { useAuthStore } from '../../store/auth.store'
 import { PageSkeleton } from '../../components/common/PageStates'
-import { digitsOnly, formatIBAN, formatPhone, validateEmail, validateIBAN, validatePhone, validatePlate } from '../../utils/validators'
+import { formatIBAN, validateEmail, validateIBAN } from '../../utils/validators'
 import '../shared/Page.css'
 
+type ProfileDto = {
+  fullName: string
+  email: string
+  phone: string
+  tcIdentityNumber?: string | null
+  iban?: string | null
+  licenseClass?: string | null
+  homeAddress?: string | null
+  vehiclePlate?: string | null
+  vehicleType?: string | null
+  averageRating: number
+  totalRatingCount: number
+}
+
 export default function DriverProfilePage() {
+  const user = useAuthStore((s) => s.user)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [iban, setIban] = useState('')
   const [licenseClass, setLicenseClass] = useState('B')
   const [plate, setPlate] = useState('')
+  const [vehicleType, setVehicleType] = useState('')
+  const [tcMasked, setTcMasked] = useState('')
+  const [homeAddress, setHomeAddress] = useState('')
+  const [averageRating, setAverageRating] = useState(0)
+  const [totalRatingCount, setTotalRatingCount] = useState(0)
   const [error, setError] = useState('')
+  const [status, setStatus] = useState('')
+
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 250)
-    return () => clearTimeout(timer)
-  }, [])
+    if (!user?.userId) {
+      setLoading(false)
+      return
+    }
+    let cancelled = false
+    void (async () => {
+      try {
+        const { data } = await apiClient.get<ProfileDto>(`/Users/${user.userId}`)
+        if (cancelled) return
+        setFullName(data.fullName)
+        setEmail(data.email)
+        setPhone(data.phone)
+        setTcMasked(data.tcIdentityNumber ?? '')
+        setIban(data.iban ? formatIBAN(data.iban.replace(/\s/g, '')) : '')
+        setLicenseClass(data.licenseClass ?? 'B')
+        setPlate(data.vehiclePlate ?? '')
+        setVehicleType(data.vehicleType ?? '')
+        setHomeAddress(data.homeAddress ?? '')
+        setAverageRating(data.averageRating)
+        setTotalRatingCount(data.totalRatingCount)
+      } catch {
+        if (!cancelled) setLoadError('Profil yüklenemedi. Lütfen tekrar deneyin.')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [user?.userId])
+
   function validateLocal() {
-    if (phone && !validatePhone(digitsOnly(phone))) return 'Telefon numarası 5 ile başlayan 10 haneli olmalıdır'
     if (email && !validateEmail(email)) return 'Geçerli bir e-posta adresi giriniz'
-    if (iban && !validateIBAN(iban)) return 'IBAN TR ile başlayan 26 karakter olmalıdır'
-    if (plate && !validatePlate(plate)) return 'Plaka formatı geçersiz'
+    const ibanRaw = iban.replace(/\s/g, '')
+    if (ibanRaw && !validateIBAN(ibanRaw)) return 'IBAN TR ile başlayan 26 karakter olmalıdır'
     return ''
   }
+
+  async function save() {
+    if (!user?.userId) return
+    const v = validateLocal()
+    if (v) {
+      setError(v)
+      return
+    }
+    if (!fullName.trim()) {
+      setError('Ad soyad zorunludur.')
+      return
+    }
+    setError('')
+    setStatus('')
+    try {
+      const ibanRaw = iban.replace(/\s/g, '')
+      await apiClient.put(`/Users/${user.userId}`, {
+        fullName: fullName.trim(),
+        email: email.trim(),
+        iban: ibanRaw || undefined,
+        homeAddress: homeAddress.trim() || undefined,
+      })
+      setStatus('Profil kaydedildi.')
+    } catch (e: unknown) {
+      const msg = (e as { uiMessage?: string })?.uiMessage ?? 'Kayıt başarısız.'
+      setError(msg)
+    }
+  }
+
   if (loading) return <PageSkeleton rows={3} variant="card" />
+  if (loadError) {
+    return (
+      <div className="page-wrap">
+        <h1 className="page-title">Şoför Profili</h1>
+        <div className="card">
+          <p className="muted">{loadError}</p>
+          <button className="btn btn-primary btn-sm" type="button" onClick={() => window.location.reload()}>
+            Yeniden dene
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="page-wrap">
       <h1 className="page-title">Şoför Profili</h1>
+      <p className="muted">
+        Ortalama puan: {averageRating.toFixed(1)} ({totalRatingCount} değerlendirme)
+      </p>
       <div className="card form-grid">
-        <input className="form-input" placeholder="Ad Soyad" />
-        <input className="form-input" placeholder="Telefon" maxLength={10} value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} />
+        <input className="form-input" placeholder="Ad Soyad" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+        <input className="form-input" placeholder="Telefon (maskeli)" value={phone} readOnly />
         <input className="form-input" placeholder="E-posta" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input className="form-input" placeholder="IBAN" maxLength={32} value={iban} onChange={(e) => setIban(formatIBAN(e.target.value).slice(0, 32))} />
-        <select className="form-input" value={licenseClass} onChange={(e) => setLicenseClass(e.target.value)}>
-          {['B', 'C', 'CE', 'D', 'DE', 'E'].map((c) => <option key={c} value={c}>{c}</option>)}
+        <input className="form-input" placeholder="T.C. Kimlik (maskeli)" value={tcMasked} readOnly />
+        <input className="form-input" placeholder="IBAN" maxLength={34} value={iban} onChange={(e) => setIban(formatIBAN(e.target.value).slice(0, 34))} />
+        <select className="form-input" value={licenseClass} disabled>
+          {['B', 'C', 'CE', 'D', 'DE', 'E'].map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
         </select>
-        <input className="form-input" placeholder="Plaka (34 ABC 1234)" maxLength={9} value={plate} onChange={(e) => setPlate(e.target.value.toUpperCase())} />
-        <button className="btn btn-primary btn-sm" type="button" onClick={() => setError(validateLocal())}>Kaydet</button>
-        {error ? <p className="muted" style={{ gridColumn: '1 / -1', color: '#ef4444' }}>{error}</p> : null}
+        <input className="form-input" placeholder="İkametgah" value={homeAddress} onChange={(e) => setHomeAddress(e.target.value)} />
+        <input className="form-input" placeholder="Plaka" value={plate} readOnly />
+        <input className="form-input" placeholder="Araç tipi" value={vehicleType} readOnly />
+        <button className="btn btn-primary btn-sm" type="button" onClick={() => void save()}>
+          Kaydet
+        </button>
+        {error ? (
+          <p className="muted" style={{ gridColumn: '1 / -1', color: '#ef4444' }}>
+            {error}
+          </p>
+        ) : null}
+        {status ? (
+          <p className="muted" style={{ gridColumn: '1 / -1' }}>
+            {status}
+          </p>
+        ) : null}
       </div>
       <div className="card">
         <h3>Belgeler</h3>

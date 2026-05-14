@@ -109,6 +109,8 @@ public class YukleDbContext : DbContext
             // PostgreSQL varchar(max) yerine native text kolonunu zorlar.
             entity.Property(u => u.AiInferenceDetails).HasColumnType("text");
             entity.Property(u => u.AdminReviewNote).HasMaxLength(500);
+            entity.Property(u => u.HomeAddress).HasMaxLength(500);
+            entity.Property(u => u.BankIban).HasMaxLength(34);
         });
 
         // ── Load ──────────────────────────────────────────────────────────────
@@ -233,6 +235,7 @@ public class YukleDbContext : DbContext
         {
             entity.HasKey(c => c.Id);
             entity.Property(c => c.SenderName).HasMaxLength(150).IsRequired();
+            entity.Property(c => c.SenderRole).HasMaxLength(32).IsRequired();
             entity.Property(c => c.Message).HasMaxLength(2000).IsRequired();
             entity.Property(c => c.BlockReason).HasMaxLength(300);
             entity.HasIndex(c => new { c.LoadId, c.CreatedAt });

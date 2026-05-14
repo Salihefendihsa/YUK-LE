@@ -34,3 +34,28 @@ export async function deliverLoad(id: string, payload: { qrToken: string; target
   const res = await apiClient.post(`/Loads/${id}/deliver`, payload)
   return res.data
 }
+
+export async function getDeliveryQr(id: string): Promise<{ loadId: string; token: string; expiresInMinutes: number }> {
+  const res = await apiClient.get<{ loadId: string; token: string; expiresInMinutes: number }>(`/Loads/${id}/delivery-qr`)
+  return res.data
+}
+
+export type HistoryRow = {
+  id: string
+  fromCity: string
+  toCity: string
+  deliveryDate?: string
+  price: number
+  driverName?: string | null
+  customerName?: string | null
+}
+
+export async function getCustomerLoadHistory(page = 1, pageSize = 20) {
+  const res = await apiClient.get<{ items: HistoryRow[]; totalSpend: number; total: number }>('/Loads/history', { params: { page, pageSize } })
+  return res.data
+}
+
+export async function getDriverLoadHistory(page = 1, pageSize = 20) {
+  const res = await apiClient.get<{ items: HistoryRow[]; totalEarn: number; tripCount: number; total: number }>('/Loads/driver-history', { params: { page, pageSize } })
+  return res.data
+}

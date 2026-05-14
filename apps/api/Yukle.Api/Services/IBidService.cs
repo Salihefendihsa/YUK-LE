@@ -23,6 +23,9 @@ public interface IBidService
     /// </summary>
     Task<List<BidListDto>> GetBidsByLoadIdAsync(Guid loadId, int customerId);
 
+    /// <summary>Admin paneli: sahiplik kontrolü olmadan yüke ait tüm teklifler.</summary>
+    Task<List<BidListDto>> GetBidsByLoadIdForAdminAsync(Guid loadId);
+
     /// <summary>
     /// Beklemedeki bir teklifi kabul eder; yükü şoföre atar,
     /// diğer teklifleri reddeder. Atomik (transaction) çalışır.

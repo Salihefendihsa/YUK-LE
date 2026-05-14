@@ -70,9 +70,15 @@ public sealed class BidsController(
     /// Sahiplik doğrulaması servis katmanında yapılır; başkasının ilanına erişilemez.
     /// </summary>
     [HttpGet("load/{loadId:guid}")]
-    [Authorize(Roles = "Customer")]
+    [Authorize(Roles = "Customer,Admin")]
     public async Task<IActionResult> GetBidsByLoad(Guid loadId)
     {
+        if (User.IsInRole("Admin"))
+        {
+            var adminBids = await _bidService.GetBidsByLoadIdForAdminAsync(loadId);
+            return Ok(adminBids);
+        }
+
         var customerIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!int.TryParse(customerIdClaim, out var customerId))
             return Unauthorized(new { Message = "Geçerli bir kullanıcı kimliği bulunamadı." });

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
+import ErrorBoundary from '../ErrorBoundary'
 import Sidebar from './Sidebar'
 import TopBar from './TopBar'
 import Footer from './Footer'
@@ -11,11 +12,17 @@ export default function AppLayout() {
   const location = useLocation()
 
   const titleMap: Record<string, string> = {
-    '/customer/dashboard': 'Müşteri Paneli | YÜK-LE',
+    '/customer/dashboard': 'Genel Bakış | YÜK-LE',
     '/customer/loads': 'İlanlarım | YÜK-LE',
-    '/customer/addresses': 'Teslimat Adresleri | YÜK-LE',
-    '/driver/dashboard': 'Şoför Paneli | YÜK-LE',
-    '/driver/wallet': 'Cüzdanım | YÜK-LE',
+    '/customer/loads/create': 'Yeni İlan | YÜK-LE',
+    '/customer/addresses': 'Belgelerim | YÜK-LE',
+    '/customer/wallet': 'Cüzdan | YÜK-LE',
+    '/customer/history': 'Geçmiş | YÜK-LE',
+    '/customer/profile': 'Profil | YÜK-LE',
+    '/driver/dashboard': 'Genel Bakış | YÜK-LE',
+    '/driver/wallet': 'Cüzdan | YÜK-LE',
+    '/driver/history': 'Geçmiş | YÜK-LE',
+    '/driver/profile': 'Profil | YÜK-LE',
     '/admin/dashboard': 'Admin Paneli | YÜK-LE',
     '/admin/tracking': 'Canlı Takip | YÜK-LE',
     '/admin/ratings': 'Puanlama Yönetimi | YÜK-LE',
@@ -50,7 +57,9 @@ export default function AppLayout() {
       <div className="app-main">
         <TopBar onMenuToggle={() => (window.innerWidth < 768 ? setMobileOpen((s) => !s) : setCollapsed(c => !c))} />
         <main className="app-content">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </main>
         <Footer />
       </div>

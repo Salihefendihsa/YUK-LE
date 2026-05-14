@@ -4,7 +4,14 @@ export function digitsOnly(value: string) {
 
 export function validateTC(tc: string): boolean {
   const clean = digitsOnly(tc)
-  return /^\d{11}$/.test(clean) && clean[0] !== '0'
+  if (!/^[1-9][0-9]{10}$/.test(clean)) return false
+  const digits = clean.split('').map(Number)
+  const sum1 = (digits[0] + digits[2] + digits[4] + digits[6] + digits[8]) * 7
+  const sum2 = digits[1] + digits[3] + digits[5] + digits[7]
+  const d10 = (sum1 - sum2) % 10
+  if (d10 !== digits[9]) return false
+  const total = digits.slice(0, 10).reduce((a, b) => a + b, 0)
+  return total % 10 === digits[10]
 }
 
 export function validateIBAN(iban: string): boolean {

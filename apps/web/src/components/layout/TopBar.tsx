@@ -36,6 +36,8 @@ export default function TopBar({ onMenuToggle }: TopBarProps) {
     return 'İyi akşamlar'
   }
 
+  const firstName = user?.fullName?.trim().split(/\s+/)[0] ?? 'Kullanıcı'
+
   return (
     <header className="topbar">
       <div className="topbar-left">
@@ -43,7 +45,7 @@ export default function TopBar({ onMenuToggle }: TopBarProps) {
           ☰
         </button>
         <p className="topbar-greeting">
-          {greeting()}, <strong>{user?.fullName ?? 'Kullanıcı'}</strong>
+          {greeting()}, <strong>{firstName} Bey</strong>
         </p>
       </div>
 

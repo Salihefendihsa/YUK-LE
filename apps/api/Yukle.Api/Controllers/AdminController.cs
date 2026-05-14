@@ -161,7 +161,10 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("drivers")]
-    public async Task<IActionResult> GetDrivers([FromQuery] string? status = null)
+    public async Task<IActionResult> GetDrivers(
+        [FromQuery] string? status = null,
+        [FromQuery] string? vehicleType = null,
+        [FromQuery] string? search = null)
     {
         var query = _context.Users
             .AsNoTracking()
@@ -173,10 +176,22 @@ public class AdminController : ControllerBase
             query = normalized switch
             {
                 "active" => query.Where(u => u.ApprovalStatus == ApprovalStatus.Active),
-                "review" => query.Where(u => u.ApprovalStatus == ApprovalStatus.PendingReview || u.ApprovalStatus == ApprovalStatus.ManualApprovalRequired),
+                "pending" => query.Where(u => u.ApprovalStatus == ApprovalStatus.Pending || u.ApprovalStatus == ApprovalStatus.PendingReview || u.ApprovalStatus == ApprovalStatus.ManualApprovalRequired),
                 "rejected" => query.Where(u => u.ApprovalStatus == ApprovalStatus.Rejected),
                 _ => query
             };
+        }
+
+        if (!string.IsNullOrWhiteSpace(vehicleType))
+        {
+            var vt = vehicleType.Trim();
+            query = query.Where(u => _context.Vehicles.Any(v => v.DriverId == u.Id && v.Type.ToString() == vt));
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = search.Trim();
+            query = query.Where(u => u.FullName.Contains(s) || u.Email.Contains(s) || u.Phone.Contains(s));
         }
 
         var data = await query
@@ -190,7 +205,7 @@ public class AdminController : ControllerBase
                 u.IsActive,
                 ApprovalStatus = u.ApprovalStatus.ToString(),
                 Vehicle = _context.Vehicles.Where(v => v.DriverId == u.Id).Select(v => v.Plate).FirstOrDefault(),
-                Rating = 5.0
+                Rating = u.AverageRating
             })
             .ToListAsync();
 
@@ -198,11 +213,30 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("customers")]
-    public async Task<IActionResult> GetCustomers()
+    public async Task<IActionResult> GetCustomers([FromQuery] string? status = null, [FromQuery] string? search = null)
     {
-        var data = await _context.Users
+        var query = _context.Users
             .AsNoTracking()
-            .Where(u => u.Role == UserRole.Customer)
+            .Where(u => u.Role == UserRole.Customer);
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            var n = status.Trim().ToLowerInvariant();
+            query = n switch
+            {
+                "active" => query.Where(u => u.IsActive),
+                "suspended" => query.Where(u => !u.IsActive),
+                _ => query
+            };
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = search.Trim();
+            query = query.Where(u => u.FullName.Contains(s) || u.Email.Contains(s) || u.Phone.Contains(s));
+        }
+
+        var data = await query
             .OrderByDescending(u => u.CreatedAt)
             .Select(u => new
             {
@@ -232,7 +266,14 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("loads")]
-    public async Task<IActionResult> GetLoads([FromQuery] string? status = null, [FromQuery] string? q = null)
+    public async Task<IActionResult> GetLoads(
+        [FromQuery] string? status = null,
+        [FromQuery] string? q = null,
+        [FromQuery] string? fromCity = null,
+        [FromQuery] DateTime? dateFrom = null,
+        [FromQuery] DateTime? dateTo = null,
+        [FromQuery] int? customerId = null,
+        [FromQuery] int? driverId = null)
     {
         var query = _context.Loads.AsNoTracking().AsQueryable();
         if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<LoadStatus>(status, true, out var parsed))
@@ -244,6 +285,21 @@ public class AdminController : ControllerBase
                                   || l.ToCity.ToLower().Contains(term)
                                   || l.Description.ToLower().Contains(term));
         }
+
+        if (!string.IsNullOrWhiteSpace(fromCity))
+        {
+            var fc = fromCity.Trim();
+            query = query.Where(l => l.FromCity.Contains(fc));
+        }
+
+        if (dateFrom.HasValue)
+            query = query.Where(l => l.CreatedAt >= dateFrom.Value);
+        if (dateTo.HasValue)
+            query = query.Where(l => l.CreatedAt <= dateTo.Value);
+        if (customerId.HasValue)
+            query = query.Where(l => l.UserId == customerId.Value);
+        if (driverId.HasValue)
+            query = query.Where(l => l.DriverId == driverId.Value);
 
         var data = await query
             .OrderByDescending(l => l.CreatedAt)
@@ -273,10 +329,24 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("payments")]
-    public async Task<IActionResult> GetPayments()
+    public async Task<IActionResult> GetPayments(
+        [FromQuery] string? status = null,
+        [FromQuery] DateTime? dateFrom = null,
+        [FromQuery] DateTime? dateTo = null,
+        [FromQuery] int? customerId = null)
     {
-        var data = await _context.PaymentTransactions
-            .AsNoTracking()
+        var query = _context.PaymentTransactions.AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<PaymentStatus>(status, true, out var ps))
+            query = query.Where(p => p.Status == ps);
+        if (dateFrom.HasValue)
+            query = query.Where(p => p.CreatedAt >= dateFrom.Value);
+        if (dateTo.HasValue)
+            query = query.Where(p => p.CreatedAt <= dateTo.Value);
+        if (customerId.HasValue)
+            query = query.Where(p => _context.Loads.Any(l => l.Id == p.LoadId && l.UserId == customerId.Value));
+
+        var data = await query
             .OrderByDescending(p => p.CreatedAt)
             .Select(p => new
             {
@@ -413,19 +483,161 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("chats")]
-    public IActionResult GetChats()
+    public async Task<IActionResult> GetChats()
     {
-        var blocked = _chatModerationService.GetBlockedMessages(500);
-        var grouped = blocked.GroupBy(x => x.LoadId).Select(g => new { LoadId = g.Key, MessageCount = g.Count(), LastMessageAt = g.Max(x => x.TimestampUtc) }).OrderByDescending(x => x.MessageCount);
-        return Ok(grouped);
+        var recent = await _context.ChatMessages
+            .AsNoTracking()
+            .OrderByDescending(m => m.CreatedAt)
+            .Take(800)
+            .ToListAsync();
+
+        var summary = recent
+            .GroupBy(m => m.LoadId)
+            .Select(g =>
+            {
+                var last = g.OrderByDescending(x => x.CreatedAt).First();
+                return new
+                {
+                    g.Key,
+                    LastAt       = last.CreatedAt,
+                    LastMessage  = last.Message,
+                    MessageCount = g.Count()
+                };
+            })
+            .OrderByDescending(x => x.LastAt)
+            .Take(200)
+            .ToList();
+
+        var loadIds = summary.Select(s => s.Key).ToList();
+        var loads = await _context.Loads.AsNoTracking()
+            .Where(l => loadIds.Contains(l.Id))
+            .Select(l => new { l.Id, l.UserId, l.DriverId, l.FromCity, l.ToCity })
+            .ToListAsync();
+
+        var userIds = loads.SelectMany(l => new[] { l.UserId }.Concat(l.DriverId != null ? new[] { l.DriverId!.Value } : Array.Empty<int>())).Distinct().ToList();
+        var names = await _context.Users.AsNoTracking()
+            .Where(u => userIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.FullName);
+
+        var result = summary.Select(s =>
+        {
+            var l = loads.FirstOrDefault(x => x.Id == s.Key);
+            var cust = l != null && names.TryGetValue(l.UserId, out var cn) ? cn : "?";
+            var drv = l?.DriverId is int did && names.TryGetValue(did, out var dn) ? dn : "-";
+            return new
+            {
+                LoadId         = s.Key,
+                CustomerName   = cust,
+                DriverName     = drv,
+                Route            = l == null ? "" : $"{l.FromCity} → {l.ToCity}",
+                s.LastMessage,
+                LastMessageAt  = s.LastAt,
+                s.MessageCount
+            };
+        });
+
+        return Ok(result);
     }
 
     [HttpGet("chats/{loadId:guid}")]
     public async Task<IActionResult> GetChatByLoad(Guid loadId)
     {
-        var messages = await _context.ChatMessages.Where(c => c.LoadId == loadId).OrderBy(c => c.CreatedAt).ToListAsync();
-        var blocked = _chatModerationService.GetBlockedMessages(500).Where(x => Guid.TryParse(x.LoadId, out var gid) && gid == loadId);
-        return Ok(new { Messages = messages, BlockedMessages = blocked });
+        var messages = await _context.ChatMessages.AsNoTracking()
+            .Where(c => c.LoadId == loadId)
+            .OrderBy(c => c.CreatedAt)
+            .ToListAsync();
+        return Ok(messages);
+    }
+
+    [HttpGet("active-drivers")]
+    public async Task<IActionResult> GetActiveDrivers()
+    {
+        var activeStatuses = new[] { LoadStatus.Assigned, LoadStatus.OnWay, LoadStatus.Arrived };
+        var loads = await _context.Loads.AsNoTracking()
+            .Where(l => l.DriverId != null && activeStatuses.Contains(l.Status))
+            .Select(l => new { l.Id, l.DriverId, l.FromCity, l.ToCity })
+            .ToListAsync();
+
+        var driverIds = loads.Select(l => l.DriverId!.Value).Distinct().ToList();
+        var drivers = await _context.Users.AsNoTracking()
+            .Where(u => driverIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u);
+
+        var veh = await _context.Vehicles.AsNoTracking()
+            .Where(v => driverIds.Contains(v.DriverId))
+            .ToListAsync();
+
+        var plateByDriver = veh
+            .GroupBy(v => v.DriverId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderByDescending(v => v.IsActive).ThenByDescending(v => v.Id).First().Plate);
+
+        var rows = loads.Select(l =>
+        {
+            var did = l.DriverId!.Value;
+            drivers.TryGetValue(did, out var d);
+            return new
+            {
+                LoadId              = l.Id,
+                DriverId            = did,
+                DriverName          = d?.FullName ?? "?",
+                Plate               = plateByDriver.TryGetValue(did, out var p) ? p : "",
+                LastKnownLat        = d?.LastKnownLatitude,
+                LastKnownLng        = d?.LastKnownLongitude,
+                LastLocationUpdate  = d?.LastLocationUpdate,
+                Route               = $"{l.FromCity} → {l.ToCity}"
+            };
+        });
+
+        return Ok(rows);
+    }
+
+    [HttpPost("users/{id:int}/note")]
+    public async Task<IActionResult> AddUserNote(int id, [FromBody] AdminNoteBody body)
+    {
+        if (string.IsNullOrWhiteSpace(body.Text))
+            return BadRequest(new { message = "Not boş olamaz." });
+
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var adminId))
+            return Unauthorized();
+
+        var target = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+        if (target is null)
+            return NotFound();
+
+        await _context.AdminActionLogs.AddAsync(new AdminActionLog
+        {
+            AdminId        = adminId,
+            TargetUserId   = id,
+            Action         = "Note",
+            Note           = body.Text.Trim(),
+            TimestampUtc   = DateTime.UtcNow
+        });
+        await _context.SaveChangesAsync();
+        return Ok(new { success = true });
+    }
+
+    [HttpPost("users/{id:int}/warn")]
+    public async Task<IActionResult> WarnUser(int id, [FromBody] WarnBody? body)
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var adminId))
+            return Unauthorized();
+
+        var target = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+        if (target is null)
+            return NotFound();
+
+        await _context.AdminActionLogs.AddAsync(new AdminActionLog
+        {
+            AdminId        = adminId,
+            TargetUserId   = id,
+            Action         = "Warn",
+            Note           = string.IsNullOrWhiteSpace(body?.Reason) ? "Uyarı" : body!.Reason!.Trim(),
+            TimestampUtc   = DateTime.UtcNow
+        });
+        await _context.SaveChangesAsync();
+        return Ok(new { success = true });
     }
 
     [HttpGet("drivers/{id:int}/stats")]
@@ -535,4 +747,14 @@ public class AdminController : ControllerBase
 public sealed class SuspendRequest
 {
     public string Reason { get; set; } = string.Empty;
+}
+
+public sealed class AdminNoteBody
+{
+    public string Text { get; set; } = string.Empty;
+}
+
+public sealed class WarnBody
+{
+    public string? Reason { get; set; }
 }
