@@ -1,5 +1,11 @@
+import type { ReactNode } from 'react'
+import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { AuroraBackground } from '../components/AuroraBackground'
+import { FloatingParticles } from '../components/FloatingParticles'
+import { SpotlightCursor } from '../components/SpotlightCursor'
+import { ShimmerText } from '../components/ShimmerText'
 
 function ArrowRightIcon() {
   return (
@@ -17,70 +23,162 @@ function ArrowRightIcon() {
 
 const ease = [0.22, 1, 0.36, 1] as const
 
-function motionBlock(delay: number, reduceMotion: boolean) {
-  if (reduceMotion) {
-    return { initial: false, animate: { opacity: 1, y: 0 } }
-  }
-  return {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.8, ease, delay },
-  }
+const containerVariants = {
+  hidden: {},
+  visible: (reduceMotion: boolean) => ({
+    transition: {
+      staggerChildren: reduceMotion ? 0 : 0.12,
+      delayChildren: reduceMotion ? 0 : 0.1,
+    },
+  }),
+}
+
+const itemVariants = {
+  hidden: (reduceMotion: boolean) =>
+    reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 },
+  visible: (reduceMotion: boolean) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: reduceMotion ? 0 : 0.8,
+      ease,
+    },
+  }),
+}
+
+function MagneticCtaLink({
+  to,
+  className,
+  children,
+  magneticDisabled,
+  withShimmer,
+}: {
+  to: string
+  className: string
+  children: ReactNode
+  magneticDisabled: boolean
+  withShimmer?: boolean
+}) {
+  const linkRef = useRef<HTMLAnchorElement>(null)
+  const innerRef = useRef<HTMLSpanElement>(null)
+
+  useEffect(() => {
+    if (magneticDisabled) return
+    const link = linkRef.current
+    const inner = innerRef.current
+    if (!link || !inner) return
+
+    const strength = 0.22
+    const onMove = (e: MouseEvent) => {
+      const rect = link.getBoundingClientRect()
+      const x = e.clientX - (rect.left + rect.width / 2)
+      const y = e.clientY - (rect.top + rect.height / 2)
+      inner.style.transform = `translate(${x * strength}px, ${y * strength}px)`
+    }
+    const reset = () => {
+      inner.style.transform = 'translate(0, 0)'
+    }
+    link.addEventListener('mousemove', onMove)
+    link.addEventListener('mouseleave', reset)
+    return () => {
+      link.removeEventListener('mousemove', onMove)
+      link.removeEventListener('mouseleave', reset)
+    }
+  }, [magneticDisabled])
+
+  return (
+    <Link ref={linkRef} to={to} className={className} data-cursor-hover>
+      <span ref={innerRef} className="hero-cta-magnetic-inner">
+        {children}
+      </span>
+      {withShimmer ? <span className="cta-shimmer" aria-hidden /> : null}
+    </Link>
+  )
 }
 
 export function HeroSection({ reduceMotion }: { reduceMotion: boolean }) {
   const r = reduceMotion
 
   return (
-    <section className="landing-hero" id="top">
-      <div className="landing-hero__layers" aria-hidden>
-        <div className="landing-hero__glow" />
-        <div className="landing-hero__dotgrid" />
-        <div className="landing-hero__vignette" />
+    <section className="hero-cinematic" id="top">
+      <AuroraBackground />
+      <FloatingParticles />
+      <SpotlightCursor disabled={r} />
+      <div className="hero-grid-pattern" aria-hidden />
+      <div className="hero-vignette" aria-hidden />
+
+      <div className="hero-content-wrapper">
+        <motion.div
+          className="hero-content"
+          initial={r ? false : 'hidden'}
+          animate="visible"
+          variants={containerVariants}
+          custom={r}
+        >
+          <motion.div className="hero-badge" variants={itemVariants} custom={r}>
+            <span className="hero-badge-dot" aria-hidden />
+            <span>TR&apos;NİN İLK AI LOJİSTİĞİ</span>
+          </motion.div>
+
+          <motion.h1 className="hero-headline" variants={itemVariants} custom={r}>
+            <span className="hero-headline-line">
+              Yükünüz <ShimmerText variant="white">GÜVENDE</ShimmerText>,
+            </span>
+            <span className="hero-headline-line">
+              Yolunuz <ShimmerText variant="orange">AÇIK</ShimmerText>.
+            </span>
+          </motion.h1>
+
+          <motion.p className="hero-subtitle" variants={itemVariants} custom={r}>
+            Saniyeler içinde eşleş. Akıllıca taşı.
+            <br />
+            Güvenle teslim al.
+          </motion.p>
+
+          <motion.div className="hero-cta-group" variants={itemVariants} custom={r}>
+            <MagneticCtaLink
+              to="/register"
+              className="cta-primary"
+              magneticDisabled={r}
+              withShimmer
+            >
+              <span>Hemen Başla</span>
+              <ArrowRightIcon />
+            </MagneticCtaLink>
+            <MagneticCtaLink to="/demo" className="cta-secondary" magneticDisabled={r}>
+              Demo Talep Et
+            </MagneticCtaLink>
+          </motion.div>
+
+          <motion.div
+            className="hero-trust-live"
+            variants={itemVariants}
+            custom={r}
+            aria-label="Güven ve canlı aktivite"
+          >
+            <div className="trust-avatars">
+              {['M', 'A', 'Z', 'F'].map((initial, i) => (
+                <div key={i} className={`trust-avatar trust-avatar-${i}`}>
+                  {initial}
+                </div>
+              ))}
+            </div>
+            <div className="trust-text">
+              <strong>2.847</strong> fabrika · <span className="trust-rating">★ 4.9</span>
+            </div>
+            <div className="trust-divider" aria-hidden />
+            <div className="trust-live">
+              <span className="live-dot" aria-hidden />
+              <strong>247</strong> aktif sefer
+            </div>
+          </motion.div>
+        </motion.div>
       </div>
 
-      <div className="landing-hero__container">
-        <motion.div className="landing-hero__badge" {...motionBlock(0.1, r)}>
-          <span className="landing-hero__badge-dot" aria-hidden />
-          <span>TR&apos;NİN İLK AI LOJİSTİĞİ</span>
-        </motion.div>
-
-        <motion.h1 className="landing-hero__title" {...motionBlock(0.2, r)}>
-          Yükünüz <span className="landing-hero__title-soft">güvende</span>,
-          <br />
-          Yolunuz <span className="landing-hero__title-accent">açık</span>.
-        </motion.h1>
-
-        <motion.p className="landing-hero__subtitle" {...motionBlock(0.4, r)}>
-          Saniyeler içinde eşleş. Akıllıca taşı. Güvenle teslim al.
-        </motion.p>
-
-        <motion.div className="landing-hero__cta-group" {...motionBlock(0.6, r)}>
-          <Link to="/register" className="landing-hero__cta-primary" data-cursor-hover>
-            Hemen Başla
-            <ArrowRightIcon />
-          </Link>
-          <Link to="/demo" className="landing-hero__cta-secondary" data-cursor-hover>
-            Demo Talep Et
-          </Link>
-        </motion.div>
-
-        <motion.div className="landing-hero__trust" {...motionBlock(0.8, r)} aria-label="Güven göstergesi">
-          <div className="landing-hero__trust-avatars">
-            <div className="landing-hero__trust-avatar landing-hero__trust-avatar--1">M</div>
-            <div className="landing-hero__trust-avatar landing-hero__trust-avatar--2">Z</div>
-            <div className="landing-hero__trust-avatar landing-hero__trust-avatar--3">F</div>
-            <div className="landing-hero__trust-avatar landing-hero__trust-avatar--4">A</div>
-          </div>
-          <span>500+ fabrika güveniyor</span>
-          <span className="landing-hero__trust-rating">★ 4.9/5</span>
-        </motion.div>
-      </div>
-
-      <div className="landing-hero__scroll" aria-hidden>
-        <span className="landing-hero__scroll-label">KAYDIRIN</span>
-        <div className="landing-hero__scroll-line">
-          <div className="landing-hero__scroll-dot" />
+      <div className="hero-scroll-indicator" aria-hidden>
+        <span className="hero-scroll-label">KAYDIRIN</span>
+        <div className="hero-scroll-line">
+          <div className="hero-scroll-dot" />
         </div>
       </div>
     </section>
