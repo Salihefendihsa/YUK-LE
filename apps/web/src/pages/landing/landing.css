@@ -1221,8 +1221,16 @@ html.landing-page body {
   position: relative;
   width: 100%;
   max-width: 600px;
-  aspect-ratio: 1 / 1;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.globe-canvas-stack {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
   padding-bottom: 44px;
   display: flex;
   align-items: center;
@@ -1340,6 +1348,96 @@ html.landing-page body {
   z-index: 3;
 }
 
+/* Globe destinations legend */
+.globe-destinations {
+  margin-top: 24px;
+  width: 100%;
+  max-width: 640px;
+  padding: 20px 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.globe-destinations-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.globe-destinations-hub {
+  color: #ffb627;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+}
+
+.globe-destinations-arrow {
+  color: rgba(255, 107, 0, 0.6);
+  font-size: 14px;
+}
+
+.globe-destinations-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.globe-destination-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+  transition: all 0.2s ease;
+}
+
+.globe-destination-chip:hover {
+  background: rgba(255, 107, 0, 0.08);
+  border-color: rgba(255, 107, 0, 0.2);
+  color: #ffb627;
+}
+
+.globe-dest-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff6b00;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px rgba(255, 107, 0, 0.5);
+}
+
+.globe-dest-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+  .globe-destinations-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .globe-destinations-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
 /* Turkey detail map (zoom view) */
 .turkey-detail-map {
   width: 100%;
@@ -1363,7 +1461,7 @@ html.landing-page body {
   width: 100%;
   height: auto;
   display: block;
-  aspect-ratio: 1000 / 460;
+  aspect-ratio: 980 / 470;
 }
 
 .turkey-outline-detail {

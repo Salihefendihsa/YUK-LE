@@ -3,17 +3,34 @@ import createGlobe, { type Arc, type Marker } from 'cobe'
 
 const HUB: [number, number] = [39.0, 35.5]
 
+const DESTINATIONS = [
+  { code: 'BER', name: 'Berlin', flag: 'DE' },
+  { code: 'LON', name: 'Londra', flag: 'GB' },
+  { code: 'ROM', name: 'Roma', flag: 'IT' },
+  { code: 'NYC', name: 'New York', flag: 'US' },
+  { code: 'LAX', name: 'Los Angeles', flag: 'US' },
+  { code: 'DXB', name: 'Dubai', flag: 'AE' },
+  { code: 'SIN', name: 'Singapur', flag: 'SG' },
+  { code: 'TYO', name: 'Tokyo', flag: 'JP' },
+  { code: 'SYD', name: 'Sidney', flag: 'AU' },
+  { code: 'GRU', name: 'São Paulo', flag: 'BR' },
+] as const
+
 const TURKEY_MARKERS: Marker[] = [
-  { location: [41.0082, 28.9784], size: 0.12 },
-  { location: [39.9334, 32.8597], size: 0.1 },
-  { location: [38.4192, 27.1287], size: 0.08 },
-  { location: [37.0, 35.3213], size: 0.06 },
-  { location: [40.1828, 29.0665], size: 0.05 },
-  { location: [36.8841, 30.7056], size: 0.05 },
-  { location: [37.0662, 37.3833], size: 0.05 },
-  { location: [37.8746, 32.4932], size: 0.04 },
-  { location: [38.7312, 35.4787], size: 0.04 },
-  { location: [41.2867, 36.33], size: 0.04 },
+  { location: HUB, size: 0.15 },
+  { location: [41.0082, 28.9784], size: 0.1 },
+  { location: [39.9334, 32.8597], size: 0.08 },
+  { location: [38.4192, 27.1287], size: 0.07 },
+  { location: [52.52, 13.405], size: 0.06 },
+  { location: [51.507, -0.128], size: 0.06 },
+  { location: [41.902, 12.496], size: 0.06 },
+  { location: [40.713, -74.006], size: 0.07 },
+  { location: [34.052, -118.244], size: 0.06 },
+  { location: [25.205, 55.27], size: 0.06 },
+  { location: [1.352, 103.819], size: 0.05 },
+  { location: [35.676, 139.65], size: 0.06 },
+  { location: [-33.868, 151.209], size: 0.05 },
+  { location: [-23.55, -46.633], size: 0.05 },
 ]
 
 const GLOBAL_ARCS: Arc[] = [
@@ -71,8 +88,8 @@ export function NetworkGlobe({ reduceMotion = false, onZoomToTurkey }: Props) {
       dark: 1,
       diffuse: 1.2,
       mapSamples: 16000,
-      mapBrightness: 4,
-      baseColor: [0.15, 0.15, 0.2],
+      mapBrightness: 6,
+      baseColor: [0.2, 0.2, 0.25],
       markerColor: [1, 0.42, 0],
       glowColor: [1, 0.5, 0.1],
       markers: TURKEY_MARKERS,
@@ -161,23 +178,43 @@ export function NetworkGlobe({ reduceMotion = false, onZoomToTurkey }: Props) {
 
   return (
     <div ref={containerRef} className="globe-container">
-      <div className="globe-ambient" aria-hidden />
-      <div className="globe-spotlight" aria-hidden />
-      <canvas
-        ref={canvasRef}
-        className="globe-canvas"
-        style={{
-          contain: 'layout paint size',
-          opacity: 0,
-          transition: 'opacity 1s ease',
-          cursor: 'pointer',
-        }}
-      />
-      <div className="globe-label-turkey">
-        <span className="globe-label-dot" aria-hidden />
-        <span>TÜRKİYE</span>
+      <div className="globe-canvas-stack">
+        <div className="globe-ambient" aria-hidden />
+        <div className="globe-spotlight" aria-hidden />
+        <canvas
+          ref={canvasRef}
+          className="globe-canvas"
+          style={{
+            contain: 'layout paint size',
+            opacity: 0,
+            transition: 'opacity 1s ease',
+            cursor: 'pointer',
+          }}
+        />
+        <div className="globe-label-turkey">
+          <span className="globe-label-dot" aria-hidden />
+          <span>TÜRKİYE</span>
+        </div>
+        <p className="globe-hint">Türkiye haritası için tıkla · sürükleyerek döndür</p>
       </div>
-      <p className="globe-hint">Türkiye haritası için tıkla · sürükleyerek döndür</p>
+
+      <div className="globe-destinations">
+        <div className="globe-destinations-title">
+          <span className="globe-destinations-hub">TÜRKİYE MERKEZLİ</span>
+          <span className="globe-destinations-arrow" aria-hidden>
+            →
+          </span>
+          <span>10 Uluslararası Nokta</span>
+        </div>
+        <div className="globe-destinations-grid">
+          {DESTINATIONS.map((dest) => (
+            <div key={dest.code} className="globe-destination-chip" title={`${dest.name} (${dest.flag})`}>
+              <span className="globe-dest-dot" aria-hidden />
+              <span className="globe-dest-name">{dest.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }

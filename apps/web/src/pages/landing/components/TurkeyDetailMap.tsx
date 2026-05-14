@@ -1,7 +1,10 @@
 import { useState } from 'react'
 
-const TURKEY_PATH =
-  'M 80 220 C 70 210, 65 195, 75 185 L 95 175 C 120 168, 145 162, 175 160 L 220 158 C 260 155, 305 152, 355 148 L 420 144 C 480 140, 540 138, 600 138 L 670 140 C 730 142, 780 148, 820 158 L 860 170 C 890 180, 910 195, 920 215 L 925 240 C 920 260, 905 275, 880 285 L 840 295 C 800 302, 750 308, 690 312 L 620 315 C 555 318, 490 320, 425 320 L 360 318 C 310 315, 265 308, 225 298 L 195 290 C 165 280, 140 265, 115 248 L 95 235 Z'
+/** Natural Earth–style country boundary (GeoJSON), projected with same bounds as cities. Source: `public/assets/turkey.geo.json`. */
+const TURKEY_OUTLINE_PATH =
+  'M573.58,78.20L645.68,104.17L704.22,93.81L747.49,99.80L806.82,64.75L860.37,61.56L908.77,94.53L917.31,118.16L912.48,150.83L949.85,167.52L969.65,187.13L935.23,206.25L950.92,283.26L941.09,304.05L968.58,357.84L944.49,369.18L926.84,352.08L868.39,343.42L846.80,353.85L789.63,364.29L762.55,363.16L704.72,388.35L663.38,388.56L636.63,375.92L581.30,394.60L564.86,381.54L562.14,418.99L548.68,433.70L535.22,448.41L516.74,417.96L535.77,392.75L505.12,398.46L463.09,383.01L428.53,421.66L352.26,429.21L311.57,393.17L257.39,390.91L245.81,418.77L211.08,426.74L162.47,390.98L107.61,392.19L77.84,325.42L41.12,288.17L65.57,235.96L33.71,203.87L89.46,139.66L166.85,136.97L187.96,85.94L283.74,94.83L344.15,51.28L402.72,32.30L485.86,30.87L573.58,78.20ZM85.05,121.49L43.12,157.65L27.31,126.38L27.99,112.52L39.93,104.99L55.49,62.97L31.01,45.19L82.21,24.07L125.48,33.08L131.45,58.89L175.32,80.58L166.17,97.02L106.49,100.73L85.05,121.49Z'
+
+const TURKEY_VIEWBOX = { w: 980, h: 470 } as const
 
 type CitySize = 'xl' | 'lg' | 'md' | 'sm'
 
@@ -15,27 +18,47 @@ type TurkeyCity = {
   highlighted?: boolean
 }
 
-const TURKEY_CITIES: TurkeyCity[] = [
-  { name: 'İstanbul', x: 215, y: 175, size: 'xl', factories: 487, region: 'marmara' },
-  { name: 'Ankara', x: 470, y: 205, size: 'xl', factories: 312, region: 'central' },
-  { name: 'İzmir', x: 150, y: 230, size: 'lg', factories: 234, region: 'aegean' },
-  { name: 'Adana', x: 545, y: 265, size: 'lg', factories: 156, region: 'mediterranean' },
-  { name: 'Bursa', x: 235, y: 200, size: 'md', factories: 178, region: 'marmara' },
-  { name: 'Antalya', x: 360, y: 280, size: 'md', factories: 142, region: 'mediterranean' },
-  { name: 'Gaziantep', x: 625, y: 270, size: 'md', factories: 128, region: 'southeast' },
-  { name: 'Konya', x: 425, y: 245, size: 'md', factories: 98, region: 'central' },
-  { name: 'Kayseri', x: 555, y: 225, size: 'md', factories: 87, region: 'central' },
-  { name: 'Mersin', x: 510, y: 280, size: 'md', factories: 89, region: 'mediterranean' },
-  { name: 'Samsun', x: 530, y: 165, size: 'sm', factories: 76, region: 'blacksea' },
-  { name: 'Trabzon', x: 660, y: 175, size: 'sm', factories: 54, region: 'blacksea' },
-  { name: 'Diyarbakır', x: 685, y: 250, size: 'sm', factories: 67, region: 'southeast' },
-  { name: 'Eskişehir', x: 360, y: 200, size: 'sm', factories: 62, region: 'central' },
-  { name: 'Elazığ', x: 650, y: 225, size: 'md', factories: 48, region: 'east', highlighted: true },
-  { name: 'Malatya', x: 615, y: 240, size: 'sm', factories: 41, region: 'east' },
-  { name: 'Erzurum', x: 745, y: 195, size: 'sm', factories: 42, region: 'east' },
-  { name: 'Van', x: 800, y: 235, size: 'sm', factories: 38, region: 'east' },
-  { name: 'Şanlıurfa', x: 645, y: 280, size: 'sm', factories: 58, region: 'southeast' },
-]
+type TurkeyCityInput = Omit<TurkeyCity, 'x' | 'y'> & { lat: number; lng: number }
+
+function projectToSVG(lat: number, lng: number, viewBoxW = TURKEY_VIEWBOX.w, viewBoxH = TURKEY_VIEWBOX.h) {
+  const minLng = 25.5
+  const maxLng = 45.0
+  const minLat = 35.5
+  const maxLat = 42.5
+
+  const x = ((lng - minLng) / (maxLng - minLng)) * viewBoxW
+  const y = ((maxLat - lat) / (maxLat - minLat)) * viewBoxH
+
+  return { x, y }
+}
+
+const TURKEY_CITIES: TurkeyCity[] = (
+  [
+  { name: 'İstanbul', lat: 41.0, lng: 28.9, factories: 487, size: 'xl', region: 'marmara' },
+  { name: 'Bursa', lat: 40.18, lng: 29.0, factories: 178, size: 'md', region: 'marmara' },
+  { name: 'İzmir', lat: 38.4, lng: 27.1, factories: 234, size: 'lg', region: 'aegean' },
+  { name: 'Ankara', lat: 39.9, lng: 32.8, factories: 312, size: 'xl', region: 'central' },
+  { name: 'Eskişehir', lat: 39.7, lng: 30.5, factories: 62, size: 'sm', region: 'central' },
+  { name: 'Konya', lat: 37.8, lng: 32.4, factories: 98, size: 'md', region: 'central' },
+  { name: 'Kayseri', lat: 38.7, lng: 35.4, factories: 87, size: 'md', region: 'central' },
+  { name: 'Antalya', lat: 36.8, lng: 30.7, factories: 142, size: 'md', region: 'mediterranean' },
+  { name: 'Mersin', lat: 36.8, lng: 34.6, factories: 89, size: 'md', region: 'mediterranean' },
+  { name: 'Adana', lat: 37.0, lng: 35.3, factories: 156, size: 'lg', region: 'mediterranean' },
+  { name: 'Elazığ', lat: 38.6, lng: 39.2, factories: 48, size: 'md', region: 'east', highlighted: true },
+  { name: 'Malatya', lat: 38.3, lng: 38.3, factories: 41, size: 'sm', region: 'east' },
+  { name: 'Erzurum', lat: 39.9, lng: 41.2, factories: 42, size: 'sm', region: 'east' },
+  { name: 'Van', lat: 38.4, lng: 43.4, factories: 38, size: 'sm', region: 'east' },
+  { name: 'Gaziantep', lat: 37.0, lng: 37.3, factories: 128, size: 'md', region: 'southeast' },
+  { name: 'Şanlıurfa', lat: 37.1, lng: 38.7, factories: 58, size: 'sm', region: 'southeast' },
+  { name: 'Diyarbakır', lat: 37.9, lng: 40.2, factories: 67, size: 'sm', region: 'southeast' },
+  { name: 'Samsun', lat: 41.2, lng: 36.3, factories: 76, size: 'sm', region: 'blacksea' },
+  { name: 'Trabzon', lat: 41.0, lng: 39.7, factories: 54, size: 'sm', region: 'blacksea' },
+] satisfies TurkeyCityInput[]
+).map((c) => {
+  const { lat, lng, ...rest } = c
+  const { x, y } = projectToSVG(lat, lng)
+  return { ...rest, x, y }
+})
 
 const TURKEY_ROUTES = [
   { from: 'İstanbul', to: 'Ankara' },
@@ -74,6 +97,7 @@ type Props = {
 
 export function TurkeyDetailMap({ onBackToGlobe, reduceMotion = false }: Props) {
   const [hoveredCity, setHoveredCity] = useState<string | null>(null)
+  const viewBoxStr = `0 0 ${TURKEY_VIEWBOX.w} ${TURKEY_VIEWBOX.h}`
 
   return (
     <div className="turkey-detail-map">
@@ -90,7 +114,13 @@ export function TurkeyDetailMap({ onBackToGlobe, reduceMotion = false }: Props) 
         Dünyaya Dön
       </button>
 
-      <svg viewBox="0 0 1000 460" className="turkey-svg" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Turkiye sehir agi haritasi">
+      <svg
+        viewBox={viewBoxStr}
+        className="turkey-svg"
+        preserveAspectRatio="xMidYMid meet"
+        role="img"
+        aria-label="Turkiye sehir agi haritasi"
+      >
         <defs>
           <linearGradient id="turkeyDetailGradient" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="rgba(255, 107, 0, 0.12)" />
@@ -109,15 +139,31 @@ export function TurkeyDetailMap({ onBackToGlobe, reduceMotion = false }: Props) 
 
         <g className="turkey-grid" opacity="0.35" aria-hidden>
           {Array.from({ length: 21 }, (_, i) => (
-            <line key={`v${i}`} x1={i * 50} y1="0" x2={i * 50} y2="460" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
+            <line
+              key={`v${i}`}
+              x1={(i * TURKEY_VIEWBOX.w) / 20}
+              y1="0"
+              x2={(i * TURKEY_VIEWBOX.w) / 20}
+              y2={TURKEY_VIEWBOX.h}
+              stroke="rgba(255,255,255,0.04)"
+              strokeWidth="1"
+            />
           ))}
           {Array.from({ length: 10 }, (_, i) => (
-            <line key={`h${i}`} x1="0" y1={i * 50} x2="1000" y2={i * 50} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
+            <line
+              key={`h${i}`}
+              x1="0"
+              y1={(i * TURKEY_VIEWBOX.h) / 9}
+              x2={TURKEY_VIEWBOX.w}
+              y2={(i * TURKEY_VIEWBOX.h) / 9}
+              stroke="rgba(255,255,255,0.04)"
+              strokeWidth="1"
+            />
           ))}
         </g>
 
         <path
-          d={TURKEY_PATH}
+          d={TURKEY_OUTLINE_PATH}
           fill="url(#turkeyDetailGradient)"
           stroke="rgba(255, 107, 0, 0.5)"
           strokeWidth="1.5"
