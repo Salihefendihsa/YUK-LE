@@ -1286,48 +1286,6 @@ html.landing-page body {
   z-index: 0;
 }
 
-.globe-label-turkey {
-  position: absolute;
-  top: 50%;
-  right: 8%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  background: rgba(255, 107, 0, 0.1);
-  border: 1px solid rgba(255, 107, 0, 0.3);
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  color: #ffb627;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  pointer-events: none;
-  z-index: 2;
-  box-shadow: 0 0 20px rgba(255, 107, 0, 0.2);
-}
-
-.globe-label-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #ff6b00;
-  box-shadow: 0 0 8px #ff6b00;
-  animation: label-pulse 2s ease-in-out infinite;
-}
-
-@keyframes label-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.4;
-  }
-}
-
 .globe-hint {
   position: absolute;
   bottom: 0;
@@ -1348,12 +1306,12 @@ html.landing-page body {
   z-index: 3;
 }
 
-/* Globe destinations legend */
-.globe-destinations {
-  margin-top: 24px;
+/* Country selector (below globe) */
+.country-selector {
   width: 100%;
-  max-width: 640px;
-  padding: 20px 24px;
+  max-width: 880px;
+  margin: 32px auto 0;
+  padding: 24px 28px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 16px;
@@ -1361,7 +1319,7 @@ html.landing-page body {
   -webkit-backdrop-filter: blur(20px);
 }
 
-.globe-destinations-title {
+.country-selector-title {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -1369,77 +1327,122 @@ html.landing-page body {
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
-  margin-bottom: 16px;
-  padding-bottom: 14px;
+  color: rgba(255, 255, 255, 0.55);
+  margin-bottom: 18px;
+  padding-bottom: 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.globe-destinations-hub {
+.country-selector-hub {
   color: #ffb627;
   font-weight: 700;
   letter-spacing: 0.15em;
 }
 
-.globe-destinations-arrow {
+.country-selector-arrow {
   color: rgba(255, 107, 0, 0.6);
-  font-size: 14px;
 }
 
-.globe-destinations-grid {
+.country-selector-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 8px;
 }
 
-.globe-destination-chip {
+.country-chip {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.75);
-  transition: all 0.2s ease;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  font-family: inherit;
 }
 
-.globe-destination-chip:hover {
-  background: rgba(255, 107, 0, 0.08);
-  border-color: rgba(255, 107, 0, 0.2);
+.country-chip:hover {
+  background: rgba(255, 107, 0, 0.1);
+  border-color: rgba(255, 107, 0, 0.4);
   color: #ffb627;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 107, 0, 0.15);
 }
 
-.globe-dest-dot {
+.country-chip--active {
+  background: rgba(255, 107, 0, 0.06);
+  border-color: rgba(255, 107, 0, 0.2);
+}
+
+.country-chip-flag {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.country-chip-name {
+  font-weight: 600;
+  white-space: nowrap;
+  flex: 1;
+  text-align: left;
+}
+
+.country-chip-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #ff6b00;
-  flex-shrink: 0;
-  box-shadow: 0 0 6px rgba(255, 107, 0, 0.5);
+  background: rgba(255, 255, 255, 0.3);
 }
 
-.globe-dest-name {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.country-chip-dot--active {
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  animation: country-chip-pulse 2s ease-in-out infinite;
 }
 
-@media (max-width: 768px) {
-  .globe-destinations-grid {
+@keyframes country-chip-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.country-chip-soon {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 107, 0, 0.7);
+  padding: 2px 6px;
+  background: rgba(255, 107, 0, 0.1);
+  border-radius: 4px;
+}
+
+@media (max-width: 968px) {
+  .country-selector-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 568px) {
+  .country-selector-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .globe-destinations-title {
+  .country-selector-title {
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
   }
 }
 
-/* Turkey detail map (zoom view) */
-.turkey-detail-map {
+/* Country map (detail view) */
+.country-map {
   width: 100%;
   max-width: 900px;
   margin: 0 auto;
@@ -1457,24 +1460,95 @@ html.landing-page body {
   -webkit-backdrop-filter: blur(20px);
 }
 
-.turkey-svg {
+.country-back-btn {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.country-back-btn:hover {
+  background: rgba(255, 107, 0, 0.1);
+  border-color: rgba(255, 107, 0, 0.3);
+  color: #ffb627;
+}
+
+.country-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 24px 100px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.country-flag {
+  font-size: 36px;
+  line-height: 1;
+}
+
+.country-header-text {
+  flex: 1;
+}
+
+.country-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.02em;
+}
+
+.country-hub {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0;
+}
+
+.country-badge-coming {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  background: rgba(255, 107, 0, 0.12);
+  border: 1px solid rgba(255, 107, 0, 0.3);
+  color: #ffb627;
+  border-radius: 999px;
+}
+
+.country-svg {
   width: 100%;
   height: auto;
   display: block;
-  aspect-ratio: 980 / 470;
 }
 
-.turkey-outline-detail {
-  filter: drop-shadow(0 0 24px rgba(255, 107, 0, 0.25));
+.country-outline-path {
+  filter: drop-shadow(0 0 24px rgba(255, 107, 0, 0.2));
 }
 
-.turkey-city-pulse {
+.country-city-pulse {
   transform-origin: center;
   transform-box: fill-box;
-  animation: turkey-city-pulse-anim 3s ease-out infinite;
+  animation: country-city-pulse-anim 3s ease-out infinite;
 }
 
-@keyframes turkey-city-pulse-anim {
+@keyframes country-city-pulse-anim {
   from {
     transform: scale(1);
     opacity: 0.55;
@@ -1485,15 +1559,15 @@ html.landing-page body {
   }
 }
 
-.turkey-route {
-  filter: drop-shadow(0 0 4px rgba(255, 107, 0, 0.45));
+.country-route {
+  filter: drop-shadow(0 0 4px rgba(255, 107, 0, 0.4));
   animation: turkey-route-draw 4s ease-in-out infinite;
 }
 
-.turkey-route--static {
+.country-route--static {
   animation: none;
   stroke-dashoffset: 0;
-  opacity: 0.45;
+  opacity: 0.6;
 }
 
 @keyframes turkey-route-draw {
@@ -1514,37 +1588,7 @@ html.landing-page body {
   }
 }
 
-.turkey-back-btn {
-  position: absolute;
-  top: 24px;
-  left: 24px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
-  cursor: pointer;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease;
-  z-index: 10;
-}
-
-.turkey-back-btn:hover {
-  background: rgba(255, 107, 0, 0.1);
-  border-color: rgba(255, 107, 0, 0.3);
-  color: #ffb627;
-}
-
-.turkey-caption {
+.country-caption {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1554,24 +1598,36 @@ html.landing-page body {
   color: rgba(255, 255, 255, 0.5);
 }
 
-.turkey-caption-dot {
+.country-caption-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: #10b981;
   box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
-  animation: turkey-caption-pulse 2s ease-in-out infinite;
 }
 
-@keyframes turkey-caption-pulse {
-  0%,
-  100% {
-    opacity: 1;
+@media (max-width: 768px) {
+  .country-map {
+    padding: 20px;
   }
-  50% {
-    opacity: 0.4;
+
+  .country-header {
+    margin-left: 80px;
+  }
+
+  .country-name {
+    font-size: 18px;
+  }
+
+  .country-flag {
+    font-size: 28px;
+  }
+
+  .country-city-label {
+    font-size: 9px;
   }
 }
+
 .live-metrics {
   display: flex;
   flex-direction: column;
@@ -1775,18 +1831,17 @@ html.landing-page body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .globe-ambient,
-  .globe-label-dot {
+  .globe-ambient {
     animation: none;
   }
 
-  .turkey-city-pulse,
-  .turkey-route,
-  .turkey-caption-dot {
+  .country-city-pulse,
+  .country-route,
+  .country-chip-dot--active {
     animation: none;
   }
 
-  .turkey-route {
+  .country-route {
     stroke-dashoffset: 0;
     opacity: 0.45;
   }
@@ -1832,11 +1887,11 @@ html.landing-page body {
     font-size: 40px;
   }
 
-  .turkey-detail-map {
+  .country-map {
     padding: 20px;
   }
 
-  .turkey-back-btn {
+  .country-back-btn {
     top: 12px;
     left: 12px;
     padding: 6px 12px;
@@ -1851,7 +1906,7 @@ html.landing-page body {
     max-width: 92%;
   }
 
-  .turkey-city-label {
+  .country-city-label {
     font-size: 9px;
   }
 }

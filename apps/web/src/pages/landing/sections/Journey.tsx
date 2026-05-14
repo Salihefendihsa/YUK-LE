@@ -1,17 +1,18 @@
 import { useCallback, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { NetworkGlobe } from '../components/NetworkGlobe'
-import { TurkeyDetailMap } from '../components/TurkeyDetailMap'
+import { CountryMap } from '../components/CountryMap'
 import { LiveMetrics } from '../components/LiveMetrics'
 import { TrustBar } from '../components/TrustBar'
+import { COUNTRIES, getCountry } from '../data/countries'
 
 const ease = [0.22, 1, 0.36, 1] as const
 
 export function JourneySection({ reduceMotion }: { reduceMotion: boolean }) {
   const r = reduceMotion
-  const [view, setView] = useState<'globe' | 'turkey'>('globe')
-  const goTurkey = useCallback(() => setView('turkey'), [])
-  const goGlobe = useCallback(() => setView('globe'), [])
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
+  const country = selectedCountry ? getCountry(selectedCountry) : null
+  const goGlobe = useCallback(() => setSelectedCountry(null), [])
   const stageTransition = r ? { duration: 0 } : { duration: 0.7, ease }
 
   return (
@@ -48,7 +49,7 @@ export function JourneySection({ reduceMotion }: { reduceMotion: boolean }) {
           transition={{ duration: 1.2, ease, delay: r ? 0 : 0.2 }}
         >
           <AnimatePresence mode="wait">
-            {view === 'globe' ? (
+            {!country ? (
               <motion.div
                 key="globe"
                 className="stage-content"
@@ -57,22 +58,60 @@ export function JourneySection({ reduceMotion }: { reduceMotion: boolean }) {
                 exit={r ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.88 }}
                 transition={stageTransition}
               >
-                <NetworkGlobe reduceMotion={r} onZoomToTurkey={goTurkey} />
+                <NetworkGlobe reduceMotion={r} />
               </motion.div>
             ) : (
               <motion.div
-                key="turkey"
+                key={`country-${country.code}`}
                 className="stage-content"
                 initial={r ? false : { opacity: 0, scale: 1.08 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={r ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.88 }}
                 transition={stageTransition}
               >
-                <TurkeyDetailMap onBackToGlobe={goGlobe} reduceMotion={r} />
+                <CountryMap country={country} onBackToGlobe={goGlobe} reduceMotion={r} />
               </motion.div>
             )}
           </AnimatePresence>
         </motion.div>
+
+        {!country ? (
+          <motion.div
+            className="country-selector"
+            initial={r ? false : { opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.6, ease, delay: r ? 0 : 0.3 }}
+          >
+            <div className="country-selector-title">
+              <span className="country-selector-hub">11 ÜLKE</span>
+              <span className="country-selector-arrow" aria-hidden>
+                →
+              </span>
+              <span>Aktif Operasyon Ağımız</span>
+            </div>
+            <div className="country-selector-grid">
+              {COUNTRIES.map((c) => (
+                <button
+                  key={c.code}
+                  type="button"
+                  className={`country-chip ${c.status === 'active' ? 'country-chip--active' : ''}`}
+                  onClick={() => setSelectedCountry(c.code)}
+                >
+                  <span className="country-chip-flag" aria-hidden>
+                    {c.flag}
+                  </span>
+                  <span className="country-chip-name">{c.chipLabel}</span>
+                  {c.status === 'active' ? (
+                    <span className="country-chip-dot country-chip-dot--active" aria-hidden />
+                  ) : (
+                    <span className="country-chip-soon">Yakında</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        ) : null}
 
         <motion.div
           className="network-metrics-row"
