@@ -79,7 +79,7 @@ html.landing-page body {
 }
 
 .landing-hero-reveal-wrap--active {
-  animation: hero-pixelate-reveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: hero-pixelate-reveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards;
 }
 
 @keyframes hero-pixelate-reveal {
@@ -88,7 +88,7 @@ html.landing-page body {
     opacity: 0;
     transform: scale(1.05);
   }
-  60% {
+  55% {
     opacity: 1;
   }
   100% {

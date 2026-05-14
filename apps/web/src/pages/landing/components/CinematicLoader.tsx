@@ -2,46 +2,33 @@ import { useEffect, useRef } from 'react'
 
 type CinematicLoaderProps = {
   onComplete: () => void
-  /** Fired once at ~1.8s when particles explode — sync Hero pixel-reveal under the loader. */
+  /** Fired once when dissolve ends (~2.2s) — Hero pixel-reveal + loader bleed. */
   onRevealHero?: () => void
 }
 
 type Particle = {
-  birthX: number
-  birthY: number
-  targetX: number
-  targetY: number
   x: number
   y: number
+  targetX: number
+  targetY: number
+  scatterX: number
+  scatterY: number
   baseSize: number
   size: number
   opacity: number
   color: string
-  driftA: number
-  driftB: number
-  explodeAngle: number
-  explodeDist: number
 }
 
 const PARTICLE_COUNT = 400
 const LOGO_TEXT = 'YÜK-LE'
-const TOTAL_MS = 2500
+const TOTAL_MS = 3000
 
 const TIMING = {
-  scatterEnd: 300,
-  convergeEnd: 1500,
-  holdEnd: 1800,
-  explodeEnd: 2500,
+  revealEnd: 500,
+  holdEnd: 1400,
+  dissolveEnd: 2200,
+  fadeoutEnd: 3000,
 } as const
-
-/** Easing similar to cubic-bezier(0.22, 1, 0.36, 1) — strong ease-out */
-function easeOutExpo(t: number) {
-  return t >= 1 ? 1 : 1 - Math.pow(2, -10 * t)
-}
-
-function easeInOutCubic(t: number) {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
-}
 
 function easeOutQuint(t: number) {
   return 1 - Math.pow(1 - t, 5)
@@ -85,37 +72,28 @@ function initParticles(width: number, height: number): Particle[] {
   const textPixels = getTextPixels(width, height)
   if (textPixels.length === 0) return []
 
-  const cx = width / 2
-  const cy = height / 2
   const particles: Particle[] = []
 
   for (let i = 0; i < PARTICLE_COUNT; i++) {
     const target = textPixels[i % textPixels.length]
     const baseSize = 1 + Math.random() * 1.5
-    const startAngle = Math.random() * Math.PI * 2
-    const startRadius = Math.max(width, height) * (0.32 + Math.random() * 0.38)
-    const birthX = cx + Math.cos(startAngle) * startRadius
-    const birthY = cy + Math.sin(startAngle) * startRadius
+    const scatterAngle = Math.random() * Math.PI * 2
+    const scatterDistance = Math.max(width, height) * (0.4 + Math.random() * 0.5)
 
-    const toCenter = Math.atan2(target.y - cy, target.x - cx)
-    const explodeAngle = toCenter + (Math.random() - 0.5) * 0.55
-    const explodeDist = Math.max(width, height) * (0.45 + Math.random() * 0.35)
+    const scatterX = target.x + Math.cos(scatterAngle) * scatterDistance
+    const scatterY = target.y + Math.sin(scatterAngle) * scatterDistance - 80
 
     particles.push({
-      birthX,
-      birthY,
+      x: target.x,
+      y: target.y,
       targetX: target.x,
       targetY: target.y,
-      x: birthX,
-      y: birthY,
+      scatterX,
+      scatterY,
       baseSize,
       size: baseSize,
       opacity: 0,
       color: i % 5 === 0 ? '#FFB627' : '#FF6B00',
-      driftA: Math.random() * Math.PI * 2,
-      driftB: Math.random() * Math.PI * 2,
-      explodeAngle,
-      explodeDist,
     })
   }
   return particles
@@ -179,12 +157,17 @@ export function CinematicLoader({ onComplete, onRevealHero }: CinematicLoaderPro
       finishTimerRef.current = window.setTimeout(() => onComplete(), 400)
     }
 
+    const revealDur = TIMING.revealEnd
+    const holdDur = TIMING.holdEnd - TIMING.revealEnd
+    const dissolveDur = TIMING.dissolveEnd - TIMING.holdEnd
+    const fadeoutDur = TIMING.fadeoutEnd - TIMING.dissolveEnd
+
     const animate = (timestamp: number) => {
       if (doneRef.current) return
       if (startTimeRef.current === null) startTimeRef.current = timestamp
       const elapsed = timestamp - startTimeRef.current
 
-      if (!revealHeroFiredRef.current && elapsed >= TIMING.holdEnd) {
+      if (!revealHeroFiredRef.current && elapsed >= TIMING.dissolveEnd) {
         revealHeroFiredRef.current = true
         wrapRef.current?.classList.add('cinematic-loader--bleed')
         onRevealHero?.()
@@ -194,50 +177,61 @@ export function CinematicLoader({ onComplete, onRevealHero }: CinematicLoaderPro
       if (progressRef.current) progressRef.current.style.width = `${progressPct}%`
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      const trailA = elapsed >= TIMING.holdEnd ? 0.12 : 0.22
-      ctx.fillStyle = `rgba(5, 6, 8, ${trailA})`
+      const pastDissolve = elapsed >= TIMING.dissolveEnd
+      if (pastDissolve) {
+        ctx.fillStyle = 'rgba(5, 6, 8, 0.14)'
+      } else {
+        ctx.fillStyle = '#050608'
+      }
       ctx.fillRect(0, 0, logicalW, logicalH)
 
       const particles = particlesRef.current
-      const scatterDur = TIMING.scatterEnd
-      const convergeDur = TIMING.convergeEnd - TIMING.scatterEnd
-      const explodeDur = TIMING.explodeEnd - TIMING.holdEnd
 
-      for (const p of particles) {
-        if (elapsed < scatterDur) {
-          const t = elapsed / scatterDur
-          const wobble = 14 * easeInOutCubic(t)
-          p.x = p.birthX + Math.sin(p.driftA + t * 4.2) * wobble * 0.35
-          p.y = p.birthY + Math.cos(p.driftB + t * 3.6) * wobble * 0.35
-          p.opacity = Math.min(t * 1.25, 1)
-          p.size = p.baseSize * (0.85 + t * 0.15)
-        } else if (elapsed < TIMING.convergeEnd) {
-          const localT = (elapsed - scatterDur) / convergeDur
-          const eased = easeOutExpo(localT)
-          p.x = p.birthX + (p.targetX - p.birthX) * eased
-          p.y = p.birthY + (p.targetY - p.birthY) * eased
-          const dx = p.targetX - p.x
-          const dy = p.targetY - p.y
-          const dist = Math.sqrt(dx * dx + dy * dy)
-          p.size = p.baseSize + (1 - Math.min(dist / 220, 1)) * 1.6
-          p.opacity = 1
+      for (let pi = 0; pi < particles.length; pi++) {
+        const p = particles[pi]
+
+        if (elapsed < TIMING.revealEnd) {
+          const t = elapsed / revealDur
+          const staggerDelay = ((pi % 20) / 20) * 0.3
+          const denom = Math.max(1 - staggerDelay, 0.06)
+          const localT = t <= staggerDelay ? 0 : Math.min(1, (t - staggerDelay) / denom)
+          const eased = easeOutQuint(localT)
+
+          p.x = p.targetX
+          p.y = p.targetY
+          p.opacity = Math.min(eased * 1.2, 1)
+          p.size = p.baseSize + eased * 1.2
         } else if (elapsed < TIMING.holdEnd) {
-          const holdDur = TIMING.holdEnd - TIMING.convergeEnd
-          const ht = (elapsed - TIMING.convergeEnd) / holdDur
-          const breath = Math.sin(ht * Math.PI) * 0.45
+          const localT = (elapsed - TIMING.revealEnd) / holdDur
+          const breath = Math.sin(localT * Math.PI * 2) * 0.4
+          const shimmerT = (elapsed - TIMING.revealEnd) * 0.003
+          const shimmerWave = Math.sin(p.targetX * 0.02 + shimmerT) * 0.5 + 0.5
+
           p.x = p.targetX
           p.y = p.targetY
           p.size = p.baseSize + 1 + breath
-          p.opacity = 1
-        } else {
-          const localT = Math.min((elapsed - TIMING.holdEnd) / explodeDur, 1)
+          p.opacity = 0.7 + shimmerWave * 0.3
+        } else if (elapsed < TIMING.dissolveEnd) {
+          const localT = (elapsed - TIMING.holdEnd) / dissolveDur
           const eased = easeOutQuint(localT)
-          const burst = eased * p.explodeDist
-          p.x = p.targetX + Math.cos(p.explodeAngle) * burst
-          p.y = p.targetY + Math.sin(p.explodeAngle) * burst - eased * 110
-          p.opacity = Math.max(0, 1 - eased * 1.05)
-          p.size = p.baseSize * (1 + eased * 2.2)
+
+          p.x = p.targetX + (p.scatterX - p.targetX) * eased
+          p.y = p.targetY + (p.scatterY - p.targetY) * eased
+          p.opacity = 1 - eased * 0.7
+          p.size = p.baseSize + (1 - eased * 0.3) + 0.5
+        } else {
+          const localT = Math.min((elapsed - TIMING.dissolveEnd) / fadeoutDur, 1)
+          const eased = easeOutQuint(localT)
+          const dx = p.scatterX - p.targetX
+          const dy = p.scatterY - p.targetY
+
+          p.x = p.scatterX + dx * eased * 0.3
+          p.y = p.scatterY + dy * eased * 0.3
+          p.opacity = 0.3 * (1 - eased)
+          p.size = p.baseSize * (1 + eased * 1.5)
         }
+
+        if (p.opacity <= 0.01) continue
 
         ctx.save()
         ctx.globalAlpha = p.opacity
