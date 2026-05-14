@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom'
 import { useAuthStore } from '../store/auth.store'
 import AppLayout from '../components/layout/AppLayout'
@@ -46,13 +47,26 @@ import AdminRatingsPage from '../pages/admin/Ratings'
 import AdminLoginPage from '../pages/admin/AdminLogin'
 import { NotFoundPage, RouteErrorPage, ServerErrorPage, UnauthorizedPage } from '../pages/system/ErrorPages'
 
-function RootRedirect() {
+const Landing = lazy(() => import('../pages/landing/Landing'))
+
+function HomeRoute() {
   const { isAuthenticated, user } = useAuthStore()
-  if (!isAuthenticated) return <Navigate to="/login" replace />
-  if (user?.role === 'Customer') return <Navigate to="/customer/dashboard" replace />
-  if (user?.role === 'Driver')   return <Navigate to="/driver/dashboard"   replace />
-  if (user?.role === 'Admin')    return <Navigate to="/admin/dashboard"    replace />
-  return <Navigate to="/login" replace />
+  if (isAuthenticated && user) {
+    if (user.role === 'Customer') return <Navigate to="/customer/dashboard" replace />
+    if (user.role === 'Driver') return <Navigate to="/driver/dashboard" replace />
+    if (user.role === 'Admin') return <Navigate to="/admin/dashboard" replace />
+  }
+  return (
+    <Suspense
+      fallback={
+        <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#090B0E', color: '#fff' }}>
+          YÜK-LE…
+        </div>
+      }
+    >
+      <Landing />
+    </Suspense>
+  )
 }
 
 function ProtectedRoute({ allowedRoles }: { allowedRoles?: string[] }) {
@@ -65,7 +79,7 @@ function ProtectedRoute({ allowedRoles }: { allowedRoles?: string[] }) {
 }
 
 const router = createBrowserRouter([
-  { path: '/', element: <RootRedirect />, errorElement: <RouteErrorPage /> },
+  { path: '/', element: <HomeRoute />, errorElement: <RouteErrorPage /> },
   { path: '/login',        element: <Login /> },
   { path: '/admin/login',  element: <AdminLoginPage /> },
   { path: '/register',     element: <Register /> },

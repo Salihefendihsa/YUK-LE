@@ -5,7 +5,9 @@
       "Bash(flutter analyze *)",
       "Bash(flutter run *)",
       "Bash(npm install *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(tasklist /FI \"IMAGENAME eq node.exe\")",
+      "PowerShell(Get-Process -Name \"node\",\"npm\",\"tsc\" -ErrorAction SilentlyContinue)"
     ]
   }
 }
