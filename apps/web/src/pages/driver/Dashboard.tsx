@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getDriverDashboard } from '../../api/dashboard'
 import { getRecommendedLoads } from '../../api/matching'
+import { useAuthStore } from '../../store/auth.store'
 import type { DriverDashboard as Stats, MatchedLoad } from '../../api/types'
 import { PageEmpty, PageError, PageSkeleton } from '../../components/common/PageStates'
 import { formatCurrencyTRY, normalizeArray } from '../../utils/format'
 import './Dashboard.css'
 
 export default function DriverDashboard() {
+  const { user } = useAuthStore()
+  const firstName = user?.fullName?.trim().split(/\s+/)[0] ?? 'Şoför'
   const [stats, setStats] = useState<Stats | null>(null)
   const [recommended, setRecommended] = useState<MatchedLoad[]>([])
   const [loading, setLoading] = useState(true)
@@ -38,6 +41,24 @@ export default function DriverDashboard() {
       </div>
       {error ? <PageError message={error} /> : null}
 
+      <div className="panel-driver-hero">
+        <div>
+          <h2>Merhaba, {firstName}!</h2>
+          <p className="page-sub" style={{ margin: 0 }}>
+            Toplam kazanç özeti ve aktif teklifleriniz
+          </p>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <p className="muted" style={{ fontSize: 12, marginBottom: 4 }}>
+            Toplam kazanç
+          </p>
+          <div className="hero-earn">{formatCurrencyTRY(stats?.totalEarned ?? 0)}</div>
+          <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+            Aktif teklif: {stats?.activeOffersCount ?? 0}
+          </p>
+        </div>
+      </div>
+
       <div className="stat-grid">
         {[
           { label: 'Aktif Teklif', value: stats?.activeOffersCount ?? 0, icon: '💼', color: 'var(--color-brand)' },
@@ -46,16 +67,18 @@ export default function DriverDashboard() {
           { label: 'Degerlendirme', value: `⭐ ${stats?.rating?.toFixed(1) ?? '0.0'}`, icon: '⭐', color: 'var(--color-ai)' },
         ].map((s) => (
           <div key={s.label} className="stat-card card">
-            <div className="stat-icon" style={{ background: `${s.color}15`, color: s.color }}>{s.icon}</div>
+            <div className="stat-icon panel-stat-icon-glow" style={{ background: `${s.color}15`, color: s.color }}>
+              {s.icon}
+            </div>
             <p className="stat-value">{s.value}</p>
             <p className="stat-label">{s.label}</p>
           </div>
         ))}
       </div>
 
-      <div className="card">
+      <div className="card panel-table-card">
         <div className="card-header">
-          <h2>🤖 AI Önerilen Yükler</h2>
+          <h2 className="panel-ai-section-title">🤖 Sizin İçin Seçildi</h2>
         </div>
         <div className="driver-loads">
           {recommended.map((row) => (

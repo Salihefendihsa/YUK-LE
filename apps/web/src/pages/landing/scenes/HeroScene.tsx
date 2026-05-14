@@ -1,8 +1,6 @@
-import { useMemo, useRef, type MutableRefObject } from 'react'
+import { useLayoutEffect, useMemo, useRef, type MutableRefObject } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
-import { AdditiveBlending, BufferGeometry, Color, Float32BufferAttribute, ShaderMaterial, Vector2 } from 'three'
-import { MeshReflectorMaterial, Environment } from '@react-three/drei'
-import { EffectComposer, Bloom } from '@react-three/postprocessing'
+import { AdditiveBlending, BufferGeometry, Color, Float32BufferAttribute, ShaderMaterial, SpotLight, Vector2 } from 'three'
 import { Truck } from '../models/Truck'
 import gradientVert from '../shaders/gradient.vert.glsl?raw'
 import gradientFrag from '../shaders/gradient.frag.glsl?raw'
@@ -99,6 +97,25 @@ type HeroSceneProps = {
   reduceEffects?: boolean
 }
 
+function KeyLight() {
+  const ref = useRef<SpotLight>(null)
+  useLayoutEffect(() => {
+    const L = ref.current
+    if (L?.shadow?.mapSize) L.shadow.mapSize.set(1024, 1024)
+  }, [])
+  return (
+    <spotLight
+      ref={ref}
+      position={[3, 6, 2]}
+      angle={0.45}
+      penumbra={0.6}
+      intensity={2.2}
+      color="#FF6B00"
+      castShadow
+    />
+  )
+}
+
 export function HeroScene({ mouseRef, reduceEffects }: HeroSceneProps) {
   const particles = reduceEffects ? 220 : 500
 
@@ -106,42 +123,20 @@ export function HeroScene({ mouseRef, reduceEffects }: HeroSceneProps) {
     <>
       <color attach="background" args={['#090B0E']} />
       <ambientLight intensity={0.25} />
-      <spotLight
-        position={[3, 6, 2]}
-        angle={0.45}
-        penumbra={0.6}
-        intensity={2.2}
-        color="#FF6B00"
-        castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
-      />
+      <KeyLight />
       <spotLight position={[-4, 3, -3]} intensity={0.9} color="#ffffff" />
       <BackgroundPlane mouse={mouseRef} />
       <Truck position={[0, 0.05, 0]} />
       <OrbitParticles count={particles} />
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} receiveShadow>
         <planeGeometry args={[24, 24]} />
-        <MeshReflectorMaterial
-          blur={[280, 120]}
-          resolution={512}
-          mixBlur={0.8}
-          mixStrength={1.1}
-          roughness={0.85}
-          depthScale={0.9}
-          minDepthThreshold={0.4}
-          maxDepthThreshold={1.6}
+        <meshStandardMaterial
           color="#07080a"
-          metalness={0.6}
-          mirror={0.35}
+          metalness={0.55}
+          roughness={0.35}
+          envMapIntensity={reduceEffects ? 0.4 : 0.85}
         />
       </mesh>
-      {!reduceEffects && (
-        <EffectComposer multisampling={0}>
-          <Bloom luminanceThreshold={0.2} mipmapBlur intensity={0.45} radius={0.5} />
-        </EffectComposer>
-      )}
-      {!reduceEffects && <Environment preset="night" />}
     </>
   )
 }

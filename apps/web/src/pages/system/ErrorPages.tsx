@@ -14,11 +14,29 @@ export function ServerErrorPage() {
 
 export function RouteErrorPage() {
   const error = useRouteError()
-  const message = isRouteErrorResponse(error) ? `${error.status} - ${error.statusText}` : 'Beklenmeyen bir uygulama hatası oluştu.'
+  const devDetail =
+    import.meta.env.DEV && error instanceof Error ? error.message : null
+  const message = isRouteErrorResponse(error)
+    ? `${error.status} - ${error.statusText}`
+    : devDetail ?? 'Beklenmeyen bir uygulama hatası oluştu.'
   return (
     <div className="page-wrap">
       <h1 className="page-title">Uygulama Hatası</h1>
       <p className="page-sub">{message}</p>
+      {import.meta.env.DEV && error instanceof Error && (
+        <pre
+          style={{
+            marginTop: 16,
+            textAlign: 'left',
+            fontSize: 12,
+            opacity: 0.85,
+            whiteSpace: 'pre-wrap',
+            maxWidth: 'min(900px, 92vw)',
+          }}
+        >
+          {error.stack}
+        </pre>
+      )}
     </div>
   )
 }

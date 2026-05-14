@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiClient } from '../../api/client'
 import { useAuthStore } from '../../store/auth.store'
-import { PageSkeleton } from '../../components/common/PageStates'
+import { PageError, PageSkeleton } from '../../components/common/PageStates'
 import { formatIBAN, validateEmail, validateIBAN } from '../../utils/validators'
 import '../shared/Page.css'
 
@@ -108,23 +108,25 @@ export default function DriverProfilePage() {
   if (loadError) {
     return (
       <div className="page-wrap">
-        <h1 className="page-title">Şoför Profili</h1>
-        <div className="card">
-          <p className="muted">{loadError}</p>
-          <button className="btn btn-primary btn-sm" type="button" onClick={() => window.location.reload()}>
-            Yeniden dene
-          </button>
+        <div className="page-head">
+          <div>
+            <h1 className="page-title">Şoför Profili</h1>
+            <p className="page-sub">Ehliyet, araç ve iletişim</p>
+          </div>
         </div>
+        <PageError message={loadError} />
       </div>
     )
   }
 
   return (
     <div className="page-wrap">
-      <h1 className="page-title">Şoför Profili</h1>
-      <p className="muted">
-        Ortalama puan: {averageRating.toFixed(1)} ({totalRatingCount} değerlendirme)
-      </p>
+      <div className="page-head">
+        <div>
+          <h1 className="page-title">Şoför Profili</h1>
+          <p className="page-sub">Puan: ⭐ {averageRating.toFixed(1)} ({totalRatingCount} değerlendirme)</p>
+        </div>
+      </div>
       <div className="card form-grid">
         <input className="form-input" placeholder="Ad Soyad" value={fullName} onChange={(e) => setFullName(e.target.value)} />
         <input className="form-input" placeholder="Telefon (maskeli)" value={phone} readOnly />

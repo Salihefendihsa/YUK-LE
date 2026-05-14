@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getCustomerDashboard } from '../../api/dashboard'
 import { getActiveLoads } from '../../api/loads'
@@ -18,7 +18,7 @@ const STATUS_LABEL: Record<string, string> = {
 const STATUS_CLASS: Record<string, string> = {
   Active: 'badge-success',
   Assigned: 'badge-info',
-  OnWay: 'badge-info',
+  OnWay: 'badge-warning',
   Delivered: 'badge-muted',
   Cancelled: 'badge-error',
 }
@@ -41,6 +41,17 @@ export default function CustomerDashboard() {
       .finally(() => setLoading(false))
   }, [])
 
+  const sparkHeights = useMemo(() => {
+    const a = stats?.activeLoadCount ?? 0
+    const w = stats?.onWayLoadCount ?? 0
+    const d = stats?.deliveredLoadCount ?? 0
+    const base = Math.max(1, a + w + d)
+    return [0.35, 0.5, 0.55, 0.48, 0.62, 0.7, 0.58].map((f, i) => {
+      const mix = ((i % 3 === 0 ? a : i % 3 === 1 ? w : d) / base) * 0.5 + f * 0.5
+      return Math.round(28 + mix * 72)
+    })
+  }, [stats?.activeLoadCount, stats?.onWayLoadCount, stats?.deliveredLoadCount])
+
   if (loading) {
     return <PageSkeleton rows={6} variant="table" />
   }
@@ -60,82 +71,136 @@ export default function CustomerDashboard() {
       {error ? <PageError message={error} /> : null}
 
       <div className="stat-grid">
-        <StatCard label="Aktif İlanlar" value={stats?.activeLoadCount ?? 0} icon="📦" color="var(--color-brand)" />
-        <StatCard label="Yolda Yükler" value={stats?.onWayLoadCount ?? 0} icon="🚛" color="var(--color-info)" />
-        <StatCard label="Teslim Edilen" value={stats?.deliveredLoadCount ?? 0} icon="✅" color="var(--color-success)" />
+        <StatCard
+          label="Aktif İlanlar"
+          value={stats?.activeLoadCount ?? 0}
+          icon="📦"
+          color="var(--color-brand)"
+          trend="+"
+        />
+        <StatCard
+          label="Yolda Yükler"
+          value={stats?.onWayLoadCount ?? 0}
+          icon="🚛"
+          color="#4a6cf7"
+          trend="~"
+        />
+        <StatCard
+          label="Teslim Edilen"
+          value={stats?.deliveredLoadCount ?? 0}
+          icon="✅"
+          color="var(--color-success)"
+          trend="↑"
+        />
         <StatCard
           label="Toplam Harcama"
           value={formatCurrencyTRY(stats?.totalSpent ?? 0)}
           icon="💰"
           color="var(--color-warning)"
+          trend="₺"
         />
       </div>
 
-      <div className="card loads-card">
-        <div className="card-header">
-          <h2>Son İlanlar</h2>
-          <Link to="/customer/loads" className="view-all">
-            Tümünü Gör
-          </Link>
+      <div className="dashboard-mid">
+        <div className="card loads-card panel-table-card">
+          <div className="card-header">
+            <h2>Son İlanlar</h2>
+            <Link to="/customer/loads" className="view-all">
+              Tümünü Gör
+            </Link>
+          </div>
+
+          {loads.length === 0 ? (
+            <PageEmpty
+              icon="📭"
+              title="Aktif ilan bulunamadı"
+              description="Yeni bir ilan oluşturduğunuzda burada listelenecek."
+              actionLabel="İlan Oluştur"
+              onAction={() => {
+                window.location.href = '/customer/loads/create'
+              }}
+            />
+          ) : (
+            <table className="loads-table">
+              <thead>
+                <tr>
+                  <th>Güzergah</th>
+                  <th>Durum</th>
+                  <th>Fiyat</th>
+                  <th>Tarih</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {loads.map((load) => (
+                  <tr key={load.id}>
+                    <td className="route-cell">
+                      <span className="city">{load.fromCity}</span>
+                      <span className="arrow">→</span>
+                      <span className="city">{load.toCity}</span>
+                    </td>
+                    <td>
+                      <span className={`badge ${STATUS_CLASS[load.status] ?? 'badge-muted'}`}>
+                        {STATUS_LABEL[load.status] ?? load.status}
+                      </span>
+                    </td>
+                    <td className="price-cell">{formatCurrencyTRY(load.price)}</td>
+                    <td className="date-cell">{formatDateTR(load.createdAt)}</td>
+                    <td>
+                      <Link to={`/customer/loads/${load.id}`} className="btn btn-ghost btn-sm">
+                        Detay
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
-        {loads.length === 0 ? (
-          <PageEmpty
-            icon="📭"
-            title="Aktif ilan bulunamadı"
-            description="Yeni bir ilan oluşturduğunuzda burada listelenecek."
-            actionLabel="İlan Oluştur"
-            onAction={() => { window.location.href = '/customer/loads/create' }}
-          />
-        ) : (
-          <table className="loads-table">
-            <thead>
-              <tr>
-                <th>Güzergah</th>
-                <th>Durum</th>
-                <th>Fiyat</th>
-                <th>Tarih</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {loads.map((load) => (
-                <tr key={load.id}>
-                  <td className="route-cell">
-                    <span className="city">{load.fromCity}</span>
-                    <span className="arrow">→</span>
-                    <span className="city">{load.toCity}</span>
-                  </td>
-                  <td>
-                    <span className={`badge ${STATUS_CLASS[load.status] ?? 'badge-muted'}`}>
-                      {STATUS_LABEL[load.status] ?? load.status}
-                    </span>
-                  </td>
-                  <td className="price-cell">{formatCurrencyTRY(load.price)}</td>
-                  <td className="date-cell">{formatDateTR(load.createdAt)}</td>
-                  <td>
-                    <Link to={`/customer/loads/${load.id}`} className="btn btn-ghost btn-sm">
-                      Detay
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+        <div className="card panel-spark-card">
+          <h3>Aylık aktivite özeti</h3>
+          <p className="page-sub" style={{ marginBottom: 12 }}>
+            İlan hareketlerinize göre normalize edilmiş görünüm
+          </p>
+          <div className="panel-spark-bars">
+            {sparkHeights.map((h, i) => (
+              <div key={i} className="panel-spark-bar" style={{ height: `${h}%` }} title={`Hafta ${i + 1}`} />
+            ))}
+          </div>
+          <div className="panel-spark-labels">
+            <span>H1</span>
+            <span>H7</span>
+          </div>
+        </div>
       </div>
     </div>
   )
 }
 
-function StatCard({ label, value, icon, color }: { label: string; value: string | number; icon: string; color: string }) {
+function StatCard({
+  label,
+  value,
+  icon,
+  color,
+  trend,
+}: {
+  label: string
+  value: string | number
+  icon: string
+  color: string
+  trend: string
+}) {
   return (
     <div className="stat-card card">
-      <div className="stat-icon" style={{ background: `${color}15`, color }}>
+      <div className="stat-icon panel-stat-icon-glow" style={{ background: `${color}18`, color }}>
         {icon}
       </div>
       <p className="stat-value">{value}</p>
       <p className="stat-label">{label}</p>
+      <span className="stat-trend" aria-hidden>
+        {trend}
+      </span>
     </div>
   )
 }

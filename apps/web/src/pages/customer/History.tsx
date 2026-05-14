@@ -25,16 +25,35 @@ export default function CustomerHistoryPage() {
   }, [])
 
   if (loading) return <PageSkeleton rows={5} variant="card" />
-  if (err) return <PageError message={err} />
+  if (err) {
+    return (
+      <div className="page-wrap">
+        <div className="page-head">
+          <div>
+            <h1 className="page-title">Geçmiş Seferler</h1>
+            <p className="page-sub">Tamamlanan teslimatlar</p>
+          </div>
+        </div>
+        <PageError message={err} />
+      </div>
+    )
+  }
 
   return (
     <div className="page-wrap">
-      <h1 className="page-title">Geçmiş Seferler</h1>
+      <div className="page-head">
+        <div>
+          <h1 className="page-title">Geçmiş Seferler</h1>
+          <p className="page-sub">Teslim edilen yükler ve toplam harcama</p>
+        </div>
+      </div>
       <div className="card" style={{ marginBottom: 16 }}>
         <p className="muted">Toplam harcama</p>
-        <p style={{ fontSize: 22, fontWeight: 700 }}>{formatCurrencyTRY(totalSpend)}</p>
+        <p className="stat-value" style={{ fontSize: 22, marginTop: 4 }}>
+          {formatCurrencyTRY(totalSpend)}
+        </p>
       </div>
-      <div className="list-grid">
+      <div className="loads-grid-responsive">
         {items.map((i) => (
           <div key={String(i.id)} className="item-card">
             <strong>

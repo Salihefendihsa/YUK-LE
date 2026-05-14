@@ -38,6 +38,15 @@ export default function TopBar({ onMenuToggle }: TopBarProps) {
 
   const firstName = user?.fullName?.trim().split(/\s+/)[0] ?? 'Kullanıcı'
 
+  function notifyIcon(title: string) {
+    const t = title.toLowerCase()
+    if (t.includes('ödeme') || t.includes('payment')) return '💳'
+    if (t.includes('belge') || t.includes('onay')) return '📄'
+    if (t.includes('yük') || t.includes('ilan')) return '📦'
+    if (t.includes('şikayet') || t.includes('uyarı')) return '⚠️'
+    return '🔔'
+  }
+
   return (
     <header className="topbar">
       <div className="topbar-left">
@@ -60,24 +69,38 @@ export default function TopBar({ onMenuToggle }: TopBarProps) {
       </div>
       {open ? (
         <>
-          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 299 }} />
-          <aside style={{ position: 'fixed', top: 0, right: 0, width: 380, height: '100vh', background: '#111318', borderLeft: '1px solid #272D3A', zIndex: 300, padding: 14, overflow: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="topbar-notify-backdrop" onClick={() => setOpen(false)} />
+          <aside className="topbar-notify-panel">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
               <strong>Bildirimler</strong>
-              <button className="btn btn-ghost btn-sm" onClick={() => void readAllNotifications()}>Tümünü Okundu İşaretle</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => void readAllNotifications()}>
+                Tümünü Okundu İşaretle
+              </button>
             </div>
             <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
-              {items.length === 0 ? <div className="empty-state">🔔 Henüz bildiriminiz yok</div> : items.map((n) => (
-                <button
-                  key={String(n.id)}
-                  className="admin-card"
-                  onClick={() => void markNotificationRead(Number(n.id))}
-                  style={{ textAlign: 'left' }}
-                >
-                  <strong>{String(n.title ?? 'Bildirim')}</strong>
-                  <p className="muted">{String(n.message ?? '')}</p>
-                </button>
-              ))}
+              {items.length === 0 ? (
+                <div className="empty-state">🔔 Henüz bildiriminiz yok</div>
+              ) : (
+                items.map((n) => (
+                  <button
+                    key={String(n.id)}
+                    type="button"
+                    className="topbar-notify-item"
+                    onClick={() => void markNotificationRead(Number(n.id))}
+                  >
+                    <span className="topbar-notify-icon" aria-hidden>
+                      {notifyIcon(String(n.title ?? ''))}
+                    </span>
+                    <span>
+                      <strong>{String(n.title ?? 'Bildirim')}</strong>
+                      <p className="muted" style={{ marginTop: 4, fontSize: 13 }}>
+                        {String(n.message ?? '')}
+                      </p>
+                    </span>
+                    <span className="topbar-notify-dot" aria-hidden />
+                  </button>
+                ))
+              )}
             </div>
           </aside>
         </>

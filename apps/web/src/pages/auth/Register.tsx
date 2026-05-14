@@ -151,7 +151,7 @@ export default function Register() {
 
   return (
     <div className="register-page">
-      <div className="register-box">
+      <div className="register-box glass-card">
         <div className="register-logo">
           <div className="logo-icon-sm">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -190,10 +190,16 @@ export default function Register() {
               <span>{role === 'Customer' ? '🏭 Fabrika Hesabı' : '🚛 Şoför Hesabı'}</span>
               <button onClick={() => setRole(null)} className="change-role-btn">Değiştir</button>
             </div>
-            <div className="item-row" style={{ marginTop: 12 }}>
-              <span className={`badge ${step === 1 ? 'badge-info' : 'badge-muted'}`}>1) Hesap</span>
-              <span className={`badge ${step === 2 ? 'badge-info' : 'badge-muted'}`}>2) Rol Bilgileri</span>
-              <span className={`badge ${step === 3 ? 'badge-info' : 'badge-muted'}`}>3) Güvenlik ve Onay</span>
+            <div className="register-stepper" aria-label="Kayıt adımları">
+              <span className={`register-step ${step > 1 ? 'done' : ''} ${step === 1 ? 'active' : ''}`}>
+                {step > 1 ? '✓' : '1'}
+              </span>
+              <span className={`register-step-line ${step > 1 ? 'fill' : ''}`} />
+              <span className={`register-step ${step > 2 ? 'done' : ''} ${step === 2 ? 'active' : ''}`}>
+                {step > 2 ? '✓' : '2'}
+              </span>
+              <span className={`register-step-line ${step > 2 ? 'fill' : ''}`} />
+              <span className={`register-step ${step === 3 ? 'active' : ''}`}>3</span>
             </div>
 
             {error && <div className="error-banner" role="alert">{error}</div>}
@@ -332,10 +338,15 @@ export default function Register() {
                 </label>
               )}
 
-              <button type="submit" className="btn btn-primary btn-full"
+              <button type="submit" className="btn btn-full btn-register-submit"
                 style={{ marginTop: 24 }} disabled={loading}>
                 {loading ? <span className="spinner" /> : null}
-                {loading ? 'Kayıt yapılıyor...' : 'Hesap Oluştur'}
+                {loading ? 'Kayıt yapılıyor...' : (
+                  <>
+                    <span>Hesap Oluştur</span>
+                    <span className="btn-register-arrow" aria-hidden>→</span>
+                  </>
+                )}
               </button>
               <button type="button" className="btn btn-ghost btn-full" style={{ marginTop: 8 }} onClick={() => setStep(2)}>Geri</button>
               </>) : null}

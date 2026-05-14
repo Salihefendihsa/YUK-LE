@@ -23,8 +23,12 @@ export default function CustomerAddressesPage() {
   if (loading) return <PageSkeleton rows={6} variant="card" />
   return (
     <div className="page-wrap">
-      <h1 className="page-title">Teslimat Adreslerim</h1>
-      <p className="page-sub">Sık kullandığınız teslimat noktalarını kaydedin.</p>
+      <div className="page-head">
+        <div>
+          <h1 className="page-title">Teslimat Adreslerim</h1>
+          <p className="page-sub">Sık kullandığınız teslimat noktalarını kaydedin.</p>
+        </div>
+      </div>
       {error ? <PageError message={error} onRetry={() => void load()} /> : null}
       <div className="card form-grid">
         <input className="form-input" placeholder="Başlık" value={form.title} onChange={(e) => setForm((s) => ({ ...s, title: e.target.value }))} />

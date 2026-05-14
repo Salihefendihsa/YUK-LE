@@ -1,0 +1,350 @@
+/* ── Rol bazlı uygulama kabuğu (landing tarzı, işlevsellik değişmez) ── */
+
+.app-layout {
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  background: #090b0e;
+  --shell-accent: #ff6b00;
+  --shell-accent-2: #4a6cf7;
+  --shell-glass: rgba(28, 32, 41, 0.6);
+  --shell-glass-border: rgba(255, 107, 0, 0.1);
+  --shell-edge: linear-gradient(180deg, #ff6b00, #f59e0b);
+}
+
+.app-layout[data-app-role='driver'] {
+  --shell-accent-2: #8b5cf6;
+}
+
+.app-layout[data-app-role='admin'] {
+  --shell-accent: #ef4444;
+  --shell-accent-2: #f59e0b;
+  --shell-glass: rgba(28, 13, 13, 0.62);
+  --shell-glass-border: rgba(239, 68, 68, 0.22);
+  --shell-edge: linear-gradient(180deg, #ef4444, #f59e0b);
+}
+
+/* Ambient katmanlar */
+.app-layout::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 120% 80% at 100% 0%, rgba(255, 107, 0, 0.12), transparent 45%),
+    radial-gradient(ellipse 60% 50% at 20% 100%, rgba(74, 108, 247, 0.08), transparent 50%);
+  opacity: 0.9;
+}
+
+.app-layout[data-app-role='driver']::before {
+  background:
+    radial-gradient(ellipse 120% 80% at 100% 0%, rgba(255, 107, 0, 0.12), transparent 45%),
+    radial-gradient(ellipse 50% 40% at 10% 90%, rgba(139, 92, 246, 0.12), transparent 55%);
+}
+
+.app-layout[data-app-role='admin']::before {
+  background:
+    radial-gradient(ellipse 100% 70% at 90% 5%, rgba(239, 68, 68, 0.14), transparent 50%),
+    radial-gradient(ellipse 50% 40% at 0% 100%, rgba(245, 158, 11, 0.08), transparent 55%);
+}
+
+.app-layout::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.app-layout .app-main,
+.app-layout .sidebar {
+  position: relative;
+  z-index: 1;
+}
+
+/* Yavaş parıltı topları */
+.shell-orb {
+  position: fixed;
+  display: block;
+  border-radius: 50%;
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.35;
+}
+.shell-orb--1 {
+  width: 220px;
+  height: 220px;
+  background: var(--shell-accent);
+  top: 12%;
+  left: 8%;
+  animation: shell-orb-a 28s ease-in-out infinite alternate;
+}
+.shell-orb--2 {
+  width: 180px;
+  height: 180px;
+  background: var(--shell-accent-2);
+  bottom: 18%;
+  right: 12%;
+  animation: shell-orb-b 32s ease-in-out infinite alternate;
+}
+.shell-orb--3 {
+  width: 140px;
+  height: 140px;
+  background: #fde047;
+  top: 55%;
+  left: 40%;
+  opacity: 0.12;
+  animation: shell-orb-c 36s ease-in-out infinite alternate;
+}
+
+@keyframes shell-orb-a {
+  to {
+    transform: translate(40px, 30px) scale(1.05);
+  }
+}
+@keyframes shell-orb-b {
+  to {
+    transform: translate(-50px, -20px) scale(1.08);
+  }
+}
+@keyframes shell-orb-c {
+  to {
+    transform: translate(20px, -40px);
+  }
+}
+
+/* Sayfa geçişi */
+.app-outlet-wrap {
+  animation: app-page-in 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes app-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Genel kart / cam */
+.app-layout .card {
+  background: var(--shell-glass) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--shell-glass-border) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border-radius: 16px !important;
+  transition:
+    transform 0.22s var(--ease, ease),
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+
+.app-layout .card:hover {
+  transform: scale(1.01);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 107, 0, 0.28) !important;
+}
+
+.app-layout[data-app-role='admin'] .card:hover {
+  border-color: rgba(239, 68, 68, 0.35) !important;
+}
+
+/* Başlıklar */
+.app-layout .page-title {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  background: linear-gradient(135deg, #fff8f0 0%, #ffdcb8 40%, #ff6b00 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -0.02em;
+}
+
+.app-layout[data-app-role='admin'] .page-title {
+  background: linear-gradient(135deg, #fecaca 0%, #f59e0b 55%, #ef4444 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.app-layout .stat-value {
+  font-family: var(--font-heading);
+  background: linear-gradient(180deg, #ffffff, #ff9a5c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.app-layout[data-app-role='admin'] .stat-value {
+  background: linear-gradient(180deg, #fff, #fca5a5);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Buton vurguları */
+.app-layout .btn-primary {
+  background: linear-gradient(135deg, #ff9a48, #ff6b00) !important;
+  border: none !important;
+  box-shadow: 0 4px 24px rgba(255, 107, 0, 0.35);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.app-layout .btn-primary:hover:not(:disabled) {
+  transform: scale(1.04);
+  box-shadow: 0 8px 32px rgba(255, 107, 0, 0.45);
+}
+
+.app-layout[data-app-role='admin'] .btn-primary {
+  background: linear-gradient(135deg, #f87171, #dc2626) !important;
+  box-shadow: 0 4px 24px rgba(239, 68, 68, 0.35);
+}
+
+/* Sidebar — cam + sol aksan çizgisi */
+.app-layout .sidebar {
+  position: relative;
+  background: rgba(13, 17, 22, 0.82) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 4px 0 32px rgba(0, 0, 0, 0.25);
+}
+
+.app-layout[data-app-role='admin'] .sidebar {
+  background: rgba(20, 8, 8, 0.9) !important;
+}
+
+.app-layout .sidebar::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--shell-edge);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.app-layout .nav-item:hover {
+  box-shadow: inset 3px 0 0 rgba(255, 107, 0, 0.45);
+}
+
+.app-layout[data-app-role='admin'] .nav-item:hover {
+  box-shadow: inset 3px 0 0 rgba(239, 68, 68, 0.55);
+}
+
+.app-layout .nav-item.active {
+  background: rgba(255, 107, 0, 0.12) !important;
+  box-shadow: 0 0 24px rgba(255, 107, 0, 0.1);
+}
+
+.app-layout[data-app-role='admin'] .sidebar .nav-item.active {
+  color: #fecaca !important;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.12);
+}
+
+.app-layout .logo-text {
+  background: linear-gradient(90deg, #fff, #ff9a5c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.app-layout[data-app-role='admin'] .logo-text {
+  background: linear-gradient(90deg, #fecaca, #f59e0b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.app-layout .topbar {
+  background: rgba(17, 19, 24, 0.72) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.topbar-notify-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 299;
+}
+
+.topbar-notify-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(380px, 100vw);
+  height: 100vh;
+  z-index: 300;
+  padding: 1rem 1.1rem;
+  overflow: auto;
+  background: rgba(28, 32, 41, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-left: 1px solid rgba(255, 107, 0, 0.12);
+  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.45);
+}
+
+.topbar-notify-item {
+  text-align: left;
+  width: 100%;
+  padding: 0.75rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(9, 11, 14, 0.45);
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease;
+  color: inherit;
+  font: inherit;
+  display: grid;
+  grid-template-columns: 40px 1fr 10px;
+  gap: 12px;
+  align-items: start;
+}
+
+.topbar-notify-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  background: rgba(255, 107, 0, 0.12);
+  border: 1px solid rgba(255, 107, 0, 0.22);
+}
+
+.topbar-notify-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3b82f6;
+  margin-top: 6px;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+}
+
+.app-layout[data-app-role='admin'] .topbar-notify-icon {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.topbar-notify-item:hover {
+  transform: scale(1.02);
+  border-color: rgba(255, 107, 0, 0.35);
+}

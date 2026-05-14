@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { login } from '../../api/auth'
 import { useAuthStore } from '../../store/auth.store'
+import GlassCard from '../../components/common/GlassCard'
 import './Login.css'
 
 type RoleOption = 'Customer' | 'Driver'
@@ -77,23 +78,30 @@ export default function Login() {
 
   return (
     <div className="login-page">
+      <div className="login-orb login-orb--1" aria-hidden />
+      <div className="login-orb login-orb--2" aria-hidden />
+      <div className="login-orb login-orb--3" aria-hidden />
       {/* ── Left Panel ────────────────────────────────────── */}
       <div className="login-left">
         <div className="login-left-content">
-          <div className="login-logo">
-            <div className="login-logo-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                <path d="M3 12L12 4L21 12V20H15V15H9V20H3V12Z" fill="white" />
-              </svg>
+          <GlassCard className="login-glass-panel">
+            <div className="login-logo">
+              <div className="login-logo-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 12L12 4L21 12V20H15V15H9V20H3V12Z" fill="white" />
+                </svg>
+              </div>
+              <span>YÜK-LE</span>
             </div>
-            <span>YÜK-LE</span>
-          </div>
 
-          <h1 className="login-tagline">
-            Yükünüz Güvende,<br />Yolunuz Açık.
-          </h1>
+            <h1 className="login-tagline">
+              <span className="login-tagline-line">Yükünüz</span>{' '}
+              <em className="login-tagline-em">güvende,</em>
+              <br />
+              <span className="login-tagline-line login-tagline-accent">yolunuz açık.</span>
+            </h1>
 
-          <ul className="login-features">
+            <ul className="login-features">
             {[
               { icon: '⚡', text: 'Saniyeler içinde eşleştirme' },
               { icon: '🤖', text: 'AI destekli adil fiyat' },
@@ -107,12 +115,13 @@ export default function Login() {
           </ul>
 
           <div className="login-truck-anim" aria-hidden>🚛</div>
+          </GlassCard>
         </div>
       </div>
 
       {/* ── Right Panel ───────────────────────────────────── */}
       <div className="login-right">
-        <div className="login-form-wrap">
+        <GlassCard className="login-form-wrap">
           {toast && <div className="success-banner" role="status">{toast}</div>}
           <h2 className="login-title">Tekrar hoşgeldiniz</h2>
           <p className="login-subtitle">Hesabınıza girin</p>
@@ -182,7 +191,7 @@ export default function Login() {
 
             <button
               type="submit"
-              className={`btn btn-full ${selectedRole === 'Customer' ? 'btn-customer' : 'btn-driver'}`}
+              className="btn btn-full btn-login-submit"
               style={{ marginTop: 24 }}
               disabled={loading}
             >
@@ -198,7 +207,7 @@ export default function Login() {
           <p className="login-register-link" style={{ marginTop: 6, opacity: 0.7 }}>
             <Link to="/admin/login">Yönetici girişi →</Link>
           </p>
-        </div>
+        </GlassCard>
       </div>
     </div>
   )

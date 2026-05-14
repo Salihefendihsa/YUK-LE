@@ -24,6 +24,8 @@ export function HeroSection({ reduceMotion }: { reduceMotion: boolean }) {
 
   useEffect(() => {
     if (reduceMotion) return
+    const el = root.current
+    if (!el) return
     const ctx = gsap.context(() => {
       gsap
         .timeline({ defaults: { ease: 'power4.out' } })
@@ -36,7 +38,7 @@ export function HeroSection({ reduceMotion }: { reduceMotion: boolean }) {
         .from('.landing-hero__sub', { y: 30, opacity: 0, duration: 0.55 }, '-=0.4')
         .from('.landing-hero__ctas', { y: 30, opacity: 0, duration: 0.5 }, '-=0.35')
         .from('.landing-hero__scroll', { opacity: 0, duration: 0.45 }, '-=0.25')
-    }, root)
+    }, el)
     return () => ctx.revert()
   }, [reduceMotion])
 

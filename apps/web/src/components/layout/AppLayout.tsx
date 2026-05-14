@@ -4,9 +4,13 @@ import ErrorBoundary from '../ErrorBoundary'
 import Sidebar from './Sidebar'
 import TopBar from './TopBar'
 import Footer from './Footer'
+import { useAuthStore } from '../../store/auth.store'
 import './AppLayout.css'
+import '../../styles/app-shell-theme.css'
 
 export default function AppLayout() {
+  const { user } = useAuthStore()
+  const appRole = user?.role === 'Customer' ? 'customer' : user?.role === 'Driver' ? 'driver' : 'admin'
   const [collapsed, setCollapsed] = useState(window.innerWidth >= 768 && window.innerWidth <= 1024)
   const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
@@ -51,14 +55,19 @@ export default function AppLayout() {
   }, [location.pathname])
 
   return (
-    <div className={`app-layout ${collapsed ? 'sidebar-collapsed' : ''}`}>
-      <Sidebar collapsed={collapsed} mobileOpen={mobileOpen} onToggle={() => setCollapsed(c => !c)} />
+    <div className={`app-layout ${collapsed ? 'sidebar-collapsed' : ''}`} data-app-role={appRole}>
+      <span className="shell-orb shell-orb--1" aria-hidden />
+      <span className="shell-orb shell-orb--2" aria-hidden />
+      <span className="shell-orb shell-orb--3" aria-hidden />
+      <Sidebar collapsed={collapsed} mobileOpen={mobileOpen} onToggle={() => setCollapsed((c) => !c)} />
       {mobileOpen ? <div className="mobile-overlay" onClick={() => setMobileOpen(false)} /> : null}
       <div className="app-main">
-        <TopBar onMenuToggle={() => (window.innerWidth < 768 ? setMobileOpen((s) => !s) : setCollapsed(c => !c))} />
+        <TopBar onMenuToggle={() => (window.innerWidth < 768 ? setMobileOpen((s) => !s) : setCollapsed((c) => !c))} />
         <main className="app-content">
           <ErrorBoundary>
-            <Outlet />
+            <div className="app-outlet-wrap" key={location.pathname}>
+              <Outlet />
+            </div>
           </ErrorBoundary>
         </main>
         <Footer />

@@ -3,7 +3,14 @@ import { Canvas } from '@react-three/fiber'
 import { gsap } from 'gsap'
 import { SecurityScene } from '../scenes/SecurityScene'
 
-const badges = ['🔐 AES-256', '🛡️ KVKK', '💳 Escrow', '📊 U-ETDS', '✓ Doğrulanmış', '🔒 Şifreli']
+const chips = [
+  { title: 'Asker sınıfı şifreleme', hint: 'Bankacılık seviyesinde güvenlik', icon: '🔐' },
+  { title: 'KVKK uyumlu', hint: 'Kişisel verileriniz koruma altında', icon: '🛡️' },
+  { title: 'Güvenli havuz ödeme', hint: 'Paranız teslimat sonrası şoföre', icon: '💳' },
+  { title: 'U-ETDS yasal bildirim', hint: 'Yasal yük bildirimleri düzenli', icon: '📊' },
+  { title: 'Doğrulanmış şoför', hint: 'Belgeler AI ile kontrol edilir', icon: '✓' },
+  { title: 'Uçtan uca şifreli', hint: 'İletişim ve dosyalar korunur', icon: '🔒' },
+]
 
 const features = [
   { title: 'KVKK uyumlu', text: 'Tüm veriler şifreli ve erişim kontrollü saklanır.' },
@@ -40,11 +47,17 @@ export function SecuritySection({ reduceMotion }: { reduceMotion: boolean }) {
           </Suspense>
         </Canvas>
       </div>
-      <div className="landing-security__badges" aria-hidden>
-        {badges.map((b) => (
-          <span key={b} className="landing-security__chip">
-            {b}
-          </span>
+      <div className="landing-security__badges">
+        {chips.map((c) => (
+          <div key={c.title} className="landing-security__chip">
+            <span className="landing-security__chip-icon" aria-hidden>
+              {c.icon}
+            </span>
+            <div>
+              <p className="landing-security__chip-title">{c.title}</p>
+              <p className="landing-security__chip-hint">{c.hint}</p>
+            </div>
+          </div>
         ))}
       </div>
       <div className="landing-security__content">

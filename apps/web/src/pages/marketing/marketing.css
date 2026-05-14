@@ -1,0 +1,123 @@
+.marketing-page {
+  min-height: 100vh;
+  background: #090b0e;
+  color: #f3f4f6;
+  padding: 1.25rem 1.25rem 3rem;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.marketing-page__bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 100% 80% at 100% 0%, rgba(255, 107, 0, 0.14), transparent 50%),
+    radial-gradient(ellipse 60% 50% at 0% 100%, rgba(139, 92, 246, 0.08), transparent 55%);
+  opacity: 0.9;
+}
+
+.marketing-page__header {
+  position: relative;
+  z-index: 2;
+  max-width: 880px;
+  margin: 0 auto 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.marketing-page__logo {
+  font-family: 'Plus Jakarta Sans', var(--font-heading), sans-serif;
+  font-weight: 900;
+  color: #fff;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.marketing-page__logo span {
+  background: linear-gradient(90deg, #fde047, #ff6b00);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.marketing-page__link {
+  color: #ff6b00;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 107, 0, 0.35);
+  transition: transform 0.2s ease;
+}
+
+.marketing-page__link:hover {
+  transform: scale(1.05);
+}
+
+.marketing-page__article {
+  position: relative;
+  z-index: 2;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 2rem 2.25rem;
+}
+
+.marketing-page__eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #fdba74;
+  margin-bottom: 0.5rem;
+}
+
+.marketing-page__title {
+  font-family: 'Plus Jakarta Sans', var(--font-heading), sans-serif;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 900;
+  background: linear-gradient(135deg, #fff 0%, #fde047 40%, #ff6b00 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 0.5rem;
+}
+
+.marketing-page__subtitle {
+  font-size: 1.05rem;
+  color: #9ca3af;
+  margin-bottom: 2rem;
+  line-height: 1.55;
+}
+
+.marketing-page__body section {
+  margin-bottom: 1.75rem;
+}
+
+.marketing-page__body h2 {
+  font-family: 'Plus Jakarta Sans', var(--font-heading), sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffdcb8;
+  margin-bottom: 0.5rem;
+}
+
+.marketing-page__body p {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: #d1d5db;
+  margin-bottom: 0.65rem;
+}
+
+.marketing-page__footer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.marketing-page__footer a {
+  color: #ff6b00;
+  font-weight: 600;
+}

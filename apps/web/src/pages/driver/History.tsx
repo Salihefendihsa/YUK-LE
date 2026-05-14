@@ -26,19 +26,36 @@ export default function DriverHistoryPage() {
     })()
   }, [])
 
-  if (loading) return <PageSkeleton rows={5} variant="card" />
-  if (err) return <PageError message={err} />
+  if (loading) return <PageSkeleton rows={7} />
+  if (err) {
+    return (
+      <div className="page-wrap">
+        <div className="page-head">
+          <div>
+            <h1 className="page-title">Geçmiş Seferlerim</h1>
+            <p className="page-sub">Tamamlanan işler</p>
+          </div>
+        </div>
+        <PageError message={err} />
+      </div>
+    )
+  }
 
   return (
     <div className="page-wrap">
-      <h1 className="page-title">Geçmiş Seferlerim</h1>
+      <div className="page-head">
+        <div>
+          <h1 className="page-title">Geçmiş Seferlerim</h1>
+          <p className="page-sub">Kazanç ve sefer özeti</p>
+        </div>
+      </div>
       <div className="card" style={{ marginBottom: 16 }}>
         <p className="muted">Toplam kazanç · Sefer sayısı</p>
-        <p style={{ fontSize: 22, fontWeight: 700 }}>
+        <p className="stat-value" style={{ fontSize: 22, marginTop: 4 }}>
           {formatCurrencyTRY(totalEarn)} · {tripCount} sefer
         </p>
       </div>
-      <div className="list-grid">
+      <div className="loads-grid-responsive">
         {items.map((i) => (
           <div key={String(i.id)} className="item-card">
             <strong>

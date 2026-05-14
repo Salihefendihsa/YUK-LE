@@ -1,6 +1,7 @@
 import { useMemo, useRef, type MutableRefObject } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Group } from 'three'
+import { Text } from '@react-three/drei'
 import { Truck } from '../models/Truck'
 
 function Tree({ x, z }: { x: number; z: number }) {
@@ -14,6 +15,36 @@ function Tree({ x, z }: { x: number; z: number }) {
         <coneGeometry args={[0.35, 0.7, 10]} />
         <meshStandardMaterial color="#0f3d28" roughness={0.75} />
       </mesh>
+    </group>
+  )
+}
+
+function TruckTrailBrand() {
+  const ref = useRef<Group>(null)
+  useFrame((state) => {
+    const g = ref.current
+    if (!g) return
+    const t = state.clock.elapsedTime
+    g.position.y = 0.85 + Math.sin(t * 2.2) * 0.04
+  })
+  return (
+    <group ref={ref} position={[0, 0.85, 2.35]}>
+      <mesh>
+        <planeGeometry args={[2.8, 0.75]} />
+        <meshBasicMaterial color="#ff6b00" transparent opacity={0.65} depthWrite={false} />
+      </mesh>
+      <Text
+        position={[0, 0, 0.02]}
+        fontSize={0.38}
+        anchorX="center"
+        anchorY="middle"
+        color="#fff7ed"
+        outlineWidth={0.04}
+        outlineColor="#000000"
+        fillOpacity={1}
+      >
+        YÜK-LE
+      </Text>
     </group>
   )
 }
@@ -43,7 +74,8 @@ export function RouteScene({
     const truck = truckRef.current
     if (!truck) return
 
-    truck.position.z = -p * 14
+    const t = state.clock.elapsedTime
+    truck.position.z = -p * 22 - t * 0.28
     truck.rotation.y = Math.PI * 0.04
 
     const targetH = p < 0.25 ? 2.2 : p < 0.5 ? 5.5 + p * 4 : 8 + p * 2
@@ -62,6 +94,8 @@ export function RouteScene({
       <ambientLight intensity={0.35} />
       <hemisphereLight args={['#ff9a44', '#1a0f08', 0.6]} position={[0, 8, 0]} />
       <directionalLight position={[2, 10, 4]} intensity={1.1} color="#ffd4a8" castShadow />
+      <pointLight position={[0.5, 1.2, 0]} intensity={1.8} color="#ffdcb8" distance={8} />
+      <pointLight position={[-0.5, 1.2, 0]} intensity={1.8} color="#ffdcb8" distance={8} />
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow position={[0, 0, 0]}>
         <planeGeometry args={[8, 80]} />
@@ -86,6 +120,15 @@ export function RouteScene({
 
       <group ref={truckRef}>
         <Truck idleMotion={false} rotation={[0, Math.PI, 0]} />
+        <mesh position={[0.52, 0.38, 1.05]} rotation={[0, Math.PI, 0]}>
+          <sphereGeometry args={[0.07, 10, 10]} />
+          <meshStandardMaterial emissive="#ffcc88" emissiveIntensity={2.2} color="#331800" />
+        </mesh>
+        <mesh position={[-0.52, 0.38, 1.05]} rotation={[0, Math.PI, 0]}>
+          <sphereGeometry args={[0.07, 10, 10]} />
+          <meshStandardMaterial emissive="#ffcc88" emissiveIntensity={2.2} color="#331800" />
+        </mesh>
+        <TruckTrailBrand />
       </group>
     </>
   )

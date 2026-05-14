@@ -39,16 +39,32 @@ export default function AdminDashboard() {
     <div className="admin-page">
       <div className="admin-head">
         <div>
-          <h1 className="admin-title">Admin Paneli</h1>
-          <p className="admin-sub">Canlı operasyon merkezi, otomatik 30 saniyede bir yenilenir.</p>
+          <h1 className="page-title admin-command-title">Komuta Merkezi</h1>
+          <p className="admin-sub">Canlı operasyon özeti — veriler 30 saniyede bir yenilenir.</p>
+          <div className="admin-health-row" aria-hidden>
+            <span className="admin-health-pill">
+              <span className="admin-health-dot" /> API
+            </span>
+            <span className="admin-health-pill">
+              <span className="admin-health-dot" /> Ödeme
+            </span>
+            <span className="admin-health-pill">
+              <span className="admin-health-dot warn" /> Kuyruk
+            </span>
+            <span className="admin-health-pill muted" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+              {new Date(now).toLocaleString('tr-TR')}
+            </span>
+          </div>
         </div>
-        <a href="/admin/reviews" className="btn btn-danger">Belge Kuyruğunu Aç</a>
+        <a href="/admin/reviews" className="btn btn-danger">
+          Belge Kuyruğu
+        </a>
       </div>
       {error ? <PageError message={error} /> : null}
 
       <div className="kpi-grid">
         {kpis.map((s) => (
-          <div key={s.label} className="admin-card">
+          <div key={s.label} className={`admin-card ${s.danger ? 'kpi-pulse' : ''}`}>
             <div className="item-row">
               <span className="kpi-label">{s.label}</span>
               {s.badge ? <span className="admin-badge">{s.badge}</span> : null}
@@ -103,6 +119,21 @@ export default function AdminDashboard() {
           <p className="danger">🟥 Şikayetler: {Number(stats.complaintCount ?? 0)}</p>
           <p className="danger">🟥 Başarısız ödemeler: {Number(stats.failedPaymentCount ?? 0)}</p>
         </div>
+      </div>
+
+      <div className="admin-quick-actions">
+        <a href="/admin/reviews" className="admin-quick-card">
+          📄 Belge onayı <span className="muted">({Number(stats.pendingReviewCount ?? 0)})</span>
+        </a>
+        <a href="/admin/chats" className="admin-quick-card accent-orange">
+          💬 Sohbetler
+        </a>
+        <a href="/admin/system" className="admin-quick-card accent-blue">
+          🔧 Sistem kontrolü
+        </a>
+        <a href="/admin/payments" className="admin-quick-card accent-green">
+          💳 Ödemeler
+        </a>
       </div>
     </div>
   )

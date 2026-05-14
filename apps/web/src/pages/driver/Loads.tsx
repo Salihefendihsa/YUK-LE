@@ -6,6 +6,11 @@ import { PageEmpty, PageError, PageSkeleton } from '../../components/common/Page
 import TurkishDateTimePicker from '../../components/common/TurkishDateTimePicker'
 import '../shared/Page.css'
 
+function isNewLoad(createdAt: string) {
+  const t = new Date(createdAt).getTime()
+  return Date.now() - t < 48 * 3600 * 1000
+}
+
 export default function DriverLoadsPage() {
   const [loads, setLoads] = useState<Load[]>([])
   const [loading, setLoading] = useState(true)
@@ -46,7 +51,7 @@ export default function DriverLoadsPage() {
           <p className="page-sub">Aktif yükleri filtreleyip inceleyin</p>
       </div>
       {error ? <PageError message={error} /> : null}
-      <div className="card filters">
+      <div className="card filters panel-table-card">
         <input className="form-input" placeholder="Şehir" value={city} onChange={(e) => setCity(e.target.value)} />
         <input className="form-input" placeholder="Araç tipi" value={vehicle} onChange={(e) => setVehicle(e.target.value)} />
         <TurkishDateTimePicker value={date || undefined} onChange={(iso) => setDate(iso)} onClear={() => setDate('')} />
@@ -54,7 +59,7 @@ export default function DriverLoadsPage() {
           Filtreleri Temizle
         </button>
       </div>
-      <div className="list-grid">
+      <div className="loads-grid-responsive">
         {filtered.map((load) => (
           <Link key={load.id} to={`/driver/loads/${load.id}`} className="item-card">
             <div className="item-row">
@@ -63,6 +68,11 @@ export default function DriverLoadsPage() {
               </strong>
               <span>₺{load.price.toLocaleString('tr-TR')}</span>
             </div>
+            {isNewLoad(load.createdAt) ? (
+              <div style={{ marginTop: 8 }}>
+                <span className="badge-new-glow">YENİ</span>
+              </div>
+            ) : null}
             <div className="item-row" style={{ marginTop: 8 }}>
               <span className="muted">{load.requiredVehicleType ?? '-'}</span>
               <span className="badge badge-info">{load.status}</span>

@@ -13,6 +13,19 @@ const STATUS: Record<string, string> = {
   Assigned: 'Atandı',
 }
 
+const STATUS_CLASS: Record<string, string> = {
+  Active: 'badge-success',
+  OnWay: 'badge-warning',
+  Delivered: 'badge-muted',
+  Cancelled: 'badge-error',
+  Assigned: 'badge-info',
+}
+
+function isNewLoad(createdAt: string) {
+  const t = new Date(createdAt).getTime()
+  return Date.now() - t < 48 * 3600 * 1000
+}
+
 export default function CustomerLoadsPage() {
   const [loads, setLoads] = useState<Load[]>([])
   const [loading, setLoading] = useState(true)
@@ -45,20 +58,31 @@ export default function CustomerLoadsPage() {
         </Link>
       </div>
       {error ? <PageError message={error} /> : null}
-      <div className="list-grid">
+      <div className="loads-grid-responsive">
         {loadList.map((load) => (
-          <Link key={load.id} className="item-card" to={`/customer/loads/${load.id}`}>
+          <div key={load.id} className="item-card">
             <div className="item-row">
               <span className="item-route">
                 {load.fromCity} → {load.toCity}
               </span>
-              <span className="badge badge-info">{STATUS[load.status] ?? load.status}</span>
+              <span className={`badge ${STATUS_CLASS[load.status] ?? 'badge-muted'}`}>{STATUS[load.status] ?? load.status}</span>
             </div>
-            <div className="item-row" style={{ marginTop: 8 }}>
+            {isNewLoad(load.createdAt) ? (
+              <div style={{ marginTop: 8 }}>
+                <span className="badge-new-glow">YENİ</span>
+              </div>
+            ) : null}
+            <div className="item-row" style={{ marginTop: 10 }}>
               <span className="muted">{load.type}</span>
               <strong>₺{load.price.toLocaleString('tr-TR')}</strong>
             </div>
-          </Link>
+            <div className="item-row" style={{ marginTop: 6 }}>
+              <span className="muted">Teklif: {load.bidCount ?? 0}</span>
+            </div>
+            <Link to={`/customer/loads/${load.id}`} className="btn btn-sm btn-detail-orange">
+              Detay
+            </Link>
+          </div>
         ))}
         {loadList.length === 0 ? (
           <PageEmpty
@@ -66,7 +90,9 @@ export default function CustomerLoadsPage() {
             title="Henüz ilan yok"
             description="Yeni bir ilan oluşturarak teklif toplamaya başlayabilirsiniz."
             actionLabel="İlan Oluştur"
-            onAction={() => { window.location.href = '/customer/loads/create' }}
+            onAction={() => {
+              window.location.href = '/customer/loads/create'
+            }}
           />
         ) : null}
       </div>

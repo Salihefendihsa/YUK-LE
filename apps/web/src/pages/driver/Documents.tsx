@@ -70,38 +70,62 @@ export default function DriverDocumentsPage() {
 
   return (
     <div className="page-wrap">
-      <div>
-        <h1 className="page-title">Belgelerim</h1>
-        <p className="page-sub">Belgeleri sürükle-bırak veya dosya seç ile yükleyin.</p>
+      <div className="page-head">
+        <div>
+          <h1 className="page-title">Belgelerim</h1>
+          <p className="page-sub">Belgeleri sürükle-bırak veya dosya seç ile yükleyin.</p>
+        </div>
       </div>
       {error ? <PageError message={error} /> : null}
-      <div className="list-grid">
+      <div className="panel-doc-grid">
         {cards.map((card) => {
           const state = docs[card.key]
+          const meter =
+            state.status === 'Onaylı' ? 100 : state.status === 'İnceleniyor' ? 55 : state.status === 'Reddedildi' ? 25 : 15
           return (
-            <div key={card.key} className="card">
+            <div key={card.key} className="panel-doc-card">
               <div className="item-row">
-                <strong>{card.icon} {card.title}</strong>
-                <span className={`badge ${state.status === 'Onaylı' ? 'badge-success' : state.status === 'Reddedildi' ? 'badge-error' : 'badge-info'}`}>
-                  {state.status === 'Onaylı' ? '✅ Onaylı' : state.status === 'Reddedildi' ? '❌ Reddedildi' : state.status === 'İnceleniyor' ? '⏳ İnceleniyor' : '⏳ Bekleniyor'}
+                <strong>
+                  {card.icon} {card.title}
+                </strong>
+                <span
+                  className={`badge ${state.status === 'Onaylı' ? 'badge-success' : state.status === 'Reddedildi' ? 'badge-error' : 'badge-info'}`}
+                >
+                  {state.status === 'Onaylı'
+                    ? '✅ Onaylı'
+                    : state.status === 'Reddedildi'
+                      ? '❌ Reddedildi'
+                      : state.status === 'İnceleniyor'
+                        ? '⏳ İnceleniyor'
+                        : '⏳ Bekleniyor'}
                 </span>
               </div>
+              <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
+                AI güven skoru (tahmini)
+              </p>
+              <div className="panel-ai-meter">
+                <span style={{ width: `${meter}%` }} />
+              </div>
               <div
+                className="panel-dropzone"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                   e.preventDefault()
                   const file = e.dataTransfer.files?.[0] ?? null
                   setDocs((prev) => ({ ...prev, [card.key]: { ...prev[card.key], file } }))
                 }}
-                style={{ marginTop: 10, border: '1px dashed var(--color-border)', borderRadius: 10, padding: 12 }}
               >
                 <p className="muted">Dosyayı buraya bırakın veya aşağıdan seçin.</p>
                 <input
                   type="file"
                   aria-label="Dosya Seç"
-                  onChange={(e) => setDocs((prev) => ({ ...prev, [card.key]: { ...prev[card.key], file: e.target.files?.[0] ?? null } }))}
+                  onChange={(e) =>
+                    setDocs((prev) => ({ ...prev, [card.key]: { ...prev[card.key], file: e.target.files?.[0] ?? null } }))
+                  }
                 />
-                <p className="muted" style={{ marginTop: 6 }}>{state.file ? state.file.name : 'Dosya seçilmedi'}</p>
+                <p className="muted" style={{ marginTop: 6 }}>
+                  {state.file ? state.file.name : 'Dosya seçilmedi'}
+                </p>
               </div>
               <button
                 type="button"
@@ -112,7 +136,11 @@ export default function DriverDocumentsPage() {
               >
                 {state.loading ? 'AI analiz ediliyor...' : 'AI Analiz Et ve Kaydet'}
               </button>
-              {state.resultText ? <p className="muted" style={{ marginTop: 12 }}>{state.resultText}</p> : null}
+              {state.resultText ? (
+                <p className="muted" style={{ marginTop: 12 }}>
+                  {state.resultText}
+                </p>
+              ) : null}
             </div>
           )
         })}

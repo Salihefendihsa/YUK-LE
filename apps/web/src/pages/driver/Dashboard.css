@@ -38,7 +38,12 @@
 .toggle-switch.on .toggle-thumb { transform: translateX(24px); }
 
 /* Load Cards */
-.driver-loads { display: flex; flex-direction: column; gap: var(--space-4); }
+.driver-loads {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  perspective: 900px;
+}
 
 .driver-load-card {
   background: var(--color-card-hover);
@@ -53,7 +58,11 @@
   background: linear-gradient(135deg, var(--color-card-hover) 0%, rgba(139,92,246,0.05) 100%);
 }
 
-.driver-load-card:hover { border-color: rgba(255,107,0,0.3); transform: translateY(-1px); }
+.driver-load-card:hover {
+  border-color: rgba(255, 107, 0, 0.35);
+  transform: translateY(-2px) rotateX(2deg);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
 
 .ai-badge {
   display: inline-flex;

@@ -603,19 +603,43 @@ html.landing-page body {
 .landing-security__badges {
   position: relative;
   z-index: 3;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  justify-content: center;
-  margin-bottom: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.65rem;
+  max-width: 1000px;
+  margin: 0 auto 1.25rem;
+  padding: 0 1rem;
 }
 
 .landing-security__chip {
-  font-size: 0.75rem;
-  padding: 0.35rem 0.55rem;
-  border-radius: 999px;
-  background: rgba(16, 185, 129, 0.12);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 12px;
+  background: rgba(16, 185, 129, 0.1);
   border: 1px solid rgba(52, 211, 153, 0.35);
+  text-align: left;
+}
+
+.landing-security__chip-icon {
+  font-size: 1.1rem;
+  line-height: 1.2;
+}
+
+.landing-security__chip-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #ecfdf5;
+  margin: 0 0 0.15rem;
+}
+
+.landing-security__chip-hint {
+  font-size: 0.68rem;
+  opacity: 0.78;
+  margin: 0;
+  line-height: 1.35;
+  color: #a7f3d0;
 }
 
 .landing-security__content {
@@ -1152,22 +1176,33 @@ html.landing-page body {
 }
 
 .landing-footer__marquee {
-  display: flex;
-  gap: 2rem;
+  position: relative;
   overflow: hidden;
-  white-space: nowrap;
-  font-size: 0.75rem;
-  opacity: 0.35;
-  margin-bottom: 2rem;
-  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto 2rem;
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
 }
 
-.landing-footer__marquee span {
-  animation: landing-marquee 22s linear infinite;
+.landing-footer__marquee-track {
+  display: inline-flex;
+  width: max-content;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  opacity: 0.4;
+  letter-spacing: 0.12em;
+  animation: landing-marquee 25s linear infinite;
+}
+
+.landing-footer__marquee-track span {
+  padding-right: 3rem;
 }
 
 @keyframes landing-marquee {
-  to {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
     transform: translateX(-50%);
   }
 }

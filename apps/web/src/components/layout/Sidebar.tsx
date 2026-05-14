@@ -71,7 +71,7 @@ export default function Sidebar({ collapsed, mobileOpen, onToggle }: SidebarProp
   }
 
   return (
-    <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''} ${user?.role === 'Admin' ? 'admin-mode' : ''}`}>
+    <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
       {/* Logo */}
       <div className="sidebar-logo">
         <div className="logo-icon">
@@ -79,7 +79,16 @@ export default function Sidebar({ collapsed, mobileOpen, onToggle }: SidebarProp
             <path d="M3 12L12 4L21 12V20H15V15H9V20H3V12Z" fill={user?.role === 'Admin' ? '#EF4444' : 'var(--color-brand)'} />
           </svg>
         </div>
-        {!collapsed && <span className="logo-text">YÜK-LE</span>}
+        {!collapsed && (
+          <div className="logo-text-wrap">
+            <span className="logo-text">YÜK-LE</span>
+            <span className="logo-panel-tag">
+              {user?.role === 'Customer' && 'Fabrika Paneli'}
+              {user?.role === 'Driver' && 'Şoför Paneli'}
+              {user?.role === 'Admin' && 'Yönetici'}
+            </span>
+          </div>
+        )}
         <button className="collapse-btn" onClick={onToggle} aria-label="Menüyü daralt">
           {collapsed ? '›' : '‹'}
         </button>

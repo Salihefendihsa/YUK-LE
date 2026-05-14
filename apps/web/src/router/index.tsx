@@ -45,6 +45,7 @@ import AdminLoadDetailPage from '../pages/admin/LoadDetail'
 import AdminTrackingPage from '../pages/admin/Tracking'
 import AdminRatingsPage from '../pages/admin/Ratings'
 import AdminLoginPage from '../pages/admin/AdminLogin'
+import MarketingDocumentPage from '../pages/marketing/MarketingDocumentPage'
 import { NotFoundPage, RouteErrorPage, ServerErrorPage, UnauthorizedPage } from '../pages/system/ErrorPages'
 
 const Landing = lazy(() => import('../pages/landing/Landing'))
@@ -88,6 +89,15 @@ const router = createBrowserRouter([
   { path: '/kvkk',         element: <KvkkPage /> },
   { path: '/kullanim-kosullari', element: <KullanimKosullariPage /> },
   { path: '/gizlilik', element: <GizlilikPage /> },
+  { path: '/features', element: <MarketingDocumentPage id="features" /> },
+  { path: '/pricing', element: <MarketingDocumentPage id="pricing" /> },
+  { path: '/demo', element: <MarketingDocumentPage id="demo" /> },
+  { path: '/api-docs', element: <MarketingDocumentPage id="api-docs" /> },
+  { path: '/hakkimizda', element: <MarketingDocumentPage id="hakkimizda" /> },
+  { path: '/kariyer', element: <MarketingDocumentPage id="kariyer" /> },
+  { path: '/blog', element: <MarketingDocumentPage id="blog" /> },
+  { path: '/basin', element: <MarketingDocumentPage id="basin" /> },
+  { path: '/cerezler', element: <MarketingDocumentPage id="cerezler" /> },
   { path: '/unauthorized', element: <UnauthorizedPage /> },
   { path: '/500', element: <ServerErrorPage /> },
   {

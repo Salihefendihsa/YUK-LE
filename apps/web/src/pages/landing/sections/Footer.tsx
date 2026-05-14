@@ -4,19 +4,19 @@ const cols = [
   {
     title: 'Ürün',
     links: [
-      { to: '#journey', label: 'Özellikler' },
-      { to: '#pricing', label: 'Fiyat' },
-      { to: '#cta', label: 'Demo' },
-      { to: '/register', label: 'API' },
+      { to: '/features', label: 'Özellikler' },
+      { to: '/pricing', label: 'Fiyat' },
+      { to: '/demo', label: 'Demo' },
+      { to: '/api-docs', label: 'API' },
     ],
   },
   {
     title: 'Şirket',
     links: [
-      { to: '#top', label: 'Hakkımızda' },
-      { to: '#reviews', label: 'Kariyer' },
-      { to: '#top', label: 'Blog' },
-      { to: '#top', label: 'Basın' },
+      { to: '/hakkimizda', label: 'Hakkımızda' },
+      { to: '/kariyer', label: 'Kariyer' },
+      { to: '/blog', label: 'Blog' },
+      { to: '/basin', label: 'Basın' },
     ],
   },
   {
@@ -25,7 +25,7 @@ const cols = [
       { to: '/kvkk', label: 'KVKK' },
       { to: '/kullanim-kosullari', label: 'Koşullar' },
       { to: '/gizlilik', label: 'Gizlilik' },
-      { to: '/gizlilik', label: 'Çerezler' },
+      { to: '/cerezler', label: 'Çerezler' },
     ],
   },
 ]
@@ -33,10 +33,12 @@ const cols = [
 export function LandingFooter() {
   return (
     <footer className="landing-footer">
-      <p className="landing-footer__strip">FABRİKALAR İLE GÜVENİLİYORUZ</p>
+      <p className="landing-footer__strip">500+ FABRİKA İLE GÜVENİLİYORUZ</p>
       <div className="landing-footer__marquee" aria-hidden>
-        <span>YÜK-LE · LOJİSTİK · AI · GÜVEN · TÜRKİYE · </span>
-        <span>YÜK-LE · LOJİSTİK · AI · GÜVEN · TÜRKİYE · </span>
+        <div className="landing-footer__marquee-track">
+          <span>YÜK-LE · LOJİSTİK · YAPAY ZEKA · GÜVEN · TÜRKİYE · </span>
+          <span>YÜK-LE · LOJİSTİK · YAPAY ZEKA · GÜVEN · TÜRKİYE · </span>
+        </div>
       </div>
       <div className="landing-footer__grid">
         <div>
@@ -60,15 +62,9 @@ export function LandingFooter() {
             <ul>
               {c.links.map((l) => (
                 <li key={l.label}>
-                  {l.to.startsWith('#') ? (
-                    <a href={l.to} data-cursor-hover>
-                      {l.label}
-                    </a>
-                  ) : (
-                    <Link to={l.to} data-cursor-hover>
-                      {l.label}
-                    </Link>
-                  )}
+                  <Link to={l.to} data-cursor-hover>
+                    {l.label}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -77,7 +73,7 @@ export function LandingFooter() {
       </div>
       <div className="landing-footer__bottom">
         <p>© 2026 YÜK-LE — Yapay zeka destekli lojistik.</p>
-        <p>Elazığ, Türkiye 🇹🇷</p>
+        <p>Türkiye 🇹🇷</p>
       </div>
     </footer>
   )

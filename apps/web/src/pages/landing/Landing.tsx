@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Leva } from 'leva'
 import './landing.css'
 import './gsapSetup'
 import { useLenisScroll } from './hooks/useLenisScroll'
@@ -57,7 +56,6 @@ export default function Landing() {
     <div className={`landing-root ${ready ? 'landing-root--ready' : ''}`}>
       {!ready && <LandingLoader onDone={onLoaded} />}
       {!reduceMotion && !light3d && <LandingCursor />}
-      {import.meta.env.DEV && <Leva collapsed />}
       <LandingNavbar />
       <main>
         <HeroSection reduceMotion={light3d} />

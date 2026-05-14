@@ -1,15 +1,25 @@
-import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
 import { getLoad } from '../../api/loads'
 import { acceptBid, getBidsForLoad } from '../../api/bids'
 import { getDriverLocation } from '../../api/location'
 import { submitRating } from '../../api/ratings'
-import type { Bid, Load } from '../../api/types'
+import type { Bid, Load, LoadStatus } from '../../api/types'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
 import LoadChatPanel from '../../components/chat/LoadChatPanel'
 import DeliveryQrSection from '../../components/delivery/DeliveryQrSection'
 import { formatCurrencyTRY, normalizeArray } from '../../utils/format'
 import '../shared/Page.css'
+
+const FLOW: LoadStatus[] = ['Active', 'Assigned', 'OnWay', 'Delivered']
+
+const STATUS_LABEL: Record<string, string> = {
+  Active: 'Yayında',
+  Assigned: 'Şoför atandı',
+  OnWay: 'Yolda',
+  Delivered: 'Teslim',
+  Cancelled: 'İptal',
+}
 
 export default function CustomerLoadDetailPage() {
   const { id = '' } = useParams()
@@ -42,6 +52,19 @@ export default function CustomerLoadDetailPage() {
     return () => clearInterval(timer)
   }, [id, load])
 
+  const timeline = useMemo(() => {
+    if (!load) return []
+    if (load.status === 'Cancelled') {
+      return [{ key: 'cancel', label: 'İptal edildi', state: 'current' as const }]
+    }
+    const idx = FLOW.indexOf(load.status)
+    return FLOW.map((st, i) => ({
+      key: st,
+      label: STATUS_LABEL[st] ?? st,
+      state: (i < idx ? 'done' : i === idx ? 'current' : 'pending') as 'done' | 'current' | 'pending',
+    }))
+  }, [load])
+
   async function onAccept(bidId: number) {
     setActionMsg('')
     try {
@@ -58,75 +81,121 @@ export default function CustomerLoadDetailPage() {
 
   return (
     <div className="page-wrap">
+      <nav className="panel-breadcrumb">
+        <Link to="/customer/dashboard">Panel</Link>
+        <span className="sep">/</span>
+        <Link to="/customer/loads">İlanlarım</Link>
+        <span className="sep">/</span>
+        <span>Detay</span>
+      </nav>
+
       <div>
         <h1 className="page-title">İlan Detayı</h1>
-        <p className="page-sub">
-          {load ? `${load.fromCity} → ${load.toCity}` : ''}
-        </p>
+        <p className="page-sub">{load ? `${load.fromCity} → ${load.toCity}` : ''}</p>
       </div>
       {error ? <PageError message={error} /> : null}
-      {actionMsg ? <div className="card muted">{actionMsg}</div> : null}
+      {actionMsg ? (
+        <div className="card muted" style={{ padding: 12 }}>
+          {actionMsg}
+        </div>
+      ) : null}
 
       {load ? (
-        <div className="card">
-          <div className="item-row">
-            <strong>Fiyat</strong>
-            <span>{formatCurrencyTRY(load.price)}</span>
-          </div>
-          <div className="item-row" style={{ marginTop: 8 }}>
-            <strong>Ağırlık</strong>
-            <span>{load.weight} kg</span>
-          </div>
-          <p className="muted" style={{ marginTop: 8 }}>
-            {load.description}
-          </p>
-          {loc ? <p className="muted">Canlı konum: {loc.latitude?.toFixed(5)}, {loc.longitude?.toFixed(5)}</p> : null}
-          {(load.status === 'Assigned' || load.status === 'OnWay') ? (
-            <div className="card" style={{ marginTop: 12, borderColor: '#f97316' }}>
-              <h3>Teslimat QR</h3>
-              <DeliveryQrSection loadId={id} />
+        <div className="panel-detail-grid">
+          <div className="card">
+            <h2 style={{ fontSize: 16, marginBottom: 12 }}>Yük bilgileri</h2>
+            <div className="item-row">
+              <strong>Fiyat</strong>
+              <span>{formatCurrencyTRY(load.price)}</span>
             </div>
-          ) : null}
-          {load.driverId ? <button className="btn btn-secondary btn-sm" onClick={() => setShowChat((v) => !v)}>Şoförle Yaz</button> : null}
-          {load.status === 'Delivered' ? <button className="btn btn-primary btn-sm" onClick={() => setShowRating(true)}>Teslimatı Puanla</button> : null}
+            <div className="item-row" style={{ marginTop: 8 }}>
+              <strong>Ağırlık</strong>
+              <span>{load.weight} kg</span>
+            </div>
+            <p className="muted" style={{ marginTop: 8 }}>
+              {load.description}
+            </p>
+            {loc ? (
+              <p className="muted" style={{ marginTop: 8 }}>
+                Canlı konum: {loc.latitude?.toFixed(5)}, {loc.longitude?.toFixed(5)}
+              </p>
+            ) : null}
+            <div className="panel-timeline" style={{ marginTop: 16 }}>
+              {timeline.map((t) => (
+                <div
+                  key={t.key}
+                  className={`panel-timeline-step ${t.state === 'done' ? 'done' : ''} ${t.state === 'current' ? 'current' : ''}`}
+                >
+                  {t.label}
+                </div>
+              ))}
+            </div>
+            {load.status === 'Assigned' || load.status === 'OnWay' ? (
+              <div className="panel-qr-wrap" style={{ marginTop: 16 }}>
+                <h3 style={{ fontSize: 15, marginBottom: 8 }}>Teslimat QR</h3>
+                <DeliveryQrSection loadId={id} />
+              </div>
+            ) : null}
+            <div style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {load.driverId ? (
+                <button type="button" className="btn btn-sm btn-chat-glow" onClick={() => setShowChat((v) => !v)}>
+                  {showChat ? 'Sohbeti Gizle' : 'Şoförle Sohbet'}
+                </button>
+              ) : null}
+              {load.status === 'Delivered' ? (
+                <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowRating(true)}>
+                  Teslimatı Puanla
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="card">
+            <h2 style={{ fontSize: 16, marginBottom: 12 }}>Gelen teklifler</h2>
+            <div className="list-grid">
+              {bids.map((bid) => (
+                <div key={bid.id} className="item-card" style={{ padding: 14 }}>
+                  <div className="item-row">
+                    <strong>{bid.driverFullName}</strong>
+                    <strong>{formatCurrencyTRY(bid.amount)}</strong>
+                  </div>
+                  <div className="item-row" style={{ marginTop: 8 }}>
+                    <span className="muted">Puan: —</span>
+                    <button type="button" className="btn btn-primary btn-sm" onClick={() => onAccept(bid.id)}>
+                      Teklifi Kabul Et
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {bids.length === 0 ? <p className="muted">Henüz teklif yok.</p> : null}
+            </div>
+          </div>
         </div>
       ) : null}
       {showChat ? <LoadChatPanel loadId={id} /> : null}
 
-      <div className="card">
-        <h2 style={{ marginBottom: 12 }}>Gelen Teklifler</h2>
-        <div className="list-grid">
-          {bids.map((bid) => (
-            <div key={bid.id} className="item-card">
-              <div className="item-row">
-                <strong>{bid.driverFullName}</strong>
-                <strong>{formatCurrencyTRY(bid.amount)}</strong>
-              </div>
-              <div className="item-row" style={{ marginTop: 8 }}>
-                <span className="muted">Puan: -</span>
-                <button className="btn btn-primary btn-sm" onClick={() => onAccept(bid.id)}>
-                  Teklifi Kabul Et
-                </button>
-              </div>
-            </div>
-          ))}
-          {bids.length === 0 ? <p className="muted">Henüz teklif yok.</p> : null}
-        </div>
-      </div>
       {showRating ? (
-        <div className="modal-backdrop">
-          <div className="modal-card">
+        <div className="modal-backdrop" role="presentation" onClick={() => setShowRating(false)}>
+          <div className="modal-card" role="dialog" aria-modal onClick={(e) => e.stopPropagation()}>
             <h3>Teslimat Puanı</h3>
             <input className="form-input" type="number" min={1} max={5} value={score} onChange={(e) => setScore(Number(e.target.value))} />
             <textarea className="form-input" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Yorumunuz" />
-            <div className="item-row">
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowRating(false)}>Kapat</button>
-              <button className="btn btn-primary btn-sm" onClick={async () => {
-                if (!load?.driverId) return
-                await submitRating({ loadId: id, givenToUserId: load.driverId, score, comment })
-                setShowRating(false)
-                setActionMsg('Puanınız kaydedildi.')
-              }}>Kaydet</button>
+            <div className="item-row" style={{ marginTop: 12 }}>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowRating(false)}>
+                Kapat
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={async () => {
+                  if (!load?.driverId) return
+                  await submitRating({ loadId: id, givenToUserId: load.driverId, score, comment })
+                  setShowRating(false)
+                  setActionMsg('Puanınız kaydedildi.')
+                }}
+              >
+                Kaydet
+              </button>
             </div>
           </div>
         </div>
