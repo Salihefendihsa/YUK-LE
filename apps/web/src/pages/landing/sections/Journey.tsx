@@ -1,5 +1,7 @@
-import { motion } from 'framer-motion'
+import { useCallback, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { NetworkGlobe } from '../components/NetworkGlobe'
+import { TurkeyDetailMap } from '../components/TurkeyDetailMap'
 import { LiveMetrics } from '../components/LiveMetrics'
 import { TrustBar } from '../components/TrustBar'
 
@@ -7,6 +9,10 @@ const ease = [0.22, 1, 0.36, 1] as const
 
 export function JourneySection({ reduceMotion }: { reduceMotion: boolean }) {
   const r = reduceMotion
+  const [view, setView] = useState<'globe' | 'turkey'>('globe')
+  const goTurkey = useCallback(() => setView('turkey'), [])
+  const goGlobe = useCallback(() => setView('globe'), [])
+  const stageTransition = r ? { duration: 0 } : { duration: 0.7, ease }
 
   return (
     <section className="section-network" id="journey">
@@ -21,7 +27,7 @@ export function JourneySection({ reduceMotion }: { reduceMotion: boolean }) {
         >
           <p className="section-network-eyebrow">
             <span className="eyebrow-dot" aria-hidden />
-            AĞ
+            OPERASYONEL GÜÇ
           </p>
           <h2 className="section-network-title">
             <span className="section-network-title-line">81 İlde,</span>
@@ -41,7 +47,31 @@ export function JourneySection({ reduceMotion }: { reduceMotion: boolean }) {
           viewport={{ once: true, margin: '-100px' }}
           transition={{ duration: 1.2, ease, delay: r ? 0 : 0.2 }}
         >
-          <NetworkGlobe reduceMotion={r} />
+          <AnimatePresence mode="wait">
+            {view === 'globe' ? (
+              <motion.div
+                key="globe"
+                className="stage-content"
+                initial={r ? false : { opacity: 0, scale: 1.08 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={r ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.88 }}
+                transition={stageTransition}
+              >
+                <NetworkGlobe reduceMotion={r} onZoomToTurkey={goTurkey} />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="turkey"
+                className="stage-content"
+                initial={r ? false : { opacity: 0, scale: 1.08 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={r ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.88 }}
+                transition={stageTransition}
+              >
+                <TurkeyDetailMap onBackToGlobe={goGlobe} reduceMotion={r} />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         <motion.div

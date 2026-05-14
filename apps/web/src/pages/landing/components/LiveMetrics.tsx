@@ -3,7 +3,7 @@ import { MetricCard } from './MetricCard'
 
 function TruckIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
         d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2m0 0a2 2 0 1 0 4 0m-4 0a2 2 0 1 0 4 0m10 0a2 2 0 1 0 4 0m-4 0h2a1 1 0 0 0 1-1v-3.65L19.74 8.35A1 1 0 0 0 19 8h-5"
         stroke="currentColor"
@@ -17,7 +17,7 @@ function TruckIcon() {
 
 function CheckIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
         d="M20 6L9 17l-5-5"
         stroke="currentColor"
@@ -31,7 +31,7 @@ function CheckIcon() {
 
 function ZapIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
         d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
         stroke="currentColor"
@@ -97,7 +97,7 @@ export function LiveMetrics({ reduceMotion, horizontal = false }: Props) {
         transition={{ duration: 0.65, ease, delay: reduceMotion ? 0 : horizontal ? 0.2 : 0.3 }}
       >
         <MetricCard
-          label="Ortalama Eşleşme"
+          label="Yük → Şoför Bağlantısı"
           target={2}
           suffix=" dk"
           trend="Sektör ortalaması: 47 dk"

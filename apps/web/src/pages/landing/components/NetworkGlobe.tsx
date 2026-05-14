@@ -17,8 +17,11 @@ const TURKEY_MARKERS: Marker[] = [
 ]
 
 const GLOBAL_ARCS: Arc[] = [
-  { from: HUB, to: [40.7128, -74.006], color: [1, 0.45, 0.12] },
+  { from: HUB, to: [52.52, 13.405], color: [1, 0.44, 0.12] },
   { from: HUB, to: [51.5074, -0.1278], color: [1, 0.42, 0.1] },
+  { from: HUB, to: [41.9028, 12.4964], color: [1, 0.43, 0.11] },
+  { from: HUB, to: [40.7128, -74.006], color: [1, 0.45, 0.12] },
+  { from: HUB, to: [34.0522, -118.2437], color: [1, 0.46, 0.13] },
   { from: HUB, to: [25.2048, 55.2708], color: [1, 0.48, 0.14] },
   { from: HUB, to: [1.3521, 103.8198], color: [1, 0.44, 0.11] },
   { from: HUB, to: [35.6762, 139.6503], color: [1, 0.43, 0.1] },
@@ -28,15 +31,17 @@ const GLOBAL_ARCS: Arc[] = [
 
 type Props = {
   reduceMotion?: boolean
+  onZoomToTurkey: () => void
 }
 
-export function NetworkGlobe({ reduceMotion = false }: Props) {
+export function NetworkGlobe({ reduceMotion = false, onZoomToTurkey }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
   const phiRef = useRef(-0.62)
   const draggingRef = useRef(false)
   const lastXRef = useRef(0)
+  const dragTotalRef = useRef(0)
 
   useEffect(() => {
     const el = containerRef.current
@@ -102,24 +107,35 @@ export function NetworkGlobe({ reduceMotion = false }: Props) {
     const onPointerDown = (e: PointerEvent) => {
       draggingRef.current = true
       lastXRef.current = e.clientX
+      dragTotalRef.current = 0
       canvas.setPointerCapture(e.pointerId)
       canvas.style.cursor = 'grabbing'
     }
 
     const onPointerUp = (e: PointerEvent) => {
+      const wasDrag = dragTotalRef.current > 14
       draggingRef.current = false
       try {
         canvas.releasePointerCapture(e.pointerId)
       } catch {
         /* ignore */
       }
-      canvas.style.cursor = 'grab'
+      canvas.style.cursor = 'pointer'
+      if (!wasDrag) {
+        onZoomToTurkey()
+      }
+    }
+
+    const onPointerLeave = () => {
+      draggingRef.current = false
+      canvas.style.cursor = 'pointer'
     }
 
     const onPointerMove = (e: PointerEvent) => {
       if (!draggingRef.current) return
       const delta = e.clientX - lastXRef.current
       lastXRef.current = e.clientX
+      dragTotalRef.current += Math.abs(delta)
       phiRef.current += delta * 0.005
     }
 
@@ -127,7 +143,7 @@ export function NetworkGlobe({ reduceMotion = false }: Props) {
     canvas.addEventListener('pointermove', onPointerMove)
     canvas.addEventListener('pointerup', onPointerUp)
     canvas.addEventListener('pointercancel', onPointerUp)
-    canvas.addEventListener('pointerleave', onPointerUp)
+    canvas.addEventListener('pointerleave', onPointerLeave)
 
     return () => {
       cancelled = true
@@ -137,11 +153,11 @@ export function NetworkGlobe({ reduceMotion = false }: Props) {
       canvas.removeEventListener('pointermove', onPointerMove)
       canvas.removeEventListener('pointerup', onPointerUp)
       canvas.removeEventListener('pointercancel', onPointerUp)
-      canvas.removeEventListener('pointerleave', onPointerUp)
+      canvas.removeEventListener('pointerleave', onPointerLeave)
       globe.destroy()
       canvas.style.opacity = '0'
     }
-  }, [width, reduceMotion])
+  }, [width, reduceMotion, onZoomToTurkey])
 
   return (
     <div ref={containerRef} className="globe-container">
@@ -154,13 +170,14 @@ export function NetworkGlobe({ reduceMotion = false }: Props) {
           contain: 'layout paint size',
           opacity: 0,
           transition: 'opacity 1s ease',
-          cursor: 'grab',
+          cursor: 'pointer',
         }}
       />
       <div className="globe-label-turkey">
         <span className="globe-label-dot" aria-hidden />
         <span>TÜRKİYE</span>
       </div>
+      <p className="globe-hint">Türkiye haritası için tıkla · sürükleyerek döndür</p>
     </div>
   )
 }

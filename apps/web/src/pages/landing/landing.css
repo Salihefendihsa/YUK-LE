@@ -1154,9 +1154,9 @@ html.landing-page body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.25em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: #ff6b00;
   margin: 0 0 24px;
@@ -1197,10 +1197,18 @@ html.landing-page body {
 }
 
 .globe-stage {
+  position: relative;
   width: 100%;
   display: flex;
   justify-content: center;
-  margin: 0 0 64px;
+  margin: 0 0 80px;
+}
+
+.stage-content {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .network-metrics-row {
@@ -1215,6 +1223,7 @@ html.landing-page body {
   max-width: 600px;
   aspect-ratio: 1 / 1;
   margin: 0 auto;
+  padding-bottom: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1311,7 +1320,160 @@ html.landing-page body {
   }
 }
 
-/* Live metrics */
+.globe-hint {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  pointer-events: none;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  white-space: nowrap;
+  z-index: 3;
+}
+
+/* Turkey detail map (zoom view) */
+.turkey-detail-map {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  position: relative;
+  padding: 32px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 107, 0, 0.04) 0%,
+    rgba(0, 0, 0, 0) 50%,
+    rgba(99, 102, 241, 0.03) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.turkey-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  aspect-ratio: 1000 / 460;
+}
+
+.turkey-outline-detail {
+  filter: drop-shadow(0 0 24px rgba(255, 107, 0, 0.25));
+}
+
+.turkey-city-pulse {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: turkey-city-pulse-anim 3s ease-out infinite;
+}
+
+@keyframes turkey-city-pulse-anim {
+  from {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+
+.turkey-route {
+  filter: drop-shadow(0 0 4px rgba(255, 107, 0, 0.45));
+  animation: turkey-route-draw 4s ease-in-out infinite;
+}
+
+.turkey-route--static {
+  animation: none;
+  stroke-dashoffset: 0;
+  opacity: 0.45;
+}
+
+@keyframes turkey-route-draw {
+  0%,
+  100% {
+    stroke-dashoffset: 100;
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  55% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  88% {
+    opacity: 0.35;
+  }
+}
+
+.turkey-back-btn {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+  z-index: 10;
+}
+
+.turkey-back-btn:hover {
+  background: rgba(255, 107, 0, 0.1);
+  border-color: rgba(255, 107, 0, 0.3);
+  color: #ffb627;
+}
+
+.turkey-caption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.turkey-caption-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  animation: turkey-caption-pulse 2s ease-in-out infinite;
+}
+
+@keyframes turkey-caption-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
 .live-metrics {
   display: flex;
   flex-direction: column;
@@ -1342,6 +1504,12 @@ html.landing-page body {
   justify-content: space-between;
   gap: 16px;
   min-height: 160px;
+}
+
+.live-metrics--horizontal .metric-card-header-label {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  line-height: 1.35;
 }
 
 .metric-card {
@@ -1384,15 +1552,23 @@ html.landing-page body {
 }
 
 .metric-card-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: rgba(255, 107, 0, 0.1);
-  color: #ff6b00;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 107, 0, 0.12);
+  color: #ffb627;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow:
+    0 0 20px rgba(255, 107, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.metric-card-icon svg {
+  width: 22px;
+  height: 22px;
 }
 
 .metric-card-value {
@@ -1506,6 +1682,17 @@ html.landing-page body {
     animation: none;
   }
 
+  .turkey-city-pulse,
+  .turkey-route,
+  .turkey-caption-dot {
+    animation: none;
+  }
+
+  .turkey-route {
+    stroke-dashoffset: 0;
+    opacity: 0.45;
+  }
+
   .metric-live-dot {
     animation: none;
   }
@@ -1545,6 +1732,29 @@ html.landing-page body {
 
   .metric-card-value {
     font-size: 40px;
+  }
+
+  .turkey-detail-map {
+    padding: 20px;
+  }
+
+  .turkey-back-btn {
+    top: 12px;
+    left: 12px;
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+
+  .globe-hint {
+    font-size: 11px;
+    padding: 6px 12px;
+    white-space: normal;
+    text-align: center;
+    max-width: 92%;
+  }
+
+  .turkey-city-label {
+    font-size: 9px;
   }
 }
 
