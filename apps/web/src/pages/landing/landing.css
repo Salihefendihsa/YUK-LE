@@ -1135,8 +1135,8 @@ html.landing-page body {
 }
 
 .section-network-header {
-  max-width: 700px;
-  margin-bottom: 64px;
+  max-width: 800px;
+  margin-bottom: 48px;
 }
 
 .section-network-eyebrow {
@@ -1183,8 +1183,8 @@ html.landing-page body {
 
 .section-network-grid {
   display: grid;
-  grid-template-columns: 1.5fr 1fr;
-  gap: 48px;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 32px;
   align-items: stretch;
 }
 
@@ -1196,9 +1196,14 @@ html.landing-page body {
 .map-container {
   position: relative;
   width: 100%;
-  aspect-ratio: 2 / 1;
-  background: linear-gradient(135deg, rgba(255, 107, 0, 0.02) 0%, rgba(0, 0, 0, 0) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 107, 0, 0.03) 0%,
+    rgba(0, 0, 0, 0) 50%,
+    rgba(99, 102, 241, 0.02) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   padding: 32px;
   overflow: hidden;
@@ -1209,11 +1214,12 @@ html.landing-page body {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-  background-size: 32px 32px;
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
   pointer-events: none;
   z-index: 0;
+  mask-image: radial-gradient(ellipse at center, black 50%, transparent 90%);
 }
 
 .turkey-map-svg {
@@ -1225,12 +1231,15 @@ html.landing-page body {
 }
 
 .turkey-outline {
-  fill: rgba(255, 255, 255, 0.04);
-  stroke: rgba(255, 255, 255, 0.12);
+  fill: url(#turkeyGradient);
+  stroke: rgba(255, 107, 0, 0.4);
   stroke-width: 1.5;
 }
 
 .route-line {
+  stroke-width: 2;
+  stroke-opacity: 0.85;
+  filter: drop-shadow(0 0 4px rgba(255, 107, 0, 0.5));
   animation: network-route-draw 4s ease-in-out infinite;
 }
 
@@ -1273,15 +1282,20 @@ html.landing-page body {
   pointer-events: none;
 }
 
-.city-pulse-ring {
+.city-pulse {
   transform-origin: center;
   transform-box: fill-box;
   animation: network-city-pulse 2.5s ease-out infinite;
 }
 
-.city-pulse-ring--static {
+.city-pulse--static {
   animation: none;
   opacity: 0;
+}
+
+.city-label {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  pointer-events: none;
 }
 
 @keyframes network-city-pulse {
@@ -1330,18 +1344,22 @@ html.landing-page body {
   flex-direction: column;
   gap: 16px;
   height: 100%;
+  justify-content: space-between;
 }
 
 .metric-card {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 16px;
-  padding: 24px 28px;
+  padding: 20px 24px;
+  flex: 1;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 8px;
   position: relative;
   transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  min-height: 0;
 }
 
 .metric-card:hover {
@@ -1382,7 +1400,7 @@ html.landing-page body {
 
 .metric-card-value {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 48px;
+  font-size: 44px;
   font-weight: 700;
   color: #fff;
   line-height: 1;
@@ -1406,13 +1424,38 @@ html.landing-page body {
 }
 
 .metric-live-dot {
-  width: 8px;
-  height: 8px;
+  position: relative;
+  display: inline-block;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: #10b981;
-  animation: network-live-pulse 2s ease-in-out infinite;
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+  animation: network-live-pulse 1.8s ease-in-out infinite;
+  box-shadow:
+    0 0 12px rgba(16, 185, 129, 0.8),
+    0 0 24px rgba(16, 185, 129, 0.4);
   flex-shrink: 0;
+}
+
+.metric-live-dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid #10b981;
+  animation: network-live-ring 2s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes network-live-ring {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
 }
 
 @keyframes network-live-pulse {
@@ -1467,7 +1510,7 @@ html.landing-page body {
     opacity: 0.4;
   }
 
-  .city-pulse-ring {
+  .city-pulse {
     animation: none;
     opacity: 0;
   }
@@ -1475,11 +1518,25 @@ html.landing-page body {
   .metric-live-dot {
     animation: none;
   }
+
+  .metric-live-dot::after {
+    animation: none;
+    opacity: 0;
+  }
 }
 
 @media (max-width: 968px) {
   .section-network-grid {
     grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .live-metrics {
+    flex-direction: column;
+  }
+
+  .map-container {
+    aspect-ratio: 16 / 10;
   }
 
   .section-network {
