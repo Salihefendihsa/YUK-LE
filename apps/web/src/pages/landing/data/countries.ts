@@ -61,7 +61,7 @@ export const COUNTRIES: CountryConfig[] = [
     shortName: 'Almanya',
     flag: '🇩🇪',
     status: 'coming_soon',
-    hubInfo: 'Avrupa hub merkezi · Yakında',
+    hubInfo: 'Avrupa hub merkezi',
     cities: [
       { name: 'Berlin', lat: 52.52, lng: 13.4, size: 'xl', factories: 23 },
       { name: 'Hamburg', lat: 53.55, lng: 9.99, size: 'lg', factories: 18 },
@@ -74,10 +74,10 @@ export const COUNTRIES: CountryConfig[] = [
     code: 'gb',
     isoNumeric: '826',
     name: 'Birleşik Krallık',
-    shortName: 'UK',
+    shortName: 'Birleşik Krallık',
     flag: '🇬🇧',
     status: 'coming_soon',
-    hubInfo: 'Yakında · UK operasyonu',
+    hubInfo: 'Birleşik Krallık operasyonu',
     cities: [
       { name: 'Londra', lat: 51.51, lng: -0.13, size: 'xl', factories: 19 },
       { name: 'Manchester', lat: 53.48, lng: -2.24, size: 'lg', factories: 11 },
@@ -92,7 +92,7 @@ export const COUNTRIES: CountryConfig[] = [
     shortName: 'İtalya',
     flag: '🇮🇹',
     status: 'coming_soon',
-    hubInfo: 'Akdeniz koridoru · Yakında',
+    hubInfo: 'Akdeniz koridoru',
     cities: [
       { name: 'Roma', lat: 41.9, lng: 12.5, size: 'xl', factories: 14 },
       { name: 'Milano', lat: 45.46, lng: 9.19, size: 'lg', factories: 17 },
@@ -104,10 +104,10 @@ export const COUNTRIES: CountryConfig[] = [
     code: 'us',
     isoNumeric: '840',
     name: 'Amerika Birleşik Devletleri',
-    shortName: 'ABD',
+    shortName: 'Amerika',
     flag: '🇺🇸',
     status: 'coming_soon',
-    hubInfo: 'Amerika operasyonu · Yakında',
+    hubInfo: 'Amerika operasyonu',
     cities: [
       { name: 'New York', lat: 40.71, lng: -74.0, size: 'xl', factories: 31 },
       { name: 'Los Angeles', lat: 34.05, lng: -118.24, size: 'xl', factories: 28 },
@@ -120,10 +120,10 @@ export const COUNTRIES: CountryConfig[] = [
     code: 'ae',
     isoNumeric: '784',
     name: 'Birleşik Arap Emirlikleri',
-    shortName: 'BAE',
+    shortName: 'Arap Emirlikleri',
     flag: '🇦🇪',
     status: 'coming_soon',
-    hubInfo: 'Orta Doğu hub · Yakında',
+    hubInfo: 'Orta Doğu hub',
     cities: [
       { name: 'Dubai', lat: 25.2, lng: 55.27, size: 'xl', factories: 16 },
       { name: 'Abu Dabi', lat: 24.47, lng: 54.37, size: 'lg', factories: 10 },
@@ -137,7 +137,7 @@ export const COUNTRIES: CountryConfig[] = [
     shortName: 'Singapur',
     flag: '🇸🇬',
     status: 'coming_soon',
-    hubInfo: 'Asya-Pasifik geçişi · Yakında',
+    hubInfo: 'Asya-Pasifik geçişi',
     cities: [{ name: 'Singapur', lat: 1.35, lng: 103.82, size: 'xl', factories: 12 }],
   },
   {
@@ -147,7 +147,7 @@ export const COUNTRIES: CountryConfig[] = [
     shortName: 'Japonya',
     flag: '🇯🇵',
     status: 'coming_soon',
-    hubInfo: 'Uzak Doğu pazarı · Yakında',
+    hubInfo: 'Uzak Doğu pazarı',
     cities: [
       { name: 'Tokyo', lat: 35.68, lng: 139.65, size: 'xl', factories: 22 },
       { name: 'Osaka', lat: 34.69, lng: 135.5, size: 'lg', factories: 14 },
@@ -161,7 +161,7 @@ export const COUNTRIES: CountryConfig[] = [
     shortName: 'Avustralya',
     flag: '🇦🇺',
     status: 'coming_soon',
-    hubInfo: 'Okyanusya operasyonu · Yakında',
+    hubInfo: 'Okyanusya operasyonu',
     cities: [
       { name: 'Sidney', lat: -33.87, lng: 151.21, size: 'xl', factories: 11 },
       { name: 'Melbourne', lat: -37.81, lng: 144.96, size: 'lg', factories: 9 },
@@ -175,7 +175,7 @@ export const COUNTRIES: CountryConfig[] = [
     shortName: 'Brezilya',
     flag: '🇧🇷',
     status: 'coming_soon',
-    hubInfo: 'Güney Amerika genişlemesi · Yakında',
+    hubInfo: 'Güney Amerika genişlemesi',
     cities: [
       { name: 'São Paulo', lat: -23.55, lng: -46.63, size: 'xl', factories: 13 },
       { name: 'Rio de Janeiro', lat: -22.91, lng: -43.17, size: 'lg', factories: 10 },

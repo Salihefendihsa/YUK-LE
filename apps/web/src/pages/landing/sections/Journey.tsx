@@ -8,6 +8,8 @@ import { COUNTRIES, getCountry } from '../data/countries'
 
 const ease = [0.22, 1, 0.36, 1] as const
 
+const TURKEY = COUNTRIES.find((c) => c.code === 'tr')
+
 export function JourneySection({ reduceMotion }: { reduceMotion: boolean }) {
   const r = reduceMotion
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
@@ -89,26 +91,38 @@ export function JourneySection({ reduceMotion }: { reduceMotion: boolean }) {
                 →
               </span>
             </div>
+
+            {TURKEY ? (
+              <div className="country-selector-featured">
+                <button
+                  type="button"
+                  className="country-chip country-chip--featured country-chip--active"
+                  onClick={() => setSelectedCountry('tr')}
+                >
+                  <span className="country-chip-flag" aria-hidden>
+                    {TURKEY.flag}
+                  </span>
+                  <span className="country-chip-name">{TURKEY.shortName}</span>
+                  <span className="country-chip-status-active">
+                    <span className="country-chip-dot" aria-hidden />
+                    Aktif
+                  </span>
+                </button>
+              </div>
+            ) : null}
+
             <div className="country-selector-grid">
-              {COUNTRIES.map((c) => (
+              {COUNTRIES.filter((c) => c.code !== 'tr').map((c) => (
                 <button
                   key={c.code}
                   type="button"
-                  className={`country-chip ${c.status === 'active' ? 'country-chip--active' : ''}`}
+                  className="country-chip"
                   onClick={() => setSelectedCountry(c.code)}
                 >
                   <span className="country-chip-flag" aria-hidden>
                     {c.flag}
                   </span>
                   <span className="country-chip-name">{c.shortName}</span>
-                  {c.status === 'active' ? (
-                    <span className="country-chip-status-active">
-                      <span className="country-chip-dot" aria-hidden />
-                      Aktif
-                    </span>
-                  ) : (
-                    <span className="country-chip-status-soon">Yakında</span>
-                  )}
                 </button>
               ))}
             </div>

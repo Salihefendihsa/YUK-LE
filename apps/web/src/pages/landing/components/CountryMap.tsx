@@ -106,18 +106,20 @@ export function CountryMap({ country, onBackToGlobe, reduceMotion = false }: Pro
 
   return (
     <div className="country-map">
-      <button type="button" className="country-back-btn" onClick={onBackToGlobe}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path
-            d="M19 12H5M12 19l-7-7 7-7"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-        Dünyaya Dön
-      </button>
+      <div className="country-map-toolbar">
+        <button type="button" className="country-back-btn" onClick={onBackToGlobe}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path
+              d="M19 12H5M12 19l-7-7 7-7"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          Dünyaya Dön
+        </button>
+      </div>
 
       <div className="country-header">
         <span className="country-flag" aria-hidden>
@@ -127,7 +129,6 @@ export function CountryMap({ country, onBackToGlobe, reduceMotion = false }: Pro
           <h3 className="country-name">{country.name}</h3>
           <p className="country-hub">{country.hubInfo}</p>
         </div>
-        {country.status === 'coming_soon' ? <span className="country-badge-coming">Yakında</span> : null}
       </div>
 
       <svg
@@ -266,8 +267,7 @@ export function CountryMap({ country, onBackToGlobe, reduceMotion = false }: Pro
       <div className="country-caption">
         <span className="country-caption-dot" aria-hidden />
         <span>
-          {country.cities.length} şehir
-          {country.status === 'active' ? ' · Aktif operasyon' : ' · Yakında aktif'}
+          {country.cities.length} şehir · {country.status === 'active' ? 'Aktif operasyon' : 'Yakında aktif'}
         </span>
       </div>
     </div>
