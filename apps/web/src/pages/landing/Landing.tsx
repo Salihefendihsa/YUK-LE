@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import './landing.css'
 import './gsapSetup'
 import { useLenisScroll } from './hooks/useLenisScroll'
-import { LandingLoader } from './components/Loader'
+import { CinematicLoader } from './components/CinematicLoader'
 import { LandingCursor } from './components/Cursor'
 import { LandingNavbar } from './components/Navbar'
 import { HeroSection } from './sections/Hero'
@@ -36,12 +36,32 @@ function useLandingPrefs() {
   return { reduceMotion, light3d }
 }
 
+function readLandingIntroDone() {
+  if (typeof window === 'undefined') return true
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true
+  try {
+    return sessionStorage.getItem('yukle_intro_shown') === 'true'
+  } catch {
+    return false
+  }
+}
+
 export default function Landing() {
-  const [ready, setReady] = useState(false)
+  const [ready, setReady] = useState(readLandingIntroDone)
+  const [heroReveal, setHeroReveal] = useState(false)
   const { reduceMotion, light3d } = useLandingPrefs()
   useLenisScroll()
 
-  const onLoaded = useCallback(() => setReady(true), [])
+  const onRevealHero = useCallback(() => setHeroReveal(true), [])
+
+  const onIntroComplete = useCallback(() => {
+    try {
+      sessionStorage.setItem('yukle_intro_shown', 'true')
+    } catch {
+      /* ignore quota / private mode */
+    }
+    setReady(true)
+  }, [])
 
   useEffect(() => {
     document.documentElement.classList.add('landing-page')
@@ -54,11 +74,19 @@ export default function Landing() {
 
   return (
     <div className={`landing-root ${ready ? 'landing-root--ready' : ''}`}>
-      {!ready && <LandingLoader onDone={onLoaded} />}
+      {!ready && <CinematicLoader onRevealHero={onRevealHero} onComplete={onIntroComplete} />}
       {!reduceMotion && !light3d && <LandingCursor />}
       <LandingNavbar />
       <main>
-        <HeroSection reduceMotion={light3d} />
+        <div
+          className={
+            heroReveal
+              ? 'landing-hero-reveal-wrap landing-hero-reveal-wrap--active'
+              : 'landing-hero-reveal-wrap'
+          }
+        >
+          <HeroSection reduceMotion={light3d} />
+        </div>
         <JourneySection reduceMotion={light3d} />
         <AISection reduceMotion={reduceMotion} />
         <SecuritySection reduceMotion={reduceMotion} />
