@@ -170,7 +170,7 @@ export function NetworkGlobe({ reduceMotion = false }: Props) {
             cursor: 'pointer',
           }}
         />
-        <p className="globe-hint">Ülkeler aşağıdan seçilir · sürükleyerek döndür</p>
+        <p className="globe-hint">Sürükleyerek döndürün</p>
       </div>
     </div>
   )

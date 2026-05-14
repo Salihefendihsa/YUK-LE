@@ -11,36 +11,27 @@ export interface City {
 
 export interface CountryConfig {
   code: string
+  isoNumeric: string
   name: string
-  chipLabel: string
+  shortName: string
   flag: string
-  svgPath: string
-  bounds: {
-    minLng: number
-    maxLng: number
-    minLat: number
-    maxLat: number
-  }
-  viewBox: string
-  cities: City[]
   status: 'active' | 'coming_soon'
   hubInfo: string
+  cities: City[]
   routes?: ReadonlyArray<readonly [string, string]>
 }
 
 export const COUNTRIES: CountryConfig[] = [
   {
     code: 'tr',
+    isoNumeric: '792',
     name: 'Türkiye',
-    chipLabel: 'Türkiye',
+    shortName: 'Türkiye',
     flag: '🇹🇷',
-    svgPath: '/assets/countries/tr.svg',
-    bounds: { minLng: 25.5, maxLng: 45.0, minLat: 35.5, maxLat: 42.5 },
-    viewBox: '0 0 980 470',
     status: 'active',
     hubInfo: 'Ana operasyon merkezi · 81 ilde aktif',
     cities: [
-      { name: 'İstanbul', lat: 41.0, lng: 28.9, size: 'xl', factories: 487 },
+      { name: 'İstanbul', lat: 41.0, lng: 28.97, size: 'xl', factories: 487 },
       { name: 'Ankara', lat: 39.93, lng: 32.86, size: 'xl', factories: 312 },
       { name: 'İzmir', lat: 38.42, lng: 27.13, size: 'lg', factories: 234 },
       { name: 'Adana', lat: 37.0, lng: 35.32, size: 'lg', factories: 156 },
@@ -60,16 +51,15 @@ export const COUNTRIES: CountryConfig[] = [
       ['İstanbul', 'İzmir'],
       ['Ankara', 'Adana'],
       ['Ankara', 'Elazığ'],
+      ['Gaziantep', 'Elazığ'],
     ],
   },
   {
     code: 'de',
+    isoNumeric: '276',
     name: 'Almanya',
-    chipLabel: 'Almanya',
+    shortName: 'Almanya',
     flag: '🇩🇪',
-    svgPath: '/assets/countries/de.svg',
-    bounds: { minLng: 5.5, maxLng: 15.5, minLat: 47.0, maxLat: 55.5 },
-    viewBox: '0 0 1000 1200',
     status: 'coming_soon',
     hubInfo: 'Avrupa hub merkezi · Yakında',
     cities: [
@@ -82,14 +72,12 @@ export const COUNTRIES: CountryConfig[] = [
   },
   {
     code: 'gb',
+    isoNumeric: '826',
     name: 'Birleşik Krallık',
-    chipLabel: 'UK',
+    shortName: 'UK',
     flag: '🇬🇧',
-    svgPath: '/assets/countries/gb.svg',
-    bounds: { minLng: -8.5, maxLng: 2.0, minLat: 49.5, maxLat: 59.0 },
-    viewBox: '0 0 800 1100',
     status: 'coming_soon',
-    hubInfo: 'Yakında · Birleşik Krallık operasyonu',
+    hubInfo: 'Yakında · UK operasyonu',
     cities: [
       { name: 'Londra', lat: 51.51, lng: -0.13, size: 'xl', factories: 19 },
       { name: 'Manchester', lat: 53.48, lng: -2.24, size: 'lg', factories: 11 },
@@ -99,12 +87,10 @@ export const COUNTRIES: CountryConfig[] = [
   },
   {
     code: 'it',
+    isoNumeric: '380',
     name: 'İtalya',
-    chipLabel: 'İtalya',
+    shortName: 'İtalya',
     flag: '🇮🇹',
-    svgPath: '/assets/countries/it.svg',
-    bounds: { minLng: 6.5, maxLng: 18.5, minLat: 36.5, maxLat: 47.0 },
-    viewBox: '0 0 1000 1100',
     status: 'coming_soon',
     hubInfo: 'Akdeniz koridoru · Yakında',
     cities: [
@@ -116,12 +102,10 @@ export const COUNTRIES: CountryConfig[] = [
   },
   {
     code: 'us',
+    isoNumeric: '840',
     name: 'Amerika Birleşik Devletleri',
-    chipLabel: 'ABD',
+    shortName: 'ABD',
     flag: '🇺🇸',
-    svgPath: '/assets/countries/us.svg',
-    bounds: { minLng: -125, maxLng: -66, minLat: 24.5, maxLat: 49.5 },
-    viewBox: '0 0 1280 800',
     status: 'coming_soon',
     hubInfo: 'Amerika operasyonu · Yakında',
     cities: [
@@ -134,12 +118,10 @@ export const COUNTRIES: CountryConfig[] = [
   },
   {
     code: 'ae',
+    isoNumeric: '784',
     name: 'Birleşik Arap Emirlikleri',
-    chipLabel: 'BAE',
+    shortName: 'BAE',
     flag: '🇦🇪',
-    svgPath: '/assets/countries/ae.svg',
-    bounds: { minLng: 51.5, maxLng: 56.5, minLat: 22.5, maxLat: 26.5 },
-    viewBox: '0 0 1000 700',
     status: 'coming_soon',
     hubInfo: 'Orta Doğu hub · Yakında',
     cities: [
@@ -150,24 +132,20 @@ export const COUNTRIES: CountryConfig[] = [
   },
   {
     code: 'sg',
+    isoNumeric: '702',
     name: 'Singapur',
-    chipLabel: 'Singapur',
+    shortName: 'Singapur',
     flag: '🇸🇬',
-    svgPath: '/assets/countries/sg.svg',
-    bounds: { minLng: 103.6, maxLng: 104.0, minLat: 1.2, maxLat: 1.5 },
-    viewBox: '0 0 1000 600',
     status: 'coming_soon',
-    hubInfo: 'Asya-Pasifik geçiş noktası · Yakında',
+    hubInfo: 'Asya-Pasifik geçişi · Yakında',
     cities: [{ name: 'Singapur', lat: 1.35, lng: 103.82, size: 'xl', factories: 12 }],
   },
   {
     code: 'jp',
+    isoNumeric: '392',
     name: 'Japonya',
-    chipLabel: 'Japonya',
+    shortName: 'Japonya',
     flag: '🇯🇵',
-    svgPath: '/assets/countries/jp.svg',
-    bounds: { minLng: 129, maxLng: 146, minLat: 30, maxLat: 46 },
-    viewBox: '0 0 800 1200',
     status: 'coming_soon',
     hubInfo: 'Uzak Doğu pazarı · Yakında',
     cities: [
@@ -178,12 +156,10 @@ export const COUNTRIES: CountryConfig[] = [
   },
   {
     code: 'au',
+    isoNumeric: '036',
     name: 'Avustralya',
-    chipLabel: 'Avustralya',
+    shortName: 'Avustralya',
     flag: '🇦🇺',
-    svgPath: '/assets/countries/au.svg',
-    bounds: { minLng: 112, maxLng: 155, minLat: -44, maxLat: -10 },
-    viewBox: '0 0 1200 1000',
     status: 'coming_soon',
     hubInfo: 'Okyanusya operasyonu · Yakında',
     cities: [
@@ -194,12 +170,10 @@ export const COUNTRIES: CountryConfig[] = [
   },
   {
     code: 'br',
+    isoNumeric: '076',
     name: 'Brezilya',
-    chipLabel: 'Brezilya',
+    shortName: 'Brezilya',
     flag: '🇧🇷',
-    svgPath: '/assets/countries/br.svg',
-    bounds: { minLng: -74, maxLng: -34, minLat: -34, maxLat: 5.5 },
-    viewBox: '0 0 1100 1100',
     status: 'coming_soon',
     hubInfo: 'Güney Amerika genişlemesi · Yakında',
     cities: [

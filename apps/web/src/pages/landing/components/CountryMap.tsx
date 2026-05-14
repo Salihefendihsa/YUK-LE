@@ -1,75 +1,59 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import { geoEqualEarth, geoMercator, geoPath } from 'd3-geo'
+import { feature } from 'topojson-client'
+import type { Feature, FeatureCollection, Polygon } from 'geojson'
+import worldTopology from 'world-atlas/countries-110m.json'
 import type { City, CitySize, CountryConfig } from '../data/countries'
 
-type Props = {
-  country: CountryConfig
-  onBackToGlobe: () => void
-  reduceMotion?: boolean
+const VIEWBOX_WIDTH = 1000
+const VIEWBOX_HEIGHT = 600
+const MAP_PAD = 40
+
+/** Singapore is omitted from 110m countries; use a tight bbox so d3 fitExtent still works. */
+const SG_FALLBACK: Feature<Polygon> = {
+  type: 'Feature',
+  id: '702',
+  properties: { name: 'Singapore' },
+  geometry: {
+    type: 'Polygon',
+    coordinates: [
+      [
+        [103.59, 1.16],
+        [104.12, 1.16],
+        [104.12, 1.48],
+        [103.59, 1.48],
+        [103.59, 1.16],
+      ],
+    ],
+  },
 }
 
-function parseViewBoxDims(viewBox: string): { w: number; h: number } {
-  const parts = viewBox.trim().split(/\s+/).map(Number)
-  const w = parts[2]
-  const h = parts[3]
-  return {
-    w: Number.isFinite(w) && w > 0 ? w : 980,
-    h: Number.isFinite(h) && h > 0 ? h : 470,
-  }
+const worldCountries = feature(
+  worldTopology as never,
+  (worldTopology as { objects: { countries: unknown } }).objects.countries as never,
+) as unknown as FeatureCollection
+
+function resolveCountryFeature(country: CountryConfig): Feature | undefined {
+  const hit = worldCountries.features.find((f) => f.id != null && String(f.id) === country.isoNumeric)
+  if (hit) return hit
+  if (country.code === 'sg') return SG_FALLBACK
+  return undefined
 }
 
-function parseRootViewBox(svgText: string): string | null {
-  const doc = new DOMParser().parseFromString(svgText, 'image/svg+xml')
-  const root = doc.documentElement
-  if (!root || root.tagName.toLowerCase() !== 'svg') return null
-  const vb = root.getAttribute('viewBox')?.trim()
-  if (vb) return vb
-  const wAttr = root.getAttribute('width')
-  const hAttr = root.getAttribute('height')
-  if (wAttr && hAttr) {
-    const w = parseFloat(wAttr.replace(/px$/i, ''))
-    const h = parseFloat(hAttr.replace(/px$/i, ''))
-    if (Number.isFinite(w) && Number.isFinite(h)) return `0 0 ${w} ${h}`
-  }
-  return null
-}
-
-function extractMainPathD(svgText: string): string | null {
-  const doc = new DOMParser().parseFromString(svgText, 'image/svg+xml')
-  const paths = [...doc.querySelectorAll('path[d]')]
-  let best = ''
-  for (const p of paths) {
-    const d = p.getAttribute('d')?.trim() ?? ''
-    if (d.length > best.length) best = d
-  }
-  return best.length > 30 ? best : null
-}
-
-function isBadSvgPayload(text: string): boolean {
-  const t = text.trimStart()
-  return t.startsWith('<!') || !t.includes('<svg') || t.includes('Wikimedia Error') || t.toLowerCase().includes('<html')
-}
-
-function projectCity(
-  city: City,
-  bounds: CountryConfig['bounds'],
-  vbW: number,
-  vbH: number,
-): { x: number; y: number } {
-  const x = ((city.lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)) * vbW
-  const y = ((bounds.maxLat - city.lat) / (bounds.maxLat - bounds.minLat)) * vbH
-  return { x, y }
+function useEqualEarth(code: string): boolean {
+  return code === 'us' || code === 'au' || code === 'br' || code === 'sg'
 }
 
 function getSize(size: CitySize): number {
   switch (size) {
     case 'xl':
-      return 8
+      return 7
     case 'lg':
-      return 6
+      return 5.5
     case 'md':
-      return 5
+      return 4.5
     default:
-      return 4
+      return 3.5
   }
 }
 
@@ -77,60 +61,47 @@ function showCityLabel(size: CitySize): boolean {
   return size === 'xl' || size === 'lg' || size === 'md'
 }
 
+type Props = {
+  country: CountryConfig
+  onBackToGlobe: () => void
+  reduceMotion?: boolean
+}
+
 export function CountryMap({ country, onBackToGlobe, reduceMotion = false }: Props) {
   const [hoveredCity, setHoveredCity] = useState<string | null>(null)
-  const [outlinePath, setOutlinePath] = useState<string | null>(null)
-  const [usePlaceholder, setUsePlaceholder] = useState(false)
-  const [effectiveViewBox, setEffectiveViewBox] = useState(country.viewBox)
 
-  useEffect(() => {
-    const ac = new AbortController()
-    let cancelled = false
-
-    setOutlinePath(null)
-    setUsePlaceholder(false)
-    setEffectiveViewBox(country.viewBox)
-
-    async function load() {
-      try {
-        const res = await fetch(country.svgPath, { signal: ac.signal })
-        const text = await res.text()
-        if (cancelled) return
-        if (!res.ok || isBadSvgPayload(text)) {
-          setUsePlaceholder(true)
-          return
-        }
-        const d = extractMainPathD(text)
-        const rootVb = parseRootViewBox(text)
-        if (rootVb) setEffectiveViewBox(rootVb)
-        if (d) {
-          setOutlinePath(d)
-          setUsePlaceholder(false)
-        } else {
-          setUsePlaceholder(true)
-        }
-      } catch {
-        if (!cancelled) setUsePlaceholder(true)
-      }
+  const { countryPath, cityPositions } = useMemo(() => {
+    const countryFeature = resolveCountryFeature(country)
+    if (!countryFeature?.geometry) {
+      return { countryPath: null as string | null, cityPositions: [] as Array<City & { x: number; y: number }> }
     }
 
-    void load()
-    return () => {
-      cancelled = true
-      ac.abort()
+    const base = useEqualEarth(country.code) ? geoEqualEarth() : geoMercator()
+    const projection = base.fitExtent(
+      [
+        [MAP_PAD, MAP_PAD],
+        [VIEWBOX_WIDTH - MAP_PAD, VIEWBOX_HEIGHT - MAP_PAD],
+      ],
+      countryFeature,
+    )
+
+    const pathGen = geoPath(projection)
+    const pathString = pathGen(countryFeature)
+    if (!pathString) {
+      return { countryPath: null, cityPositions: [] }
     }
-  }, [country.svgPath, country.viewBox, country.code])
 
-  const { w: vbW, h: vbH } = useMemo(() => parseViewBoxDims(effectiveViewBox), [effectiveViewBox])
+    const positions = country.cities.map((city) => {
+      const projected = projection([city.lng, city.lat])
+      const x = projected?.[0] ?? 0
+      const y = projected?.[1] ?? 0
+      return { ...city, x, y }
+    })
 
-  const cities = useMemo(() => {
-    return country.cities.map((c) => ({
-      ...c,
-      ...projectCity(c, country.bounds, vbW, vbH),
-    }))
-  }, [country.bounds, country.cities, vbW, vbH])
+    return { countryPath: pathString, cityPositions: positions }
+  }, [country])
 
-  const cityByName = useMemo(() => Object.fromEntries(cities.map((c) => [c.name, c])), [cities])
+  const cityByName = useMemo(() => Object.fromEntries(cityPositions.map((c) => [c.name, c])), [cityPositions])
   const code = country.code
 
   return (
@@ -159,10 +130,16 @@ export function CountryMap({ country, onBackToGlobe, reduceMotion = false }: Pro
         {country.status === 'coming_soon' ? <span className="country-badge-coming">Yakında</span> : null}
       </div>
 
-      <svg viewBox={effectiveViewBox} className="country-svg" preserveAspectRatio="xMidYMid meet" role="img" aria-label={country.name}>
+      <svg
+        viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
+        className="country-svg"
+        preserveAspectRatio="xMidYMid meet"
+        role="img"
+        aria-label={country.name}
+      >
         <defs>
           <linearGradient id={`grad-${code}`} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="rgba(255, 107, 0, 0.12)" />
+            <stop offset="0%" stopColor="rgba(255, 107, 0, 0.14)" />
             <stop offset="100%" stopColor="rgba(255, 107, 0, 0.04)" />
           </linearGradient>
           <linearGradient id={`route-${code}`} x1="0%" y1="0%" x2="100%" y2="0%">
@@ -171,74 +148,23 @@ export function CountryMap({ country, onBackToGlobe, reduceMotion = false }: Pro
             <stop offset="100%" stopColor="#ff6b00" stopOpacity="0" />
           </linearGradient>
           <radialGradient id={`glow-${code}`} cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#ff6b00" stopOpacity="0.55" />
+            <stop offset="0%" stopColor="#ff6b00" stopOpacity="0.5" />
             <stop offset="100%" stopColor="#ff6b00" stopOpacity="0" />
           </radialGradient>
         </defs>
 
-        <g className="country-grid" opacity="0.35" aria-hidden>
-          {Array.from({ length: 21 }, (_, i) => (
-            <line
-              key={`v${i}`}
-              x1={(i * vbW) / 20}
-              y1="0"
-              x2={(i * vbW) / 20}
-              y2={vbH}
-              stroke="rgba(255,255,255,0.04)"
-              strokeWidth="1"
-            />
-          ))}
-          {Array.from({ length: 10 }, (_, i) => (
-            <line
-              key={`h${i}`}
-              x1="0"
-              y1={(i * vbH) / 9}
-              x2={vbW}
-              y2={(i * vbH) / 9}
-              stroke="rgba(255,255,255,0.04)"
-              strokeWidth="1"
-            />
-          ))}
-        </g>
-
-        {usePlaceholder ? (
-          <g aria-hidden>
-            <rect
-              x={vbW * 0.08}
-              y={vbH * 0.12}
-              width={vbW * 0.84}
-              height={vbH * 0.76}
-              rx={Math.min(vbW, vbH) * 0.04}
-              fill="rgba(255,255,255,0.02)"
-              stroke="rgba(255,107,0,0.25)"
-              strokeWidth="1.5"
-              strokeDasharray="8 6"
-            />
-            <text
-              x={vbW / 2}
-              y={vbH / 2 - 8}
-              textAnchor="middle"
-              fill="rgba(255,255,255,0.35)"
-              fontSize="13"
-              fontWeight="600"
-            >
-              Harita yüklenemedi
-            </text>
-            <text x={vbW / 2} y={vbH / 2 + 14} textAnchor="middle" fill="rgba(255,182,39,0.85)" fontSize="12" fontWeight="700">
-              Yakında
-            </text>
-          </g>
-        ) : outlinePath ? (
+        {countryPath ? (
           <path
-            d={outlinePath}
+            d={countryPath}
             fill={`url(#grad-${code})`}
-            stroke="rgba(255, 107, 0, 0.5)"
+            stroke="rgba(255, 107, 0, 0.55)"
             strokeWidth="1.5"
+            strokeLinejoin="round"
             className="country-outline-path"
           />
         ) : (
-          <text x={vbW / 2} y={vbH / 2} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize="14">
-            Harita yükleniyor...
+          <text x={VIEWBOX_WIDTH / 2} y={VIEWBOX_HEIGHT / 2} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize="14">
+            Harita bulunamadı
           </text>
         )}
 
@@ -247,7 +173,7 @@ export function CountryMap({ country, onBackToGlobe, reduceMotion = false }: Pro
           const to = cityByName[route[1]]
           if (!from || !to) return null
           const midX = (from.x + to.x) / 2
-          const midY = (from.y + to.y) / 2 - 30
+          const midY = (from.y + to.y) / 2 - 40
           return (
             <path
               key={`${route[0]}-${route[1]}-${i}`}
@@ -265,7 +191,7 @@ export function CountryMap({ country, onBackToGlobe, reduceMotion = false }: Pro
           )
         })}
 
-        {cities.map((city, i) => {
+        {cityPositions.map((city, i) => {
           const r = getSize(city.size)
           const fill = city.highlighted ? '#ffb627' : '#ff6b00'
           return (
@@ -275,7 +201,7 @@ export function CountryMap({ country, onBackToGlobe, reduceMotion = false }: Pro
               onMouseLeave={() => setHoveredCity(null)}
               style={{ cursor: 'pointer' }}
             >
-              <circle cx={city.x} cy={city.y} r="20" fill={`url(#glow-${code})`} opacity={0.45} />
+              <circle cx={city.x} cy={city.y} r="18" fill={`url(#glow-${code})`} opacity={0.45} />
               {!reduceMotion ? (
                 <circle
                   cx={city.x}
@@ -301,7 +227,7 @@ export function CountryMap({ country, onBackToGlobe, reduceMotion = false }: Pro
                 <text
                   x={city.x + r + 6}
                   y={city.y + 4}
-                  fill="rgba(255,255,255,0.85)"
+                  fill="rgba(255,255,255,0.9)"
                   fontSize="11"
                   fontWeight="600"
                   className="country-city-label"
@@ -311,7 +237,7 @@ export function CountryMap({ country, onBackToGlobe, reduceMotion = false }: Pro
                 </text>
               ) : null}
               {hoveredCity === city.name ? (
-                <g>
+                <g style={{ pointerEvents: 'none' }}>
                   <rect
                     x={city.x + 12}
                     y={city.y - 36}

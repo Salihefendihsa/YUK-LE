@@ -84,11 +84,10 @@ export function JourneySection({ reduceMotion }: { reduceMotion: boolean }) {
             transition={{ duration: 0.6, ease, delay: r ? 0 : 0.3 }}
           >
             <div className="country-selector-title">
-              <span className="country-selector-hub">11 ÜLKE</span>
+              <span className="country-selector-label">Ülke seçin</span>
               <span className="country-selector-arrow" aria-hidden>
                 →
               </span>
-              <span>Aktif Operasyon Ağımız</span>
             </div>
             <div className="country-selector-grid">
               {COUNTRIES.map((c) => (
@@ -101,11 +100,14 @@ export function JourneySection({ reduceMotion }: { reduceMotion: boolean }) {
                   <span className="country-chip-flag" aria-hidden>
                     {c.flag}
                   </span>
-                  <span className="country-chip-name">{c.chipLabel}</span>
+                  <span className="country-chip-name">{c.shortName}</span>
                   {c.status === 'active' ? (
-                    <span className="country-chip-dot country-chip-dot--active" aria-hidden />
+                    <span className="country-chip-status-active">
+                      <span className="country-chip-dot" aria-hidden />
+                      Aktif
+                    </span>
                   ) : (
-                    <span className="country-chip-soon">Yakında</span>
+                    <span className="country-chip-status-soon">Yakında</span>
                   )}
                 </button>
               ))}
