@@ -1,15 +1,24 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useId } from 'react'
 
 type MinimalLoaderProps = {
   onComplete: () => void
-  minDuration?: number
+  duration?: number
 }
 
-export function MinimalLoader({ onComplete, minDuration = 800 }: MinimalLoaderProps) {
+type LoaderPhase = 'loading' | 'reveal' | 'exiting'
+
+const RADIUS = 70
+
+export function MinimalLoader({ onComplete, duration = 5000 }: MinimalLoaderProps) {
+  const uid = useId().replace(/:/g, '')
+  const gradId = `circleGrad-${uid}`
+  const glowId = `circleGlow-${uid}`
+
   const [progress, setProgress] = useState(0)
-  const [isExiting, setIsExiting] = useState(false)
-  const rafRef = useRef<number>(0)
+  const [phase, setPhase] = useState<LoaderPhase>('loading')
+  const rafRef = useRef(0)
   const exitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const phaseRef = useRef<LoaderPhase>('loading')
 
   useEffect(() => {
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -18,20 +27,30 @@ export function MinimalLoader({ onComplete, minDuration = 800 }: MinimalLoaderPr
       return () => window.clearTimeout(t)
     }
 
+    phaseRef.current = 'loading'
+
     const startTime = Date.now()
+    const loadDuration = duration - 500
 
     const tick = () => {
       const elapsed = Date.now() - startTime
-      const t = Math.min(elapsed / minDuration, 1)
-      const eased = 1 - Math.pow(1 - t, 3)
-      setProgress(eased * 100)
 
-      if (elapsed >= minDuration) {
-        setProgress(100)
-        setIsExiting(true)
-        exitTimerRef.current = window.setTimeout(() => onComplete(), 400)
-      } else {
+      if (elapsed < loadDuration) {
+        const t = elapsed / loadDuration
+        const eased = 1 - Math.pow(1 - t, 3)
+        setProgress(eased * 100)
         rafRef.current = requestAnimationFrame(tick)
+      } else if (elapsed < duration) {
+        setProgress(100)
+        if (phaseRef.current === 'loading') {
+          phaseRef.current = 'reveal'
+          setPhase('reveal')
+        }
+        rafRef.current = requestAnimationFrame(tick)
+      } else if (phaseRef.current !== 'exiting') {
+        phaseRef.current = 'exiting'
+        setPhase('exiting')
+        exitTimerRef.current = window.setTimeout(() => onComplete(), 450)
       }
     }
 
@@ -41,25 +60,87 @@ export function MinimalLoader({ onComplete, minDuration = 800 }: MinimalLoaderPr
       cancelAnimationFrame(rafRef.current)
       if (exitTimerRef.current) window.clearTimeout(exitTimerRef.current)
     }
-  }, [minDuration, onComplete])
+  }, [duration, onComplete])
 
-  const pct = Math.round(progress)
+  const circumference = 2 * Math.PI * RADIUS
+  const offset = circumference - (progress / 100) * circumference
+
+  const arcAngle = (-Math.PI / 2) + (Math.min(progress, 100) / 100) * Math.PI * 2
+  const dotCx = 90 + RADIUS * Math.cos(arcAngle)
+  const dotCy = 90 + RADIUS * Math.sin(arcAngle)
+
+  const pct = Math.floor(progress)
 
   return (
-    <div className={`minimal-loader ${isExiting ? 'minimal-loader--exiting' : ''}`}>
-      <div className="minimal-loader-overlay" aria-hidden />
-      <div className="minimal-loader-content">
-        <div className="minimal-loader-logo">
-          <span className="minimal-loader-dot" aria-hidden />
-          <span className="minimal-loader-wordmark">YÜK-LE</span>
+    <div className={`circle-loader circle-loader--${phase}`}>
+      <div className="circle-loader-bg" aria-hidden />
+      <div className="circle-loader-vignette" aria-hidden />
+      <div className="circle-loader-content">
+        <div className="circle-loader-spinner">
+          <svg
+            className={phase === 'loading' ? 'circle-loader-spinner-svg' : undefined}
+            width="180"
+            height="180"
+            viewBox="0 0 180 180"
+            aria-hidden
+          >
+            <defs>
+              <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FF6B00" />
+                <stop offset="50%" stopColor="#FFB627" />
+                <stop offset="100%" stopColor="#FF6B00" />
+              </linearGradient>
+              <filter id={glowId} x="-40%" y="-40%" width="180%" height="180%">
+                <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                <feMerge>
+                  <feMergeNode in="coloredBlur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+            <circle
+              cx="90"
+              cy="90"
+              r={RADIUS}
+              fill="none"
+              stroke="rgba(255, 255, 255, 0.06)"
+              strokeWidth="2"
+            />
+            <circle
+              cx="90"
+              cy="90"
+              r={RADIUS}
+              fill="none"
+              stroke={`url(#${gradId})`}
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={offset}
+              transform="rotate(-90 90 90)"
+              filter={`url(#${glowId})`}
+              className="circle-loader-arc"
+            />
+            {progress > 0 && progress < 100 ? (
+              <circle
+                cx={dotCx}
+                cy={dotCy}
+                r="4"
+                fill="#FFB627"
+                style={{ filter: 'drop-shadow(0 0 6px #FF6B00)' }}
+              />
+            ) : null}
+          </svg>
+          <div className="circle-loader-wordmark">
+            <span className="circle-loader-dot" aria-hidden />
+            <span className="circle-loader-text">YÜK-LE</span>
+          </div>
         </div>
-        <div className="minimal-loader-bar">
-          <div className="minimal-loader-bar-fill" style={{ width: `${progress}%` }} />
-          <div className="minimal-loader-bar-shimmer" aria-hidden />
-        </div>
-        <div className="minimal-loader-status">
-          Yükleniyor<span aria-hidden> · </span>
-          <span className="minimal-loader-status-pct">{pct}%</span>
+        <div className="circle-loader-status">
+          <span>YUKLENIYOR</span>
+          <span className="circle-loader-status-sep" aria-hidden>
+            ·
+          </span>
+          <span className="circle-loader-status-pct">%{pct}</span>
         </div>
       </div>
     </div>

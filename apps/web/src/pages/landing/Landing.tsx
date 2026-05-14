@@ -36,27 +36,12 @@ function useLandingPrefs() {
   return { reduceMotion, light3d }
 }
 
-function readLandingIntroDone() {
-  if (typeof window === 'undefined') return true
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true
-  try {
-    return sessionStorage.getItem('yukle_intro_shown') === 'true'
-  } catch {
-    return false
-  }
-}
-
 export default function Landing() {
-  const [ready, setReady] = useState(readLandingIntroDone)
+  const [ready, setReady] = useState(false)
   const { reduceMotion, light3d } = useLandingPrefs()
   useLenisScroll()
 
   const onIntroComplete = useCallback(() => {
-    try {
-      sessionStorage.setItem('yukle_intro_shown', 'true')
-    } catch {
-      /* ignore quota / private mode */
-    }
     setReady(true)
   }, [])
 
@@ -71,21 +56,26 @@ export default function Landing() {
 
   return (
     <div className={`landing-root ${ready ? 'landing-root--ready' : ''}`}>
-      {!ready && <MinimalLoader onComplete={onIntroComplete} minDuration={800} />}
-      {!reduceMotion && !light3d && <LandingCursor />}
-      <LandingNavbar />
-      <main>
-        <HeroSection reduceMotion={light3d} />
-        <JourneySection reduceMotion={light3d} />
-        <AISection reduceMotion={reduceMotion} />
-        <SecuritySection reduceMotion={reduceMotion} />
-        <StatsSection reduceMotion={reduceMotion} />
-        <MobileDemoSection reduceMotion={light3d} />
-        <TestimonialsSection />
-        <PricingSection />
-        <CTASection />
-      </main>
-      <LandingFooter />
+      {!ready && <MinimalLoader onComplete={onIntroComplete} duration={5000} />}
+      <div
+        className="landing-root-content"
+        style={{ visibility: ready ? 'visible' : 'hidden' }}
+      >
+        {!reduceMotion && !light3d && <LandingCursor />}
+        <LandingNavbar />
+        <main>
+          <HeroSection reduceMotion={light3d} />
+          <JourneySection reduceMotion={light3d} />
+          <AISection reduceMotion={reduceMotion} />
+          <SecuritySection reduceMotion={reduceMotion} />
+          <StatsSection reduceMotion={reduceMotion} />
+          <MobileDemoSection reduceMotion={light3d} />
+          <TestimonialsSection />
+          <PricingSection />
+          <CTASection />
+        </main>
+        <LandingFooter />
+      </div>
     </div>
   )
 }
