@@ -2,11 +2,15 @@ import { Link } from 'react-router-dom'
 import { MARKETING_DOCS, type MarketingDocId } from './marketingContent'
 import './marketing.css'
 
+const CTA_REGISTER_IDS = new Set<MarketingDocId>(['belge-tanima', 'adil-fiyat', 'akilli-eslestirme', 'features', 'pricing'])
+
 type Props = { id: MarketingDocId }
 
 export default function MarketingDocumentPage({ id }: Props) {
   const doc = MARKETING_DOCS[id]
   if (!doc) return null
+
+  const showRegisterCta = CTA_REGISTER_IDS.has(id)
 
   return (
     <div className="marketing-page">
@@ -15,9 +19,14 @@ export default function MarketingDocumentPage({ id }: Props) {
         <Link to="/" className="marketing-page__logo">
           🚛 <span>YÜK-LE</span>
         </Link>
-        <Link to="/login" className="marketing-page__link">
-          Giriş
-        </Link>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <Link to="/login" className="marketing-page__link">
+            Giriş
+          </Link>
+          <Link to="/register" className="marketing-page__link">
+            Kayıt Ol
+          </Link>
+        </div>
       </header>
       <article className="marketing-page__article glass-card">
         <p className="marketing-page__eyebrow">Kurumsal</p>
@@ -33,6 +42,13 @@ export default function MarketingDocumentPage({ id }: Props) {
             </section>
           ))}
         </div>
+        {showRegisterCta ? (
+          <p style={{ marginTop: '1.5rem' }}>
+            <Link to="/register" className="marketing-page__link">
+              {id === 'adil-fiyat' ? 'Hemen Başla' : id === 'akilli-eslestirme' ? 'Hemen Dene' : 'Şimdi Dene'}
+            </Link>
+          </p>
+        ) : null}
         <p className="marketing-page__footer">
           <Link to="/">← Ana sayfa</Link>
         </p>

@@ -88,7 +88,10 @@ export default function ForgotPasswordPage() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div className="login-page" style={{ flex: 1 }}>
+      <div className="login-page" style={{ flex: 1, position: 'relative' }}>
+        <Link to="/" className="back-to-home">
+          ← Ana Sayfa
+        </Link>
         <div className="login-right" style={{ width: '100%' }}>
           <div className="login-form-wrap">
             <h2 className="login-title">Şifremi Unuttum</h2>

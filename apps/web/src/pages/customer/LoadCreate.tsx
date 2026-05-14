@@ -277,7 +277,7 @@ export default function CustomerLoadCreatePage() {
                     className="form-input"
                     value={savedAddressName}
                     onChange={(e) => setSavedAddressName(e.target.value)}
-                    placeholder="Örn: Fabrika Depo 1"
+                    placeholder="Örn: Merkez depo 1"
                   />
                 </label>
               ) : null}

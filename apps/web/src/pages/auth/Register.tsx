@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { register } from '../../api/auth'
 import { digitsOnly, formatIBAN, formatPhone, validateEmail, validateIBAN, validatePassword, validatePhone, validateTC, validateTaxNumber } from '../../utils/validators'
 import './Register.css'
+import './Login.css'
 
 type Role = 'Customer' | 'Driver'
 
@@ -151,14 +152,19 @@ export default function Register() {
 
   return (
     <div className="register-page">
+      <Link to="/" className="back-to-home">
+        ← Ana Sayfa
+      </Link>
       <div className="register-box glass-card">
         <div className="register-logo">
-          <div className="logo-icon-sm">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M3 12L12 4L21 12V20H15V15H9V20H3V12Z" fill="white" />
-            </svg>
-          </div>
-          <span>YÜK-LE</span>
+          <Link to="/" className="login-logo-link">
+            <div className="logo-icon-sm">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M3 12L12 4L21 12V20H15V15H9V20H3V12Z" fill="white" />
+              </svg>
+            </div>
+            <span>YÜK-LE</span>
+          </Link>
         </div>
 
         <h1 className="register-title">Hesap Oluştur</h1>
@@ -170,8 +176,8 @@ export default function Register() {
             <p className="role-question">Nasıl kullanacaksınız?</p>
             <div className="role-cards">
               <button className="role-card" onClick={() => setRole('Customer')}>
-                <span className="role-icon">🏭</span>
-                <strong>Fabrika / Yük Sahibi</strong>
+                <span className="role-icon">🏢</span>
+                <strong>Müşteri / Yük Sahibi</strong>
                 <span>Yük ilanı oluştur, şoför bul</span>
               </button>
               <button className="role-card" onClick={() => setRole('Driver')}>
@@ -187,7 +193,7 @@ export default function Register() {
         {role && (
           <>
             <div className="role-selected-bar">
-              <span>{role === 'Customer' ? '🏭 Fabrika Hesabı' : '🚛 Şoför Hesabı'}</span>
+              <span>{role === 'Customer' ? '🏢 Müşteri Hesabı' : '🚛 Şoför Hesabı'}</span>
               <button onClick={() => setRole(null)} className="change-role-btn">Değiştir</button>
             </div>
             <div className="register-stepper" aria-label="Kayıt adımları">
@@ -355,7 +361,7 @@ export default function Register() {
         )}
 
         <p className="register-login-link">
-          Zaten hesabınız var mı? <Link to="/login">Giriş Yapın</Link>
+          Zaten hesabınız var mı? <Link to="/login">Giriş Yap</Link>
         </p>
       </div>
     </div>

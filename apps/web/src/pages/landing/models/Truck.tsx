@@ -1,48 +1,139 @@
-import { useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Group } from 'three'
+import { CanvasTexture, Group, SRGBColorSpace, type Mesh } from 'three'
 
 import type { ThreeElements } from '@react-three/fiber'
 
-type GroupProps = ThreeElements['group'] & { idleMotion?: boolean }
+type GroupProps = ThreeElements['group'] & {
+  idleMotion?: boolean
+  /** Journey sahnesi: tekerlek dönüşü, turuncu kabin, dorse markası */
+  journey?: boolean
+}
 
-/** Procedural semi-truck (merged boxes). Drop `public/models/truck.glb` and swap to useGLTF if desired. */
-export function Truck({ idleMotion = true, ...rest }: GroupProps) {
+function useBrandTexture() {
+  const tex = useMemo(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 512
+    canvas.height = 256
+    const g = canvas.getContext('2d')
+    if (!g) return null
+    g.fillStyle = '#121418'
+    g.fillRect(0, 0, 512, 256)
+    g.shadowColor = 'rgba(255, 120, 0, 0.9)'
+    g.shadowBlur = 28
+    g.font = '900 76px Plus Jakarta Sans, system-ui, sans-serif'
+    g.textAlign = 'center'
+    g.textBaseline = 'middle'
+    g.fillStyle = '#ff6b00'
+    g.fillText('YÜK-LE', 256, 130)
+    const t = new CanvasTexture(canvas)
+    t.colorSpace = SRGBColorSpace
+    t.needsUpdate = true
+    return t
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      tex?.dispose()
+    }
+  }, [tex])
+
+  return tex
+}
+
+/** Kabin + dorse + tekerlekler; journey modunda turuncu kabin ve yan marka */
+export function Truck({ idleMotion = true, journey = false, ...rest }: GroupProps) {
   const group = useRef<Group>(null)
+  const wheels = useRef<Mesh[]>([])
+  const brand = useBrandTexture()
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     const g = group.current
-    if (!g || !idleMotion) return
+    if (!g) return
     const t = state.clock.elapsedTime
-    g.rotation.y += 0.002
-    g.position.y = Math.sin(t) * 0.1
+    if (idleMotion && !journey) {
+      g.rotation.y += 0.002
+      g.position.y = Math.sin(t) * 0.1
+    } else if (journey) {
+      g.position.y = Math.sin(t * 2.4) * 0.035
+    }
+    if (journey) {
+      const spin = delta * 9
+      for (const w of wheels.current) {
+        if (w) w.rotation.x += spin
+      }
+    }
   })
+
+  const cabColor = journey ? '#ff6b00' : '#252a33'
+  const cabDark = journey ? '#cc5500' : '#1a1d24'
+  const trailerColor = journey ? '#e8eaef' : '#1a1d24'
 
   return (
     <group ref={group} {...rest}>
-      <mesh castShadow receiveShadow position={[0, 0.45, 0]}>
-        <boxGeometry args={[1.1, 0.55, 2.4]} />
-        <meshStandardMaterial color="#1a1d24" metalness={0.6} roughness={0.35} />
+      {/* Kabin */}
+      <mesh castShadow receiveShadow position={[0, 0.52, 0.55]}>
+        <boxGeometry args={[1.05, 0.62, 1.15]} />
+        <meshStandardMaterial color={cabColor} metalness={0.35} roughness={0.4} emissive={journey ? '#441800' : '#000000'} emissiveIntensity={journey ? 0.25 : 0} />
       </mesh>
-      <mesh castShadow position={[0, 0.95, 0.35]}>
-        <boxGeometry args={[1.05, 0.55, 1.1]} />
-        <meshStandardMaterial color="#252a33" metalness={0.45} roughness={0.4} />
+      {/* Ön cam */}
+      <mesh position={[0, 0.62, 1.12]} rotation={[0.1, 0, 0]}>
+        <boxGeometry args={[0.95, 0.35, 0.08]} />
+        <meshStandardMaterial color="#1e3a5f" metalness={0.8} roughness={0.15} transparent opacity={0.65} />
       </mesh>
-      <mesh castShadow position={[0, 0.32, -1.35]}>
-        <boxGeometry args={[1.05, 0.35, 0.85]} />
-        <meshStandardMaterial color="#111318" metalness={0.5} roughness={0.45} />
+      {/* Dorse */}
+      <mesh castShadow receiveShadow position={[0, 0.48, -0.95]}>
+        <boxGeometry args={[1.02, 0.68, 2.85]} />
+        <meshStandardMaterial color={trailerColor} metalness={journey ? 0.55 : 0.5} roughness={journey ? 0.35 : 0.45} />
       </mesh>
-      {[[-0.52, 0.22, 0.75], [0.52, 0.22, 0.75], [-0.52, 0.22, -0.85], [0.52, 0.22, -0.85]].map(
-        (p, i) => (
-          <mesh key={i} castShadow position={p as [number, number, number]}>
-            <cylinderGeometry args={[0.22, 0.22, 0.12, 16]} />
-            <meshStandardMaterial color="#0d0f12" metalness={0.3} roughness={0.55} />
-          </mesh>
-        ),
-      )}
-      <mesh position={[0.56, 0.55, 0.2]} rotation={[0, 0, Math.PI / 2]}>
-        <boxGeometry args={[0.08, 0.02, 0.35]} />
-        <meshStandardMaterial emissive="#FF6B00" emissiveIntensity={0.9} color="#331100" />
+      {journey && brand ? (
+        <mesh position={[0.53, 0.45, -0.95]} rotation={[0, Math.PI / 2, 0]}>
+          <planeGeometry args={[2.5, 0.75]} />
+          <meshStandardMaterial map={brand} transparent roughness={0.45} metalness={0.2} emissive="#ff5500" emissiveIntensity={0.35} depthWrite={false} />
+        </mesh>
+      ) : null}
+      {/* Şasi */}
+      <mesh castShadow position={[0, 0.18, -0.2]}>
+        <boxGeometry args={[0.95, 0.12, 3.2]} />
+        <meshStandardMaterial color={cabDark} metalness={0.4} roughness={0.55} />
+      </mesh>
+      {/* Tekerlekler — journey'de döner */}
+      {(
+        [
+          [-0.48, 0.16, 0.78],
+          [0.48, 0.16, 0.78],
+          [-0.48, 0.16, -0.35],
+          [0.48, 0.16, -0.35],
+          [-0.48, 0.16, -1.55],
+          [0.48, 0.16, -1.55],
+        ] as const
+      ).map((p, i) => (
+        <mesh
+          key={i}
+          ref={(el) => {
+            if (el && journey) wheels.current[i] = el
+          }}
+          castShadow
+          position={[...p]}
+          rotation={[0, 0, Math.PI / 2]}
+        >
+          <cylinderGeometry args={[0.2, 0.2, 0.14, 18]} />
+          <meshStandardMaterial color="#0b0d10" metalness={0.25} roughness={0.65} />
+        </mesh>
+      ))}
+      {/* Egzoz */}
+      <mesh castShadow position={[-0.42, 0.62, 0.05]} rotation={[0.2, 0, 0.15]}>
+        <cylinderGeometry args={[0.05, 0.06, 0.35, 8]} />
+        <meshStandardMaterial color="#2a2a2a" metalness={0.6} roughness={0.35} />
+      </mesh>
+      {/* Ayna */}
+      <mesh position={[0.58, 0.58, 0.85]}>
+        <boxGeometry args={[0.06, 0.12, 0.08]} />
+        <meshStandardMaterial color="#333" metalness={0.5} roughness={0.4} />
+      </mesh>
+      <mesh position={[-0.58, 0.58, 0.85]}>
+        <boxGeometry args={[0.06, 0.12, 0.08]} />
+        <meshStandardMaterial color="#333" metalness={0.5} roughness={0.4} />
       </mesh>
     </group>
   )

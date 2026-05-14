@@ -4,18 +4,18 @@ import { gsap } from 'gsap'
 import { SecurityScene } from '../scenes/SecurityScene'
 
 const chips = [
-  { title: 'Asker sınıfı şifreleme', hint: 'Bankacılık seviyesinde güvenlik', icon: '🔐' },
-  { title: 'KVKK uyumlu', hint: 'Kişisel verileriniz koruma altında', icon: '🛡️' },
-  { title: 'Güvenli havuz ödeme', hint: 'Paranız teslimat sonrası şoföre', icon: '💳' },
-  { title: 'U-ETDS yasal bildirim', hint: 'Yasal yük bildirimleri düzenli', icon: '📊' },
-  { title: 'Doğrulanmış şoför', hint: 'Belgeler AI ile kontrol edilir', icon: '✓' },
-  { title: 'Uçtan uca şifreli', hint: 'İletişim ve dosyalar korunur', icon: '🔒' },
+  { title: 'Banka Düzeyinde Şifreleme', hint: 'Verileriniz bankacılık seviyesinde korunur.', icon: '🔐' },
+  { title: 'KVKK Uyumlu', hint: 'Kişisel verileriniz koruma altında.', icon: '🛡️' },
+  { title: 'Güvenli Havuz Ödeme', hint: 'Paranız teslimat sonrası şoföre.', icon: '💳' },
+  { title: 'U-ETDS Yasal Bildirim', hint: 'Yasal yük bildirimleri düzenli.', icon: '📊' },
+  { title: 'Doğrulanmış Şoför', hint: 'Belgeler yapay zeka ile kontrol edilir.', icon: '✓' },
+  { title: 'Uçtan Uca Şifreli', hint: 'İletişim ve dosyalar korunur.', icon: '🔒' },
 ]
 
 const features = [
-  { title: 'KVKK uyumlu', text: 'Tüm veriler şifreli ve erişim kontrollü saklanır.' },
-  { title: 'Escrow ödeme', text: 'Para güvenli havuzda; teslim onayıyla serbest bırakılır.' },
-  { title: 'U-ETDS entegre', text: 'Yasal bildirimler ve sefer kayıtları düzenli akar.' },
+  { title: 'KVKK Uyumlu', text: 'Tüm veriler şifreli ve erişim kontrollü saklanır.' },
+  { title: 'Güvenli Havuz Ödeme', text: 'Para güvenli havuzda; teslim onayıyla serbest bırakılır.' },
+  { title: 'U-ETDS Entegre', text: 'Yasal bildirimler ve sefer kayıtları düzenli akar.' },
 ]
 
 export function SecuritySection({ reduceMotion }: { reduceMotion: boolean }) {
@@ -61,7 +61,7 @@ export function SecuritySection({ reduceMotion }: { reduceMotion: boolean }) {
         ))}
       </div>
       <div className="landing-security__content">
-        <h2 className="landing-security__h2">Güvenliğiniz önceliğimiz</h2>
+        <h2 className="landing-security__h2">Güvenliğiniz Önceliğimiz</h2>
         <div className="landing-security__grid">
           {features.map((f) => (
             <article key={f.title} className="landing-sec__feat landing-security__card" data-cursor-hover>

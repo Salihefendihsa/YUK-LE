@@ -32,12 +32,12 @@ export function LandingNavbar() {
       className={`landing-nav ${scrolled ? 'landing-nav--scrolled' : ''} ${compact ? 'landing-nav--compact' : ''}`}
     >
       <div className="landing-nav__inner">
-        <button type="button" className="landing-nav__brand" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+        <Link to="/" className="landing-nav__brand">
           <span className="landing-nav__brand-icon" aria-hidden>
             🚛
           </span>
           <span className="landing-nav__brand-text">YÜK-LE</span>
-        </button>
+        </Link>
 
         <nav className="landing-nav__menu" aria-label="Ana menü">
           {links.map((l) => (

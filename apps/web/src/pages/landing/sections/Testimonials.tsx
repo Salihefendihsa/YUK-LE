@@ -1,53 +1,150 @@
-const reviews = [
+const REVIEWS = [
   {
     name: 'Ayşe Korkmaz',
-    role: 'Operasyon Müdürü',
-    company: 'Anadolu Gıda',
-    text: 'Teklif süreleri ciddi anlamda kısaldı. AI fiyat önerisi ekibimize güven veriyor.',
+    job: 'Operasyon Müdürü',
+    company: 'Anadolu Gıda A.Ş.',
+    text: "Eskiden telefon trafiğiyle uğraşıyorduk, şimdi her şey uygulamada. AI'ın önerdiği fiyatlar gayet adil, ne çok ne az.",
+    when: '6 hafta önce',
+    tenure: '6 aydır kullanıyor',
+    trips: '38 sefer tamamlandı',
+    grad: 0,
   },
   {
     name: 'Mehmet Yılmaz',
-    role: 'Lojistik Şefi',
-    company: 'Doğu Çelik',
-    text: 'Şoför eşleşmesi ve canlı takip sayesinde müşteri şikayetleri neredeyse sıfırlandı.',
+    job: 'Şoför',
+    company: 'Bireysel taşımacı',
+    text: 'Şoförle anlaşıp parayı havuzda görünce içim rahat etti. Teslim olunca direkt cebime düştü. Pratik olmuş.',
+    when: '2 hafta önce',
+    tenure: '1 yıldır kullanıyor',
+    trips: '52 sefer tamamlandı',
+    grad: 1,
   },
   {
     name: 'Elif Demir',
-    role: 'Satın Alma',
+    job: 'Satın Alma Uzmanı',
     company: 'Vadi Mobilya',
-    text: 'KVKK ve evrak süreçleri düzgün akıyor. Kurumsal kullanım için ideal.',
+    text: 'Daha önce 3-4 gün süren teklif toplama işi yarım saatte bitiyor. Ekipte hepimiz çok memnunuz.',
+    when: '1 ay önce',
+    tenure: '4 aydır kullanıyor',
+    trips: '29 sefer tamamlandı',
+    grad: 2,
   },
   {
-    name: 'Can Arslan',
-    role: 'Filo Yöneticisi',
-    company: 'Kuzey Nakliyat',
-    text: 'Sürücülerimiz için arayüz sade, ödeme akışı net. Platforma geçiş kolaydı.',
+    name: 'Hasan Çelik',
+    job: 'Lojistik Koordinatörü',
+    company: 'Anadolu Tekstil',
+    text: 'İlanı verdim, 10 dakika içinde 5 teklif geldi. Şoför evrakları AI ile kontrolden geçmiş, içim rahat.',
+    when: '3 hafta önce',
+    tenure: '3 aydır kullanıyor',
+    trips: '41 sefer tamamlandı',
+    grad: 3,
   },
-]
+  {
+    name: 'Fatma Aydın',
+    job: 'İşletme Sahibi',
+    company: 'Aydın Lojistik',
+    text: "Eşim baktı dedi 'bu uygulama nasıl bu kadar kolay'. Ben de 'AI yapıyor' dedim, anlamadı ama beğendi 😄",
+    when: '5 gün önce',
+    tenure: '8 aydır kullanıyor',
+    trips: '47 sefer tamamlandı',
+    grad: 4,
+  },
+  {
+    name: 'Murat Şahin',
+    job: 'Tır Şoförü',
+    company: 'Bireysel taşımacı',
+    text: "Yola çıkmadan müşterinin yolda olduğunu gördüğüm yerlere bayılıyorum. Eskiden 'nerdesin abi' telefonları bitti.",
+    when: '2 ay önce',
+    tenure: '5 aydır kullanıyor',
+    trips: '33 sefer tamamlandı',
+    grad: 0,
+  },
+  {
+    name: 'Zeynep Kara',
+    job: 'Genel Müdür',
+    company: 'Kara Holding',
+    text: 'KVKK uyumlu olduğunu görünce ekibimize güvenle önerebildim. Vergi entegrasyonları da temiz.',
+    when: '1 hafta önce',
+    tenure: '2 aydır kullanıyor',
+    trips: '12 sefer tamamlandı',
+    grad: 1,
+  },
+  {
+    name: 'Ahmet Doğan',
+    job: 'Şoför',
+    company: 'Doğan Nakliyat',
+    text: "İlk başta 'bir uygulama da bu mu' dedim ama bir denedim, devam ediyorum. Telefonla pazarlık yapmaktan iyi.",
+    when: '10 gün önce',
+    tenure: '10 aydır kullanıyor',
+    trips: '61 sefer tamamlandı',
+    grad: 2,
+  },
+] as const
 
-export function TestimonialsSection() {
+function gradClass(i: number) {
+  return `landing-reviews__avatar landing-reviews__avatar--g${i % 5}`
+}
+
+function MarqueeRow({ reverse }: { reverse?: boolean }) {
+  const doubled = [...REVIEWS, ...REVIEWS]
   return (
-    <section className="landing-reviews" id="reviews">
-      <h2 className="landing-reviews__h2">Sahadan notlar</h2>
-      <div className="landing-reviews__track" tabIndex={0}>
-        {reviews.map((r) => (
-          <article key={r.name} className="landing-reviews__card" data-cursor-hover>
-            <div className="landing-reviews__head">
-              <div className="landing-reviews__avatar" aria-hidden />
-              <div>
-                <p className="landing-reviews__name">{r.name}</p>
-                <p className="landing-reviews__role">
-                  {r.role} · {r.company}
-                </p>
+    <div className={`landing-reviews__row${reverse ? ' landing-reviews__row--rev' : ''}`}>
+      <div className="landing-reviews__marquee">
+        {doubled.map((r, i) => (
+          <article key={`${r.name}-${i}`} className="landing-reviews__card" data-cursor-hover>
+            <div className="landing-reviews__top">
+              <div className="landing-reviews__who">
+                <div className={gradClass(r.grad)} aria-hidden>
+                  {r.name[0]}
+                </div>
+                <div>
+                  <p className="landing-reviews__name">{r.name}</p>
+                  <p className="landing-reviews__job">{r.job}</p>
+                  <p className="landing-reviews__company">{r.company}</p>
+                </div>
               </div>
+              <span className="landing-reviews__verified">✓ Doğrulanmış</span>
             </div>
             <div className="landing-reviews__stars" aria-label="5 üzerinden 5">
               ★★★★★
             </div>
-            <p className="landing-reviews__text">{r.text}</p>
-            <p className="landing-reviews__logo">{r.company}</p>
+            <p className="landing-reviews__quote">{r.text}</p>
+            <p className="landing-reviews__meta">{r.when}</p>
+            <div className="landing-reviews__foot">
+              <span>{r.tenure}</span>
+              <span>{r.trips}</span>
+            </div>
           </article>
         ))}
+      </div>
+    </div>
+  )
+}
+
+export function TestimonialsSection() {
+  return (
+    <section className="landing-reviews" id="reviews">
+      <div className="landing-reviews__head-block">
+        <h2 className="landing-reviews__h2">Kullanıcılarımız Ne Diyor?</h2>
+        <p className="landing-reviews__lead">Türkiye&apos;nin dört bir yanından gerçek kullanıcı deneyimleri</p>
+      </div>
+      <div className="landing-reviews__rows">
+        <MarqueeRow />
+        <MarqueeRow reverse />
+      </div>
+      <div className="landing-reviews__stats">
+        <div className="landing-reviews__stat">
+          <strong>⭐ 4.9/5</strong>
+          <span>Ortalama Puan</span>
+        </div>
+        <div className="landing-reviews__stat">
+          <strong>👥 12.5K+</strong>
+          <span>Aktif Kullanıcı</span>
+        </div>
+        <div className="landing-reviews__stat">
+          <strong>💬 8K+</strong>
+          <span>Olumlu Yorum</span>
+        </div>
       </div>
     </section>
   )

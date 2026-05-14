@@ -180,6 +180,19 @@
   letter-spacing: 0.06em;
 }
 
+.register-logo .login-logo-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease;
+}
+
+.register-logo .login-logo-link:hover {
+  transform: scale(1.05);
+}
+
 .logo-icon-sm {
   width: 36px;
   height: 36px;

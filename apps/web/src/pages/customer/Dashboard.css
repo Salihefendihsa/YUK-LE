@@ -172,6 +172,50 @@
 .map-pin { position: absolute; font-size: 20px; }
 .map-label { font-size: 12px; color: var(--color-text-faint); text-align: center; position: relative; }
 
+.dashboard-widgets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+.dash-widget h3 {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+}
+
+.dash-widget-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.dash-widget-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.dash-widget-ol {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.dash-widget-bullets {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+
 @media (max-width: 1024px) {
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
   .dashboard-mid { grid-template-columns: 1fr; }

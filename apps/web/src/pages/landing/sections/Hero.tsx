@@ -60,9 +60,14 @@ export function HeroSection({ reduceMotion }: { reduceMotion: boolean }) {
           <div className="landing-hero__badge">TR&apos;NİN İLK AI LOJİSTİĞİ</div>
           <h1 className="landing-hero__title">
             <span className="landing-hero__line">YÜKÜNÜZ</span>
-            <span className="landing-hero__line">GÜVENDE</span>
+            <span className="landing-hero__line">GÜVENDE,</span>
             <span className="landing-hero__line landing-hero__line--accent">YOLUNUZ</span>
-            <span className="landing-hero__line landing-hero__line--grad">AÇIK.</span>
+            <span className="landing-hero__line landing-hero__line--last">
+              <strong>AÇIK</strong>
+              <span className="landing-hero__dot" aria-hidden>
+                .
+              </span>
+            </span>
           </h1>
           <p className="landing-hero__sub">
             Saniyeler içinde eşleş. Akıllıca taşı.
@@ -73,9 +78,9 @@ export function HeroSection({ reduceMotion }: { reduceMotion: boolean }) {
             <Link to="/register" className="landing-hero__btn landing-hero__btn--primary" data-cursor-hover>
               Hemen Başla <span className="landing-hero__arrow">→</span>
             </Link>
-            <button type="button" className="landing-hero__btn landing-hero__btn--ghost" data-cursor-hover>
-              Demo İzle
-            </button>
+            <Link to="/demo" className="landing-hero__btn landing-hero__btn--ghost" data-cursor-hover>
+              Demo Talep Et
+            </Link>
           </div>
         </div>
         <div className="landing-hero__scroll">

@@ -6,7 +6,7 @@ import { RouteScene } from '../scenes/RouteScene'
 
 const stages = [
   'Yola çıkıyoruz...',
-  'AI rota optimize ediyor',
+  'Yapay zeka rota optimize ediyor',
   'Şoför ve müşteri eşleşti',
   'Hedefe ulaşıldı ✓',
 ]
@@ -55,7 +55,8 @@ export function JourneySection({ reduceMotion }: { reduceMotion: boolean }) {
       <div className="landing-journey__canvas" aria-hidden>
         <Canvas
           dpr={[1, 1.5]}
-          camera={{ position: [0, 3, 8], fov: 55, near: 0.1, far: 120 }}
+          camera={{ position: [0, 4.2, 11], fov: 58, near: 0.1, far: 120 }}
+          shadows
           gl={{ antialias: true, alpha: true }}
         >
           <Suspense fallback={null}>
@@ -64,9 +65,23 @@ export function JourneySection({ reduceMotion }: { reduceMotion: boolean }) {
         </Canvas>
       </div>
       <div className="landing-journey__overlay">
+        <div className="landing-journey__hud" aria-hidden>
+          <div className="landing-journey__hud-tile landing-journey__hud-tile--tl">
+            <span className="landing-journey__hud-label">Hız</span>
+            <strong>85 km/s</strong>
+          </div>
+          <div className="landing-journey__hud-tile landing-journey__hud-tile--tr">
+            <span className="landing-journey__hud-label">GPS</span>
+            <strong>İstanbul → Ankara</strong>
+          </div>
+          <div className="landing-journey__hud-tile landing-journey__hud-tile--br">
+            <span className="landing-journey__hud-label">Kalan</span>
+            <strong>230 km</strong>
+          </div>
+        </div>
         <div className="landing-journey__copy">
           <p className="landing-journey__eyebrow">Yolculuk</p>
-          <h2 className="landing-journey__h2">Türkiye genelinde akıcı lojistik</h2>
+          <h2 className="landing-journey__h2">Türkiye Genelinde Akıcı Lojistik</h2>
           <p ref={labelRef} className="landing-journey__stage">
             {stages[0]}
           </p>

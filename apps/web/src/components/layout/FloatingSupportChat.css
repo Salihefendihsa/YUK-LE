@@ -1,0 +1,110 @@
+.fab-support {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 180;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 107, 0, 0.35);
+  background: linear-gradient(145deg, rgba(255, 154, 72, 0.95), #ff6b00);
+  color: #0a0a0a;
+  font-size: 22px;
+  cursor: pointer;
+  box-shadow: 0 8px 32px rgba(255, 107, 0, 0.35);
+  transition: transform 0.2s ease;
+}
+
+.fab-support:hover {
+  transform: scale(1.06);
+}
+
+.fab-panel-root {
+  position: fixed;
+  inset: 0;
+  z-index: 390;
+  display: grid;
+  place-items: end flex-end;
+  padding: 24px;
+  pointer-events: none;
+}
+
+.fab-panel-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  border: none;
+  background: rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+
+.fab-panel {
+  position: relative;
+  pointer-events: auto;
+  width: min(360px, 100%);
+  padding: 16px;
+  margin-bottom: 72px;
+  animation: fab-in 0.25s ease;
+}
+
+@keyframes fab-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.fab-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.fab-faq {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fab-faq-item {
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(9, 11, 14, 0.45);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.fab-faq-item:hover {
+  border-color: rgba(255, 107, 0, 0.35);
+}
+
+.glass-msg {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 107, 0, 0.15);
+  font-size: 13px;
+}
+
+.fab-ta {
+  width: 100%;
+  margin-top: 10px;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(9, 11, 14, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: inherit;
+  font: inherit;
+  resize: vertical;
+}

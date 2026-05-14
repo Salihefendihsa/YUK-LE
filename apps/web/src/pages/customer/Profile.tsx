@@ -135,6 +135,19 @@ export default function CustomerProfilePage() {
           <p className="page-sub">Hesap, şirket ve güvenlik</p>
         </div>
       </div>
+      <div className="card" style={{ marginBottom: 16 }}>
+        <h2 style={{ margin: '0 0 12px', fontSize: '1rem' }}>Rozetler</h2>
+        <p className="muted" style={{ fontSize: 13, marginBottom: 10 }}>
+          Gamification — şoförlerden gelen geri bildirimlere göre rozetler yakında hesaplanacak.
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {['🥇 İlk İlan', '🚀 100 Sefer', '💎 VIP Müşteri', '🤝 Güvenilir Ortak', '⚡ Hızlı Ödeyici'].map((b) => (
+            <span key={b} className="badge badge-muted" style={{ padding: '8px 12px', fontSize: 12 }}>
+              {b}
+            </span>
+          ))}
+        </div>
+      </div>
       <div className="card form-grid">
         <input className="form-input" placeholder="Ad Soyad" value={fullName} onChange={(e) => setFullName(e.target.value)} />
         <input className="form-input" placeholder="E-posta" value={email} onChange={(e) => setEmail(e.target.value)} />

@@ -174,6 +174,54 @@ export default function CustomerDashboard() {
           </div>
         </div>
       </div>
+
+      <div className="dashboard-widgets">
+        <div className="card dash-widget">
+          <h3>📊 Bu hafta</h3>
+          <ul className="dash-widget-list">
+            <li>
+              <span>Yeni ilan</span>
+              <strong>5</strong>
+            </li>
+            <li>
+              <span>Tamamlanan</span>
+              <strong>3</strong>
+            </li>
+            <li>
+              <span>Toplam harcama</span>
+              <strong>₺12.450</strong>
+            </li>
+          </ul>
+        </div>
+        <div className="card dash-widget">
+          <h3>🏆 Favori şoförlerim</h3>
+          <p className="muted" style={{ fontSize: 13 }}>
+            En çok çalıştığınız 3 şoför (demo)
+          </p>
+          <ol className="dash-widget-ol">
+            <li>Ahmet K. — 12 sefer</li>
+            <li>Mehmet Y. — 9 sefer</li>
+            <li>Can D. — 7 sefer</li>
+          </ol>
+          <Link to="/customer/loads/create" className="btn btn-primary btn-sm" style={{ marginTop: 10 }}>
+            Hızlı ilan
+          </Link>
+        </div>
+        <div className="card dash-widget">
+          <h3>💡 Akıllı öneriler</h3>
+          <ul className="dash-widget-bullets">
+            <li>İstanbul → Bursa güzergahında bu hafta talep yüksek; fiyat avantajı olabilir.</li>
+            <li>Frigorifik araç arayan bir şoför sizin güzergahınıza uygun fiyat veriyor.</li>
+          </ul>
+        </div>
+        <div className="card dash-widget">
+          <h3>📈 Performans skorum</h3>
+          <p style={{ fontSize: 36, fontWeight: 800, margin: '4px 0', color: 'var(--color-brand)' }}>4.9</p>
+          <p className="muted" style={{ fontSize: 13 }}>
+            Hızlı ödeme rozeti · Güvenilir müşteri
+          </p>
+        </div>
+      </div>
     </div>
   )
 }

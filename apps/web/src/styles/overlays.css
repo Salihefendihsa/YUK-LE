@@ -188,6 +188,28 @@
   overflow: hidden;
 }
 
+.ap-login-brand-link {
+  position: absolute;
+  top: 72px;
+  left: 24px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #fecaca;
+  text-decoration: none;
+}
+
+.ap-login-brand-icon {
+  font-size: 22px;
+}
+
+.ap-login-brand-text {
+  font-size: 1.1rem;
+}
+
 .ap-login-root::before {
   content: '';
   position: absolute;

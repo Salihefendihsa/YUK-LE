@@ -46,7 +46,7 @@ export default function Login() {
           selectedRole === 'Customer'
             ? 'Bu hesap şoför hesabı olarak gorunuyor. Lütfen Şoför kartini secin.'
             : selectedRole === 'Driver'
-              ? 'Bu hesap fabrika hesabı olarak görünüyor. Lütfen Fabrika kartını seçin.'
+              ? 'Bu hesap müşteri hesabı olarak görünüyor. Lütfen Müşteri kartını seçin.'
               : 'Bu hesap yönetici hesabı olarak görünmüyor. Lütfen doğru rolü seçin.'
         )
         return
@@ -78,6 +78,9 @@ export default function Login() {
 
   return (
     <div className="login-page">
+      <Link to="/" className="back-to-home">
+        ← Ana Sayfa
+      </Link>
       <div className="login-orb login-orb--1" aria-hidden />
       <div className="login-orb login-orb--2" aria-hidden />
       <div className="login-orb login-orb--3" aria-hidden />
@@ -86,12 +89,14 @@ export default function Login() {
         <div className="login-left-content">
           <GlassCard className="login-glass-panel">
             <div className="login-logo">
-              <div className="login-logo-icon">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                  <path d="M3 12L12 4L21 12V20H15V15H9V20H3V12Z" fill="white" />
-                </svg>
-              </div>
-              <span>YÜK-LE</span>
+              <Link to="/" className="login-logo-link">
+                <div className="login-logo-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 12L12 4L21 12V20H15V15H9V20H3V12Z" fill="white" />
+                  </svg>
+                </div>
+                <span>YÜK-LE</span>
+              </Link>
             </div>
 
             <h1 className="login-tagline">
@@ -134,8 +139,8 @@ export default function Login() {
               className={`login-role-card ${selectedRole === 'Customer' ? 'active customer' : ''}`}
               onClick={() => setSelectedRole('Customer')}
             >
-              <span className="role-icon">🏭</span>
-              <strong>Fabrika</strong>
+              <span className="role-icon">🏢</span>
+              <strong>Müşteri</strong>
             </button>
             <button
               type="button"

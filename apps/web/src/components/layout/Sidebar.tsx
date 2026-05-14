@@ -9,11 +9,13 @@ interface NavItem {
 }
 
 const CUSTOMER_NAV: NavItem[] = [
-  { label: 'Dashboard',   path: '/customer/dashboard', icon: '⊞' },
-  { label: 'İlanlarım',   path: '/customer/loads',     icon: '📦' },
-  { label: 'Teklifler',   path: '/customer/bids',      icon: '💼' },
-  { label: 'Canlı Harita',path: '/customer/track',     icon: '🗺️' },
-  { label: 'Geçmiş',     path: '/customer/history',   icon: '📋' },
+  { label: 'Dashboard', path: '/customer/dashboard', icon: '⊞' },
+  { label: 'Analitik', path: '/customer/analytics', icon: '📈' },
+  { label: 'İlanlarım', path: '/customer/loads', icon: '📦' },
+  { label: 'Teklifler', path: '/customer/bids', icon: '💼' },
+  { label: 'Sohbetlerim', path: '/customer/chats', icon: '💬' },
+  { label: 'Canlı Harita', path: '/customer/track', icon: '🗺️' },
+  { label: 'Geçmiş', path: '/customer/history', icon: '📋' },
   { label: 'Adreslerim', path: '/customer/addresses', icon: '📍' },
   { label: 'Profil', path: '/customer/profile', icon: '👤' },
 ]
@@ -22,6 +24,7 @@ const DRIVER_NAV: NavItem[] = [
   { label: 'Ana Ekran', path: '/driver/dashboard', icon: '🏠' },
   { label: 'Yük Panosu', path: '/driver/loads', icon: '📦' },
   { label: 'Aktif Seferim', path: '/driver/active-load', icon: '🚛' },
+  { label: 'Sohbetlerim', path: '/driver/chats', icon: '💬' },
   { label: 'Belgelerim', path: '/driver/documents', icon: '📄' },
   { label: 'Cüzdanım', path: '/driver/wallet', icon: '💰' },
   { label: 'Profilim', path: '/driver/profile', icon: '👤' },
@@ -31,9 +34,9 @@ const ADMIN_NAV: NavItem[] = [
   { label: '📊 Genel Bakış', path: '/admin/dashboard', icon: '📊' },
   { label: '📄 Belge Kuyruğu', path: '/admin/reviews', icon: '📄' },
   { label: '🚛 Şoförler', path: '/admin/drivers', icon: '🚛' },
-  { label: '🏭 Müşteriler', path: '/admin/customers', icon: '🏭' },
+  { label: '🏢 Müşteriler', path: '/admin/customers', icon: '🏢' },
   { label: '📦 İlanlar', path: '/admin/loads', icon: '📦' },
-  { label: '💬 Sohbetler', path: '/admin/chats', icon: '💬' },
+  { label: '💬 Tüm Sohbetler', path: '/admin/chats', icon: '💬' },
   { label: '💳 Ödemeler', path: '/admin/payments', icon: '💳' },
   { label: '👥 Tüm Kullanıcılar', path: '/admin/users', icon: '👥' },
   { label: '🔧 Sistem Durumu', path: '/admin/system', icon: '🔧' },
@@ -42,28 +45,28 @@ const ADMIN_NAV: NavItem[] = [
   { label: '⭐ Puanlar', path: '/admin/ratings', icon: '⭐' },
 ]
 
-const BOTTOM_NAV: NavItem[] = [
-  { label: 'Ayarlar', path: '/admin/settings', icon: '⚙️' },
-]
+function settingsPath(role: string | undefined) {
+  if (role === 'Customer') return '/customer/settings'
+  if (role === 'Driver') return '/driver/settings'
+  return '/admin/settings'
+}
 
 interface SidebarProps {
   collapsed: boolean
   mobileOpen: boolean
-  onToggle: () => void
 }
 
-export default function Sidebar({ collapsed, mobileOpen, onToggle }: SidebarProps) {
+export default function Sidebar({ collapsed, mobileOpen }: SidebarProps) {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
 
   const navItems =
-    user?.role === 'Driver'  ? DRIVER_NAV  :
-    user?.role === 'Admin'   ? ADMIN_NAV   :
-    CUSTOMER_NAV
+    user?.role === 'Driver' ? DRIVER_NAV : user?.role === 'Admin' ? ADMIN_NAV : CUSTOMER_NAV
 
   const roleLabel =
-    user?.role === 'Customer' ? 'Fabrika' :
-    user?.role === 'Driver'   ? 'Şoför'   : 'Admin'
+    user?.role === 'Customer' ? 'Müşteri' : user?.role === 'Driver' ? 'Şoför' : 'Admin'
+
+  const bottomNav: NavItem[] = [{ label: 'Ayarlar', path: settingsPath(user?.role), icon: '⚙️' }]
 
   function handleLogout() {
     logout()
@@ -72,7 +75,6 @@ export default function Sidebar({ collapsed, mobileOpen, onToggle }: SidebarProp
 
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
-      {/* Logo */}
       <div className="sidebar-logo">
         <div className="logo-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -83,18 +85,14 @@ export default function Sidebar({ collapsed, mobileOpen, onToggle }: SidebarProp
           <div className="logo-text-wrap">
             <span className="logo-text">YÜK-LE</span>
             <span className="logo-panel-tag">
-              {user?.role === 'Customer' && 'Fabrika Paneli'}
+              {user?.role === 'Customer' && 'Müşteri Paneli'}
               {user?.role === 'Driver' && 'Şoför Paneli'}
               {user?.role === 'Admin' && 'Yönetici'}
             </span>
           </div>
         )}
-        <button className="collapse-btn" onClick={onToggle} aria-label="Menüyü daralt">
-          {collapsed ? '›' : '‹'}
-        </button>
       </div>
 
-      {/* Main Nav */}
       <nav className="sidebar-nav">
         <ul>
           {navItems.map((item) => (
@@ -114,7 +112,7 @@ export default function Sidebar({ collapsed, mobileOpen, onToggle }: SidebarProp
         <div className="sidebar-divider" />
 
         <ul>
-          {BOTTOM_NAV.map((item) => (
+          {bottomNav.map((item) => (
             <li key={item.path}>
               <NavLink
                 to={item.path}
@@ -127,25 +125,37 @@ export default function Sidebar({ collapsed, mobileOpen, onToggle }: SidebarProp
             </li>
           ))}
         </ul>
+
+        {user?.role === 'Customer' && !collapsed ? (
+          <div className="sidebar-mobile-promo card">
+            <p className="sidebar-mobile-promo-title">📱 Mobil uygulamayı indir</p>
+            <p className="muted" style={{ fontSize: 12, margin: '0 0 8px' }}>
+              QR ile hızlı erişim
+            </p>
+            <div className="sidebar-qr-placeholder" aria-hidden>
+              ▣▢▣▢
+              <br />
+              ▢▣▢▣
+            </div>
+            <div className="sidebar-store-row">
+              <span className="store-pill">App Store</span>
+              <span className="store-pill">Google Play</span>
+            </div>
+          </div>
+        ) : null}
       </nav>
 
-      {/* User Footer */}
       <div className="sidebar-footer">
-        <div className="user-avatar">
-          {user?.fullName?.[0]?.toUpperCase() ?? 'U'}
-        </div>
+        <div className="user-avatar">{user?.fullName?.[0]?.toUpperCase() ?? 'U'}</div>
         {!collapsed && (
           <div className="user-info">
             <p className="user-name">{user?.fullName ?? 'Kullanıcı'}</p>
-            <span className="badge badge-muted" style={{ fontSize: 10 }}>{roleLabel}</span>
+            <span className="badge badge-muted" style={{ fontSize: 10 }}>
+              {roleLabel}
+            </span>
           </div>
         )}
-        <button
-          className="logout-btn"
-          onClick={handleLogout}
-          title="Çıkış Yap"
-          aria-label="Çıkış Yap"
-        >
+        <button className="logout-btn" onClick={handleLogout} title="Çıkış Yap" aria-label="Çıkış Yap">
           ⏻
         </button>
       </div>

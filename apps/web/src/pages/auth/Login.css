@@ -604,3 +604,89 @@
     display: none;
   }
 }
+
+/* Ana sayfaya dönüş + logo linki */
+.back-to-home {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 107, 0, 0.2);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  backdrop-filter: blur(10px);
+  font-size: 14px;
+  font-weight: 600;
+  transition:
+    color 0.3s ease,
+    border-color 0.3s ease,
+    background 0.3s ease,
+    transform 0.2s ease;
+}
+
+.back-to-home:hover {
+  color: #ff6b00;
+  border-color: #ff6b00;
+  background: rgba(255, 107, 0, 0.1);
+  transform: translateX(-2px);
+}
+
+.login-logo-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease;
+}
+
+.login-logo-link:hover {
+  transform: scale(1.05);
+}
+
+/* Ana sayfaya dön + tıklanabilir logo (Login / Register / Forgot) */
+.back-to-home {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 107, 0, 0.2);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  backdrop-filter: blur(10px);
+  transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease, transform 0.2s ease;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.back-to-home:hover {
+  color: #ff6b00;
+  border-color: #ff6b00;
+  background: rgba(255, 107, 0, 0.1);
+  transform: translateX(-2px);
+}
+
+.login-logo-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease;
+}
+
+.login-logo-link:hover {
+  transform: scale(1.05);
+}

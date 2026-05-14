@@ -43,7 +43,7 @@ export function LandingFooter() {
       <div className="landing-footer__grid">
         <div>
           <p className="landing-footer__brand">🚛 YÜK-LE</p>
-          <p className="landing-footer__tag">Yapay zekâ destekli yük platformu</p>
+          <p className="landing-footer__tag">Yapay zeka destekli yük platformu</p>
           <div className="landing-footer__social">
             <a href="https://twitter.com" data-cursor-hover>
               Twitter

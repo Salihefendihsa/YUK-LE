@@ -1,4 +1,5 @@
 import { Suspense, useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { Canvas } from '@react-three/fiber'
 import { gsap } from 'gsap'
 import { AIScene } from '../scenes/AIScene'
@@ -6,19 +7,22 @@ import { AIScene } from '../scenes/AIScene'
 const cards = [
   {
     icon: '📄',
-    title: 'Belge OCR',
-    text: 'Ehliyet ve evraklar yapay zekâ ile okunur, anında doğrulanır.',
+    title: 'Belge Tanıma',
+    to: '/features/belge-tanima',
+    text: 'Ehliyet ve evraklar yapay zeka ile okunur, anında doğrulanır.',
     tag: '✓ Doğrulandı',
   },
   {
     icon: '💰',
     title: 'Adil Fiyat',
+    to: '/features/adil-fiyat',
     text: 'Mesafe, yük ve talep dengesiyle şeffaf fiyat önerisi.',
     tag: '₺3.847',
   },
   {
     icon: '🎯',
     title: 'Akıllı Eşleştirme',
+    to: '/features/akilli-eslestirme',
     text: 'Şoför ve yük profilleri %95 uyum ile eşleşir.',
     tag: '%95 uyum',
   },
@@ -77,15 +81,18 @@ export function AISection({ reduceMotion }: { reduceMotion: boolean }) {
             <span>{'>'} %95 uyum bulundu</span>
           </div>
         </div>
-        <h2 className="landing-ai__h2">Yapay zekâ her adımda yanınızda</h2>
+        <h2 className="landing-ai__h2">Yapay Zeka Her Adımda Yanınızda</h2>
         <div className="landing-ai__cards">
           {cards.map((c) => (
-            <article key={c.title} className="landing-ai__card" data-cursor-hover>
-              <div className="landing-ai__card-icon">{c.icon}</div>
-              <h3>{c.title}</h3>
-              <p>{c.text}</p>
-              <span className="landing-ai__tag">{c.tag}</span>
-            </article>
+            <Link key={c.title} to={c.to} className="landing-ai__card-wrap" data-cursor-hover>
+              <article className="landing-ai__card">
+                <div className="landing-ai__card-icon">{c.icon}</div>
+                <h3>{c.title}</h3>
+                <p>{c.text}</p>
+                <span className="landing-ai__tag">{c.tag}</span>
+                <span className="landing-ai__more">Detayları Gör →</span>
+              </article>
+            </Link>
           ))}
         </div>
       </div>
