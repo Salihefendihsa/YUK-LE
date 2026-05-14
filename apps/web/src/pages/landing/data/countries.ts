@@ -69,6 +69,12 @@ export const COUNTRIES: CountryConfig[] = [
       { name: 'Frankfurt', lat: 50.11, lng: 8.68, size: 'md', factories: 12 },
       { name: 'Köln', lat: 50.94, lng: 6.96, size: 'md', factories: 9 },
     ],
+    routes: [
+      ['Berlin', 'Hamburg'],
+      ['Berlin', 'Münih'],
+      ['Frankfurt', 'Münih'],
+      ['Köln', 'Frankfurt'],
+    ],
   },
   {
     code: 'gb',
@@ -84,6 +90,11 @@ export const COUNTRIES: CountryConfig[] = [
       { name: 'Birmingham', lat: 52.49, lng: -1.89, size: 'md', factories: 8 },
       { name: 'Liverpool', lat: 53.41, lng: -2.99, size: 'md', factories: 6 },
     ],
+    routes: [
+      ['Londra', 'Birmingham'],
+      ['Londra', 'Manchester'],
+      ['Manchester', 'Liverpool'],
+    ],
   },
   {
     code: 'it',
@@ -98,6 +109,11 @@ export const COUNTRIES: CountryConfig[] = [
       { name: 'Milano', lat: 45.46, lng: 9.19, size: 'lg', factories: 17 },
       { name: 'Napoli', lat: 40.85, lng: 14.27, size: 'md', factories: 9 },
       { name: 'Torino', lat: 45.07, lng: 7.69, size: 'md', factories: 8 },
+    ],
+    routes: [
+      ['Milano', 'Roma'],
+      ['Roma', 'Napoli'],
+      ['Torino', 'Milano'],
     ],
   },
   {
@@ -115,6 +131,13 @@ export const COUNTRIES: CountryConfig[] = [
       { name: 'Houston', lat: 29.76, lng: -95.37, size: 'md', factories: 11 },
       { name: 'Miami', lat: 25.76, lng: -80.19, size: 'md', factories: 9 },
     ],
+    routes: [
+      ['New York', 'Chicago'],
+      ['Chicago', 'Los Angeles'],
+      ['Los Angeles', 'Houston'],
+      ['Houston', 'Miami'],
+      ['New York', 'Miami'],
+    ],
   },
   {
     code: 'ae',
@@ -129,6 +152,10 @@ export const COUNTRIES: CountryConfig[] = [
       { name: 'Abu Dabi', lat: 24.47, lng: 54.37, size: 'lg', factories: 10 },
       { name: 'Şarja', lat: 25.35, lng: 55.42, size: 'md', factories: 6 },
     ],
+    routes: [
+      ['Dubai', 'Abu Dabi'],
+      ['Dubai', 'Şarja'],
+    ],
   },
   {
     code: 'sg',
@@ -139,6 +166,7 @@ export const COUNTRIES: CountryConfig[] = [
     status: 'coming_soon',
     hubInfo: 'Asya-Pasifik geçişi',
     cities: [{ name: 'Singapur', lat: 1.35, lng: 103.82, size: 'xl', factories: 12 }],
+    routes: [],
   },
   {
     code: 'jp',
@@ -152,6 +180,10 @@ export const COUNTRIES: CountryConfig[] = [
       { name: 'Tokyo', lat: 35.68, lng: 139.65, size: 'xl', factories: 22 },
       { name: 'Osaka', lat: 34.69, lng: 135.5, size: 'lg', factories: 14 },
       { name: 'Yokohama', lat: 35.44, lng: 139.64, size: 'md', factories: 9 },
+    ],
+    routes: [
+      ['Tokyo', 'Yokohama'],
+      ['Tokyo', 'Osaka'],
     ],
   },
   {
@@ -167,6 +199,10 @@ export const COUNTRIES: CountryConfig[] = [
       { name: 'Melbourne', lat: -37.81, lng: 144.96, size: 'lg', factories: 9 },
       { name: 'Brisbane', lat: -27.47, lng: 153.03, size: 'md', factories: 6 },
     ],
+    routes: [
+      ['Sidney', 'Melbourne'],
+      ['Sidney', 'Brisbane'],
+    ],
   },
   {
     code: 'br',
@@ -180,6 +216,11 @@ export const COUNTRIES: CountryConfig[] = [
       { name: 'São Paulo', lat: -23.55, lng: -46.63, size: 'xl', factories: 13 },
       { name: 'Rio de Janeiro', lat: -22.91, lng: -43.17, size: 'lg', factories: 10 },
       { name: 'Brasília', lat: -15.78, lng: -47.93, size: 'md', factories: 5 },
+    ],
+    routes: [
+      ['São Paulo', 'Rio de Janeiro'],
+      ['São Paulo', 'Brasília'],
+      ['Rio de Janeiro', 'Brasília'],
     ],
   },
 ]
