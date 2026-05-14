@@ -47,16 +47,20 @@ const ease = [0.22, 1, 0.36, 1] as const
 
 type Props = {
   reduceMotion: boolean
+  horizontal?: boolean
 }
 
-export function LiveMetrics({ reduceMotion }: Props) {
-  return (
-    <div className="live-metrics">
+export function LiveMetrics({ reduceMotion, horizontal = false }: Props) {
+  const wrapClass = horizontal ? 'live-metrics live-metrics--horizontal' : 'live-metrics'
+
+  const cards = (
+    <>
       <motion.div
+        className="live-metrics__cell"
         initial={reduceMotion ? false : { opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-80px' }}
-        transition={{ duration: 0.65, ease, delay: reduceMotion ? 0 : 0.1 }}
+        transition={{ duration: 0.65, ease, delay: reduceMotion ? 0 : horizontal ? 0.05 : 0.1 }}
       >
         <MetricCard
           label="Aktif Sefer"
@@ -69,10 +73,11 @@ export function LiveMetrics({ reduceMotion }: Props) {
         />
       </motion.div>
       <motion.div
+        className="live-metrics__cell"
         initial={reduceMotion ? false : { opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-80px' }}
-        transition={{ duration: 0.65, ease, delay: reduceMotion ? 0 : 0.2 }}
+        transition={{ duration: 0.65, ease, delay: reduceMotion ? 0 : horizontal ? 0.12 : 0.2 }}
       >
         <MetricCard
           label="Zamanında Teslimat"
@@ -85,10 +90,11 @@ export function LiveMetrics({ reduceMotion }: Props) {
         />
       </motion.div>
       <motion.div
+        className="live-metrics__cell"
         initial={reduceMotion ? false : { opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-80px' }}
-        transition={{ duration: 0.65, ease, delay: reduceMotion ? 0 : 0.3 }}
+        transition={{ duration: 0.65, ease, delay: reduceMotion ? 0 : horizontal ? 0.2 : 0.3 }}
       >
         <MetricCard
           label="Ortalama Eşleşme"
@@ -99,6 +105,8 @@ export function LiveMetrics({ reduceMotion }: Props) {
           reduceMotion={reduceMotion}
         />
       </motion.div>
-    </div>
+    </>
   )
+
+  return <div className={wrapClass}>{cards}</div>
 }
