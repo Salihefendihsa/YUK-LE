@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import './landing.css'
 import './gsapSetup'
 import { useLenisScroll } from './hooks/useLenisScroll'
-import { CinematicLoader } from './components/CinematicLoader'
+import { MinimalLoader } from './components/MinimalLoader'
 import { LandingCursor } from './components/Cursor'
 import { LandingNavbar } from './components/Navbar'
 import { HeroSection } from './sections/Hero'
@@ -48,11 +48,8 @@ function readLandingIntroDone() {
 
 export default function Landing() {
   const [ready, setReady] = useState(readLandingIntroDone)
-  const [heroReveal, setHeroReveal] = useState(false)
   const { reduceMotion, light3d } = useLandingPrefs()
   useLenisScroll()
-
-  const onRevealHero = useCallback(() => setHeroReveal(true), [])
 
   const onIntroComplete = useCallback(() => {
     try {
@@ -74,19 +71,11 @@ export default function Landing() {
 
   return (
     <div className={`landing-root ${ready ? 'landing-root--ready' : ''}`}>
-      {!ready && <CinematicLoader onRevealHero={onRevealHero} onComplete={onIntroComplete} />}
+      {!ready && <MinimalLoader onComplete={onIntroComplete} minDuration={800} />}
       {!reduceMotion && !light3d && <LandingCursor />}
       <LandingNavbar />
       <main>
-        <div
-          className={
-            heroReveal
-              ? 'landing-hero-reveal-wrap landing-hero-reveal-wrap--active'
-              : 'landing-hero-reveal-wrap'
-          }
-        >
-          <HeroSection reduceMotion={light3d} />
-        </div>
+        <HeroSection reduceMotion={light3d} />
         <JourneySection reduceMotion={light3d} />
         <AISection reduceMotion={reduceMotion} />
         <SecuritySection reduceMotion={reduceMotion} />
