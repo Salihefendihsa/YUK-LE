@@ -1,6 +1,5 @@
 import { lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import './landing.css'
-import './gsapSetup'
 import { useLenisScroll } from './hooks/useLenisScroll'
 import { MinimalLoader } from './components/MinimalLoader'
 import { LazySection } from './components/LazySection'
@@ -74,6 +73,10 @@ export default function Landing() {
 
   const onIntroComplete = useCallback(() => {
     setReady(true)
+  }, [])
+
+  useEffect(() => {
+    void import('./gsapSetup')
   }, [])
 
   useEffect(() => {

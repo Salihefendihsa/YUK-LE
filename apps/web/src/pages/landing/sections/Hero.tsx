@@ -1,11 +1,16 @@
 import type { ReactNode } from 'react'
-import { useEffect, useRef } from 'react'
+import { lazy, Suspense, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { AuroraBackground } from '../components/AuroraBackground'
-import { FloatingParticles } from '../components/FloatingParticles'
-import { SpotlightCursor } from '../components/SpotlightCursor'
 import { ShimmerText } from '../components/ShimmerText'
+
+const FloatingParticles = lazy(() =>
+  import('../components/FloatingParticles').then((m) => ({ default: m.FloatingParticles })),
+)
+const SpotlightCursor = lazy(() =>
+  import('../components/SpotlightCursor').then((m) => ({ default: m.SpotlightCursor })),
+)
 
 function ArrowRightIcon() {
   return (
@@ -102,8 +107,10 @@ export function HeroSection({ reduceMotion }: { reduceMotion: boolean }) {
   return (
     <section className="hero-cinematic" id="top">
       <AuroraBackground />
-      <FloatingParticles />
-      <SpotlightCursor disabled={r} />
+      <Suspense fallback={null}>
+        <FloatingParticles />
+        <SpotlightCursor disabled={r} />
+      </Suspense>
       <div className="hero-grid-pattern" aria-hidden />
       <div className="hero-vignette" aria-hidden />
 

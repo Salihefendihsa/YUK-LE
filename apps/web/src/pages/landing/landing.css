@@ -20,6 +20,18 @@ html.landing-page body {
   pointer-events: none;
 }
 
+/* Below-the-fold: skip paint until near viewport */
+.lazy-section-placeholder,
+#journey,
+#ai,
+#security,
+#mobile,
+#testimonials,
+#pricing {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 600px;
+}
+
 /* Circle loader + vignette reveal */
 .circle-loader {
   position: fixed;
@@ -525,6 +537,7 @@ html.landing-page body {
   overflow: hidden;
   pointer-events: none;
   z-index: 1;
+  will-change: transform;
 }
 
 .aurora {
@@ -617,6 +630,7 @@ html.landing-page body {
   overflow: hidden;
   pointer-events: none;
   z-index: 2;
+  will-change: transform, opacity;
 }
 
 .particle {
@@ -652,6 +666,7 @@ html.landing-page body {
   pointer-events: none;
   z-index: 3;
   transition: background 0.1s ease;
+  will-change: background;
 }
 
 @media (hover: none), (max-width: 768px) {
