@@ -264,3 +264,18 @@ input, textarea, select {
     transform: none;
   }
 }
+
+.route-spinner {
+  width: 32px;
+  height: 32px;
+  border: 2px solid rgba(255, 107, 0, 0.2);
+  border-top-color: #ff6b00;
+  border-radius: 50%;
+  animation: route-spinner-rotate 0.8s linear infinite;
+}
+
+@keyframes route-spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
