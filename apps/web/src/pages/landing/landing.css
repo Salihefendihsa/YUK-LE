@@ -39,8 +39,80 @@ html.landing-page body {
 .circle-loader-bg {
   position: absolute;
   inset: 0;
-  background: #050608;
-  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: hidden;
+  background-color: #050608;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: 0 0;
+  transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.circle-loader-bg::before {
+  content: '';
+  position: absolute;
+  bottom: -25%;
+  right: -15%;
+  width: 70vw;
+  height: 70vh;
+  background: radial-gradient(
+    circle,
+    rgba(255, 107, 0, 0.35) 0%,
+    rgba(255, 51, 0, 0.18) 35%,
+    transparent 70%
+  );
+  filter: blur(80px);
+  animation: loader-aurora-drift-1 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.circle-loader-bg::after {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: -15%;
+  width: 60vw;
+  height: 60vh;
+  background: radial-gradient(
+    circle,
+    rgba(99, 102, 241, 0.25) 0%,
+    rgba(76, 29, 149, 0.15) 35%,
+    transparent 70%
+  );
+  filter: blur(80px);
+  animation: loader-aurora-drift-2 10s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes loader-aurora-drift-1 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-30px, -20px) scale(1.08);
+  }
+}
+
+@keyframes loader-aurora-drift-2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(40px, 30px) scale(1.1);
+  }
+}
+
+.circle-loader--reveal .circle-loader-bg::before,
+.circle-loader--exiting .circle-loader-bg::before {
+  filter: blur(80px) brightness(1.28) saturate(1.12);
+  transition: filter 0.5s ease;
+}
+
+.circle-loader--reveal .circle-loader-bg::after,
+.circle-loader--exiting .circle-loader-bg::after {
+  filter: blur(80px) brightness(1.28) saturate(1.12);
+  transition: filter 0.5s ease;
 }
 
 .circle-loader--exiting .circle-loader-bg {
@@ -234,6 +306,11 @@ html.landing-page body {
   .circle-loader-dot,
   .circle-loader-text,
   .circle-loader--reveal .circle-loader-spinner {
+    animation: none;
+  }
+
+  .circle-loader-bg::before,
+  .circle-loader-bg::after {
     animation: none;
   }
 

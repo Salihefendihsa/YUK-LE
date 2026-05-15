@@ -9,7 +9,7 @@ type LoaderPhase = 'loading' | 'reveal' | 'exiting'
 
 const RADIUS = 70
 
-export function MinimalLoader({ onComplete, duration = 5000 }: MinimalLoaderProps) {
+export function MinimalLoader({ onComplete, duration = 2500 }: MinimalLoaderProps) {
   const uid = useId().replace(/:/g, '')
   const gradId = `circleGrad-${uid}`
   const glowId = `circleGlow-${uid}`
@@ -50,7 +50,7 @@ export function MinimalLoader({ onComplete, duration = 5000 }: MinimalLoaderProp
       } else if (phaseRef.current !== 'exiting') {
         phaseRef.current = 'exiting'
         setPhase('exiting')
-        exitTimerRef.current = window.setTimeout(() => onComplete(), 450)
+        exitTimerRef.current = window.setTimeout(() => onComplete(), 300)
       }
     }
 

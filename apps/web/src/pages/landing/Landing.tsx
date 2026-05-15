@@ -56,7 +56,7 @@ export default function Landing() {
 
   return (
     <div className={`landing-root ${ready ? 'landing-root--ready' : ''}`}>
-      {!ready && <MinimalLoader onComplete={onIntroComplete} duration={5000} />}
+      {!ready && <MinimalLoader onComplete={onIntroComplete} duration={2500} />}
       <div
         className="landing-root-content"
         style={{ visibility: ready ? 'visible' : 'hidden' }}
