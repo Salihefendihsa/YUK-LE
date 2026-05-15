@@ -38,8 +38,26 @@ function useLandingPrefs() {
 
 export default function Landing() {
   const [ready, setReady] = useState(false)
+  const [loadProgress, setLoadProgress] = useState(0)
   const { reduceMotion, light3d } = useLandingPrefs()
   useLenisScroll()
+
+  const heroReveal = useMemo(() => {
+    if (ready) return 1
+    if (loadProgress < 80) return 0
+    return Math.min((loadProgress - 80) / 20, 1)
+  }, [loadProgress, ready])
+
+  const contentRevealStyle = useMemo(() => {
+    const vis: 'visible' | 'hidden' = loadProgress >= 80 || ready ? 'visible' : 'hidden'
+    return {
+      opacity: heroReveal,
+      filter: `blur(${(1 - heroReveal) * 24}px)`,
+      transform: `scale(${1 + (1 - heroReveal) * 0.04})`,
+      visibility: vis,
+      transition: 'opacity 0.15s ease-out, filter 0.15s ease-out, transform 0.15s ease-out',
+    }
+  }, [heroReveal, loadProgress, ready])
 
   const onIntroComplete = useCallback(() => {
     setReady(true)
@@ -56,11 +74,10 @@ export default function Landing() {
 
   return (
     <div className={`landing-root ${ready ? 'landing-root--ready' : ''}`}>
-      {!ready && <MinimalLoader onComplete={onIntroComplete} duration={2500} />}
-      <div
-        className="landing-root-content"
-        style={{ visibility: ready ? 'visible' : 'hidden' }}
-      >
+      {!ready && (
+        <MinimalLoader onComplete={onIntroComplete} onProgress={setLoadProgress} duration={2500} />
+      )}
+      <div className="landing-root-content" style={contentRevealStyle}>
         {!reduceMotion && !light3d && <LandingCursor />}
         <LandingNavbar />
         <main>

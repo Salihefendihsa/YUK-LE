@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, useId } from 'react'
+import { useEffect, useRef, useState, useId, type CSSProperties } from 'react'
 
 type MinimalLoaderProps = {
   onComplete: () => void
+  onProgress?: (progress: number) => void
   duration?: number
 }
 
@@ -9,10 +10,13 @@ type LoaderPhase = 'loading' | 'reveal' | 'exiting'
 
 const RADIUS = 70
 
-export function MinimalLoader({ onComplete, duration = 2500 }: MinimalLoaderProps) {
+export function MinimalLoader({ onComplete, onProgress, duration = 2500 }: MinimalLoaderProps) {
   const uid = useId().replace(/:/g, '')
   const gradId = `circleGrad-${uid}`
   const glowId = `circleGlow-${uid}`
+
+  const onProgressRef = useRef(onProgress)
+  onProgressRef.current = onProgress
 
   const [progress, setProgress] = useState(0)
   const [phase, setPhase] = useState<LoaderPhase>('loading')
@@ -23,6 +27,7 @@ export function MinimalLoader({ onComplete, duration = 2500 }: MinimalLoaderProp
   useEffect(() => {
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (prefersReduced) {
+      onProgressRef.current?.(100)
       const t = window.setTimeout(() => onComplete(), 200)
       return () => window.clearTimeout(t)
     }
@@ -38,10 +43,13 @@ export function MinimalLoader({ onComplete, duration = 2500 }: MinimalLoaderProp
       if (elapsed < loadDuration) {
         const t = elapsed / loadDuration
         const eased = 1 - Math.pow(1 - t, 3)
-        setProgress(eased * 100)
+        const p = eased * 100
+        setProgress(p)
+        onProgressRef.current?.(p)
         rafRef.current = requestAnimationFrame(tick)
       } else if (elapsed < duration) {
         setProgress(100)
+        onProgressRef.current?.(100)
         if (phaseRef.current === 'loading') {
           phaseRef.current = 'reveal'
           setPhase('reveal')
@@ -62,9 +70,22 @@ export function MinimalLoader({ onComplete, duration = 2500 }: MinimalLoaderProp
     }
   }, [duration, onComplete])
 
+  const panelOpacity =
+    phase === 'exiting'
+      ? 0
+      : progress < 80
+        ? 1
+        : Math.max(1 - ((progress - 80) / 20) * 0.7, 0.3)
+
+  const auroraBoost = progress < 80 ? 1 : 1 + ((progress - 80) / 20) * 0.5
+
+  const rootStyle = {
+    ['--loader-panel-opacity' as string]: String(panelOpacity),
+    ['--loader-aurora-boost' as string]: String(auroraBoost),
+  } as CSSProperties
+
   const circumference = 2 * Math.PI * RADIUS
   const offset = circumference - (progress / 100) * circumference
-
   const arcAngle = (-Math.PI / 2) + (Math.min(progress, 100) / 100) * Math.PI * 2
   const dotCx = 90 + RADIUS * Math.cos(arcAngle)
   const dotCy = 90 + RADIUS * Math.sin(arcAngle)
@@ -72,7 +93,11 @@ export function MinimalLoader({ onComplete, duration = 2500 }: MinimalLoaderProp
   const pct = Math.floor(progress)
 
   return (
-    <div className={`circle-loader circle-loader--${phase}`}>
+    <div
+      className={`circle-loader circle-loader--${phase}`}
+      style={rootStyle}
+      data-progress-late={progress >= 80 && phase === 'loading' ? 'true' : 'false'}
+    >
       <div className="circle-loader-bg" aria-hidden />
       <div className="circle-loader-vignette" aria-hidden />
       <div className="circle-loader-content">

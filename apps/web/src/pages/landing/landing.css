@@ -44,7 +44,8 @@ html.landing-page body {
   background-image: radial-gradient(circle, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
   background-size: 32px 32px;
   background-position: 0 0;
-  transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  opacity: var(--loader-panel-opacity, 1);
+  transition: opacity 0.15s ease-out;
 }
 
 .circle-loader-bg::before {
@@ -60,7 +61,7 @@ html.landing-page body {
     rgba(255, 51, 0, 0.18) 35%,
     transparent 70%
   );
-  filter: blur(80px);
+  filter: blur(80px) brightness(var(--loader-aurora-boost, 1));
   animation: loader-aurora-drift-1 8s ease-in-out infinite;
   pointer-events: none;
 }
@@ -78,7 +79,7 @@ html.landing-page body {
     rgba(76, 29, 149, 0.15) 35%,
     transparent 70%
   );
-  filter: blur(80px);
+  filter: blur(80px) brightness(var(--loader-aurora-boost, 1));
   animation: loader-aurora-drift-2 10s ease-in-out infinite;
   pointer-events: none;
 }
@@ -105,18 +106,21 @@ html.landing-page body {
 
 .circle-loader--reveal .circle-loader-bg::before,
 .circle-loader--exiting .circle-loader-bg::before {
-  filter: blur(80px) brightness(1.28) saturate(1.12);
+  filter: blur(80px)
+    brightness(calc(var(--loader-aurora-boost, 1) * 1.28)) saturate(1.12);
   transition: filter 0.5s ease;
 }
 
 .circle-loader--reveal .circle-loader-bg::after,
 .circle-loader--exiting .circle-loader-bg::after {
-  filter: blur(80px) brightness(1.28) saturate(1.12);
+  filter: blur(80px)
+    brightness(calc(var(--loader-aurora-boost, 1) * 1.28)) saturate(1.12);
   transition: filter 0.5s ease;
 }
 
 .circle-loader--exiting .circle-loader-bg {
   opacity: 0;
+  transition: opacity 0.45s ease;
 }
 
 .circle-loader-vignette {
@@ -149,9 +153,14 @@ html.landing-page body {
   align-items: center;
   gap: 32px;
   padding: 32px;
+  opacity: 1;
   transition:
-    opacity 0.45s ease,
+    opacity 0.3s ease-out,
     transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.circle-loader--loading[data-progress-late='true'] .circle-loader-content {
+  opacity: 0.85;
 }
 
 .circle-loader--exiting .circle-loader-content {
@@ -337,6 +346,7 @@ html.landing-page body {
 
 .landing-root-content {
   min-height: 100vh;
+  will-change: opacity, filter, transform;
 }
 
 /* Custom cursor */
