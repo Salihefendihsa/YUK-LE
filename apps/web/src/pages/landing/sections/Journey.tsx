@@ -33,12 +33,11 @@ export function JourneySection({ reduceMotion }: { reduceMotion: boolean }) {
             OPERASYONEL GÜÇ
           </p>
           <h2 className="section-network-title">
-            <span className="section-network-title-line">81 İlde,</span>
-            <span className="section-network-title-line">Tek Tuşla.</span>
+            <span className="section-network-title-line">Türkiye&apos;den başlar,</span>
+            <span className="section-network-title-line">dünyaya akar.</span>
           </h2>
           <p className="section-network-subtitle">
-            Türkiye&apos;nin dört bir yanında aktif şoför ağı.
-            <br />
+            Türkiye&apos;de 2.847 fabrika ile başladık, 10 ülkede büyümeye devam ediyoruz.
             Yükünüzü saniyeler içinde eşleştirin, anlık takip edin.
           </p>
         </motion.header>
