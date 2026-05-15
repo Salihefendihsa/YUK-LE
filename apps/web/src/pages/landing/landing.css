@@ -4,12 +4,6 @@ html.landing-page body {
   background: #090b0e;
 }
 
-@media (pointer: fine) {
-  html.landing-page body {
-    cursor: none;
-  }
-}
-
 .landing-root {
   min-height: 100vh;
   color: #f3f4f6;
@@ -347,27 +341,6 @@ html.landing-page body {
 .landing-root-content {
   min-height: 100vh;
   will-change: opacity, filter, transform;
-}
-
-/* Custom cursor */
-.landing-cursor {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #ffb37a, #ff6b00 55%, #cc5500);
-  box-shadow: 0 0 24px rgba(255, 107, 0, 0.55);
-  pointer-events: none;
-  z-index: 99999;
-  mix-blend-mode: normal;
-}
-
-@media (pointer: coarse) {
-  .landing-cursor {
-    display: none;
-  }
 }
 
 /* Navbar */

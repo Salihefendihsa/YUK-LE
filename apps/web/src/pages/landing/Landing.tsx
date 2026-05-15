@@ -3,7 +3,6 @@ import './landing.css'
 import './gsapSetup'
 import { useLenisScroll } from './hooks/useLenisScroll'
 import { MinimalLoader } from './components/MinimalLoader'
-import { LandingCursor } from './components/Cursor'
 import { LandingNavbar } from './components/Navbar'
 import { HeroSection } from './sections/Hero'
 import { JourneySection } from './sections/Journey'
@@ -78,7 +77,6 @@ export default function Landing() {
         <MinimalLoader onComplete={onIntroComplete} onProgress={setLoadProgress} duration={2500} />
       )}
       <div className="landing-root-content" style={contentRevealStyle}>
-        {!reduceMotion && !light3d && <LandingCursor />}
         <LandingNavbar />
         <main>
           <HeroSection reduceMotion={light3d} />
