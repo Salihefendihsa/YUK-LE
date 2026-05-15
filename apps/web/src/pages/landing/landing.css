@@ -15,6 +15,11 @@ html.landing-page body {
   overflow: hidden;
 }
 
+.lazy-section-placeholder {
+  background: transparent;
+  pointer-events: none;
+}
+
 /* Circle loader + vignette reveal */
 .circle-loader {
   position: fixed;

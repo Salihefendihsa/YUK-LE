@@ -1,19 +1,33 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import './landing.css'
 import './gsapSetup'
 import { useLenisScroll } from './hooks/useLenisScroll'
 import { MinimalLoader } from './components/MinimalLoader'
+import { LazySection } from './components/LazySection'
 import { LandingNavbar } from './components/Navbar'
 import { HeroSection } from './sections/Hero'
-import { JourneySection } from './sections/Journey'
-import { AISection } from './sections/AI'
-import { SecuritySection } from './sections/Security'
-import { StatsSection } from './sections/Stats'
-import { MobileDemoSection } from './sections/MobileDemo'
-import { TestimonialsSection } from './sections/Testimonials'
-import { PricingSection } from './sections/Pricing'
-import { CTASection } from './sections/CTA'
-import { LandingFooter } from './sections/Footer'
+
+const JourneySection = lazy(() =>
+  import('./sections/Journey').then((m) => ({ default: m.JourneySection })),
+)
+const AISection = lazy(() => import('./sections/AI').then((m) => ({ default: m.AISection })))
+const StatsSection = lazy(() => import('./sections/Stats').then((m) => ({ default: m.StatsSection })))
+const SecuritySection = lazy(() =>
+  import('./sections/Security').then((m) => ({ default: m.SecuritySection })),
+)
+const MobileDemoSection = lazy(() =>
+  import('./sections/MobileDemo').then((m) => ({ default: m.MobileDemoSection })),
+)
+const TestimonialsSection = lazy(() =>
+  import('./sections/Testimonials').then((m) => ({ default: m.TestimonialsSection })),
+)
+const PricingSection = lazy(() =>
+  import('./sections/Pricing').then((m) => ({ default: m.PricingSection })),
+)
+const CTASection = lazy(() => import('./sections/CTA').then((m) => ({ default: m.CTASection })))
+const LandingFooter = lazy(() =>
+  import('./sections/Footer').then((m) => ({ default: m.LandingFooter })),
+)
 
 function useLandingPrefs() {
   const reduceMotion = useMemo(
@@ -80,16 +94,34 @@ export default function Landing() {
         <LandingNavbar />
         <main>
           <HeroSection reduceMotion={light3d} />
-          <JourneySection reduceMotion={light3d} />
-          <AISection reduceMotion={reduceMotion} />
-          <SecuritySection reduceMotion={reduceMotion} />
-          <StatsSection reduceMotion={reduceMotion} />
-          <MobileDemoSection reduceMotion={light3d} />
-          <TestimonialsSection />
-          <PricingSection />
-          <CTASection />
+          <LazySection id="journey" rootMargin="500px" minHeight="700px">
+            <JourneySection reduceMotion={light3d} />
+          </LazySection>
+          <LazySection id="ai" rootMargin="500px" minHeight="700px">
+            <AISection reduceMotion={reduceMotion} />
+          </LazySection>
+          <LazySection id="stats" rootMargin="400px" minHeight="400px">
+            <StatsSection reduceMotion={reduceMotion} />
+          </LazySection>
+          <LazySection id="security" rootMargin="500px" minHeight="700px">
+            <SecuritySection reduceMotion={reduceMotion} />
+          </LazySection>
+          <LazySection id="mobile" rootMargin="500px" minHeight="700px">
+            <MobileDemoSection reduceMotion={light3d} />
+          </LazySection>
+          <LazySection id="testimonials" rootMargin="400px" minHeight="500px">
+            <TestimonialsSection />
+          </LazySection>
+          <LazySection id="pricing" rootMargin="400px" minHeight="600px">
+            <PricingSection />
+          </LazySection>
+          <LazySection id="cta" rootMargin="300px" minHeight="400px">
+            <CTASection />
+          </LazySection>
         </main>
-        <LandingFooter />
+        <LazySection id="footer" rootMargin="200px" minHeight="300px">
+          <LandingFooter />
+        </LazySection>
       </div>
     </div>
   )
