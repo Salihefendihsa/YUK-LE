@@ -8,6 +8,7 @@ using Polly;
 using Yukle.Api.Data;
 using Yukle.Api.Infrastructure;
 using Yukle.Api.Services;
+using Yukle.Api.Services.Sms;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -57,6 +58,11 @@ var allowedOrigins = builder.Configuration
 if (!allowedOrigins.Contains("http://localhost:5173", StringComparer.OrdinalIgnoreCase))
 {
     allowedOrigins = [.. allowedOrigins, "http://localhost:5173"];
+}
+
+if (!allowedOrigins.Contains("http://localhost:8081", StringComparer.OrdinalIgnoreCase))
+{
+    allowedOrigins = [.. allowedOrigins, "http://localhost:8081"];
 }
 
 builder.Services.AddCors(options =>
@@ -110,13 +116,15 @@ builder.Services.AddSingleton<Yukle.Api.Services.IEncryptionService,
 builder.Services.AddScoped<Yukle.Api.Services.ITokenService,        Yukle.Api.Services.TokenService>();
 builder.Services.AddScoped<Yukle.Api.Services.ILoadService,         Yukle.Api.Services.LoadService>();
 builder.Services.AddScoped<Yukle.Api.Services.IAuthService,         Yukle.Api.Services.AuthService>();
-builder.Services.AddScoped<Yukle.Api.Services.ISmsService,          Yukle.Api.Services.NetgsmSmsService>();
+builder.Services.AddYukleSms(builder.Configuration);
 builder.Services.AddScoped<Yukle.Api.Services.IBidService,          Yukle.Api.Services.BidService>();
 builder.Services.AddScoped<Yukle.Api.Services.INotificationService, Yukle.Api.Services.NotificationService>();
 builder.Services.AddScoped<Yukle.Api.Services.IDashboardService,    Yukle.Api.Services.DashboardService>();
 builder.Services.AddScoped<Yukle.Api.Services.AiPricingService>();
 builder.Services.AddScoped<Yukle.Api.Services.PricingService>();
-builder.Services.AddScoped<Yukle.Api.Services.IPaymentService,      Yukle.Api.Services.MockPaymentService>();
+builder.Services.AddScoped<Yukle.Api.Services.IWalletSettlementCalculator, Yukle.Api.Services.WalletSettlementCalculator>();
+builder.Services.AddScoped<Yukle.Api.Services.IWalletLedgerService,        Yukle.Api.Services.WalletLedgerService>();
+builder.Services.AddScoped<Yukle.Api.Services.IPaymentService,             Yukle.Api.Services.MockPaymentService>();
 builder.Services.AddSingleton<Yukle.Api.Services.IChatModerationService, Yukle.Api.Services.ChatModerationService>();
 
 // ── Rota Servisi (OSRM) ────────────────────────────────────────────────────

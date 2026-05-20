@@ -115,11 +115,34 @@ public class BidService : IBidService
             .ToListAsync();
     }
 
+    public async Task<List<DriverBidListDto>> GetBidsByDriverIdAsync(int driverId)
+    {
+        return await _context.Bids
+            .AsNoTracking()
+            .Where(b => b.DriverId == driverId)
+            .OrderByDescending(b => b.CreatedAt)
+            .Select(b => new DriverBidListDto
+            {
+                Id        = b.Id,
+                LoadId    = b.LoadId,
+                FromCity  = b.Load.FromCity,
+                ToCity    = b.Load.ToCity,
+                Amount    = b.Amount,
+                Note      = b.Note,
+                OfferDate = b.CreatedAt,
+                Status    = b.Status.ToString()
+            })
+            .ToListAsync();
+    }
+
     // ── AcceptBidAsync ────────────────────────────────────────────────────────
 
     public async Task AcceptBidAsync(int bidId, int customerId)
     {
-        using var transaction = await _context.Database.BeginTransactionAsync();
+        var strategy = _context.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
+        {
+        await using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
             // Guard 1: Teklif var mı ve Pending mi?
@@ -204,5 +227,6 @@ public class BidService : IBidService
             await transaction.RollbackAsync();
             throw;
         }
+        });
     }
 }

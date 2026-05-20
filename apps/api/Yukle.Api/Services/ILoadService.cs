@@ -17,6 +17,12 @@ public interface ILoadService
     /// <summary>Durumu Active olan tüm yük ilanlarını özet DTO listesi olarak döner.</summary>
     Task<List<LoadListDto>> GetActiveLoadsAsync();
 
+    /// <summary>Musterinin tum yuk ilanlari (tum durumlar).</summary>
+    Task<List<LoadListDto>> GetCustomerLoadsAsync(int userId);
+
+    /// <summary>Soforun Assigned / OnWay / Arrived durumundaki guncel seferini doner.</summary>
+    Task<LoadListDto?> GetDriverCurrentLoadAsync(int driverId);
+
     /// <summary>Belirli bir ID'ye sahip yük ilanının detayını döner; bulunamazsa null.</summary>
     Task<LoadListDto?> GetLoadByIdAsync(Guid id);
 

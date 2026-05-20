@@ -301,11 +301,13 @@ public class AdminController : ControllerBase
         if (driverId.HasValue)
             query = query.Where(l => l.DriverId == driverId.Value);
 
-        var data = await query
+        var rows = await query
             .OrderByDescending(l => l.CreatedAt)
             .Select(l => new
             {
                 l.Id,
+                l.UserId,
+                l.DriverId,
                 l.FromCity,
                 l.ToCity,
                 Status = l.Status.ToString(),
@@ -313,6 +315,28 @@ public class AdminController : ControllerBase
                 l.CreatedAt
             })
             .ToListAsync();
+
+        var userIds = rows
+            .SelectMany(l => new[] { l.UserId }.Concat(l.DriverId != null ? new[] { l.DriverId!.Value } : Array.Empty<int>()))
+            .Distinct()
+            .ToList();
+
+        var names = await _context.Users.AsNoTracking()
+            .Where(u => userIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.FullName);
+
+        var data = rows.Select(l => new
+        {
+            l.Id,
+            l.FromCity,
+            l.ToCity,
+            l.Status,
+            l.Price,
+            l.CreatedAt,
+            CustomerName = names.TryGetValue(l.UserId, out var cn) ? cn : "?",
+            DriverName = l.DriverId is int did && names.TryGetValue(did, out var dn) ? dn : null
+        });
+
         return Ok(data);
     }
 
@@ -422,10 +446,8 @@ public class AdminController : ControllerBase
     public async Task<IActionResult> GetStats()
     {
         var today = DateTime.UtcNow.Date;
-        var monthStart = new DateTime(today.Year, today.Month, 1);
         var users = await _context.Users.GroupBy(u => u.Role).Select(g => new { Role = g.Key.ToString(), Count = g.Count() }).ToListAsync();
         var totalVolume = await _context.PaymentTransactions.SumAsync(p => (decimal?)p.Amount) ?? 0m;
-        var monthCommission = await _context.PaymentTransactions.Where(p => p.CreatedAt >= monthStart && p.Status == PaymentStatus.Released).SumAsync(p => (decimal?)p.Amount) ?? 0m;
         return Ok(new
         {
             Users = users,
@@ -433,7 +455,8 @@ public class AdminController : ControllerBase
             ActiveLoads = await _context.Loads.CountAsync(l => l.Status == LoadStatus.Active),
             DeliveredToday = await _context.Loads.CountAsync(l => l.Status == LoadStatus.Delivered && l.DeliveryDate >= today),
             TotalVolume = totalVolume,
-            MonthlyCommission = monthCommission * 0.1m,
+            MonthlyCommission = (decimal?)null,
+            MonthlyCommissionStatus = "not_calculated",
             PendingReviews = await _context.Users.CountAsync(u => u.ApprovalStatus == ApprovalStatus.PendingReview),
             ReportedChats = _chatModerationService.GetBlockedMessages(500).Count
         });

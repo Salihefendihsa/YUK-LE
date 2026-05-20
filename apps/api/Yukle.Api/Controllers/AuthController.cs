@@ -144,6 +144,24 @@ namespace Yukle.Api.Controllers
         }
 
         [AllowAnonymous]
+        [EnableRateLimiting("otp-policy")]
+        [HttpPost("resend-otp")]
+        public async Task<IActionResult> ResendOtp([FromBody] ForgotPasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            try
+            {
+                await _authService.ResendVerificationOtpAsync(request.Phone);
+                return Ok(new { success = true, message = "Dogrulama kodu tekrar gonderildi." });
+            }
+            catch (ApplicationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [AllowAnonymous]
         [EnableRateLimiting("otp-policy")]     // Phase 2.2: 3 istek/dk, IP bazlı
         [HttpPost("verify-otp")]
         public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto request)

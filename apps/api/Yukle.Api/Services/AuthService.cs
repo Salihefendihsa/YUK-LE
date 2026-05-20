@@ -252,6 +252,25 @@ public class AuthService : IAuthService
         await _context.SaveChangesAsync();
     }
 
+    public async Task ResendVerificationOtpAsync(string phone)
+    {
+        var normalized = phone.Trim();
+        await EnforceSmsRateLimitAsync(normalized);
+
+        var user = await _context.Users.SingleOrDefaultAsync(u => u.Phone == normalized)
+            ?? throw new ApplicationException("Bu telefon numarasiyla kayit bulunamadi.");
+
+        if (user.IsPhoneVerified)
+            throw new ApplicationException("Bu telefon numarasi zaten dogrulanmis.");
+
+        var otp = _smsService.GenerateSixDigitOtp();
+        var utcNow = DateTime.UtcNow;
+        user.VerificationCode = otp;
+        user.VerificationCodeExpiry = utcNow.AddMinutes(5);
+        await _context.SaveChangesAsync();
+        await _smsService.SendOtpAsync(normalized, otp);
+    }
+
     private async Task VerifyPasswordResetOtpAsync(VerifyOtpDto dto)
     {
         var phone    = dto.Phone.Trim();

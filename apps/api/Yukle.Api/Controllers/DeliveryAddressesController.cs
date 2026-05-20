@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Yukle.Api.Data;
+using Yukle.Api.DTOs;
 using Yukle.Api.Models;
 
 namespace Yukle.Api.Controllers;
@@ -21,35 +22,57 @@ public class DeliveryAddressesController(YukleDbContext context) : ControllerBas
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] DeliveryAddress request)
+    public async Task<IActionResult> Create([FromBody] UpsertDeliveryAddressDto dto)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        request.Id = Guid.NewGuid();
-        request.UserId = userId;
-        request.CreatedAt = DateTime.UtcNow;
+        var request = MapToEntity(dto, userId);
         await context.DeliveryAddresses.AddAsync(request);
         await context.SaveChangesAsync();
         return Ok(request);
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] DeliveryAddress request)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpsertDeliveryAddressDto dto)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var item = await context.DeliveryAddresses.FirstOrDefaultAsync(a => a.Id == id && a.UserId == userId);
         if (item is null) return NotFound();
-        item.Title = request.Title;
-        item.CompanyName = request.CompanyName;
-        item.ContactPerson = request.ContactPerson;
-        item.ContactPhone = request.ContactPhone;
-        item.Address = request.Address;
-        item.City = request.City;
-        item.District = request.District;
-        item.Latitude = request.Latitude;
-        item.Longitude = request.Longitude;
-        item.IsDefault = request.IsDefault;
+        ApplyDto(item, dto);
         await context.SaveChangesAsync();
         return Ok(item);
+    }
+
+    private static DeliveryAddress MapToEntity(UpsertDeliveryAddressDto dto, int userId) => new()
+    {
+        Id = Guid.NewGuid(),
+        UserId = userId,
+        CreatedAt = DateTime.UtcNow,
+        Title = dto.Title.Trim(),
+        CompanyName = dto.CompanyName.Trim(),
+        ContactPerson = dto.ContactPerson.Trim(),
+        ContactPhone = dto.ContactPhone.Trim(),
+        Address = dto.Address.Trim(),
+        City = dto.City.Trim(),
+        District = dto.District.Trim(),
+        Latitude = dto.Latitude,
+        Longitude = dto.Longitude,
+        IsDefault = dto.IsDefault,
+    };
+
+    private static void ApplyDto(DeliveryAddress item, UpsertDeliveryAddressDto dto)
+    {
+        item.Title = dto.Title.Trim();
+        item.CompanyName = dto.CompanyName.Trim();
+        item.ContactPerson = dto.ContactPerson.Trim();
+        item.ContactPhone = dto.ContactPhone.Trim();
+        item.Address = dto.Address.Trim();
+        item.City = dto.City.Trim();
+        item.District = dto.District.Trim();
+        item.Latitude = dto.Latitude;
+        item.Longitude = dto.Longitude;
+        item.IsDefault = dto.IsDefault;
     }
 
     [HttpDelete("{id:guid}")]

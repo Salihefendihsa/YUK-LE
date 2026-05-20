@@ -173,7 +173,26 @@ public sealed class LoadsController(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
-        var loads = await loadService.GetActiveLoadsAsync();
+        List<LoadListDto> loads;
+
+        if (User.IsInRole("Customer")
+            && int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId))
+        {
+            loads = await loadService.GetCustomerLoadsAsync(customerId);
+        }
+        else
+        {
+            loads = await loadService.GetActiveLoadsAsync();
+
+            if (User.IsInRole("Driver")
+                && int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var driverId))
+            {
+                var currentTrip = await loadService.GetDriverCurrentLoadAsync(driverId);
+                if (currentTrip is not null && loads.All(l => l.Id != currentTrip.Id))
+                    loads.Add(currentTrip);
+            }
+        }
+
         var query = loads.AsQueryable();
         if (!string.IsNullOrWhiteSpace(fromCity)) query = query.Where(x => x.FromCity.Contains(fromCity, StringComparison.OrdinalIgnoreCase));
         if (!string.IsNullOrWhiteSpace(toCity)) query = query.Where(x => x.ToCity.Contains(toCity, StringComparison.OrdinalIgnoreCase));

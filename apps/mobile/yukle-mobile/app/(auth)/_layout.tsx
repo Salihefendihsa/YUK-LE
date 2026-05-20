@@ -1,0 +1,33 @@
+import { Redirect, Stack } from 'expo-router';
+import { ActivityIndicator, View } from 'react-native';
+import { Colors } from '../../src/constants/colors';
+import { screenRootStyle } from '../../src/constants/layout';
+import { useStoreHydration } from '../../src/hooks/useStoreHydration';
+import { useAuthStore } from '../../src/store/auth.store';
+
+export default function AuthLayout() {
+  const hydrated = useStoreHydration();
+  const { isAuthenticated, user } = useAuthStore();
+
+  if (!hydrated) {
+    return (
+      <View style={[screenRootStyle, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={Colors.primary} />
+      </View>
+    );
+  }
+
+  if (isAuthenticated && user) {
+    if (user.role === 'Customer') {
+      return <Redirect href="/(customer)/(tabs)/dashboard" />;
+    }
+    if (user.role === 'Driver') {
+      return <Redirect href="/(driver)/(tabs)/dashboard" />;
+    }
+    if (user.role === 'Admin') {
+      return <Redirect href="/(admin)/(tabs)/dashboard" />;
+    }
+  }
+
+  return <Stack screenOptions={{ headerShown: false }} />;
+}

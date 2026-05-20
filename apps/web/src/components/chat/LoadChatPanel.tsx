@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import * as signalR from '@microsoft/signalr'
-import { apiClient } from '../../api/client'
+import { getChatMessages } from '../../api/chat'
+import { createChatConnection } from '../../lib/chatHub'
 import { useAuthStore } from '../../store/auth.store'
 import { formatTimeTR } from '../../utils/format'
 import { getAccessTokenForHub } from '../../utils/signalrToken'
@@ -27,12 +28,8 @@ export default function LoadChatPanel({ loadId }: Props) {
   const [connected, setConnected] = useState(false)
 
   useEffect(() => {
-    const connection = new signalR.HubConnectionBuilder()
-      .withUrl('http://localhost:5151/hubs/chat', {
-        accessTokenFactory: () => getAccessTokenForHub(),
-      })
-      .withAutomaticReconnect()
-      .build()
+    const token = getAccessTokenForHub()
+    const connection = createChatConnection(token)
 
     connection.on('ReceiveMessage', (payload: ChatMessage) => {
       setMessages((prev) => {
@@ -44,18 +41,10 @@ export default function LoadChatPanel({ loadId }: Props) {
     let cancelled = false
     void (async () => {
       try {
-        type Row = {
-          id: string
-          senderId: number
-          senderName?: string
-          senderRole?: string
-          message: string
-          sentAt: string
-        }
-        const { data } = await apiClient.get<Row[]>(`/Chat/${loadId}/messages`)
+        const data = await getChatMessages(loadId)
         if (!cancelled) {
           setMessages(
-            (data ?? []).map((r) => ({
+            data.map((r) => ({
               id: r.id,
               senderId: r.senderId,
               senderName: r.senderName,

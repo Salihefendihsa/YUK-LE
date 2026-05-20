@@ -114,6 +114,81 @@ public class LoadService : ILoadService
             .ToListAsync();
     }
 
+    public async Task<List<LoadListDto>> GetCustomerLoadsAsync(int userId)
+    {
+        return await _context.Loads
+            .Where(l => l.UserId == userId)
+            .OrderByDescending(l => l.CreatedAt)
+            .Select(l => new LoadListDto
+            {
+                Id               = l.Id,
+                FromCity         = l.FromCity,
+                FromDistrict     = l.FromDistrict,
+                ToCity           = l.ToCity,
+                ToDistrict       = l.ToDistrict,
+                Description      = l.Description,
+                Weight           = l.Weight,
+                Volume           = l.Volume,
+                Type             = l.Type,
+                PickupDate       = l.PickupDate,
+                DeliveryDate     = l.DeliveryDate,
+                CreatedAt        = l.CreatedAt,
+                Price            = l.Price,
+                Currency         = l.Currency,
+                Status           = l.Status,
+                OwnerId          = l.UserId,
+                OwnerFullName    = l.Owner.FullName,
+                DriverId         = l.DriverId,
+                DestinationLat   = l.Destination.Y,
+                DestinationLng   = l.Destination.X,
+                BidCount         = l.Bids.Count,
+                AiSuggestedPrice = l.AiSuggestedPrice,
+                AiMinPrice       = l.AiMinPrice,
+                AiMaxPrice       = l.AiMaxPrice,
+                AiPriceReasoning = l.AiPriceReasoning
+            })
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    public async Task<LoadListDto?> GetDriverCurrentLoadAsync(int driverId)
+    {
+        var statuses = new[] { LoadStatus.Assigned, LoadStatus.OnWay, LoadStatus.Arrived };
+        return await _context.Loads
+            .Where(l => l.DriverId == driverId && statuses.Contains(l.Status))
+            .OrderByDescending(l => l.CreatedAt)
+            .Select(l => new LoadListDto
+            {
+                Id               = l.Id,
+                FromCity         = l.FromCity,
+                FromDistrict     = l.FromDistrict,
+                ToCity           = l.ToCity,
+                ToDistrict       = l.ToDistrict,
+                Description      = l.Description,
+                Weight           = l.Weight,
+                Volume           = l.Volume,
+                Type             = l.Type,
+                PickupDate       = l.PickupDate,
+                DeliveryDate     = l.DeliveryDate,
+                CreatedAt        = l.CreatedAt,
+                Price            = l.Price,
+                Currency         = l.Currency,
+                Status           = l.Status,
+                OwnerId          = l.UserId,
+                OwnerFullName    = l.Owner.FullName,
+                DriverId         = l.DriverId,
+                DestinationLat   = l.Destination.Y,
+                DestinationLng   = l.Destination.X,
+                BidCount         = l.Bids.Count,
+                AiSuggestedPrice = l.AiSuggestedPrice,
+                AiMinPrice       = l.AiMinPrice,
+                AiMaxPrice       = l.AiMaxPrice,
+                AiPriceReasoning = l.AiPriceReasoning
+            })
+            .AsNoTracking()
+            .FirstOrDefaultAsync();
+    }
+
     public async Task<LoadListDto?> GetLoadByIdAsync(Guid id)
     {
         return await _context.Loads
@@ -154,7 +229,10 @@ public class LoadService : ILoadService
 
     public async Task PickupAsync(Guid loadId, int driverId)
     {
-        using var transaction = await _context.Database.BeginTransactionAsync();
+        var strategy = _context.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
+        {
+        await using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
             var load = await _context.Loads.FindAsync(loadId)
@@ -186,13 +264,17 @@ public class LoadService : ILoadService
             await transaction.RollbackAsync();
             throw;
         }
+        });
     }
 
     // ── DeliverAsync ──────────────────────────────────────────────────────────
 
     public async Task DeliverAsync(Guid loadId, int driverId)
     {
-        using var transaction = await _context.Database.BeginTransactionAsync();
+        var strategy = _context.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
+        {
+        await using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
             var load = await _context.Loads.FindAsync(loadId)
@@ -243,6 +325,7 @@ public class LoadService : ILoadService
             await transaction.RollbackAsync();
             throw;
         }
+        });
     }
 
     // ── UpdateStatusAsync ─────────────────────────────────────────────────────

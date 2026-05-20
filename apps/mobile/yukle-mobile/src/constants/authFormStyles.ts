@@ -1,0 +1,140 @@
+import { StyleSheet } from 'react-native';
+import { palette } from '../theme/colors';
+import { radius } from '../theme/radius';
+import { spacing } from '../theme/spacing';
+import { fontFamily, typography } from '../theme/typography';
+
+export const authFormStyles = StyleSheet.create({
+  scroll: { flexGrow: 1 },
+  title: { display: 'none' },
+  sub: { ...typography.caption, marginBottom: spacing[4], textTransform: 'none' },
+  label: { ...typography.label, marginBottom: spacing[2] },
+  input: {
+    backgroundColor: palette.input,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: palette.borderLight,
+    color: palette.text,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    fontSize: 15,
+    fontFamily: fontFamily.regular,
+    marginBottom: spacing[3],
+    minHeight: 52,
+  },
+  roleRow: {
+    flexDirection: 'row',
+    gap: spacing[3],
+    marginBottom: spacing[5],
+  },
+  roleBtn: {
+    flex: 1,
+    paddingVertical: spacing[3],
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: palette.borderLight,
+    alignItems: 'center',
+    backgroundColor: palette.surface,
+  },
+  roleBtnActive: {
+    borderColor: palette.brandBorder,
+    backgroundColor: palette.brandMuted,
+  },
+  roleBtnText: {
+    fontFamily: fontFamily.semiBold,
+    color: palette.textSecondary,
+    fontSize: 14,
+  },
+  roleBtnTextActive: { color: palette.brand },
+  stepRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: spacing[2],
+    marginBottom: spacing[4],
+    gap: spacing[3],
+  },
+  stepBtn: {
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[4],
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: palette.borderLight,
+  },
+  stepBtnPrimary: {
+    backgroundColor: palette.brand,
+    borderColor: palette.brand,
+  },
+  stepBtnText: {
+    fontFamily: fontFamily.semiBold,
+    color: palette.text,
+    fontSize: 14,
+  },
+  stepBtnTextPrimary: {
+    fontFamily: fontFamily.bold,
+    color: palette.onBrand,
+    fontSize: 14,
+  },
+  errorBox: { display: 'none' },
+  errorText: { display: 'none' },
+  successBox: { display: 'none' },
+  successText: { display: 'none' },
+  checkRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing[3],
+    marginBottom: spacing[3],
+  },
+  checkLabel: {
+    ...typography.caption,
+    flex: 1,
+    textTransform: 'none',
+    color: palette.textSecondary,
+  },
+  link: { ...typography.link, marginTop: spacing[5], textAlign: 'center' },
+  otpRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing[2],
+    marginVertical: spacing[5],
+  },
+  otpBox: {
+    width: 46,
+    height: 54,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: palette.borderLight,
+    backgroundColor: palette.input,
+    color: palette.text,
+    fontSize: 22,
+    fontFamily: fontFamily.bold,
+    textAlign: 'center',
+  },
+  otpBoxFilled: {
+    borderColor: palette.brand,
+    backgroundColor: palette.brandMuted,
+  },
+  stepBadge: {
+    ...typography.label,
+    marginBottom: spacing[4],
+    color: palette.gold,
+  },
+  testBox: {
+    marginTop: spacing[6],
+    backgroundColor: palette.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: palette.borderSubtle,
+    padding: spacing[3],
+  },
+  testTitle: {
+    ...typography.label,
+    marginBottom: spacing[2],
+    color: palette.textMuted,
+  },
+  testItem: {
+    fontFamily: fontFamily.regular,
+    color: palette.textMuted,
+    fontSize: 12,
+    marginBottom: spacing[1],
+  },
+});

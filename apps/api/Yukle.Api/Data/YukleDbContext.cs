@@ -33,6 +33,7 @@ public class YukleDbContext : DbContext
 
     // Faz 4: Ticaret ve Yasal Log
     public DbSet<PaymentTransaction> PaymentTransactions { get; set; }
+    public DbSet<WalletAuditLog>     WalletAuditLogs     { get; set; }
     public DbSet<UetdsOutbox>        UetdsOutboxes       { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -285,6 +286,18 @@ public class YukleDbContext : DbContext
 
             entity.Property(p => p.TransactionId).HasMaxLength(100);
             entity.Property(p => p.Amount).HasPrecision(18, 4);
+        });
+
+        // ── WalletAuditLog ────────────────────────────────────────────────────
+        modelBuilder.Entity<WalletAuditLog>(entity =>
+        {
+            entity.HasKey(w => w.Id);
+            entity.Property(w => w.Amount).HasPrecision(18, 2);
+            entity.Property(w => w.BalanceBefore).HasPrecision(18, 2);
+            entity.Property(w => w.BalanceAfter).HasPrecision(18, 2);
+            entity.Property(w => w.Reason).HasMaxLength(500);
+            entity.HasIndex(w => new { w.UserId, w.CreatedAt });
+            entity.HasIndex(w => w.LoadId);
         });
 
         // ── Phase 4.3 UetdsOutbox ─────────────────────────────────────────────

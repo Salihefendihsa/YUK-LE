@@ -21,6 +21,7 @@ namespace Yukle.Api.Services
         Task<LoginResponseDto>  LoginWithGoogleAsync(GoogleLoginDto dto);
 
         Task                    VerifyOtpAsync(VerifyOtpDto dto);
+        Task                    ResendVerificationOtpAsync(string phone);
 
         /// <summary>
         /// <b>v2.5.4 — Refresh Token Akışı.</b>

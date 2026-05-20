@@ -87,6 +87,21 @@ public sealed class BidsController(
         return Ok(bids);
     }
 
+    // ── GET api/bids/driver ───────────────────────────────────────────────────
+
+    /// <summary>Giris yapan soforun verdigi tum teklifleri listeler.</summary>
+    [HttpGet("driver")]
+    [Authorize(Roles = "Driver")]
+    public async Task<IActionResult> GetDriverBids()
+    {
+        var driverIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(driverIdClaim, out var driverId))
+            return Unauthorized(new { Message = "Gecerli bir kullanici kimligi bulunamadi." });
+
+        var bids = await _bidService.GetBidsByDriverIdAsync(driverId);
+        return Ok(bids);
+    }
+
     // ── POST api/bids/{id}/accept ─────────────────────────────────────────────
 
     /// <summary>

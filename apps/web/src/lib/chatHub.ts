@@ -8,8 +8,9 @@ function hubUrlFromApiBase(): string {
 }
 
 export function createChatConnection(accessToken: string) {
+  const hubUrl = `${hubUrlFromApiBase()}?access_token=${encodeURIComponent(accessToken)}`
   return new signalR.HubConnectionBuilder()
-    .withUrl(hubUrlFromApiBase(), {
+    .withUrl(hubUrl, {
       accessTokenFactory: () => accessToken,
       transport: signalR.HttpTransportType.WebSockets,
     })
