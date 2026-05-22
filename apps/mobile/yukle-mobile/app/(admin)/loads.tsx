@@ -8,16 +8,26 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { AdminLoadDetailModal } from '../../src/components/admin/AdminLoadDetailModal';
-import { Colors } from '../../src/constants/colors';
+import { AlertBanner } from '../../src/components/ui/AlertBanner';
+import { Card } from '../../src/components/ui/Card';
+import { EmptyState } from '../../src/components/ui/EmptyState';
+import { LoadingState } from '../../src/components/ui/LoadingState';
+import { PrimaryButton } from '../../src/components/ui/PrimaryButton';
+import { SectionHeader } from '../../src/components/ui/SectionHeader';
+import { StatusPill } from '../../src/components/ui/StatusPill';
+import { TextField } from '../../src/components/ui/TextField';
 import { screenRootStyle } from '../../src/constants/layout';
 import { getApiErrorMessage } from '../../src/services/api.client';
 import { cancelAdminLoad, getAdminLoads } from '../../src/services/admin.service';
 import type { AdminLoadRow } from '../../src/types/admin';
+import { palette } from '../../src/theme/colors';
+import { fontFamily, typography } from '../../src/theme/typography';
+import { spacing } from '../../src/theme/spacing';
 import { formatCurrencyTRY, formatDateTR } from '../../src/utils/format';
+import { getLoadStatusPill } from '../../src/utils/statusPills';
 
 const CANCELLABLE = new Set(['Active', 'Assigned', 'OnWay', 'Arrived']);
 
@@ -93,9 +103,8 @@ export default function AdminLoadsScreen() {
 
   if (loading) {
     return (
-      <View style={[screenRootStyle, styles.centered]}>
-        <ActivityIndicator color={Colors.primary} size="large" />
-        <Text style={styles.muted}>Ilanlar yukleniyor...</Text>
+      <View style={screenRootStyle}>
+        <LoadingState message="Ilanlar yukleniyor..." />
       </View>
     );
   }
@@ -107,80 +116,71 @@ export default function AdminLoadsScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
         }
         ListHeaderComponent={
           <>
-            <Pressable onPress={() => router.back()}>
-              <Text style={styles.backLink}>← Geri</Text>
+            <Pressable onPress={() => router.back()} style={styles.back}>
+              <Text style={typography.link}>← Geri</Text>
             </Pressable>
-            <Text style={styles.title}>Ilan Yonetimi</Text>
-            <Text style={styles.sub}>Tum ilanlar — API listesinde musteri/sofor yok</Text>
+            <SectionHeader
+              title="Ilan Yonetimi"
+              subtitle="Tum ilanlar — API listesinde musteri/sofor yok"
+            />
 
-            <TextInput
-              style={styles.input}
+            <TextField
+              icon="filter-outline"
               placeholder="Durum (Active, Assigned, ...)"
-              placeholderTextColor={Colors.textMuted}
               value={statusFilter}
               onChangeText={setStatusFilter}
               autoCapitalize="none"
             />
-            <TextInput
-              style={styles.input}
+            <TextField
+              icon="search-outline"
               placeholder="Ara: sehir veya aciklama"
-              placeholderTextColor={Colors.textMuted}
               value={search}
               onChangeText={setSearch}
             />
-            <Pressable style={styles.filterBtn} onPress={() => fetchData()}>
-              <Text style={styles.filterBtnText}>Filtrele / Yenile</Text>
-            </Pressable>
+            <PrimaryButton title="Filtrele / Yenile" onPress={() => fetchData()} style={styles.filterBtn} />
 
-            {error ? (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            ) : null}
-            {statusMsg ? (
-              <View style={styles.successBox}>
-                <Text style={styles.successText}>{statusMsg}</Text>
-              </View>
-            ) : null}
+            {error ? <AlertBanner message={error} tone="error" /> : null}
+            {statusMsg ? <AlertBanner message={statusMsg} tone="success" /> : null}
           </>
         }
         ListEmptyComponent={
           !error ? (
-            <View style={styles.empty}>
-              <Text style={styles.emptyTitle}>Ilan bulunamadi</Text>
-            </View>
+            <EmptyState icon="📦" title="Ilan bulunamadi" description="Filtreyi degistirin." />
           ) : null
         }
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Pressable onPress={() => setSelected(item)}>
-              <Text style={styles.route}>
-                {item.fromCity} → {item.toCity}
-              </Text>
-              <Text style={styles.muted}>Durum: {item.status}</Text>
-              <Text style={styles.muted}>Fiyat: {formatCurrencyTRY(item.price)}</Text>
-              <Text style={styles.muted}>Tarih: {formatDateTR(item.createdAt)}</Text>
-              <Text style={styles.detailLink}>Detay →</Text>
-            </Pressable>
-            {canCancelLoad(item.status) ? (
-              <Pressable
-                style={[styles.cancelBtn, busyId === item.id && styles.btnDisabled]}
-                onPress={() => confirmCancel(item)}
-                disabled={busyId === item.id}
-              >
-                {busyId === item.id ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <Text style={styles.cancelBtnText}>Iptal Et</Text>
-                )}
+        renderItem={({ item }) => {
+          const pill = getLoadStatusPill(item.status);
+          return (
+            <Card variant="elevated" padding={4} style={styles.loadCard}>
+              <Pressable onPress={() => setSelected(item)}>
+                <View style={styles.loadHead}>
+                  <Text style={styles.route}>
+                    {item.fromCity} → {item.toCity}
+                  </Text>
+                  <StatusPill {...pill} />
+                </View>
+                <Text style={styles.muted}>Fiyat: {formatCurrencyTRY(item.price)}</Text>
+                <Text style={styles.muted}>Tarih: {formatDateTR(item.createdAt)}</Text>
+                <Text style={styles.detailLink}>Detay →</Text>
               </Pressable>
-            ) : null}
-          </View>
-        )}
+              {canCancelLoad(item.status) ? (
+                busyId === item.id ? (
+                  <View style={styles.cancelLoading}>
+                    <ActivityIndicator color={palette.error} size="small" />
+                  </View>
+                ) : (
+                  <Pressable style={styles.cancelBtn} onPress={() => confirmCancel(item)}>
+                    <Text style={styles.cancelBtnText}>Iptal Et</Text>
+                  </Pressable>
+                )
+              ) : null}
+            </Card>
+          );
+        }}
       />
 
       {selected ? (
@@ -195,70 +195,34 @@ export default function AdminLoadsScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { padding: 16, paddingBottom: 32 },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
-  backLink: { color: Colors.primary, fontSize: 14, fontWeight: '600', marginBottom: 8 },
-  title: { color: Colors.textPrimary, fontSize: 22, fontWeight: '700' },
-  sub: { color: Colors.textSecondary, fontSize: 12, marginBottom: 12 },
-  input: {
-    backgroundColor: Colors.bgInput,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: Colors.textPrimary,
-    fontSize: 14,
-    marginBottom: 8,
+  list: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[2] },
+  back: { marginBottom: spacing[2] },
+  filterBtn: { marginBottom: spacing[3] },
+  loadCard: { marginBottom: spacing[2], gap: spacing[2] },
+  loadHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: spacing[2],
   },
-  filterBtn: {
-    alignSelf: 'flex-start',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    marginBottom: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.primary,
+  route: { ...typography.h3, flex: 1 },
+  muted: { ...typography.caption, textTransform: 'none' },
+  detailLink: {
+    fontFamily: fontFamily.bold,
+    fontSize: 13,
+    color: palette.brand,
+    marginTop: spacing[1],
   },
-  filterBtnText: { color: Colors.primary, fontWeight: '600' },
-  muted: { color: Colors.textSecondary, fontSize: 13 },
-  card: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 14,
-    marginBottom: 10,
-    gap: 8,
-  },
-  route: { color: Colors.textPrimary, fontSize: 16, fontWeight: '700' },
-  detailLink: { color: Colors.primary, fontSize: 13, fontWeight: '700', marginTop: 4 },
   cancelBtn: {
-    backgroundColor: Colors.error,
-    borderRadius: 8,
-    paddingVertical: 10,
+    backgroundColor: palette.error,
+    borderRadius: 10,
+    paddingVertical: spacing[3],
     alignItems: 'center',
   },
-  cancelBtnText: { color: '#fff', fontWeight: '700' },
-  btnDisabled: { opacity: 0.5 },
-  empty: { alignItems: 'center', paddingVertical: 32 },
-  emptyTitle: { color: Colors.textPrimary, fontSize: 16, fontWeight: '600' },
-  errorBox: {
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(239,68,68,0.3)',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+  cancelBtnText: {
+    fontFamily: fontFamily.bold,
+    fontSize: 14,
+    color: palette.text,
   },
-  errorText: { color: Colors.error, fontSize: 13 },
-  successBox: {
-    backgroundColor: 'rgba(16,185,129,0.12)',
-    borderWidth: 1,
-    borderColor: Colors.success,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-  },
-  successText: { color: Colors.success, fontSize: 13, fontWeight: '600' },
+  cancelLoading: { paddingVertical: spacing[3], alignItems: 'center' },
 });

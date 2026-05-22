@@ -1,61 +1,30 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { DeliveryQrSection } from '../../src/components/DeliveryQrSection';
-import { Colors } from '../../src/constants/colors';
+import { DetailRow } from '../../src/components/driver/DetailRow';
+import { AlertBanner } from '../../src/components/ui/AlertBanner';
+import { Card } from '../../src/components/ui/Card';
+import { LoadingState } from '../../src/components/ui/LoadingState';
+import { PrimaryButton } from '../../src/components/ui/PrimaryButton';
+import { SecondaryButton } from '../../src/components/ui/SecondaryButton';
+import { StatusPill } from '../../src/components/ui/StatusPill';
 import { screenRootStyle } from '../../src/constants/layout';
 import { getApiErrorMessage } from '../../src/services/api.client';
 import { acceptBid, getBidsForLoad } from '../../src/services/bids.service';
 import { getLoadById } from '../../src/services/loads.service';
 import type { LoadBid } from '../../src/types/bid';
 import type { Load } from '../../src/types/load';
+import { palette } from '../../src/theme/colors';
+import { fontFamily, typography } from '../../src/theme/typography';
+import { spacing } from '../../src/theme/spacing';
 import { formatCurrencyTRY, formatWeightKg } from '../../src/utils/format';
 import { canCustomerOpenChat } from '../../src/utils/loadChat';
-
-const STATUS_LABEL: Record<string, string> = {
-  Active: 'Yayinda',
-  Assigned: 'Sofor atandi',
-  OnWay: 'Yolda',
-  Arrived: 'Varildi',
-  Delivered: 'Teslim',
-  Cancelled: 'Iptal',
-};
-
-const BID_STATUS_LABEL: Record<string, string> = {
-  Pending: 'Beklemede',
-  Accepted: 'Kabul edildi',
-  Rejected: 'Reddedildi',
-  Cancelled: 'Iptal',
-};
-
-function DetailRow({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.row}>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue}>{value}</Text>
-    </View>
-  );
-}
-
-function bidPriceHint(
-  amount: number,
-  load: Load
-): { label: string; color: string } | null {
-  const min = load.aiMinPrice;
-  const max = load.aiMaxPrice;
-  if (min == null || max == null || min <= 0) return null;
-  if (amount < min) return { label: 'Uygun fiyat', color: Colors.success };
-  if (amount > max) return { label: 'Yuksek teklif', color: Colors.error };
-  return { label: 'Onerilen aralikta', color: Colors.primaryGold };
-}
+import {
+  getAiPriceComparePill,
+  getBidStatusPill,
+  getLoadStatusPill,
+} from '../../src/utils/statusPills';
 
 function BidCard({
   bid,
@@ -68,36 +37,31 @@ function BidCard({
   accepting: boolean;
   onAccept: (bid: LoadBid) => void;
 }) {
-  const hint = bidPriceHint(bid.amount, load);
+  const bidPill = getBidStatusPill(bid.status);
+  const pricePill = getAiPriceComparePill(bid.amount, load.aiMinPrice, load.aiMaxPrice);
   const canAccept = load.status === 'Active' && bid.status === 'Pending';
 
   return (
     <View style={[styles.bidItem, bid.status === 'Accepted' && styles.bidItemAccepted]}>
-      <View style={styles.row}>
+      <View style={styles.bidTop}>
         <Text style={styles.bidDriver}>{bid.driverFullName}</Text>
         <Text style={styles.bidAmount}>{formatCurrencyTRY(bid.amount)}</Text>
       </View>
-      <View style={styles.row}>
-        <Text style={styles.mutedSmall}>
-          Durum: {BID_STATUS_LABEL[bid.status] ?? bid.status}
-          {bid.driverPhone ? ` · ${bid.driverPhone}` : ''}
-        </Text>
+      <View style={styles.bidMetaRow}>
+        <StatusPill label={bidPill.label} tone={bidPill.tone} />
+        {pricePill ? <StatusPill label={pricePill.label} tone={pricePill.tone} /> : null}
       </View>
-      {hint ? (
-        <Text style={[styles.priceHint, { color: hint.color }]}>{hint.label}</Text>
+      {bid.driverPhone ? (
+        <Text style={styles.bidPhone}>{bid.driverPhone}</Text>
       ) : null}
       {canAccept ? (
-        <Pressable
-          style={[styles.acceptBtn, accepting && styles.acceptBtnDisabled]}
+        <PrimaryButton
+          title="Kabul Et"
           onPress={() => onAccept(bid)}
+          loading={accepting}
           disabled={accepting}
-        >
-          {accepting ? (
-            <ActivityIndicator color={Colors.bgDark} size="small" />
-          ) : (
-            <Text style={styles.acceptBtnText}>Kabul Et</Text>
-          )}
-        </Pressable>
+          style={{ marginTop: spacing[2] }}
+        />
       ) : null}
     </View>
   );
@@ -166,110 +130,95 @@ export default function CustomerLoadDetailScreen() {
 
   if (loading) {
     return (
-      <View style={[screenRootStyle, styles.centered]}>
-        <ActivityIndicator color={Colors.primary} size="large" />
-        <Text style={styles.muted}>Ilan detayi yukleniyor...</Text>
+      <View style={screenRootStyle}>
+        <LoadingState message="Ilan detayi yukleniyor..." />
       </View>
     );
   }
 
   if (fetchError && !load) {
     return (
-      <View style={[screenRootStyle, styles.centered, styles.pad]}>
-        <Text style={styles.title}>Ilan Detayi</Text>
-        <View style={styles.errorBox}>
-          <Text style={styles.errorText}>{fetchError}</Text>
-        </View>
-        <Pressable style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backBtnText}>Geri</Text>
-        </Pressable>
+      <View style={[screenRootStyle, styles.centered]}>
+        <Text style={styles.pageTitle}>Ilan Detayi</Text>
+        <AlertBanner message={fetchError} tone="error" />
+        <SecondaryButton title="Geri" onPress={() => router.back()} style={{ minWidth: 120 }} />
       </View>
     );
   }
 
   if (!load) {
     return (
-      <View style={[screenRootStyle, styles.centered, styles.pad]}>
-        <Text style={styles.title}>Ilan bulunamadi</Text>
-        <Pressable style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backBtnText}>Geri</Text>
-        </Pressable>
+      <View style={[screenRootStyle, styles.centered]}>
+        <Text style={styles.pageTitle}>Ilan bulunamadi</Text>
+        <SecondaryButton title="Geri" onPress={() => router.back()} />
       </View>
     );
   }
 
   const yukTipi = load.loadType ?? load.type ?? '-';
   const showQr = load.status === 'Assigned' || load.status === 'OnWay';
+  const statusPill = getLoadStatusPill(load.status);
 
   return (
     <ScrollView style={screenRootStyle} contentContainerStyle={styles.scroll}>
       <Pressable onPress={() => router.back()}>
-        <Text style={styles.backLink}>← Geri</Text>
+        <Text style={typography.link}>← Geri</Text>
       </Pressable>
 
-      <Text style={styles.title}>Ilan Detayi</Text>
-      <Text style={styles.route}>
-        {load.fromCity} → {load.toCity}
-      </Text>
-
-      {fetchError ? (
-        <View style={styles.errorBox}>
-          <Text style={styles.errorText}>{fetchError}</Text>
+      <View style={styles.titleRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.pageTitle}>Ilan Detayi</Text>
+          <Text style={styles.route}>
+            {load.fromCity} → {load.toCity}
+          </Text>
         </View>
-      ) : null}
+        <StatusPill label={statusPill.label} tone={statusPill.tone} />
+      </View>
 
-      {actionMsg ? (
-        <View style={styles.successBox}>
-          <Text style={styles.successText}>{actionMsg}</Text>
-        </View>
-      ) : null}
+      {fetchError ? <AlertBanner message={fetchError} tone="error" /> : null}
+      {actionMsg ? <AlertBanner message={actionMsg} tone="success" /> : null}
 
-      <View style={styles.card}>
+      <Card variant="default" padding={4}>
         <Text style={styles.cardTitle}>Yuk bilgileri</Text>
-        <DetailRow label="Durum" value={STATUS_LABEL[load.status] ?? load.status} />
         <DetailRow label="Yuk tipi" value={String(yukTipi)} />
         <DetailRow label="Agirlik" value={formatWeightKg(load.weight)} />
         <DetailRow label="Ilan fiyati" value={formatCurrencyTRY(load.price)} />
-        {load.description ? (
-          <Text style={styles.desc}>{load.description}</Text>
-        ) : null}
-      </View>
+        {load.description ? <Text style={styles.desc}>{load.description}</Text> : null}
+      </Card>
 
       {load.aiSuggestedPrice != null && load.aiSuggestedPrice > 0 ? (
-        <View style={styles.aiCard}>
+        <Card variant="elevated" padding={4} style={styles.aiCard}>
           <Text style={styles.aiTitle}>AI onerilen fiyat</Text>
           <Text style={styles.aiPrice}>{formatCurrencyTRY(load.aiSuggestedPrice)}</Text>
           {load.aiMinPrice != null && load.aiMaxPrice != null ? (
-            <Text style={styles.mutedSmall}>
+            <Text style={styles.aiMeta}>
               Aralik: {formatCurrencyTRY(load.aiMinPrice)} – {formatCurrencyTRY(load.aiMaxPrice)}
             </Text>
           ) : null}
           {load.aiPriceReasoning ? (
             <Text style={styles.aiReason}>{load.aiPriceReasoning}</Text>
           ) : null}
-        </View>
+        </Card>
       ) : null}
 
       {showQr ? (
-        <View style={styles.card}>
+        <Card variant="glass" padding={4}>
           <Text style={styles.cardTitle}>Teslimat QR</Text>
           <DeliveryQrSection loadId={loadId} />
-        </View>
+        </Card>
       ) : null}
 
       {canCustomerOpenChat(load) ? (
-        <Pressable
-          style={styles.chatBtn}
+        <SecondaryButton
+          title="Soforle Sohbet"
           onPress={() => router.push({ pathname: '/chat', params: { loadId } })}
-        >
-          <Text style={styles.chatBtnText}>Soforle Sohbet</Text>
-        </Pressable>
+        />
       ) : null}
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Gelen teklifler</Text>
+      <Card variant="glass" padding={4}>
+        <Text style={styles.cardTitle}>Gelen teklifler ({bids.length})</Text>
         {bids.length === 0 ? (
-          <Text style={styles.muted}>Henuz teklif gelmedi.</Text>
+          <Text style={styles.emptyBid}>Henuz teklif gelmedi.</Text>
         ) : (
           bids.map((bid) => (
             <BidCard
@@ -281,100 +230,51 @@ export default function CustomerLoadDetailScreen() {
             />
           ))
         )}
-      </View>
+      </Card>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { padding: 16, paddingBottom: 40, gap: 12 },
-  pad: { padding: 24 },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
-  backLink: { color: Colors.primary, fontSize: 14, fontWeight: '600' },
-  title: { color: Colors.textPrimary, fontSize: 22, fontWeight: '700' },
-  route: { color: Colors.primaryGold, fontSize: 18, fontWeight: '700' },
-  muted: { color: Colors.textSecondary, fontSize: 14 },
-  mutedSmall: { color: Colors.textSecondary, fontSize: 12 },
-  card: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 14,
-    gap: 10,
+  scroll: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[4] },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing[6],
+    gap: spacing[4],
   },
-  cardTitle: { color: Colors.textPrimary, fontSize: 16, fontWeight: '700', marginBottom: 4 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 },
-  rowLabel: { color: Colors.textSecondary, fontSize: 14, flex: 1 },
-  rowValue: { color: Colors.textPrimary, fontSize: 14, fontWeight: '600', flex: 1, textAlign: 'right' },
-  desc: { color: Colors.textPrimary, fontSize: 14, marginTop: 4 },
-  aiCard: {
-    backgroundColor: 'rgba(255,182,39,0.08)',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.primaryGold,
-    padding: 14,
-    gap: 6,
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing[3],
+    marginTop: spacing[2],
   },
-  aiTitle: { color: Colors.primaryGold, fontSize: 13, fontWeight: '700' },
-  aiPrice: { color: Colors.textPrimary, fontSize: 20, fontWeight: '700' },
-  aiReason: { color: Colors.textSecondary, fontSize: 12, marginTop: 4 },
+  pageTitle: { ...typography.h1 },
+  route: { fontFamily: fontFamily.bold, fontSize: 18, color: palette.gold, marginTop: spacing[1] },
+  cardTitle: { ...typography.h3, marginBottom: spacing[3] },
+  desc: { ...typography.body, marginTop: spacing[2] },
+  aiCard: { borderColor: palette.goldBorder, backgroundColor: palette.goldMuted },
+  aiTitle: { fontFamily: fontFamily.semiBold, fontSize: 13, color: palette.gold },
+  aiPrice: { fontFamily: fontFamily.bold, fontSize: 22, color: palette.text, marginVertical: spacing[1] },
+  aiMeta: { ...typography.caption, textTransform: 'none' },
+  aiReason: { ...typography.caption, textTransform: 'none', marginTop: spacing[2] },
   bidItem: {
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    paddingTop: 12,
-    marginTop: 4,
-    gap: 8,
+    borderTopColor: palette.borderSubtle,
+    paddingTop: spacing[4],
+    marginTop: spacing[2],
+    gap: spacing[2],
   },
   bidItemAccepted: {
     borderLeftWidth: 3,
-    borderLeftColor: Colors.success,
-    paddingLeft: 8,
+    borderLeftColor: palette.success,
+    paddingLeft: spacing[3],
   },
-  bidDriver: { color: Colors.textPrimary, fontSize: 15, fontWeight: '700', flex: 1 },
-  bidAmount: { color: Colors.primaryGold, fontSize: 16, fontWeight: '700' },
-  priceHint: { fontSize: 12, fontWeight: '600' },
-  acceptBtn: {
-    backgroundColor: Colors.primary,
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  acceptBtnDisabled: { opacity: 0.5 },
-  acceptBtnText: { color: Colors.bgDark, fontSize: 15, fontWeight: '700' },
-  successBox: {
-    backgroundColor: 'rgba(16,185,129,0.12)',
-    borderColor: Colors.success,
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-  },
-  successText: { color: Colors.success, fontSize: 14, fontWeight: '600' },
-  errorBox: {
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    borderColor: 'rgba(239,68,68,0.3)',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-  },
-  errorText: { color: Colors.error, fontSize: 13 },
-  backBtn: {
-    marginTop: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  backBtnText: { color: Colors.textPrimary, fontWeight: '600' },
-  chatBtn: {
-    backgroundColor: 'rgba(255,107,0,0.15)',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  chatBtnText: { color: Colors.primary, fontSize: 16, fontWeight: '700' },
+  bidTop: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing[2] },
+  bidDriver: { fontFamily: fontFamily.bold, fontSize: 15, color: palette.text, flex: 1 },
+  bidAmount: { fontFamily: fontFamily.bold, fontSize: 16, color: palette.gold },
+  bidMetaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] },
+  bidPhone: { ...typography.caption, textTransform: 'none' },
+  emptyBid: { ...typography.caption, textTransform: 'none' },
 });

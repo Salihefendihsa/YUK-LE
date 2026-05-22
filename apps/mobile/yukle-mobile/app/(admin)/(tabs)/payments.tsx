@@ -3,19 +3,28 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
-import { Colors } from '../../../src/constants/colors';
+import { AlertBanner } from '../../../src/components/ui/AlertBanner';
+import { Card } from '../../../src/components/ui/Card';
+import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
+import { SectionHeader } from '../../../src/components/ui/SectionHeader';
+import { StatusPill } from '../../../src/components/ui/StatusPill';
+import { TextField } from '../../../src/components/ui/TextField';
 import { screenRootStyle } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getAdminPayments, releaseAdminPayment } from '../../../src/services/admin.service';
 import type { AdminPaymentRow } from '../../../src/types/admin';
+import { palette } from '../../../src/theme/colors';
+import { fontFamily, typography } from '../../../src/theme/typography';
+import { spacing } from '../../../src/theme/spacing';
 import { formatCurrencyTRY, formatDateTR } from '../../../src/utils/format';
+import { getPaymentStatusPill } from '../../../src/utils/statusPills';
 
 function canRelease(status: string): boolean {
   return status === 'Blocked';
@@ -87,9 +96,8 @@ export default function AdminPaymentsTab() {
 
   if (loading) {
     return (
-      <View style={[screenRootStyle, styles.centered]}>
-        <ActivityIndicator color={Colors.primary} size="large" />
-        <Text style={styles.muted}>Odemeler yukleniyor...</Text>
+      <View style={screenRootStyle}>
+        <LoadingState message="Odemeler yukleniyor..." />
       </View>
     );
   }
@@ -101,168 +109,113 @@ export default function AdminPaymentsTab() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
         }
         ListHeaderComponent={
           <>
-            <Text style={styles.title}>Odeme ve Havuz</Text>
-            <Text style={styles.sub}>Gercek API alanlari — sahte komisyon KPI yok</Text>
+            <SectionHeader
+              title="Odeme ve Havuz"
+              subtitle="Gercek API alanlari — sahte komisyon KPI yok"
+            />
 
             <View style={styles.kpiRow}>
-              <View style={styles.kpi}>
+              <Card variant="elevated" padding={3} style={styles.kpi}>
                 <Text style={styles.kpiLabel}>Kayit</Text>
                 <Text style={styles.kpiValue}>{summary.count}</Text>
-              </View>
-              <View style={styles.kpi}>
+              </Card>
+              <Card variant="elevated" padding={3} style={styles.kpi}>
                 <Text style={styles.kpiLabel}>Toplam tutar</Text>
                 <Text style={styles.kpiValueSmall}>{formatCurrencyTRY(summary.totalAmount)}</Text>
-              </View>
-              <View style={styles.kpi}>
+              </Card>
+              <Card variant="elevated" padding={3} style={styles.kpi}>
                 <Text style={styles.kpiLabel}>Havuzda</Text>
                 <Text style={styles.kpiValue}>{summary.blockedCount}</Text>
-              </View>
-              <View style={styles.kpi}>
+              </Card>
+              <Card variant="elevated" padding={3} style={styles.kpi}>
                 <Text style={styles.kpiLabel}>Serbest</Text>
                 <Text style={styles.kpiValue}>{summary.releasedCount}</Text>
-              </View>
+              </Card>
             </View>
 
-            <TextInput
-              style={styles.input}
+            <TextField
+              icon="filter-outline"
               placeholder="Durum (Blocked, Released, ...)"
-              placeholderTextColor={Colors.textMuted}
               value={statusFilter}
               onChangeText={setStatusFilter}
               autoCapitalize="none"
             />
-            <Pressable style={styles.filterBtn} onPress={() => fetchData()}>
-              <Text style={styles.filterBtnText}>Filtrele / Yenile</Text>
-            </Pressable>
+            <PrimaryButton
+              title="Filtrele / Yenile"
+              onPress={() => fetchData()}
+              style={styles.filterBtn}
+            />
 
-            {error ? (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            ) : null}
-            {statusMsg ? (
-              <View style={styles.successBox}>
-                <Text style={styles.successText}>{statusMsg}</Text>
-              </View>
-            ) : null}
+            {error ? <AlertBanner message={error} tone="error" /> : null}
+            {statusMsg ? <AlertBanner message={statusMsg} tone="success" /> : null}
           </>
         }
         ListEmptyComponent={
           !error ? (
-            <View style={styles.empty}>
-              <Text style={styles.emptyTitle}>Odeme kaydi yok</Text>
-            </View>
+            <EmptyState icon="💳" title="Odeme kaydi yok" description="Filtreyi degistirin." />
           ) : null
         }
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Text style={styles.amount}>{formatCurrencyTRY(item.amount)}</Text>
-            <Text style={styles.muted}>Durum: {item.status}</Text>
-            <Text style={styles.muted}>Ilan: {item.loadId.slice(0, 8)}...</Text>
-            <Text style={styles.muted}>Islem: {item.transactionId || '-'}</Text>
-            <Text style={styles.muted}>Tarih: {formatDateTR(item.createdAt)}</Text>
-            {canRelease(item.status) ? (
-              <Pressable
-                style={[styles.releaseBtn, busyId === item.id && styles.btnDisabled]}
-                onPress={() => confirmRelease(item)}
-                disabled={busyId === item.id}
-              >
-                {busyId === item.id ? (
-                  <ActivityIndicator color={Colors.bgDark} size="small" />
+        renderItem={({ item }) => {
+          const pill = getPaymentStatusPill(item.status);
+          return (
+            <Card variant="elevated" padding={4} style={styles.payCard}>
+              <View style={styles.payHead}>
+                <Text style={styles.amount}>{formatCurrencyTRY(item.amount)}</Text>
+                <StatusPill {...pill} />
+              </View>
+              <Text style={styles.muted}>Ilan: {item.loadId.slice(0, 8)}...</Text>
+              <Text style={styles.muted}>Islem: {item.transactionId || '-'}</Text>
+              <Text style={styles.muted}>Tarih: {formatDateTR(item.createdAt)}</Text>
+              {canRelease(item.status) ? (
+                busyId === item.id ? (
+                  <View style={styles.releaseLoading}>
+                    <ActivityIndicator color={palette.brand} size="small" />
+                  </View>
                 ) : (
-                  <Text style={styles.releaseBtnText}>Serbest Birak</Text>
-                )}
-              </Pressable>
-            ) : null}
-          </View>
-        )}
+                  <PrimaryButton
+                    title="Serbest Birak"
+                    onPress={() => confirmRelease(item)}
+                    style={styles.releaseBtn}
+                  />
+                )
+              ) : null}
+            </Card>
+          );
+        }}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  list: { padding: 16, paddingBottom: 32 },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
-  title: { color: Colors.textPrimary, fontSize: 22, fontWeight: '700' },
-  sub: { color: Colors.textSecondary, fontSize: 12, marginBottom: 12 },
-  kpiRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
-  kpi: {
-    flex: 1,
-    minWidth: '45%',
-    backgroundColor: Colors.bgCard,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 10,
-    gap: 4,
+  list: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[2] },
+  kpiRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginBottom: spacing[3] },
+  kpi: { flex: 1, minWidth: '45%', gap: spacing[1] },
+  kpiLabel: { ...typography.caption, textTransform: 'none' },
+  kpiValue: {
+    fontFamily: fontFamily.bold,
+    fontSize: 20,
+    color: palette.gold,
   },
-  kpiLabel: { color: Colors.textMuted, fontSize: 11 },
-  kpiValue: { color: Colors.primaryGold, fontSize: 20, fontWeight: '800' },
-  kpiValueSmall: { color: Colors.primaryGold, fontSize: 14, fontWeight: '700' },
-  input: {
-    backgroundColor: Colors.bgInput,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: Colors.textPrimary,
+  kpiValueSmall: {
+    fontFamily: fontFamily.bold,
     fontSize: 14,
-    marginBottom: 8,
+    color: palette.gold,
   },
-  filterBtn: {
-    alignSelf: 'flex-start',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    marginBottom: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-  },
-  filterBtnText: { color: Colors.primary, fontWeight: '600' },
-  muted: { color: Colors.textSecondary, fontSize: 13 },
-  card: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 14,
-    marginBottom: 10,
-    gap: 6,
-  },
-  amount: { color: Colors.textPrimary, fontSize: 18, fontWeight: '700' },
-  releaseBtn: {
-    backgroundColor: Colors.primary,
-    borderRadius: 8,
-    paddingVertical: 10,
+  filterBtn: { marginBottom: spacing[3] },
+  payCard: { marginBottom: spacing[2], gap: spacing[1] },
+  payHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 8,
+    gap: spacing[2],
   },
-  releaseBtnText: { color: Colors.bgDark, fontWeight: '700' },
-  btnDisabled: { opacity: 0.5 },
-  empty: { alignItems: 'center', paddingVertical: 32 },
-  emptyTitle: { color: Colors.textPrimary, fontSize: 16, fontWeight: '600' },
-  errorBox: {
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(239,68,68,0.3)',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-  },
-  errorText: { color: Colors.error, fontSize: 13 },
-  successBox: {
-    backgroundColor: 'rgba(16,185,129,0.12)',
-    borderWidth: 1,
-    borderColor: Colors.success,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-  },
-  successText: { color: Colors.success, fontSize: 13, fontWeight: '600' },
+  amount: { ...typography.h3, flex: 1 },
+  muted: { ...typography.caption, textTransform: 'none' },
+  releaseBtn: { marginTop: spacing[2] },
+  releaseLoading: { paddingVertical: spacing[3], alignItems: 'center' },
 });

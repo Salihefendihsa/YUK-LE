@@ -1,27 +1,20 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { Colors } from '../../src/constants/colors';
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { AlertBanner } from '../../src/components/ui/AlertBanner';
+import { Card } from '../../src/components/ui/Card';
+import { EmptyState } from '../../src/components/ui/EmptyState';
+import { LoadingState } from '../../src/components/ui/LoadingState';
+import { StatusPill } from '../../src/components/ui/StatusPill';
 import { screenRootStyle } from '../../src/constants/layout';
 import { getApiErrorMessage } from '../../src/services/api.client';
 import { getDriverBids } from '../../src/services/bids.service';
 import type { DriverBid } from '../../src/types/bid';
+import { palette } from '../../src/theme/colors';
+import { fontFamily, typography } from '../../src/theme/typography';
+import { spacing } from '../../src/theme/spacing';
 import { formatCurrencyTRY, formatDateTR } from '../../src/utils/format';
-
-function bidStatusStyle(status: string) {
-  const s = status.toLowerCase();
-  if (s.includes('accept')) return styles.badgeOk;
-  if (s.includes('reject') || s.includes('cancel')) return styles.badgeErr;
-  return styles.badgePending;
-}
+import { getBidStatusPill } from '../../src/utils/statusPills';
 
 export default function DriverBidsScreen() {
   const router = useRouter();
@@ -53,9 +46,8 @@ export default function DriverBidsScreen() {
 
   if (loading) {
     return (
-      <View style={[screenRootStyle, styles.centered]}>
-        <ActivityIndicator color={Colors.primary} size="large" />
-        <Text style={styles.muted}>Teklifler yukleniyor...</Text>
+      <View style={screenRootStyle}>
+        <LoadingState message="Teklifler yukleniyor..." />
       </View>
     );
   }
@@ -67,89 +59,68 @@ export default function DriverBidsScreen() {
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={styles.list}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
         }
         ListHeaderComponent={
           <>
             <Pressable onPress={() => router.back()}>
-              <Text style={styles.backLink}>← Profil</Text>
+              <Text style={typography.link}>← Profil</Text>
             </Pressable>
             <Text style={styles.title}>Tekliflerim</Text>
             <Text style={styles.sub}>Verdiginiz yuk teklifleri</Text>
-            {error ? (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            ) : null}
+            {error ? <AlertBanner message={error} tone="error" /> : null}
           </>
         }
         ListEmptyComponent={
           !error ? (
-            <View style={styles.empty}>
-              <Text style={styles.emptyTitle}>Henuz teklifiniz yok</Text>
-              <Text style={styles.muted}>Yuk panosundan ilanlara teklif verebilirsiniz.</Text>
-            </View>
+            <EmptyState
+              icon="🏷️"
+              title="Henuz teklifiniz yok"
+              description="Yuk panosundan ilanlara teklif verebilirsiniz."
+            />
           ) : null
         }
-        renderItem={({ item }) => (
-          <Pressable
-            style={styles.card}
-            onPress={() =>
-              router.push({ pathname: '/(driver)/load-detail', params: { id: item.loadId } })
-            }
-          >
-            <View style={styles.cardRow}>
-              <Text style={styles.route}>
-                {item.fromCity} → {item.toCity}
-              </Text>
-              <View style={[styles.badge, bidStatusStyle(item.status)]}>
-                <Text style={styles.badgeText}>{item.status}</Text>
-              </View>
-            </View>
-            <Text style={styles.price}>{formatCurrencyTRY(item.amount)}</Text>
-            <Text style={styles.muted}>{formatDateTR(item.offerDate)}</Text>
-            {item.note ? <Text style={styles.mutedSmall}>Not: {item.note}</Text> : null}
-          </Pressable>
-        )}
+        renderItem={({ item }) => {
+          const pill = getBidStatusPill(item.status);
+          return (
+            <Pressable
+              onPress={() =>
+                router.push({ pathname: '/(driver)/load-detail', params: { id: item.loadId } })
+              }
+            >
+              <Card variant="glass" padding={4} style={styles.card}>
+                <View style={styles.cardTop}>
+                  <Text style={styles.route}>
+                    {item.fromCity} → {item.toCity}
+                  </Text>
+                  <StatusPill label={pill.label} tone={pill.tone} />
+                </View>
+                <Text style={styles.price}>{formatCurrencyTRY(item.amount)}</Text>
+                <Text style={styles.date}>{formatDateTR(item.offerDate)}</Text>
+                {item.note ? <Text style={styles.note}>Not: {item.note}</Text> : null}
+              </Card>
+            </Pressable>
+          );
+        }}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  list: { padding: 16, paddingBottom: 32 },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
-  backLink: { color: Colors.primary, fontSize: 14, fontWeight: '600', marginBottom: 8 },
-  title: { color: Colors.textPrimary, fontSize: 22, fontWeight: '700' },
-  sub: { color: Colors.textSecondary, fontSize: 14, marginBottom: 12 },
-  muted: { color: Colors.textSecondary, fontSize: 13 },
-  mutedSmall: { color: Colors.textMuted, fontSize: 12 },
-  card: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 14,
-    marginBottom: 8,
-    gap: 4,
+  list: { padding: spacing[4], paddingBottom: spacing[8], gap: spacing[3] },
+  title: { ...typography.h1, marginTop: spacing[3] },
+  sub: { ...typography.caption, textTransform: 'none', marginBottom: spacing[4] },
+  card: { marginBottom: spacing[2] },
+  cardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: spacing[2],
+    marginBottom: spacing[2],
   },
-  cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },
-  route: { color: Colors.textPrimary, fontSize: 15, fontWeight: '700', flex: 1 },
-  price: { color: Colors.primaryGold, fontSize: 16, fontWeight: '700' },
-  badge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-  badgeText: { fontSize: 10, fontWeight: '700', color: Colors.bgDark },
-  badgeOk: { backgroundColor: Colors.success },
-  badgeErr: { backgroundColor: Colors.error },
-  badgePending: { backgroundColor: Colors.primaryGold },
-  empty: { alignItems: 'center', paddingVertical: 32, gap: 8 },
-  emptyTitle: { color: Colors.textPrimary, fontSize: 16, fontWeight: '600' },
-  errorBox: {
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    borderColor: 'rgba(239,68,68,0.3)',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-  },
-  errorText: { color: Colors.error, fontSize: 13 },
+  route: { fontFamily: fontFamily.bold, fontSize: 15, color: palette.text, flex: 1 },
+  price: { fontFamily: fontFamily.bold, fontSize: 16, color: palette.gold },
+  date: { ...typography.caption, textTransform: 'none' },
+  note: { ...typography.caption, textTransform: 'none', color: palette.textMuted, marginTop: spacing[1] },
 });

@@ -8,15 +8,22 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
-import { adminScreenStyles as s } from '../../src/constants/adminScreenStyles';
-import { Colors } from '../../src/constants/colors';
+import { AlertBanner } from '../../src/components/ui/AlertBanner';
+import { Card } from '../../src/components/ui/Card';
+import { EmptyState } from '../../src/components/ui/EmptyState';
+import { LoadingState } from '../../src/components/ui/LoadingState';
+import { PrimaryButton } from '../../src/components/ui/PrimaryButton';
+import { SectionHeader } from '../../src/components/ui/SectionHeader';
+import { TextField } from '../../src/components/ui/TextField';
 import { screenRootStyle } from '../../src/constants/layout';
 import { getApiErrorMessage } from '../../src/services/api.client';
 import { deleteRating, getAllRatings } from '../../src/services/admin.service';
 import type { AdminRatingRow } from '../../src/types/admin';
+import { palette } from '../../src/theme/colors';
+import { fontFamily, typography } from '../../src/theme/typography';
+import { spacing } from '../../src/theme/spacing';
 import { formatDateTR } from '../../src/utils/format';
 
 function starsText(n: number): string {
@@ -91,8 +98,8 @@ export default function AdminRatingsScreen() {
 
   if (loading) {
     return (
-      <View style={[screenRootStyle, s.centered]}>
-        <ActivityIndicator color={Colors.primary} size="large" />
+      <View style={screenRootStyle}>
+        <LoadingState message="Puanlar yukleniyor..." />
       </View>
     );
   }
@@ -111,80 +118,60 @@ export default function AdminRatingsScreen() {
               await fetchData();
               setRefreshing(false);
             }}
-            tintColor={Colors.primary}
+            tintColor={palette.brand}
           />
         }
         ListHeaderComponent={
           <>
-            <Pressable onPress={() => router.back()}>
-              <Text style={s.backLink}>← Geri</Text>
+            <Pressable onPress={() => router.back()} style={styles.back}>
+              <Text style={typography.link}>← Geri</Text>
             </Pressable>
-            <Text style={s.title}>Puanlar</Text>
-            <Text style={s.sub}>
-              Gercek API (web MOCK kullaniyordu). Ortalama: {avg.toFixed(1)} · {filtered.length} kayit
-            </Text>
-            <TextInput
-              style={s.input}
+            <SectionHeader
+              title="Puanlar"
+              subtitle={`Gercek API. Ortalama: ${avg.toFixed(1)} · ${filtered.length} kayit`}
+            />
+            <TextField
+              icon="filter-outline"
               placeholder="API filter: low | high"
-              placeholderTextColor={Colors.textMuted}
               value={filter}
               onChangeText={setFilter}
               autoCapitalize="none"
             />
-            <TextInput
-              style={s.input}
+            <TextField
+              icon="search-outline"
               placeholder="Yerel ara: isim veya yorum"
-              placeholderTextColor={Colors.textMuted}
               value={q}
               onChangeText={setQ}
             />
-            <Pressable style={s.filterBtn} onPress={() => fetchData()}>
-              <Text style={s.filterBtnText}>Filtrele / Yenile</Text>
-            </Pressable>
-            {error ? (
-              <View style={s.errorBox}>
-                <Text style={s.errorText}>{error}</Text>
-              </View>
-            ) : null}
-            {statusMsg ? (
-              <View style={s.successBox}>
-                <Text style={s.successText}>{statusMsg}</Text>
-              </View>
-            ) : null}
+            <PrimaryButton title="Filtrele / Yenile" onPress={() => fetchData()} style={styles.filterBtn} />
+            {error ? <AlertBanner message={error} tone="error" /> : null}
+            {statusMsg ? <AlertBanner message={statusMsg} tone="success" /> : null}
           </>
         }
         ListEmptyComponent={
-          !error ? (
-            <View style={s.empty}>
-              <Text style={s.emptyTitle}>Puan kaydi yok</Text>
-            </View>
-          ) : null
+          !error ? <EmptyState icon="⭐" title="Puan kaydi yok" /> : null
         }
         renderItem={({ item }) => (
-          <View style={s.card}>
-            <Text style={s.cardTitle}>
+          <Card variant="elevated" padding={4} style={styles.rateCard}>
+            <Text style={styles.stars}>
               {starsText(item.score)} ({item.score})
             </Text>
-            <Text style={s.muted}>
+            <Text style={styles.muted}>
               {item.givenByName} → {item.givenToName}
             </Text>
-            <Text style={s.muted}>{formatDateTR(item.createdAt)}</Text>
-            <Text style={s.mono}>Ilan: {item.loadId.slice(0, 8)}...</Text>
-            <Text style={s.muted} numberOfLines={4}>
+            <Text style={styles.muted}>{formatDateTR(item.createdAt)}</Text>
+            <Text style={styles.mono}>Ilan: {item.loadId.slice(0, 8)}...</Text>
+            <Text style={styles.muted} numberOfLines={4}>
               {item.comment || '(yorum yok)'}
             </Text>
-            <Pressable
-              style={[s.btnDanger, busyId === item.id && s.btnDisabled]}
-              onPress={() => confirmDelete(item)}
-              disabled={busyId === item.id}
-            >
-              {busyId === item.id ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text style={s.btnDangerText}>Sil</Text>
-              )}
-            </Pressable>
-          </View>
+            {busyId === item.id ? (
+              <ActivityIndicator color={palette.error} style={{ marginTop: spacing[2] }} />
+            ) : (
+              <Pressable style={styles.deleteBtn} onPress={() => confirmDelete(item)}>
+                <Text style={styles.deleteBtnText}>Sil</Text>
+              </Pressable>
+            )}
+          </Card>
         )}
       />
     </View>
@@ -192,5 +179,31 @@ export default function AdminRatingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { padding: 16, paddingBottom: 40, gap: 10 },
+  list: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[2] },
+  back: { marginBottom: spacing[2] },
+  filterBtn: { marginBottom: spacing[3] },
+  rateCard: { marginBottom: spacing[2], gap: spacing[1] },
+  stars: {
+    fontFamily: fontFamily.bold,
+    fontSize: 16,
+    color: palette.gold,
+  },
+  muted: { ...typography.caption, textTransform: 'none' },
+  mono: {
+    fontFamily: fontFamily.regular,
+    fontSize: 11,
+    color: palette.textMuted,
+  },
+  deleteBtn: {
+    backgroundColor: palette.error,
+    borderRadius: 10,
+    paddingVertical: spacing[3],
+    alignItems: 'center',
+    marginTop: spacing[2],
+  },
+  deleteBtnText: {
+    fontFamily: fontFamily.bold,
+    fontSize: 14,
+    color: palette.text,
+  },
 });

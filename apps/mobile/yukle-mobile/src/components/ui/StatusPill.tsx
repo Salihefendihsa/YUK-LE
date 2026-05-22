@@ -4,7 +4,9 @@ import { fontFamily } from '../../theme/typography';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 
-type Tone = 'success' | 'warning' | 'error' | 'info' | 'brand' | 'neutral';
+export type StatusTone = 'success' | 'warning' | 'error' | 'info' | 'brand' | 'neutral';
+
+type Tone = StatusTone;
 
 const toneStyles: Record<Tone, { bg: string; border: string; text: string }> = {
   success: { bg: palette.successBg, border: palette.successBorder, text: palette.success },

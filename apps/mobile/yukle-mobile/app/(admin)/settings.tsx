@@ -1,8 +1,15 @@
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useAuthStore } from '../../src/store/auth.store';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Card } from '../../src/components/ui/Card';
+import { SectionHeader } from '../../src/components/ui/SectionHeader';
+import { TextField } from '../../src/components/ui/TextField';
 import { adminScreenStyles as s } from '../../src/constants/adminScreenStyles';
 import { screenRootStyle } from '../../src/constants/layout';
+import { useAuthStore } from '../../src/store/auth.store';
+import { palette } from '../../src/theme/colors';
+import { fontFamily } from '../../src/theme/typography';
+import { spacing } from '../../src/theme/spacing';
+import { typography } from '../../src/theme/typography';
 
 export default function AdminSettingsScreen() {
   const router = useRouter();
@@ -10,10 +17,11 @@ export default function AdminSettingsScreen() {
 
   return (
     <ScrollView style={screenRootStyle} contentContainerStyle={styles.scroll}>
-      <Pressable onPress={() => router.back()}>
-        <Text style={s.backLink}>← Geri</Text>
+      <Pressable onPress={() => router.back()} style={styles.back}>
+        <Text style={typography.link}>← Geri</Text>
       </Pressable>
-      <Text style={s.title}>Admin Ayarlar</Text>
+
+      <SectionHeader title="Admin Ayarlar" subtitle="UI-only — kayit yok" />
 
       <View style={s.placeholderBanner}>
         <Text style={s.placeholderText}>
@@ -24,45 +32,25 @@ export default function AdminSettingsScreen() {
         </Text>
       </View>
 
-      <View style={s.card}>
-        <Text style={s.cardTitle}>Admin Bilgileri (salt okunur oturum)</Text>
-        <TextInput
-          style={[s.input, styles.disabled]}
-          value={user?.fullName ?? 'Admin'}
-          editable={false}
-        />
-        <TextInput
-          style={[s.input, styles.disabled]}
-          value="admin@yuk-le.com"
-          editable={false}
-        />
-      </View>
+      <Card variant="elevated" padding={4}>
+        <Text style={styles.cardTitle}>Admin Bilgileri (salt okunur oturum)</Text>
+        <TextField value={user?.fullName ?? 'Admin'} editable={false} icon="person-outline" />
+        <TextField value="admin@yuk-le.com" editable={false} icon="mail-outline" />
+      </Card>
 
-      <View style={s.card}>
-        <Text style={s.cardTitle}>Sifre Degistir</Text>
-        <TextInput
-          style={[s.input, styles.disabled]}
-          placeholder="Mevcut sifre"
-          placeholderTextColor="#6b7280"
-          secureTextEntry
-          editable={false}
-        />
-        <TextInput
-          style={[s.input, styles.disabled]}
-          placeholder="Yeni sifre"
-          placeholderTextColor="#6b7280"
-          secureTextEntry
-          editable={false}
-        />
-      </View>
+      <Card variant="elevated" padding={4}>
+        <Text style={styles.cardTitle}>Sifre Degistir</Text>
+        <TextField placeholder="Mevcut sifre" editable={false} secureTextEntry icon="lock-closed-outline" />
+        <TextField placeholder="Yeni sifre" editable={false} secureTextEntry icon="lock-closed-outline" />
+      </Card>
 
-      <View style={s.card}>
-        <Text style={s.cardTitle}>Bildirim Tercihleri</Text>
+      <Card variant="elevated" padding={4}>
+        <Text style={styles.cardTitle}>Bildirim Tercihleri</Text>
         <Text style={s.muted}>Ornek secenekler — kayit yok</Text>
         <Text style={s.muted}>• Yeni belge e-posta</Text>
         <Text style={s.muted}>• Supheli aktivite uyarisi</Text>
         <Text style={s.muted}>• 2FA: yakinda</Text>
-      </View>
+      </Card>
 
       <Pressable style={styles.saveBtn} disabled>
         <Text style={styles.saveBtnText}>Kaydet (devre disi)</Text>
@@ -72,13 +60,21 @@ export default function AdminSettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { padding: 16, paddingBottom: 40, gap: 12 },
-  disabled: { opacity: 0.55 },
+  scroll: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[3] },
+  back: { marginBottom: spacing[2] },
+  cardTitle: { ...typography.h3, marginBottom: spacing[3] },
   saveBtn: {
-    backgroundColor: 'rgba(255,107,0,0.35)',
-    borderRadius: 8,
-    paddingVertical: 12,
+    backgroundColor: palette.surface,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: palette.borderLight,
+    paddingVertical: spacing[3],
     alignItems: 'center',
+    opacity: 0.6,
   },
-  saveBtnText: { color: '#9ca3af', fontWeight: '600' },
+  saveBtnText: {
+    fontFamily: fontFamily.semiBold,
+    fontSize: 14,
+    color: palette.textMuted,
+  },
 });

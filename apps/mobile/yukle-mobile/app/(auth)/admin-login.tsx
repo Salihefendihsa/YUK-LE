@@ -1,26 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { YukleButton } from '../../src/components/YukleButton';
-import { Colors } from '../../src/constants/colors';
-import { screenRootStyle } from '../../src/constants/layout';
+import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { AlertBanner } from '../../src/components/ui/AlertBanner';
+import { AuthScreen } from '../../src/components/ui/AuthScreen';
+import { PrimaryButton } from '../../src/components/ui/PrimaryButton';
+import { TextField } from '../../src/components/ui/TextField';
+import { authFormStyles as s } from '../../src/constants/authFormStyles';
 import { authService } from '../../src/services/auth.service';
 import { useAuthStore } from '../../src/store/auth.store';
+import { palette } from '../../src/theme/colors';
+import { spacing } from '../../src/theme/spacing';
+import { typography } from '../../src/theme/typography';
 
 export default function AdminLoginRoute() {
   const router = useRouter();
-  const setAuth = useAuthStore((s) => s.setAuth);
+  const setAuth = useAuthStore((st) => st.setAuth);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -54,137 +49,85 @@ export default function AdminLoginRoute() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <StatusBar style="light" />
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backLink}>← Giris ekrani</Text>
-        </TouchableOpacity>
-
-        <View style={styles.logoSection}>
-          <View style={styles.shieldBox}>
-            <Ionicons name="shield-checkmark-outline" size={32} color={Colors.primaryGold} />
+    <AuthScreen
+      title="Yonetici Girisi"
+      subtitle="Yetkili personel — komuta merkezi"
+      footer={
+        <View style={styles.footer}>
+          <Text style={styles.secureNote}>
+            Bu sayfa korumalidir. Tum giris denemeleri kayit altindadir.
+          </Text>
+          <View style={s.testBox}>
+            <Text style={s.testTitle}>TEST ADMIN</Text>
+            <Text style={s.testItem}>admin@yuk-le.com / Admin123!</Text>
           </View>
-          <Text style={styles.title}>Yonetici Girisi</Text>
-          <Text style={styles.subtitle}>Yetkili personel girisi</Text>
         </View>
-
-        <View style={styles.inputWrapper}>
-          <Ionicons name="mail-outline" size={18} color={Colors.textMuted} style={styles.icon} />
-          <TextInput
-            style={styles.input}
-            placeholder="admin@yuk-le.com"
-            placeholderTextColor={Colors.textMuted}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
+      }
+      contentStyle={styles.adminCard}
+    >
+      <View style={styles.shieldRow}>
+        <View style={styles.shieldBox}>
+          <Ionicons name="shield-checkmark" size={28} color={palette.gold} />
         </View>
+      </View>
 
-        <View style={styles.inputWrapper}>
-          <Ionicons name="lock-closed-outline" size={18} color={Colors.textMuted} style={styles.icon} />
-          <TextInput
-            style={[styles.input, styles.inputFlex]}
-            placeholder="********"
-            placeholderTextColor={Colors.textMuted}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
-            autoCapitalize="none"
-          />
-          <TouchableOpacity onPress={() => setShowPassword((v) => !v)}>
+      <Pressable onPress={() => router.back()} style={styles.back}>
+        <Text style={typography.link}>← Giris ekrani</Text>
+      </Pressable>
+
+      <TextField
+        icon="mail-outline"
+        placeholder="admin@yuk-le.com"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoCorrect={false}
+      />
+
+      <TextField
+        icon="lock-closed-outline"
+        placeholder="********"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry={!showPassword}
+        right={
+          <TouchableOpacity onPress={() => setShowPassword((v) => !v)} hitSlop={8}>
             <Ionicons
               name={showPassword ? 'eye-outline' : 'eye-off-outline'}
               size={18}
-              color={Colors.textMuted}
+              color={palette.textMuted}
             />
           </TouchableOpacity>
-        </View>
+        }
+      />
 
-        {!!error && (
-          <View style={styles.errorBox}>
-            <Ionicons name="alert-circle-outline" size={16} color={Colors.error} />
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
+      {error ? <AlertBanner message={error} tone="error" /> : null}
 
-        <YukleButton title="Giris Yap" onPress={handleLogin} loading={loading} />
-
-        <Text style={styles.secureNote}>Bu sayfa korumalidir. Tum giris denemeleri kayit altindadir.</Text>
-
-        <View style={styles.testBox}>
-          <Text style={styles.testTitle}>TEST ADMIN</Text>
-          <Text style={styles.testItem}>admin@yuk-le.com / Admin123!</Text>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <PrimaryButton title="Giris Yap" onPress={handleLogin} loading={loading} />
+    </AuthScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: screenRootStyle,
-  scroll: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 48, paddingBottom: 40 },
-  backLink: { color: Colors.primary, fontSize: 14, fontWeight: '600', marginBottom: 24 },
-  logoSection: { alignItems: 'center', marginBottom: 32 },
+  adminCard: { borderColor: palette.goldBorder },
+  shieldRow: { alignItems: 'center', marginBottom: spacing[2] },
   shieldBox: {
-    width: 64,
-    height: 64,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,182,39,0.12)',
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    backgroundColor: palette.goldMuted,
     borderWidth: 1,
-    borderColor: Colors.primaryGold,
+    borderColor: palette.goldBorder,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
   },
-  title: { color: Colors.textPrimary, fontSize: 24, fontWeight: '700' },
-  subtitle: { color: Colors.textSecondary, fontSize: 14, marginTop: 4 },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.bgInput,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginBottom: 16,
-    paddingHorizontal: 14,
-    height: 52,
+  back: { marginBottom: spacing[2] },
+  footer: { marginTop: spacing[6], width: '100%', gap: spacing[4] },
+  secureNote: {
+    ...typography.caption,
+    textTransform: 'none',
+    textAlign: 'center',
+    color: palette.textMuted,
   },
-  icon: { marginRight: 10 },
-  input: { flex: 1, color: Colors.textPrimary, fontSize: 15 },
-  inputFlex: { flex: 1 },
-  errorBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(239,68,68,0.3)',
-    padding: 12,
-    marginBottom: 16,
-  },
-  errorText: { color: Colors.error, fontSize: 13, flex: 1 },
-  secureNote: { color: Colors.textMuted, fontSize: 12, textAlign: 'center', marginTop: 16, lineHeight: 18 },
-  testBox: {
-    marginTop: 24,
-    backgroundColor: Colors.bgCard,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 12,
-  },
-  testTitle: {
-    color: Colors.textMuted,
-    fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 0.8,
-    marginBottom: 8,
-  },
-  testItem: { color: Colors.textMuted, fontSize: 12 },
 });

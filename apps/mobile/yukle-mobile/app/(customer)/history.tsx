@@ -1,20 +1,20 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { Colors } from '../../src/constants/colors';
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { AlertBanner } from '../../src/components/ui/AlertBanner';
+import { Card } from '../../src/components/ui/Card';
+import { EmptyState } from '../../src/components/ui/EmptyState';
+import { LoadingState } from '../../src/components/ui/LoadingState';
+import { StatusPill } from '../../src/components/ui/StatusPill';
 import { screenRootStyle } from '../../src/constants/layout';
 import { getApiErrorMessage } from '../../src/services/api.client';
 import { getCustomerLoadHistory } from '../../src/services/history.service';
 import type { CustomerHistoryRow } from '../../src/types/history';
+import { palette } from '../../src/theme/colors';
+import { fontFamily, typography } from '../../src/theme/typography';
+import { spacing } from '../../src/theme/spacing';
 import { formatCurrencyTRY, formatDateTR } from '../../src/utils/format';
+import { getLoadStatusPill } from '../../src/utils/statusPills';
 
 export default function CustomerHistoryScreen() {
   const router = useRouter();
@@ -48,9 +48,8 @@ export default function CustomerHistoryScreen() {
 
   if (loading) {
     return (
-      <View style={[screenRootStyle, styles.centered]}>
-        <ActivityIndicator color={Colors.primary} size="large" />
-        <Text style={styles.muted}>Gecmis seferler yukleniyor...</Text>
+      <View style={screenRootStyle}>
+        <LoadingState message="Gecmis seferler yukleniyor..." />
       </View>
     );
   }
@@ -62,96 +61,82 @@ export default function CustomerHistoryScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
         }
         ListHeaderComponent={
           <>
             <Pressable onPress={() => router.back()}>
-              <Text style={styles.backLink}>← Profil</Text>
+              <Text style={typography.link}>← Profil</Text>
             </Pressable>
             <Text style={styles.title}>Gecmis Seferlerim</Text>
             <Text style={styles.sub}>Tamamlanan teslimatlar ve toplam harcama</Text>
 
-            {error ? (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            ) : null}
+            {error ? <AlertBanner message={error} tone="error" /> : null}
 
-            <View style={styles.summaryCard}>
-              <Text style={styles.mutedSmall}>Toplam harcama</Text>
+            <Card variant="glass" padding={4} style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Toplam harcama</Text>
               <Text style={styles.summaryValue}>{formatCurrencyTRY(totalSpend)}</Text>
-            </View>
+            </Card>
           </>
         }
         ListEmptyComponent={
           !error ? (
-            <View style={styles.empty}>
-              <Text style={styles.emptyTitle}>Henuz tamamlanmis seferiniz yok</Text>
-              <Text style={styles.muted}>Teslim edilen seferler burada listelenecek.</Text>
-            </View>
+            <EmptyState
+              icon="📜"
+              title="Henuz tamamlanmis seferiniz yok"
+              description="Teslim edilen seferler burada listelenecek."
+            />
           ) : null
         }
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Text style={styles.route}>
-              {item.fromCity} → {item.toCity}
-            </Text>
-            <Text style={styles.muted}>Sofor: {item.driverName ?? '-'}</Text>
-            <Text style={styles.muted}>
-              Tarih: {item.deliveryDate ? formatDateTR(item.deliveryDate) : '-'}
-            </Text>
-            <View style={styles.cardRow}>
+        renderItem={({ item }) => {
+          const pill = getLoadStatusPill(item.status ?? 'Delivered');
+          return (
+            <Card variant="default" padding={4} style={styles.card}>
+              <View style={styles.cardTop}>
+                <Text style={styles.route}>
+                  {item.fromCity} → {item.toCity}
+                </Text>
+                <StatusPill label={pill.label} tone={pill.tone} />
+              </View>
+              <Text style={styles.meta}>Sofor: {item.driverName ?? '-'}</Text>
+              <Text style={styles.meta}>
+                Tarih: {item.deliveryDate ? formatDateTR(item.deliveryDate) : '-'}
+              </Text>
               <Text style={styles.price}>{formatCurrencyTRY(item.price)}</Text>
-              <Text style={styles.badge}>{item.status ?? 'Delivered'}</Text>
-            </View>
-          </View>
-        )}
+            </Card>
+          );
+        }}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  list: { padding: 16, paddingBottom: 32 },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
-  backLink: { color: Colors.primary, fontSize: 14, fontWeight: '600', marginBottom: 8 },
-  title: { color: Colors.textPrimary, fontSize: 22, fontWeight: '700' },
-  sub: { color: Colors.textSecondary, fontSize: 14, marginBottom: 12 },
-  muted: { color: Colors.textSecondary, fontSize: 13 },
-  mutedSmall: { color: Colors.textMuted, fontSize: 12 },
-  summaryCard: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.primaryGold,
-    padding: 14,
-    marginBottom: 12,
-    gap: 4,
+  list: { padding: spacing[4], paddingBottom: spacing[8], gap: spacing[3] },
+  title: { ...typography.h1, marginTop: spacing[3] },
+  sub: { ...typography.caption, textTransform: 'none', marginBottom: spacing[4] },
+  summaryCard: { marginBottom: spacing[4], borderColor: palette.goldBorder },
+  summaryLabel: { ...typography.label, color: palette.textMuted },
+  summaryValue: {
+    fontFamily: fontFamily.bold,
+    fontSize: 22,
+    color: palette.gold,
+    marginTop: spacing[1],
   },
-  summaryValue: { color: Colors.primaryGold, fontSize: 20, fontWeight: '700' },
-  card: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 14,
-    marginBottom: 8,
-    gap: 4,
+  card: { marginBottom: spacing[2] },
+  cardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: spacing[2],
+    marginBottom: spacing[2],
   },
-  route: { color: Colors.textPrimary, fontSize: 16, fontWeight: '700' },
-  cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
-  price: { color: Colors.primary, fontSize: 15, fontWeight: '700' },
-  badge: { color: Colors.success, fontSize: 12, fontWeight: '600' },
-  empty: { alignItems: 'center', paddingVertical: 32, gap: 8 },
-  emptyTitle: { color: Colors.textPrimary, fontSize: 16, fontWeight: '600' },
-  errorBox: {
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    borderColor: 'rgba(239,68,68,0.3)',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+  route: { fontFamily: fontFamily.bold, fontSize: 16, color: palette.text, flex: 1 },
+  meta: { ...typography.caption, textTransform: 'none' },
+  price: {
+    fontFamily: fontFamily.bold,
+    fontSize: 15,
+    color: palette.brand,
+    marginTop: spacing[2],
   },
-  errorText: { color: Colors.error, fontSize: 13 },
 });

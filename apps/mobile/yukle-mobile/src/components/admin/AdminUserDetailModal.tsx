@@ -8,12 +8,18 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Colors } from '../../constants/colors';
 import { getApiErrorMessage } from '../../services/api.client';
 import { getUserProfile } from '../../services/user.service';
 import type { AdminUserListItem } from '../../types/admin';
 import type { UserProfile } from '../../types/user';
+import { palette } from '../../theme/colors';
+import { fontFamily, typography } from '../../theme/typography';
+import { spacing } from '../../theme/spacing';
 import { formatCurrencyTRY } from '../../utils/format';
+import { getApprovalStatusPill } from '../../utils/statusPills';
+import { Card } from '../ui/Card';
+import { StatusPill } from '../ui/StatusPill';
+import { DetailRow } from '../driver/DetailRow';
 
 type Props = {
   item: AdminUserListItem;
@@ -47,6 +53,14 @@ export function AdminUserDetailModal({ item, visible, onClose }: Props) {
     };
   }, [item.id, visible]);
 
+  const activePill = item.isActive
+    ? { label: 'Aktif', tone: 'success' as const }
+    : { label: 'Pasif', tone: 'error' as const };
+  const approvalPill =
+    item.role === 'Driver' && item.approvalStatus
+      ? getApprovalStatusPill(item.approvalStatus)
+      : null;
+
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.root}>
@@ -58,17 +72,15 @@ export function AdminUserDetailModal({ item, visible, onClose }: Props) {
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll}>
-          <View style={styles.card}>
+          <Card variant="elevated" padding={4}>
             <Text style={styles.name}>{item.fullName}</Text>
-            <Text style={styles.muted}>Rol: {item.role === 'Driver' ? 'Sofor' : 'Musteri'}</Text>
+            <View style={styles.pillRow}>
+              <StatusPill label={item.role === 'Driver' ? 'Sofor' : 'Musteri'} tone="brand" />
+              <StatusPill label={activePill.label} tone={activePill.tone} />
+              {approvalPill ? <StatusPill {...approvalPill} /> : null}
+            </View>
             <Text style={styles.muted}>Telefon: {item.phone}</Text>
             <Text style={styles.muted}>E-posta: {item.email}</Text>
-            <Text style={styles.muted}>
-              Hesap: {item.isActive ? 'Aktif' : 'Pasif / Askida'}
-            </Text>
-            {item.role === 'Driver' && item.approvalStatus ? (
-              <Text style={styles.muted}>Onay: {item.approvalStatus}</Text>
-            ) : null}
             {item.role === 'Driver' && item.vehicle ? (
               <Text style={styles.muted}>Plaka: {item.vehicle}</Text>
             ) : null}
@@ -83,7 +95,7 @@ export function AdminUserDetailModal({ item, visible, onClose }: Props) {
                 </Text>
               </>
             ) : null}
-          </View>
+          </Card>
 
           <View style={styles.mockNote}>
             <Text style={styles.mockNoteText}>
@@ -92,13 +104,11 @@ export function AdminUserDetailModal({ item, visible, onClose }: Props) {
             </Text>
           </View>
 
-          {loading ? (
-            <ActivityIndicator color={Colors.primary} style={{ marginTop: 16 }} />
-          ) : null}
+          {loading ? <ActivityIndicator color={palette.brand} style={{ marginTop: spacing[4] }} /> : null}
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
           {profile ? (
-            <View style={styles.card}>
+            <Card variant="elevated" padding={4}>
               <Text style={styles.sectionTitle}>GET /Users/{'{id}'} (gercek)</Text>
               <DetailRow label="Ad soyad" value={profile.fullName} />
               <DetailRow label="E-posta" value={profile.email} />
@@ -127,7 +137,7 @@ export function AdminUserDetailModal({ item, visible, onClose }: Props) {
                   value={`${profile.averageRating.toFixed(1)} (${profile.totalRatingCount})`}
                 />
               ) : null}
-            </View>
+            </Card>
           ) : null}
         </ScrollView>
       </View>
@@ -135,51 +145,46 @@ export function AdminUserDetailModal({ item, visible, onClose }: Props) {
   );
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.row}>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue}>{value}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.bgDark },
+  root: { flex: 1, backgroundColor: palette.bg },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing[4],
     paddingTop: 48,
-    paddingBottom: 12,
+    paddingBottom: spacing[3],
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: palette.borderSubtle,
   },
-  title: { color: Colors.textPrimary, fontSize: 18, fontWeight: '700' },
-  close: { color: Colors.primary, fontWeight: '600' },
-  scroll: { padding: 16, paddingBottom: 40, gap: 12 },
-  card: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 14,
-    gap: 6,
+  title: { ...typography.h2 },
+  close: { ...typography.link },
+  scroll: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[3] },
+  name: { ...typography.h2, marginBottom: spacing[2] },
+  pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginBottom: spacing[2] },
+  sectionTitle: {
+    fontFamily: fontFamily.bold,
+    fontSize: 14,
+    color: palette.gold,
+    marginBottom: spacing[2],
   },
-  name: { color: Colors.textPrimary, fontSize: 18, fontWeight: '700' },
-  sectionTitle: { color: Colors.primaryGold, fontSize: 14, fontWeight: '700', marginBottom: 4 },
-  muted: { color: Colors.textSecondary, fontSize: 13 },
+  muted: { ...typography.caption, textTransform: 'none' },
   mockNote: {
-    backgroundColor: 'rgba(255,182,39,0.1)',
+    backgroundColor: palette.goldMuted,
     borderWidth: 1,
-    borderColor: Colors.primaryGold,
-    borderRadius: 8,
-    padding: 10,
+    borderColor: palette.goldBorder,
+    borderRadius: 10,
+    padding: spacing[3],
   },
-  mockNoteText: { color: Colors.primaryGold, fontSize: 12, lineHeight: 18 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, paddingVertical: 4 },
-  rowLabel: { color: Colors.textMuted, fontSize: 12, flex: 1 },
-  rowValue: { color: Colors.textPrimary, fontSize: 12, fontWeight: '600', flex: 1, textAlign: 'right' },
-  error: { color: Colors.error, fontSize: 13 },
+  mockNoteText: {
+    fontFamily: fontFamily.regular,
+    fontSize: 12,
+    color: palette.gold,
+    lineHeight: 18,
+  },
+  error: {
+    fontFamily: fontFamily.regular,
+    fontSize: 13,
+    color: palette.error,
+  },
 });

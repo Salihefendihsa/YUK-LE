@@ -8,12 +8,17 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Colors } from '../../constants/colors';
 import { getApiErrorMessage } from '../../services/api.client';
 import { getLoadById } from '../../services/loads.service';
 import type { AdminLoadRow } from '../../types/admin';
 import type { Load } from '../../types/load';
+import { palette } from '../../theme/colors';
+import { fontFamily, typography } from '../../theme/typography';
+import { spacing } from '../../theme/spacing';
 import { formatCurrencyTRY, formatDateTR, formatWeightKg } from '../../utils/format';
+import { getLoadStatusPill } from '../../utils/statusPills';
+import { Card } from '../ui/Card';
+import { StatusPill } from '../ui/StatusPill';
 
 type Props = {
   row: AdminLoadRow;
@@ -25,6 +30,7 @@ export function AdminLoadDetailModal({ row, visible, onClose }: Props) {
   const [load, setLoad] = useState<Load | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const statusPill = getLoadStatusPill(row.status);
 
   useEffect(() => {
     if (!visible || !row.id) return;
@@ -58,15 +64,17 @@ export function AdminLoadDetailModal({ row, visible, onClose }: Props) {
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll}>
-          <View style={styles.card}>
-            <Text style={styles.route}>
-              {row.fromCity} → {row.toCity}
-            </Text>
-            <Text style={styles.muted}>Durum: {row.status}</Text>
+          <Card variant="elevated" padding={4}>
+            <View style={styles.routeRow}>
+              <Text style={styles.route}>
+                {row.fromCity} → {row.toCity}
+              </Text>
+              <StatusPill {...statusPill} />
+            </View>
             <Text style={styles.muted}>Fiyat: {formatCurrencyTRY(row.price)}</Text>
             <Text style={styles.muted}>Olusturma: {formatDateTR(row.createdAt)}</Text>
             <Text style={styles.mono}>ID: {row.id}</Text>
-          </View>
+          </Card>
 
           <View style={styles.mockNote}>
             <Text style={styles.mockNoteText}>
@@ -75,11 +83,11 @@ export function AdminLoadDetailModal({ row, visible, onClose }: Props) {
             </Text>
           </View>
 
-          {loading ? <ActivityIndicator color={Colors.primary} /> : null}
+          {loading ? <ActivityIndicator color={palette.brand} /> : null}
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
           {load ? (
-            <View style={styles.card}>
+            <Card variant="elevated" padding={4}>
               <Text style={styles.sectionTitle}>GET /Loads/{'{id}'} (gercek)</Text>
               <Text style={styles.muted}>Musteri: {load.ownerFullName}</Text>
               <Text style={styles.muted}>
@@ -90,7 +98,7 @@ export function AdminLoadDetailModal({ row, visible, onClose }: Props) {
               {load.description ? (
                 <Text style={styles.muted}>Aciklama: {load.description}</Text>
               ) : null}
-            </View>
+            </Card>
           ) : null}
         </ScrollView>
       </View>
@@ -99,39 +107,61 @@ export function AdminLoadDetailModal({ row, visible, onClose }: Props) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.bgDark },
+  root: { flex: 1, backgroundColor: palette.bg },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing[4],
     paddingTop: 48,
-    paddingBottom: 12,
+    paddingBottom: spacing[3],
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: palette.borderSubtle,
   },
-  title: { color: Colors.textPrimary, fontSize: 18, fontWeight: '700' },
-  close: { color: Colors.primary, fontWeight: '600' },
-  scroll: { padding: 16, paddingBottom: 40, gap: 12 },
-  card: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 14,
-    gap: 6,
+  title: { ...typography.h2 },
+  close: { ...typography.link },
+  scroll: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[3] },
+  routeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: spacing[2],
+    marginBottom: spacing[2],
   },
-  route: { color: Colors.primaryGold, fontSize: 18, fontWeight: '700' },
-  sectionTitle: { color: Colors.primaryGold, fontSize: 14, fontWeight: '700' },
-  muted: { color: Colors.textSecondary, fontSize: 13 },
-  mono: { color: Colors.textMuted, fontSize: 11 },
+  route: {
+    fontFamily: fontFamily.bold,
+    fontSize: 18,
+    color: palette.gold,
+    flex: 1,
+  },
+  sectionTitle: {
+    fontFamily: fontFamily.bold,
+    fontSize: 14,
+    color: palette.gold,
+    marginBottom: spacing[2],
+  },
+  muted: { ...typography.caption, textTransform: 'none' },
+  mono: {
+    fontFamily: fontFamily.regular,
+    fontSize: 11,
+    color: palette.textMuted,
+  },
   mockNote: {
-    backgroundColor: 'rgba(255,182,39,0.1)',
+    backgroundColor: palette.goldMuted,
     borderWidth: 1,
-    borderColor: Colors.primaryGold,
-    borderRadius: 8,
-    padding: 10,
+    borderColor: palette.goldBorder,
+    borderRadius: 10,
+    padding: spacing[3],
   },
-  mockNoteText: { color: Colors.primaryGold, fontSize: 12, lineHeight: 18 },
-  error: { color: Colors.error, fontSize: 13 },
+  mockNoteText: {
+    fontFamily: fontFamily.regular,
+    fontSize: 12,
+    color: palette.gold,
+    lineHeight: 18,
+  },
+  error: {
+    fontFamily: fontFamily.regular,
+    fontSize: 13,
+    color: palette.error,
+  },
 });

@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { Colors } from '../../../src/constants/colors';
+import { palette } from '../../../src/theme/colors';
+import { fontFamily } from '../../../src/theme/typography';
 
 type TabIcon = keyof typeof Ionicons.glyphMap;
 
 function tabIcon(name: TabIcon, focused: boolean, color: string) {
-  return <Ionicons name={name} size={22} color={focused ? Colors.primary : color} />;
+  return <Ionicons name={name} size={22} color={focused ? palette.brand : color} />;
 }
 
 export default function AdminTabsLayout() {
@@ -14,16 +15,20 @@ export default function AdminTabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: Colors.bgCard,
-          borderTopColor: Colors.border,
-          height: 60,
+          backgroundColor: palette.surface,
+          borderTopColor: palette.borderSubtle,
+          borderTopWidth: 1,
+          height: 62,
           paddingBottom: 8,
           paddingTop: 6,
         },
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.textMuted,
-        tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
-        sceneStyle: { backgroundColor: Colors.bgDark },
+        tabBarActiveTintColor: palette.brand,
+        tabBarInactiveTintColor: palette.textMuted,
+        tabBarLabelStyle: {
+          fontFamily: fontFamily.semiBold,
+          fontSize: 10,
+        },
+        sceneStyle: { backgroundColor: palette.bg },
       }}
     >
       <Tabs.Screen

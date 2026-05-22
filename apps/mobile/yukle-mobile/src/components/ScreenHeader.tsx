@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Colors } from '../constants/colors';
+import { palette } from '../theme/colors';
+import { fontFamily } from '../theme/typography';
+import { spacing } from '../theme/spacing';
 import { NotificationBell } from './NotificationBell';
 
 type Props = {
@@ -29,11 +31,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: 8,
-    marginBottom: 12,
+    gap: spacing[2],
+    marginBottom: spacing[4],
   },
-  textCol: { flex: 1, gap: 4 },
-  title: { color: Colors.textPrimary, fontSize: 22, fontWeight: '700' },
-  sub: { color: Colors.textSecondary, fontSize: 13 },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  textCol: { flex: 1, gap: spacing[1] },
+  title: {
+    fontFamily: fontFamily.bold,
+    fontSize: 22,
+    color: palette.text,
+    letterSpacing: -0.3,
+  },
+  sub: {
+    fontFamily: fontFamily.regular,
+    fontSize: 13,
+    color: palette.textSecondary,
+  },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: spacing[1] },
 });

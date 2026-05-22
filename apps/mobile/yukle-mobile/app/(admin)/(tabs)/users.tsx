@@ -7,11 +7,17 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { AdminUserDetailModal } from '../../../src/components/admin/AdminUserDetailModal';
-import { Colors } from '../../../src/constants/colors';
+import { AlertBanner } from '../../../src/components/ui/AlertBanner';
+import { Card } from '../../../src/components/ui/Card';
+import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
+import { SectionHeader } from '../../../src/components/ui/SectionHeader';
+import { StatusPill } from '../../../src/components/ui/StatusPill';
+import { TextField } from '../../../src/components/ui/TextField';
 import { screenRootStyle } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import {
@@ -22,9 +28,19 @@ import {
   toggleUserActive,
 } from '../../../src/services/admin.service';
 import type { AdminUserListItem } from '../../../src/types/admin';
+import { palette } from '../../../src/theme/colors';
+import { fontFamily, typography } from '../../../src/theme/typography';
+import { spacing } from '../../../src/theme/spacing';
 import { formatCurrencyTRY } from '../../../src/utils/format';
+import { getApprovalStatusPill } from '../../../src/utils/statusPills';
 
 type UserTab = 'Driver' | 'Customer';
+
+function activePill(isActive: boolean) {
+  return isActive
+    ? { label: 'Aktif', tone: 'success' as const }
+    : { label: 'Pasif', tone: 'error' as const };
+}
 
 export default function AdminUsersTab() {
   const [tab, setTab] = useState<UserTab>('Driver');
@@ -106,9 +122,8 @@ export default function AdminUsersTab() {
 
   if (loading) {
     return (
-      <View style={[screenRootStyle, styles.centered]}>
-        <ActivityIndicator color={Colors.primary} size="large" />
-        <Text style={styles.muted}>Kullanicilar yukleniyor...</Text>
+      <View style={screenRootStyle}>
+        <LoadingState message="Kullanicilar yukleniyor..." />
       </View>
     );
   }
@@ -120,12 +135,11 @@ export default function AdminUsersTab() {
         keyExtractor={(item) => `${item.role}-${item.id}`}
         contentContainerStyle={styles.list}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
         }
         ListHeaderComponent={
           <>
-            <Text style={styles.title}>Kullanicilar</Text>
-            <Text style={styles.sub}>Sofor ve musteri yonetimi</Text>
+            <SectionHeader title="Kullanicilar" subtitle="Sofor ve musteri yonetimi" />
 
             <View style={styles.tabRow}>
               <Pressable
@@ -146,82 +160,82 @@ export default function AdminUsersTab() {
               </Pressable>
             </View>
 
-            <TextInput
-              style={styles.search}
+            <TextField
+              icon="search-outline"
+              placeholder="Ad, e-posta veya telefon ara..."
               value={search}
               onChangeText={setSearch}
-              placeholder="Ad, e-posta veya telefon ara..."
-              placeholderTextColor={Colors.textMuted}
               onSubmitEditing={() => fetchData()}
             />
-            <Pressable style={styles.filterBtn} onPress={() => fetchData()}>
-              <Text style={styles.filterBtnText}>Ara / Yenile</Text>
-            </Pressable>
+            <PrimaryButton
+              title="Ara / Yenile"
+              onPress={() => fetchData()}
+              style={styles.searchBtn}
+            />
 
-            {error ? (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            ) : null}
-            {statusMsg ? (
-              <View style={styles.successBox}>
-                <Text style={styles.successText}>{statusMsg}</Text>
-              </View>
-            ) : null}
+            {error ? <AlertBanner message={error} tone="error" /> : null}
+            {statusMsg ? <AlertBanner message={statusMsg} tone="success" /> : null}
           </>
         }
         ListEmptyComponent={
           !error ? (
-            <View style={styles.empty}>
-              <Text style={styles.emptyTitle}>
-                {tab === 'Driver' ? 'Sofor bulunamadi' : 'Musteri bulunamadi'}
-              </Text>
-            </View>
+            <EmptyState
+              icon="👥"
+              title={tab === 'Driver' ? 'Sofor bulunamadi' : 'Musteri bulunamadi'}
+              description="Arama kriterlerini degistirin veya yenileyin."
+            />
           ) : null
         }
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Pressable onPress={() => setSelected(item)}>
-              <View style={styles.cardHead}>
-                <Text style={styles.cardName}>{item.fullName}</Text>
-                <Text style={[styles.statusBadge, item.isActive ? styles.active : styles.inactive]}>
-                  {item.isActive ? 'Aktif' : 'Pasif'}
-                </Text>
-              </View>
-              <Text style={styles.muted}>{item.phone}</Text>
-              <Text style={styles.muted}>
-                {item.role === 'Driver' ? 'Sofor' : 'Musteri'}
-                {item.role === 'Driver' && item.approvalStatus
-                  ? ` · Onay: ${item.approvalStatus}`
-                  : ''}
-              </Text>
-              {item.role === 'Driver' && item.vehicle ? (
-                <Text style={styles.muted}>Plaka: {item.vehicle}</Text>
-              ) : null}
-              {item.role === 'Customer' ? (
-                <Text style={styles.muted}>
-                  Ilan: {item.totalLoadCount ?? 0} · Harcama:{' '}
-                  {formatCurrencyTRY(item.totalSpent ?? 0)}
-                </Text>
-              ) : null}
-              <Text style={styles.detailLink}>Detay →</Text>
-            </Pressable>
+        renderItem={({ item }) => {
+          const ap = activePill(item.isActive);
+          const approvalPill =
+            item.role === 'Driver' && item.approvalStatus
+              ? getApprovalStatusPill(item.approvalStatus)
+              : null;
 
-            <Pressable
-              style={[styles.toggleBtn, togglingId === item.id && styles.btnDisabled]}
-              onPress={() => confirmToggle(item)}
-              disabled={togglingId === item.id}
-            >
+          return (
+            <Card variant="elevated" padding={4} style={styles.userCard}>
+              <Pressable onPress={() => setSelected(item)}>
+                <View style={styles.cardHead}>
+                  <Text style={styles.cardName} numberOfLines={1}>
+                    {item.fullName}
+                  </Text>
+                  <StatusPill label={ap.label} tone={ap.tone} />
+                </View>
+                <Text style={styles.muted}>{item.phone}</Text>
+                <View style={styles.pillRow}>
+                  <StatusPill
+                    label={item.role === 'Driver' ? 'Sofor' : 'Musteri'}
+                    tone="brand"
+                  />
+                  {approvalPill ? <StatusPill {...approvalPill} /> : null}
+                </View>
+                {item.role === 'Driver' && item.vehicle ? (
+                  <Text style={styles.muted}>Plaka: {item.vehicle}</Text>
+                ) : null}
+                {item.role === 'Customer' ? (
+                  <Text style={styles.muted}>
+                    Ilan: {item.totalLoadCount ?? 0} · Harcama:{' '}
+                    {formatCurrencyTRY(item.totalSpent ?? 0)}
+                  </Text>
+                ) : null}
+                <Text style={styles.detailLink}>Detay →</Text>
+              </Pressable>
+
               {togglingId === item.id ? (
-                <ActivityIndicator color={Colors.bgDark} size="small" />
+                <View style={styles.toggleLoading}>
+                  <ActivityIndicator color={palette.brand} size="small" />
+                </View>
               ) : (
-                <Text style={styles.toggleBtnText}>
-                  {item.isActive ? 'Pasif Yap' : 'Aktif Et'}
-                </Text>
+                <PrimaryButton
+                  title={item.isActive ? 'Pasif Yap' : 'Aktif Et'}
+                  onPress={() => confirmToggle(item)}
+                  style={styles.toggleBtn}
+                />
               )}
-            </Pressable>
-          </View>
-        )}
+            </Card>
+          );
+        }}
       />
 
       {selected ? (
@@ -236,85 +250,39 @@ export default function AdminUsersTab() {
 }
 
 const styles = StyleSheet.create({
-  list: { padding: 16, paddingBottom: 32 },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
-  title: { color: Colors.textPrimary, fontSize: 22, fontWeight: '700' },
-  sub: { color: Colors.textSecondary, fontSize: 13, marginBottom: 12 },
-  tabRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  list: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[2] },
+  tabRow: { flexDirection: 'row', gap: spacing[2], marginBottom: spacing[3] },
   tabBtn: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: 'center',
-  },
-  tabBtnActive: { borderColor: Colors.primary, backgroundColor: 'rgba(255,107,0,0.12)' },
-  tabText: { color: Colors.textMuted, fontSize: 13, fontWeight: '600' },
-  tabTextActive: { color: Colors.primary },
-  search: {
-    backgroundColor: Colors.bgInput,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: Colors.textPrimary,
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  filterBtn: {
-    alignSelf: 'flex-start',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    marginBottom: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-  },
-  filterBtnText: { color: Colors.primary, fontWeight: '600', fontSize: 13 },
-  muted: { color: Colors.textSecondary, fontSize: 13 },
-  card: {
-    backgroundColor: Colors.bgCard,
+    paddingVertical: spacing[3],
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 14,
-    marginBottom: 10,
-    gap: 8,
-  },
-  cardHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardName: { color: Colors.textPrimary, fontSize: 16, fontWeight: '700', flex: 1 },
-  statusBadge: { fontSize: 11, fontWeight: '700', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
-  active: { color: Colors.success, borderWidth: 1, borderColor: Colors.success },
-  inactive: { color: Colors.error, borderWidth: 1, borderColor: Colors.error },
-  detailLink: { color: Colors.primary, fontSize: 13, fontWeight: '700', marginTop: 4 },
-  toggleBtn: {
-    backgroundColor: Colors.primary,
-    borderRadius: 8,
-    paddingVertical: 10,
+    borderColor: palette.borderLight,
     alignItems: 'center',
+    backgroundColor: palette.surface,
   },
-  toggleBtnText: { color: Colors.bgDark, fontWeight: '700', fontSize: 14 },
-  btnDisabled: { opacity: 0.5 },
-  empty: { alignItems: 'center', paddingVertical: 32 },
-  emptyTitle: { color: Colors.textPrimary, fontSize: 16, fontWeight: '600' },
-  errorBox: {
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(239,68,68,0.3)',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+  tabBtnActive: {
+    borderColor: palette.brandBorder,
+    backgroundColor: palette.brandMuted,
   },
-  errorText: { color: Colors.error, fontSize: 13 },
-  successBox: {
-    backgroundColor: 'rgba(16,185,129,0.12)',
-    borderWidth: 1,
-    borderColor: Colors.success,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+  tabText: {
+    fontFamily: fontFamily.semiBold,
+    fontSize: 13,
+    color: palette.textMuted,
   },
-  successText: { color: Colors.success, fontSize: 13, fontWeight: '600' },
+  tabTextActive: { color: palette.brand },
+  searchBtn: { marginBottom: spacing[3] },
+  userCard: { marginBottom: spacing[2], gap: spacing[2] },
+  cardHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing[2] },
+  cardName: { ...typography.h3, flex: 1 },
+  pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginTop: spacing[1] },
+  muted: { ...typography.caption, textTransform: 'none' },
+  detailLink: {
+    fontFamily: fontFamily.bold,
+    fontSize: 13,
+    color: palette.brand,
+    marginTop: spacing[2],
+  },
+  toggleBtn: { marginTop: spacing[1] },
+  toggleLoading: { paddingVertical: spacing[3], alignItems: 'center' },
 });

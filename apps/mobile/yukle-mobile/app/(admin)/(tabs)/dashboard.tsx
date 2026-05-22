@@ -1,22 +1,22 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
-import { Colors } from '../../../src/constants/colors';
+import { AlertBanner } from '../../../src/components/ui/AlertBanner';
+import { Card } from '../../../src/components/ui/Card';
+import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { StatusPill } from '../../../src/components/ui/StatusPill';
 import { screenRootStyle } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getAdminDashboard } from '../../../src/services/admin.service';
 import type { AdminDashboardStats } from '../../../src/types/admin';
 import { useAuthStore } from '../../../src/store/auth.store';
+import { palette } from '../../../src/theme/colors';
+import { fontFamily, typography } from '../../../src/theme/typography';
+import { spacing } from '../../../src/theme/spacing';
 import { formatCurrencyTRY } from '../../../src/utils/format';
+import { getSystemServicePill } from '../../../src/utils/statusPills';
 
 function KpiCard({
   label,
@@ -30,22 +30,17 @@ function KpiCard({
   badge?: string;
 }) {
   return (
-    <View style={[styles.kpiCard, danger && styles.kpiDanger]}>
+    <Card variant="elevated" padding={4} style={danger ? styles.kpiDanger : undefined}>
       <View style={styles.kpiHead}>
         <Text style={styles.kpiLabel}>{label}</Text>
-        {badge ? <Text style={styles.kpiBadge}>{badge}</Text> : null}
+        {badge ? (
+          <View style={styles.kpiBadge}>
+            <Text style={styles.kpiBadgeText}>{badge}</Text>
+          </View>
+        ) : null}
       </View>
       <Text style={[styles.kpiValue, danger && styles.kpiValueDanger]}>{value}</Text>
-    </View>
-  );
-}
-
-function StatusPill({ label, online }: { label: string; online?: boolean }) {
-  return (
-    <View style={styles.statusPill}>
-      <View style={[styles.statusDot, online === false && styles.statusDotOff]} />
-      <Text style={styles.statusText}>{label}</Text>
-    </View>
+    </Card>
   );
 }
 
@@ -86,9 +81,8 @@ export default function AdminDashboardScreen() {
 
   if (loading) {
     return (
-      <View style={[screenRootStyle, styles.centered]}>
-        <ActivityIndicator color={Colors.primary} size="large" />
-        <Text style={styles.muted}>Komuta merkezi yukleniyor...</Text>
+      <View style={screenRootStyle}>
+        <LoadingState message="Komuta merkezi yukleniyor..." />
       </View>
     );
   }
@@ -100,7 +94,7 @@ export default function AdminDashboardScreen() {
       style={screenRootStyle}
       contentContainerStyle={styles.scroll}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
       }
     >
       <ScreenHeader
@@ -108,23 +102,37 @@ export default function AdminDashboardScreen() {
         subtitle={`Canli operasyon — ${user?.fullName ?? 'Admin'}`}
         right={
           <Pressable style={styles.logoutBtn} onPress={handleLogout}>
-            <Text style={styles.logoutText}>Logout</Text>
+            <Text style={styles.logoutText}>Cikis</Text>
           </Pressable>
         }
       />
 
-      {error ? (
-        <View style={styles.errorBox}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      ) : null}
+      {error ? <AlertBanner message={error} tone="error" /> : null}
 
       {stats ? (
         <>
+          <Card variant="glass" padding={5} style={styles.hero}>
+            <View style={styles.heroTop}>
+              <View style={styles.heroIcon}>
+                <Ionicons name="shield-checkmark" size={26} color={palette.gold} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.heroTitle}>Operasyon ozeti</Text>
+                <Text style={styles.heroSub}>Platform genel bakis</Text>
+              </View>
+            </View>
+          </Card>
+
           <View style={styles.statusRow}>
-            <StatusPill label={`API: ${sys?.api ?? '-'}`} online={sys?.api === 'Online'} />
-            <StatusPill label={`DB: ${sys?.db ?? '-'}`} online={sys?.db === 'Online'} />
-            <StatusPill label={`Redis: ${sys?.redis ?? '-'}`} online={sys?.redis === 'Online'} />
+            {sys?.api ? (
+              <StatusPill {...getSystemServicePill(sys.api)} label={`API: ${sys.api}`} />
+            ) : null}
+            {sys?.db ? (
+              <StatusPill {...getSystemServicePill(sys.db)} label={`DB: ${sys.db}`} />
+            ) : null}
+            {sys?.redis ? (
+              <StatusPill {...getSystemServicePill(sys.redis)} label={`Redis: ${sys.redis}`} />
+            ) : null}
           </View>
 
           <View style={styles.kpiGrid}>
@@ -142,7 +150,7 @@ export default function AdminDashboardScreen() {
             />
           </View>
 
-          <View style={styles.card}>
+          <Card variant="elevated" padding={4}>
             <Text style={styles.cardTitle}>Canli aktivite</Text>
             {stats.recentActions.length === 0 ? (
               <Text style={styles.muted}>Aktivite bulunamadi.</Text>
@@ -163,7 +171,7 @@ export default function AdminDashboardScreen() {
                 </View>
               ))
             )}
-          </View>
+          </Card>
         </>
       ) : null}
     </ScrollView>
@@ -171,84 +179,77 @@ export default function AdminDashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { padding: 16, paddingBottom: 32, gap: 12 },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
-  headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  title: { color: Colors.textPrimary, fontSize: 22, fontWeight: '700' },
-  sub: { color: Colors.textSecondary, fontSize: 13, marginTop: 2 },
-  adminName: { color: Colors.primaryGold, fontSize: 12, marginTop: 4, fontWeight: '600' },
-  muted: { color: Colors.textSecondary, fontSize: 13 },
+  scroll: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[3] },
+  hero: { marginBottom: spacing[1] },
+  heroTop: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
+  heroIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: palette.goldMuted,
+    borderWidth: 1,
+    borderColor: palette.goldBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroTitle: { ...typography.h3, color: palette.text },
+  heroSub: { ...typography.caption, textTransform: 'none', marginTop: 2 },
   logoutBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[3],
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: palette.borderLight,
   },
-  logoutText: { color: Colors.textSecondary, fontSize: 12, fontWeight: '600' },
-  statusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  statusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: Colors.bgCard,
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: Colors.border,
+  logoutText: {
+    fontFamily: fontFamily.semiBold,
+    fontSize: 12,
+    color: palette.textSecondary,
   },
-  statusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.success },
-  statusDotOff: { backgroundColor: Colors.error },
-  statusText: { color: Colors.textSecondary, fontSize: 11, fontWeight: '600' },
-  kpiGrid: { gap: 8 },
-  kpiCard: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 14,
-    gap: 6,
-  },
-  kpiDanger: { borderColor: 'rgba(239,68,68,0.5)' },
+  statusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] },
+  kpiGrid: { gap: spacing[2] },
   kpiHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  kpiLabel: { color: Colors.textSecondary, fontSize: 12, fontWeight: '600' },
+  kpiLabel: { ...typography.caption, textTransform: 'none' },
   kpiBadge: {
-    color: Colors.primaryGold,
-    fontSize: 10,
-    fontWeight: '700',
     borderWidth: 1,
-    borderColor: Colors.primaryGold,
+    borderColor: palette.goldBorder,
     borderRadius: 4,
     paddingHorizontal: 6,
     paddingVertical: 2,
+    backgroundColor: palette.goldMuted,
   },
-  kpiValue: { color: Colors.textPrimary, fontSize: 22, fontWeight: '800' },
-  kpiValueDanger: { color: Colors.error },
-  card: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 14,
-    gap: 8,
+  kpiBadgeText: {
+    fontFamily: fontFamily.bold,
+    fontSize: 10,
+    color: palette.gold,
   },
-  cardTitle: { color: Colors.textPrimary, fontSize: 15, fontWeight: '700' },
+  kpiValue: {
+    fontFamily: fontFamily.bold,
+    fontSize: 22,
+    color: palette.text,
+    letterSpacing: -0.5,
+  },
+  kpiValueDanger: { color: palette.error },
+  kpiDanger: { borderColor: palette.errorBorder },
+  cardTitle: { ...typography.h3, marginBottom: spacing[2] },
+  muted: { ...typography.caption, textTransform: 'none' },
   actionRow: {
     flexDirection: 'row',
-    gap: 10,
-    paddingVertical: 8,
+    gap: spacing[3],
+    paddingVertical: spacing[2],
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: palette.borderSubtle,
   },
-  actionTime: { color: Colors.textMuted, fontSize: 11, width: 48 },
-  actionNote: { color: Colors.textSecondary, fontSize: 13, flex: 1 },
-  errorBox: {
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    borderColor: 'rgba(239,68,68,0.3)',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
+  actionTime: {
+    fontFamily: fontFamily.regular,
+    fontSize: 11,
+    color: palette.textMuted,
+    width: 48,
   },
-  errorText: { color: Colors.error, fontSize: 13 },
+  actionNote: {
+    fontFamily: fontFamily.regular,
+    fontSize: 13,
+    color: palette.textSecondary,
+    flex: 1,
+  },
 });

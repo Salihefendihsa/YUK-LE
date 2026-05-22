@@ -11,12 +11,19 @@ import {
   Text,
   View,
 } from 'react-native';
-import { adminScreenStyles as s } from '../../src/constants/adminScreenStyles';
-import { Colors } from '../../src/constants/colors';
+import { AlertBanner } from '../../src/components/ui/AlertBanner';
+import { Card } from '../../src/components/ui/Card';
+import { EmptyState } from '../../src/components/ui/EmptyState';
+import { LoadingState } from '../../src/components/ui/LoadingState';
+import { SectionHeader } from '../../src/components/ui/SectionHeader';
+import { StatusPill } from '../../src/components/ui/StatusPill';
 import { screenRootStyle } from '../../src/constants/layout';
 import { getApiErrorMessage } from '../../src/services/api.client';
 import { getAdminChatMessages, getAdminChats } from '../../src/services/admin.service';
 import type { AdminChatMessageRow, AdminChatSummaryRow } from '../../src/types/admin';
+import { palette } from '../../src/theme/colors';
+import { fontFamily, typography } from '../../src/theme/typography';
+import { spacing } from '../../src/theme/spacing';
 import { formatDateTimeTR } from '../../src/utils/format';
 
 export default function AdminChatsScreen() {
@@ -58,8 +65,8 @@ export default function AdminChatsScreen() {
 
   if (loading) {
     return (
-      <View style={[screenRootStyle, s.centered]}>
-        <ActivityIndicator color={Colors.primary} size="large" />
+      <View style={screenRootStyle}>
+        <LoadingState message="Sohbetler yukleniyor..." />
       </View>
     );
   }
@@ -78,42 +85,38 @@ export default function AdminChatsScreen() {
               await fetchChats();
               setRefreshing(false);
             }}
-            tintColor={Colors.primary}
+            tintColor={palette.brand}
           />
         }
         ListHeaderComponent={
           <>
-            <Pressable onPress={() => router.back()}>
-              <Text style={s.backLink}>← Geri</Text>
+            <Pressable onPress={() => router.back()} style={styles.back}>
+              <Text style={typography.link}>← Geri</Text>
             </Pressable>
-            <Text style={s.title}>Sohbetler</Text>
-            <Text style={s.sub}>Ozet: GET /Admin/chats — Mesaj: GET /Admin/chats/loadId</Text>
-            {error && !selected ? (
-              <View style={s.errorBox}>
-                <Text style={s.errorText}>{error}</Text>
-              </View>
-            ) : null}
+            <SectionHeader
+              title="Sohbetler"
+              subtitle="Ozet: GET /Admin/chats — Mesaj: GET /Admin/chats/loadId"
+            />
+            {error && !selected ? <AlertBanner message={error} tone="error" /> : null}
           </>
         }
         ListEmptyComponent={
-          !error ? (
-            <View style={s.empty}>
-              <Text style={s.emptyTitle}>Sohbet kaydi yok</Text>
-            </View>
-          ) : null
+          !error ? <EmptyState icon="💬" title="Sohbet kaydi yok" /> : null
         }
         renderItem={({ item }) => (
-          <Pressable style={s.card} onPress={() => void openChat(item)}>
-            <Text style={s.cardTitle}>{item.route || `Ilan ${item.loadId.slice(0, 8)}`}</Text>
-            <Text style={s.muted}>
-              Musteri: {item.customerName} | Sofor: {item.driverName}
-            </Text>
-            <Text style={s.muted} numberOfLines={2}>
-              Son: {item.lastMessage}
-            </Text>
-            <Text style={s.muted}>
-              {formatDateTimeTR(item.lastMessageAt)} · {item.messageCount} mesaj
-            </Text>
+          <Pressable onPress={() => void openChat(item)}>
+            <Card variant="elevated" padding={4} style={styles.chatCard}>
+              <Text style={styles.cardTitle}>{item.route || `Ilan ${item.loadId.slice(0, 8)}`}</Text>
+              <Text style={styles.muted}>
+                Musteri: {item.customerName} | Sofor: {item.driverName}
+              </Text>
+              <Text style={styles.muted} numberOfLines={2}>
+                Son: {item.lastMessage}
+              </Text>
+              <Text style={styles.muted}>
+                {formatDateTimeTR(item.lastMessageAt)} · {item.messageCount} mesaj
+              </Text>
+            </Card>
           </Pressable>
         )}
       />
@@ -121,35 +124,40 @@ export default function AdminChatsScreen() {
       <Modal visible={selected != null} animationType="slide" onRequestClose={() => setSelected(null)}>
         <View style={[screenRootStyle, styles.modal]}>
           <View style={styles.modalHeader}>
-            <Text style={s.title}>Mesaj Gecmisi</Text>
+            <Text style={styles.modalTitle}>Mesaj Gecmisi</Text>
             <Pressable onPress={() => setSelected(null)}>
-              <Text style={s.backLink}>Kapat</Text>
+              <Text style={typography.link}>Kapat</Text>
             </Pressable>
           </View>
           {selected ? (
-            <Text style={s.muted}>
+            <Text style={styles.muted}>
               {selected.route} — {selected.customerName} / {selected.driverName}
             </Text>
           ) : null}
           {msgLoading ? (
-            <ActivityIndicator color={Colors.primary} style={{ marginTop: 24 }} />
+            <ActivityIndicator color={palette.brand} style={{ marginTop: spacing[6] }} />
           ) : (
-            <ScrollView contentContainerStyle={{ gap: 8, paddingBottom: 24 }}>
+            <ScrollView contentContainerStyle={styles.msgScroll}>
               {messages.map((m) => (
-                <View
+                <Card
                   key={m.id}
-                  style={[s.card, m.isBlocked && { borderColor: 'rgba(239,68,68,0.5)' }]}
+                  variant="elevated"
+                  padding={4}
+                  style={m.isBlocked ? styles.blockedMsg : undefined}
                 >
-                  <Text style={s.cardTitle}>
-                    {m.senderName} ({m.senderRole})
-                  </Text>
-                  <Text style={s.muted}>{formatDateTimeTR(m.createdAt)}</Text>
-                  <Text style={m.isBlocked ? s.danger : s.muted}>{m.message}</Text>
-                  {m.blockReason ? <Text style={s.muted}>Sebep: {m.blockReason}</Text> : null}
-                </View>
+                  <View style={styles.msgHead}>
+                    <Text style={styles.cardTitle}>
+                      {m.senderName} ({m.senderRole})
+                    </Text>
+                    {m.isBlocked ? <StatusPill label="Engellendi" tone="error" /> : null}
+                  </View>
+                  <Text style={styles.muted}>{formatDateTimeTR(m.createdAt)}</Text>
+                  <Text style={m.isBlocked ? styles.danger : styles.muted}>{m.message}</Text>
+                  {m.blockReason ? <Text style={styles.muted}>Sebep: {m.blockReason}</Text> : null}
+                </Card>
               ))}
               {messages.length === 0 && !msgLoading ? (
-                <Text style={s.emptyTitle}>Mesaj yok</Text>
+                <EmptyState icon="💬" title="Mesaj yok" />
               ) : null}
             </ScrollView>
           )}
@@ -160,7 +168,25 @@ export default function AdminChatsScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { padding: 16, paddingBottom: 40, gap: 10 },
-  modal: { padding: 16, flex: 1 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  list: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[2] },
+  back: { marginBottom: spacing[2] },
+  chatCard: { marginBottom: spacing[2] },
+  cardTitle: { ...typography.h3 },
+  muted: { ...typography.caption, textTransform: 'none' },
+  modal: { padding: spacing[4], flex: 1 },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing[3],
+  },
+  modalTitle: { ...typography.h2 },
+  msgScroll: { gap: spacing[2], paddingBottom: spacing[8], paddingTop: spacing[2] },
+  msgHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing[2] },
+  blockedMsg: { borderColor: palette.errorBorder },
+  danger: {
+    fontFamily: fontFamily.regular,
+    fontSize: 13,
+    color: palette.error,
+  },
 });

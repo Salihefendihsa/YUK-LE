@@ -1,7 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -10,10 +9,16 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
-import { Colors } from '../../src/constants/colors';
+import { AlertBanner } from '../../src/components/ui/AlertBanner';
+import { Card } from '../../src/components/ui/Card';
+import { EmptyState } from '../../src/components/ui/EmptyState';
+import { LoadingState } from '../../src/components/ui/LoadingState';
+import { PrimaryButton } from '../../src/components/ui/PrimaryButton';
+import { SecondaryButton } from '../../src/components/ui/SecondaryButton';
+import { StatusPill } from '../../src/components/ui/StatusPill';
+import { TextField } from '../../src/components/ui/TextField';
 import { screenRootStyle } from '../../src/constants/layout';
 import { getApiErrorMessage } from '../../src/services/api.client';
 import {
@@ -24,6 +29,9 @@ import {
   updateAddress,
 } from '../../src/services/addresses.service';
 import type { DeliveryAddress, DeliveryAddressInput } from '../../src/types/address';
+import { palette } from '../../src/theme/colors';
+import { typography } from '../../src/theme/typography';
+import { spacing } from '../../src/theme/spacing';
 
 const EMPTY_FORM: DeliveryAddressInput = {
   title: '',
@@ -35,31 +43,6 @@ const EMPTY_FORM: DeliveryAddressInput = {
   district: '',
   isDefault: false,
 };
-
-function FormField({
-  label,
-  value,
-  onChangeText,
-  multiline,
-}: {
-  label: string;
-  value: string;
-  onChangeText: (v: string) => void;
-  multiline?: boolean;
-}) {
-  return (
-    <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput
-        style={[styles.input, multiline && styles.inputMulti]}
-        value={value}
-        onChangeText={onChangeText}
-        placeholderTextColor={Colors.textMuted}
-        multiline={multiline}
-      />
-    </View>
-  );
-}
 
 export default function CustomerAddressesScreen() {
   const router = useRouter();
@@ -182,9 +165,8 @@ export default function CustomerAddressesScreen() {
 
   if (loading) {
     return (
-      <View style={[screenRootStyle, styles.centered]}>
-        <ActivityIndicator color={Colors.primary} size="large" />
-        <Text style={styles.muted}>Adresler yukleniyor...</Text>
+      <View style={screenRootStyle}>
+        <LoadingState message="Adresler yukleniyor..." />
       </View>
     );
   }
@@ -197,79 +179,73 @@ export default function CustomerAddressesScreen() {
       <ScrollView
         contentContainerStyle={styles.scroll}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
         }
         keyboardShouldPersistTaps="handled"
       >
         <Pressable onPress={() => router.back()}>
-          <Text style={styles.backLink}>← Profil</Text>
+          <Text style={typography.link}>← Profil</Text>
         </Pressable>
         <Text style={styles.title}>Teslimat Adreslerim</Text>
         <Text style={styles.sub}>Sik kullandiginiz teslimat noktalarini kaydedin.</Text>
 
-        {error ? (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        ) : null}
+        {error ? <AlertBanner message={error} tone="error" /> : null}
 
-        <View style={styles.formCard}>
+        <Card variant="glass" padding={4}>
           <Text style={styles.formTitle}>{editingId ? 'Adresi duzenle' : 'Yeni adres'}</Text>
-          <FormField label="Baslik" value={form.title} onChangeText={(v) => setForm((s) => ({ ...s, title: v }))} />
-          <FormField label="Sirket adi" value={form.companyName} onChangeText={(v) => setForm((s) => ({ ...s, companyName: v }))} />
-          <FormField label="Yetkili kisi" value={form.contactPerson} onChangeText={(v) => setForm((s) => ({ ...s, contactPerson: v }))} />
-          <FormField label="Telefon" value={form.contactPhone} onChangeText={(v) => setForm((s) => ({ ...s, contactPhone: v }))} />
-          <FormField label="Sehir" value={form.city} onChangeText={(v) => setForm((s) => ({ ...s, city: v }))} />
-          <FormField label="Ilce" value={form.district} onChangeText={(v) => setForm((s) => ({ ...s, district: v }))} />
-          <FormField label="Tam adres" value={form.address} onChangeText={(v) => setForm((s) => ({ ...s, address: v }))} multiline />
+          <TextField label="Baslik" value={form.title} onChangeText={(v) => setForm((s) => ({ ...s, title: v }))} />
+          <TextField label="Sirket adi" value={form.companyName} onChangeText={(v) => setForm((s) => ({ ...s, companyName: v }))} />
+          <TextField label="Yetkili kisi" value={form.contactPerson} onChangeText={(v) => setForm((s) => ({ ...s, contactPerson: v }))} />
+          <TextField label="Telefon" value={form.contactPhone} onChangeText={(v) => setForm((s) => ({ ...s, contactPhone: v }))} keyboardType="phone-pad" />
+          <TextField label="Sehir" value={form.city} onChangeText={(v) => setForm((s) => ({ ...s, city: v }))} />
+          <TextField label="Ilce" value={form.district} onChangeText={(v) => setForm((s) => ({ ...s, district: v }))} />
+          <TextField label="Tam adres" value={form.address} onChangeText={(v) => setForm((s) => ({ ...s, address: v }))} multiline numberOfLines={3} />
           <View style={styles.formActions}>
             {editingId ? (
-              <Pressable style={styles.ghostBtn} onPress={resetForm}>
-                <Text style={styles.ghostBtnText}>Iptal</Text>
-              </Pressable>
+              <SecondaryButton title="Iptal" onPress={resetForm} style={styles.actionBtn} />
             ) : null}
-            <Pressable style={[styles.primaryBtn, saving && styles.btnDisabled]} onPress={onSave} disabled={saving}>
-              {saving ? (
-                <ActivityIndicator color={Colors.bgDark} />
-              ) : (
-                <Text style={styles.primaryBtnText}>{editingId ? 'Kaydet' : 'Adres Ekle'}</Text>
-              )}
-            </Pressable>
+            <PrimaryButton
+              title={editingId ? 'Kaydet' : 'Adres Ekle'}
+              onPress={onSave}
+              loading={saving}
+              style={styles.actionBtn}
+            />
           </View>
-        </View>
+        </Card>
 
         {items.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={styles.emptyTitle}>Kayitli adres bulunamadi</Text>
-            <Text style={styles.muted}>Yukari formdan ilk teslimat adresinizi ekleyin.</Text>
-          </View>
+          <EmptyState
+            icon="📍"
+            title="Kayitli adres bulunamadi"
+            description="Yukari formdan ilk teslimat adresinizi ekleyin."
+          />
         ) : (
           items.map((a) => (
-            <View key={a.id} style={styles.card}>
+            <Card key={a.id} variant="default" padding={4} style={styles.addrCard}>
               <View style={styles.cardHead}>
                 <Text style={styles.cardTitle}>{a.title}</Text>
-                {a.isDefault ? <Text style={styles.defaultBadge}>Varsayilan</Text> : null}
+                {a.isDefault ? <StatusPill label="Varsayilan" tone="success" /> : null}
               </View>
-              <Text style={styles.muted}>
+              <Text style={styles.addrMeta}>
                 {a.companyName} · {a.contactPerson} ({a.contactPhone})
               </Text>
-              <Text style={styles.muted}>
+              <Text style={styles.addrMeta}>
                 {a.address}, {a.district}/{a.city}
               </Text>
               <View style={styles.cardActions}>
                 {!a.isDefault ? (
-                  <Pressable style={styles.ghostBtn} onPress={() => confirmSetDefault(a)}>
-                    <Text style={styles.ghostBtnText}>Varsayilan Yap</Text>
-                  </Pressable>
+                  <SecondaryButton
+                    title="Varsayilan Yap"
+                    onPress={() => confirmSetDefault(a)}
+                    style={styles.miniBtn}
+                  />
                 ) : null}
-                <Pressable style={styles.ghostBtn} onPress={() => startEdit(a)}>
-                  <Text style={styles.ghostBtnText}>Duzenle</Text>
-                </Pressable>
+                <SecondaryButton title="Duzenle" onPress={() => startEdit(a)} style={styles.miniBtn} />
                 <Pressable style={styles.dangerBtn} onPress={() => confirmDelete(a)}>
-                  <Text style={styles.dangerBtnText}>Sil</Text>
+                  <Text style={styles.dangerText}>Sil</Text>
                 </Pressable>
               </View>
-            </View>
+            </Card>
           ))
         )}
       </ScrollView>
@@ -278,90 +254,24 @@ export default function CustomerAddressesScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { padding: 16, paddingBottom: 40, gap: 12 },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
-  backLink: { color: Colors.primary, fontSize: 14, fontWeight: '600' },
-  title: { color: Colors.textPrimary, fontSize: 22, fontWeight: '700' },
-  sub: { color: Colors.textSecondary, fontSize: 14, marginBottom: 4 },
-  muted: { color: Colors.textSecondary, fontSize: 13 },
-  formCard: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 14,
-    gap: 8,
-  },
-  formTitle: { color: Colors.textPrimary, fontSize: 15, fontWeight: '700', marginBottom: 4 },
-  field: { gap: 4 },
-  fieldLabel: { color: Colors.textMuted, fontSize: 12, fontWeight: '600' },
-  input: {
-    backgroundColor: Colors.bgInput,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: Colors.textPrimary,
-    fontSize: 14,
-  },
-  inputMulti: { minHeight: 72, textAlignVertical: 'top' },
-  formActions: { flexDirection: 'row', gap: 8, marginTop: 8, flexWrap: 'wrap' },
-  primaryBtn: {
-    flex: 1,
-    minWidth: 120,
-    backgroundColor: Colors.primary,
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  primaryBtnText: { color: Colors.bgDark, fontWeight: '700', fontSize: 15 },
-  ghostBtn: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  ghostBtnText: { color: Colors.textSecondary, fontSize: 13, fontWeight: '600' },
+  scroll: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[4] },
+  title: { ...typography.h1 },
+  sub: { ...typography.caption, textTransform: 'none' },
+  formTitle: { ...typography.h3, marginBottom: spacing[2] },
+  formActions: { flexDirection: 'row', gap: spacing[2], marginTop: spacing[2], flexWrap: 'wrap' },
+  actionBtn: { flex: 1, minWidth: 120 },
+  addrCard: { gap: spacing[2] },
+  cardHead: { flexDirection: 'row', alignItems: 'center', gap: spacing[2], flexWrap: 'wrap' },
+  cardTitle: { ...typography.h3, flex: 1 },
+  addrMeta: { ...typography.caption, textTransform: 'none' },
+  cardActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginTop: spacing[3] },
+  miniBtn: { paddingHorizontal: spacing[3] },
   dangerBtn: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[3],
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(239,68,68,0.4)',
+    borderColor: palette.errorBorder,
   },
-  dangerBtnText: { color: Colors.error, fontSize: 13, fontWeight: '600' },
-  btnDisabled: { opacity: 0.5 },
-  card: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 14,
-    gap: 6,
-  },
-  cardHead: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  cardTitle: { color: Colors.textPrimary, fontSize: 16, fontWeight: '700' },
-  defaultBadge: {
-    color: Colors.success,
-    fontSize: 11,
-    fontWeight: '700',
-    borderWidth: 1,
-    borderColor: Colors.success,
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  cardActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
-  empty: { alignItems: 'center', paddingVertical: 24, gap: 8 },
-  emptyTitle: { color: Colors.textPrimary, fontSize: 16, fontWeight: '600' },
-  errorBox: {
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    borderColor: 'rgba(239,68,68,0.3)',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-  },
-  errorText: { color: Colors.error, fontSize: 13 },
+  dangerText: { color: palette.error, fontSize: 13, fontWeight: '600' },
 });

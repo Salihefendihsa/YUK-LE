@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Image,
   Modal,
@@ -8,14 +7,21 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { API_BASE_URL } from '../../constants/api';
-import { Colors } from '../../constants/colors';
 import { parseAiInferenceDetails } from '../../services/admin.service';
 import type { PendingReview } from '../../types/admin';
+import { palette } from '../../theme/colors';
+import { fontFamily, typography } from '../../theme/typography';
+import { spacing } from '../../theme/spacing';
+import { radius } from '../../theme/radius';
 import { formatDateTR } from '../../utils/format';
+import { getAiConfidencePill } from '../../utils/statusPills';
+import { Card } from '../ui/Card';
+import { SecondaryButton } from '../ui/SecondaryButton';
+import { StatusPill } from '../ui/StatusPill';
+import { TextField } from '../ui/TextField';
 
 const REJECT_PRESETS = [
   { id: '', label: 'Hazir sebep secin' },
@@ -45,6 +51,7 @@ export function ReviewsDetailModal({ review, visible, busy, onClose, onApprove, 
   const ai = useMemo(() => parseAiInferenceDetails(review.aiInferenceDetails), [review.aiInferenceDetails]);
   const imageUri = resolveImageUri(ai.documentUrl);
   const confidence = ai.confidenceScore ?? null;
+  const aiPill = getAiConfidencePill(confidence);
 
   const [adminNote, setAdminNote] = useState(review.adminReviewNote ?? '');
   const [rejectOpen, setRejectOpen] = useState(false);
@@ -111,50 +118,46 @@ export function ReviewsDetailModal({ review, visible, busy, onClose, onApprove, 
             )}
           </View>
 
-          <View style={styles.card}>
+          <Card variant="elevated" padding={4}>
             <Text style={styles.driverName}>{review.fullName}</Text>
             <Text style={styles.muted}>Telefon: {review.phone}</Text>
             <Text style={styles.muted}>E-posta: {review.email}</Text>
             <Text style={styles.muted}>Kayit: {formatDateTR(review.createdAt)}</Text>
-          </View>
+          </Card>
 
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>AI analiz sonucu</Text>
+          <Card variant="elevated" padding={4}>
+            <View style={styles.sectionHead}>
+              <Text style={styles.sectionTitle}>AI analiz sonucu</Text>
+              <StatusPill {...aiPill} />
+            </View>
             <AiRow label="Belge tipi" value={ai.documentType ?? '-'} />
+            <AiRow label="Gecerlilik" value={ai.expiryDate ?? ai.validUntil ?? '-'} />
             <AiRow
-              label="Gecerlilik"
-              value={ai.expiryDate ?? ai.validUntil ?? '-'}
+              label="Gecerli mi"
+              value={ai.isValid == null ? '-' : ai.isValid ? 'Evet' : 'Hayir'}
             />
-            <AiRow label="Gecerli mi" value={ai.isValid == null ? '-' : ai.isValid ? 'Evet' : 'Hayir'} />
-            <AiRow
-              label="Guven skoru"
-              value={confidence != null ? `%${Math.round(confidence)}` : 'N/A'}
-            />
-            {ai.validationMessage ? (
-              <Text style={styles.aiMsg}>{ai.validationMessage}</Text>
-            ) : null}
+            {ai.validationMessage ? <Text style={styles.aiMsg}>{ai.validationMessage}</Text> : null}
             {ai.documentClasses && ai.documentClasses.length > 0 ? (
               <Text style={styles.muted}>Siniflar: {ai.documentClasses.join(', ')}</Text>
             ) : null}
             {review.adminReviewNote ? (
               <Text style={styles.muted}>Sistem notu: {review.adminReviewNote}</Text>
             ) : null}
-          </View>
+          </Card>
 
-          <View style={styles.card}>
+          <Card variant="elevated" padding={4}>
             <Text style={styles.fieldLabel}>Admin notu</Text>
-            <TextInput
-              style={styles.textArea}
+            <TextField
+              placeholder="Inceleme notu (onayda istege bagli)"
               value={adminNote}
               onChangeText={setAdminNote}
-              placeholder="Inceleme notu (onayda istege bagli)"
-              placeholderTextColor={Colors.textMuted}
               multiline
+              style={styles.noteField}
             />
-          </View>
+          </Card>
 
           {rejectOpen ? (
-            <View style={[styles.card, styles.rejectCard]}>
+            <Card variant="elevated" padding={4} style={styles.rejectCard}>
               <Text style={styles.sectionTitle}>Red sebebi</Text>
               {REJECT_PRESETS.map((p) => (
                 <Pressable
@@ -165,18 +168,14 @@ export function ReviewsDetailModal({ review, visible, busy, onClose, onApprove, 
                   <Text style={styles.presetText}>{p.label}</Text>
                 </Pressable>
               ))}
-              <TextInput
-                style={styles.textArea}
+              <TextField
+                placeholder="Aciklama (zorunlu, en az 20 karakter)"
                 value={rejectText}
                 onChangeText={setRejectText}
-                placeholder="Aciklama (zorunlu, en az 20 karakter)"
-                placeholderTextColor={Colors.textMuted}
                 multiline
               />
               <View style={styles.rowBtns}>
-                <Pressable style={styles.ghostBtn} onPress={() => setRejectOpen(false)}>
-                  <Text style={styles.ghostText}>Vazgec</Text>
-                </Pressable>
+                <SecondaryButton title="Vazgec" onPress={() => setRejectOpen(false)} style={{ flex: 1 }} />
                 <Pressable
                   style={[styles.dangerBtn, (busy || combinedReject.length < 20) && styles.btnDisabled]}
                   onPress={submitReject}
@@ -185,7 +184,7 @@ export function ReviewsDetailModal({ review, visible, busy, onClose, onApprove, 
                   <Text style={styles.dangerText}>Reddet ve Gonder</Text>
                 </Pressable>
               </View>
-            </View>
+            </Card>
           ) : null}
 
           <Pressable
@@ -193,11 +192,7 @@ export function ReviewsDetailModal({ review, visible, busy, onClose, onApprove, 
             onPress={confirmApprove}
             disabled={busy}
           >
-            {busy ? (
-              <ActivityIndicator color={Colors.bgDark} />
-            ) : (
-              <Text style={styles.approveText}>Belgeyi Onayla</Text>
-            )}
+            <Text style={styles.approveText}>Belgeyi Onayla</Text>
           </Pressable>
 
           {!rejectOpen ? (
@@ -225,103 +220,115 @@ function AiRow({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.bgDark },
+  root: { flex: 1, backgroundColor: palette.bg },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing[4],
     paddingTop: 48,
-    paddingBottom: 12,
+    paddingBottom: spacing[3],
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: palette.borderSubtle,
   },
-  title: { color: Colors.textPrimary, fontSize: 18, fontWeight: '700' },
-  closeText: { color: Colors.primary, fontWeight: '600', fontSize: 14 },
-  scroll: { padding: 16, paddingBottom: 40, gap: 12 },
+  title: { ...typography.h2 },
+  closeText: { ...typography.link },
+  scroll: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[3] },
   previewBox: {
     minHeight: 180,
-    backgroundColor: Colors.bgCard,
-    borderRadius: 12,
+    backgroundColor: palette.card,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: palette.borderLight,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   previewImg: { width: '100%', height: 220 },
-  previewPlaceholder: { color: Colors.textMuted, fontSize: 13, textAlign: 'center', padding: 24 },
-  card: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 14,
-    gap: 6,
+  previewPlaceholder: {
+    ...typography.caption,
+    textTransform: 'none',
+    textAlign: 'center',
+    padding: spacing[6],
   },
-  rejectCard: { borderColor: 'rgba(239,68,68,0.4)' },
-  driverName: { color: Colors.textPrimary, fontSize: 17, fontWeight: '700' },
-  sectionTitle: { color: Colors.primaryGold, fontSize: 14, fontWeight: '700', marginBottom: 4 },
-  muted: { color: Colors.textSecondary, fontSize: 13 },
-  aiRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, paddingVertical: 4 },
-  aiLabel: { color: Colors.textMuted, fontSize: 13 },
-  aiValue: { color: Colors.textPrimary, fontSize: 13, fontWeight: '600', flex: 1, textAlign: 'right' },
-  aiMsg: { color: Colors.textSecondary, fontSize: 12, marginTop: 6, lineHeight: 18 },
-  fieldLabel: { color: Colors.textMuted, fontSize: 12, fontWeight: '600' },
-  textArea: {
-    backgroundColor: Colors.bgInput,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 8,
-    padding: 12,
-    color: Colors.textPrimary,
-    fontSize: 14,
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  presetBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginBottom: 6,
-  },
-  presetBtnActive: { borderColor: Colors.primary, backgroundColor: 'rgba(255,107,0,0.1)' },
-  presetText: { color: Colors.textSecondary, fontSize: 13 },
-  rowBtns: { flexDirection: 'row', gap: 8, marginTop: 8 },
-  ghostBtn: {
-    flex: 1,
-    paddingVertical: 12,
+  rejectCard: { borderColor: palette.errorBorder },
+  driverName: { ...typography.h3 },
+  sectionHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    marginBottom: spacing[2],
   },
-  ghostText: { color: Colors.textSecondary, fontWeight: '600' },
+  sectionTitle: {
+    fontFamily: fontFamily.bold,
+    fontSize: 14,
+    color: palette.gold,
+  },
+  muted: { ...typography.caption, textTransform: 'none' },
+  aiRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing[2], paddingVertical: 4 },
+  aiLabel: { ...typography.caption, textTransform: 'none' },
+  aiValue: {
+    fontFamily: fontFamily.semiBold,
+    fontSize: 13,
+    color: palette.text,
+    flex: 1,
+    textAlign: 'right',
+  },
+  aiMsg: {
+    fontFamily: fontFamily.regular,
+    fontSize: 12,
+    color: palette.textSecondary,
+    marginTop: spacing[2],
+    lineHeight: 18,
+  },
+  fieldLabel: { ...typography.caption, marginBottom: spacing[2] },
+  noteField: { minHeight: 80 },
+  presetBtn: {
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[3],
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: palette.borderLight,
+    marginBottom: spacing[2],
+  },
+  presetBtnActive: { borderColor: palette.brandBorder, backgroundColor: palette.brandMuted },
+  presetText: { ...typography.caption, textTransform: 'none' },
+  rowBtns: { flexDirection: 'row', gap: spacing[2], marginTop: spacing[2] },
   dangerBtn: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: spacing[3],
     alignItems: 'center',
-    borderRadius: 8,
-    backgroundColor: Colors.error,
+    borderRadius: radius.md,
+    backgroundColor: palette.error,
   },
-  dangerText: { color: '#fff', fontWeight: '700' },
+  dangerText: {
+    fontFamily: fontFamily.bold,
+    fontSize: 14,
+    color: palette.text,
+  },
   approveBtn: {
-    backgroundColor: Colors.success,
-    borderRadius: 10,
-    paddingVertical: 16,
+    backgroundColor: palette.success,
+    borderRadius: radius.lg,
+    paddingVertical: spacing[4],
     alignItems: 'center',
   },
-  approveText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  approveText: {
+    fontFamily: fontFamily.bold,
+    fontSize: 16,
+    color: palette.text,
+  },
   rejectBtn: {
-    backgroundColor: 'rgba(239,68,68,0.15)',
-    borderRadius: 10,
+    backgroundColor: palette.errorBg,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: Colors.error,
-    paddingVertical: 16,
+    borderColor: palette.errorBorder,
+    paddingVertical: spacing[4],
     alignItems: 'center',
   },
-  rejectBtnText: { color: Colors.error, fontSize: 16, fontWeight: '700' },
+  rejectBtnText: {
+    fontFamily: fontFamily.bold,
+    fontSize: 16,
+    color: palette.error,
+  },
   btnDisabled: { opacity: 0.5 },
 });

@@ -1,15 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { ReviewsDetailModal } from '../../../src/components/admin/ReviewsDetailModal';
-import { Colors } from '../../../src/constants/colors';
+import { AlertBanner } from '../../../src/components/ui/AlertBanner';
+import { Card } from '../../../src/components/ui/Card';
+import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { SectionHeader } from '../../../src/components/ui/SectionHeader';
+import { StatusPill } from '../../../src/components/ui/StatusPill';
 import { screenRootStyle } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import {
@@ -18,7 +15,11 @@ import {
   parseAiInferenceDetails,
 } from '../../../src/services/admin.service';
 import type { PendingReview } from '../../../src/types/admin';
+import { palette } from '../../../src/theme/colors';
+import { fontFamily, typography } from '../../../src/theme/typography';
+import { spacing } from '../../../src/theme/spacing';
 import { formatDateTR } from '../../../src/utils/format';
+import { getAiConfidencePill, getApprovalStatusPill } from '../../../src/utils/statusPills';
 
 function confidenceOf(review: PendingReview): number {
   const ai = parseAiInferenceDetails(review.aiInferenceDetails);
@@ -78,9 +79,8 @@ export default function AdminReviewsTab() {
 
   if (loading) {
     return (
-      <View style={[screenRootStyle, styles.centered]}>
-        <ActivityIndicator color={Colors.primary} size="large" />
-        <Text style={styles.muted}>Belge kuyrugu yukleniyor...</Text>
+      <View style={screenRootStyle}>
+        <LoadingState message="Belge kuyrugu yukleniyor..." />
       </View>
     );
   }
@@ -92,59 +92,58 @@ export default function AdminReviewsTab() {
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={styles.list}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
         }
         ListHeaderComponent={
           <>
-            <Text style={styles.title}>Belge Inceleme</Text>
-            <Text style={styles.sub}>AI skoruna gore sirali manuel karar</Text>
+            <SectionHeader
+              title="Belge Inceleme"
+              subtitle="AI skoruna gore sirali manuel karar"
+            />
 
-            {error ? (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            ) : null}
-            {statusMsg ? (
-              <View style={styles.successBox}>
-                <Text style={styles.successText}>{statusMsg}</Text>
-              </View>
-            ) : null}
+            {error ? <AlertBanner message={error} tone="error" /> : null}
+            {statusMsg ? <AlertBanner message={statusMsg} tone="success" /> : null}
 
-            <View style={styles.kpiCard}>
+            <Card variant="glass" padding={4} style={styles.kpiCard}>
               <Text style={styles.kpiLabel}>Bekleyen</Text>
               <Text style={styles.kpiValue}>{reviews.length}</Text>
-            </View>
+            </Card>
           </>
         }
         ListEmptyComponent={
           !error ? (
-            <View style={styles.empty}>
-              <Text style={styles.emptyTitle}>Bekleyen belge yok</Text>
-              <Text style={styles.muted}>
-                Sofor belge yukleyip PendingReview durumuna duserse burada listelenir.
-              </Text>
-            </View>
+            <EmptyState
+              icon="📄"
+              title="Bekleyen belge yok"
+              description="Sofor belge yukleyip PendingReview durumuna duserse burada listelenir."
+            />
           ) : null
         }
         renderItem={({ item }) => {
           const ai = parseAiInferenceDetails(item.aiInferenceDetails);
           const docType = ai.documentType ?? 'Surucu belgesi';
           const score = ai.confidenceScore;
+          const pendingPill = getApprovalStatusPill('PendingReview');
+          const aiPill = getAiConfidencePill(score);
 
           return (
-            <Pressable style={styles.card} onPress={() => setSelected(item)}>
-              <View style={styles.cardRow}>
-                <Text style={styles.cardName}>{item.fullName}</Text>
-                <Text style={styles.badge}>Beklemede</Text>
-              </View>
-              <Text style={styles.muted}>{item.phone}</Text>
-              <Text style={styles.muted}>
-                Belge: {docType} · Yukleme: {formatDateTR(item.createdAt)}
-              </Text>
-              <Text style={styles.muted}>
-                AI guven: {score != null ? `%${Math.round(score)}` : 'N/A'}
-              </Text>
-              <Text style={styles.detailLink}>Detayli incele →</Text>
+            <Pressable onPress={() => setSelected(item)}>
+              <Card variant="elevated" padding={4} style={styles.queueCard}>
+                <View style={styles.cardRow}>
+                  <Text style={styles.cardName} numberOfLines={1}>
+                    {item.fullName}
+                  </Text>
+                  <StatusPill {...pendingPill} />
+                </View>
+                <Text style={styles.muted}>{item.phone}</Text>
+                <Text style={styles.muted}>
+                  Belge: {docType} · Yukleme: {formatDateTR(item.createdAt)}
+                </Text>
+                <View style={styles.pillRow}>
+                  <StatusPill {...aiPill} />
+                </View>
+                <Text style={styles.detailLink}>Detayli incele →</Text>
+              </Card>
             </Pressable>
           );
         }}
@@ -165,62 +164,24 @@ export default function AdminReviewsTab() {
 }
 
 const styles = StyleSheet.create({
-  list: { padding: 16, paddingBottom: 32 },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
-  title: { color: Colors.textPrimary, fontSize: 22, fontWeight: '700' },
-  sub: { color: Colors.textSecondary, fontSize: 13, marginBottom: 12 },
-  muted: { color: Colors.textSecondary, fontSize: 13 },
-  kpiCard: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.primaryGold,
-    padding: 14,
-    marginBottom: 12,
-    gap: 4,
+  list: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[2] },
+  kpiCard: { marginBottom: spacing[2], gap: spacing[1] },
+  kpiLabel: { ...typography.caption, textTransform: 'none' },
+  kpiValue: {
+    fontFamily: fontFamily.bold,
+    fontSize: 28,
+    color: palette.gold,
+    letterSpacing: -0.5,
   },
-  kpiLabel: { color: Colors.textMuted, fontSize: 12 },
-  kpiValue: { color: Colors.primaryGold, fontSize: 28, fontWeight: '800' },
-  card: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 14,
-    marginBottom: 10,
-    gap: 4,
+  queueCard: { marginBottom: spacing[2] },
+  cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing[2] },
+  cardName: { ...typography.h3, flex: 1 },
+  muted: { ...typography.caption, textTransform: 'none' },
+  pillRow: { flexDirection: 'row', marginTop: spacing[1] },
+  detailLink: {
+    fontFamily: fontFamily.bold,
+    fontSize: 13,
+    color: palette.brand,
+    marginTop: spacing[2],
   },
-  cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardName: { color: Colors.textPrimary, fontSize: 16, fontWeight: '700', flex: 1 },
-  badge: {
-    color: Colors.primaryGold,
-    fontSize: 11,
-    fontWeight: '700',
-    borderWidth: 1,
-    borderColor: Colors.primaryGold,
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  detailLink: { color: Colors.primary, fontSize: 13, fontWeight: '700', marginTop: 8 },
-  empty: { alignItems: 'center', paddingVertical: 32, gap: 8 },
-  emptyTitle: { color: Colors.textPrimary, fontSize: 16, fontWeight: '600' },
-  errorBox: {
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    borderColor: 'rgba(239,68,68,0.3)',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-  },
-  errorText: { color: Colors.error, fontSize: 13 },
-  successBox: {
-    backgroundColor: 'rgba(16,185,129,0.12)',
-    borderColor: Colors.success,
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-  },
-  successText: { color: Colors.success, fontSize: 13, fontWeight: '600' },
 });

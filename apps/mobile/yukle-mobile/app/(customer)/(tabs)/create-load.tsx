@@ -7,14 +7,21 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
-import { Colors } from '../../../src/constants/colors';
+import { AlertBanner } from '../../../src/components/ui/AlertBanner';
+import { Card } from '../../../src/components/ui/Card';
+import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
+import { SecondaryButton } from '../../../src/components/ui/SecondaryButton';
+import { TextField } from '../../../src/components/ui/TextField';
 import { screenRootStyle } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { createLoad, getLoadPriceSuggestion } from '../../../src/services/loads.service';
 import type { AiMarketAnalysis, CreateLoadPayload, LoadTypeValue, VehicleTypeValue } from '../../../src/types/create-load';
+import { palette } from '../../../src/theme/colors';
+import { fontFamily, typography } from '../../../src/theme/typography';
+import { radius } from '../../../src/theme/radius';
+import { spacing } from '../../../src/theme/spacing';
 import { formatCurrencyTRY } from '../../../src/utils/format';
 
 const DEFAULT_FROM = {
@@ -199,9 +206,13 @@ export default function CustomerCreateLoadScreen() {
         <Text style={styles.title}>Ilan Olustur</Text>
         <Text style={styles.sub}>3 adimli ilan olusturma (harita sonraki faz)</Text>
 
+        <Text style={styles.stepBadge}>Adim {step} / 3</Text>
         <View style={styles.stepRow}>
           {[1, 2, 3].map((n) => (
-            <View key={n} style={[styles.stepChip, step === n && styles.stepChipOn, step > n && styles.stepChipDone]}>
+            <View
+              key={n}
+              style={[styles.stepChip, step === n && styles.stepChipOn, step > n && styles.stepChipDone]}
+            >
               <Text style={[styles.stepChipText, (step === n || step > n) && styles.stepChipTextOn]}>
                 {step > n ? 'OK' : n}
               </Text>
@@ -209,45 +220,31 @@ export default function CustomerCreateLoadScreen() {
           ))}
         </View>
 
-        {error ? (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        ) : null}
+        {error ? <AlertBanner message={error} tone="error" /> : null}
 
         {step === 1 ? (
-          <View style={styles.card}>
+          <Card variant="default" padding={4}>
             <Text style={styles.sectionTitle}>Guzergah ve zaman</Text>
-            <Field label="Cikis sehir" value={fromCity} onChangeText={setFromCity} />
-            <Field label="Cikis ilce" value={fromDistrict} onChangeText={setFromDistrict} />
-            <Field label="Cikis enlem (lat)" value={fromLat} onChangeText={setFromLat} keyboard="numeric" />
-            <Field label="Cikis boylam (lng)" value={fromLng} onChangeText={setFromLng} keyboard="numeric" />
-            <Field label="Varis sehir" value={toCity} onChangeText={setToCity} />
-            <Field label="Varis ilce" value={toDistrict} onChangeText={setToDistrict} />
-            <Field label="Varis enlem (lat)" value={toLat} onChangeText={setToLat} keyboard="numeric" />
-            <Field label="Varis boylam (lng)" value={toLng} onChangeText={setToLng} keyboard="numeric" />
-            <Field
-              label="Yukleme tarihi (ISO)"
-              value={pickupDate}
-              onChangeText={setPickupDate}
-              hint="Ornek: 2026-05-21T08:00:00.000Z"
-            />
-            <Field
-              label="Teslim tarihi (ISO)"
-              value={deliveryDate}
-              onChangeText={setDeliveryDate}
-              hint="Alim tarihinden sonra olmali"
-            />
+            <TextField label="Cikis sehir" value={fromCity} onChangeText={setFromCity} />
+            <TextField label="Cikis ilce" value={fromDistrict} onChangeText={setFromDistrict} />
+            <TextField label="Cikis enlem (lat)" value={fromLat} onChangeText={setFromLat} keyboardType="numeric" />
+            <TextField label="Cikis boylam (lng)" value={fromLng} onChangeText={setFromLng} keyboardType="numeric" />
+            <TextField label="Varis sehir" value={toCity} onChangeText={setToCity} />
+            <TextField label="Varis ilce" value={toDistrict} onChangeText={setToDistrict} />
+            <TextField label="Varis enlem (lat)" value={toLat} onChangeText={setToLat} keyboardType="numeric" />
+            <TextField label="Varis boylam (lng)" value={toLng} onChangeText={setToLng} keyboardType="numeric" />
+            <TextField label="Yukleme tarihi (ISO)" value={pickupDate} onChangeText={setPickupDate} />
+            <TextField label="Teslim tarihi (ISO)" value={deliveryDate} onChangeText={setDeliveryDate} />
             <View style={styles.mapPlaceholder}>
-              <Text style={styles.muted}>Harita onizleme — sonraki faz</Text>
+              <Text style={styles.mapHint}>Harita onizleme — sonraki faz</Text>
             </View>
-          </View>
+          </Card>
         ) : null}
 
         {step === 2 ? (
-          <View style={styles.card}>
+          <Card variant="default" padding={4}>
             <Text style={styles.sectionTitle}>Yuk detayi</Text>
-            <Text style={styles.fieldLabel}>Arac tipi</Text>
+            <Text style={styles.chipGroupLabel}>Arac tipi</Text>
             <View style={styles.chipRow}>
               {VEHICLE_OPTIONS.map((o) => (
                 <Pressable
@@ -255,11 +252,13 @@ export default function CustomerCreateLoadScreen() {
                   style={[styles.chip, vehicleType === o.value && styles.chipOn]}
                   onPress={() => setVehicleType(o.value)}
                 >
-                  <Text style={[styles.chipText, vehicleType === o.value && styles.chipTextOn]}>{o.label}</Text>
+                  <Text style={[styles.chipText, vehicleType === o.value && styles.chipTextOn]}>
+                    {o.label}
+                  </Text>
                 </Pressable>
               ))}
             </View>
-            <Text style={styles.fieldLabel}>Yuk tipi</Text>
+            <Text style={styles.chipGroupLabel}>Yuk tipi</Text>
             <View style={styles.chipRow}>
               {LOAD_TYPE_OPTIONS.map((o) => (
                 <Pressable
@@ -267,261 +266,177 @@ export default function CustomerCreateLoadScreen() {
                   style={[styles.chip, loadType === o.value && styles.chipOn]}
                   onPress={() => setLoadType(o.value)}
                 >
-                  <Text style={[styles.chipText, loadType === o.value && styles.chipTextOn]}>{o.label}</Text>
+                  <Text style={[styles.chipText, loadType === o.value && styles.chipTextOn]}>
+                    {o.label}
+                  </Text>
                 </Pressable>
               ))}
             </View>
-            <Field label="Agirlik (kg)" value={weight} onChangeText={setWeight} keyboard="numeric" />
-            <Field label="Hacim (m3)" value={volume} onChangeText={setVolume} keyboard="numeric" />
-            <Field label="Aciklama" value={description} onChangeText={setDescription} multiline />
-          </View>
+            <TextField label="Agirlik (kg)" value={weight} onChangeText={setWeight} keyboardType="numeric" />
+            <TextField label="Hacim (m3)" value={volume} onChangeText={setVolume} keyboardType="numeric" />
+            <TextField
+              label="Aciklama"
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={3}
+            />
+          </Card>
         ) : null}
 
         {step === 3 ? (
-          <View style={styles.card}>
+          <Card variant="default" padding={4}>
             <Text style={styles.sectionTitle}>Fiyatlandirma</Text>
-            <View style={styles.aiInfoCard}>
+            <Card variant="elevated" padding={4} style={styles.aiInfoCard}>
               <Text style={styles.aiInfoTitle}>AI onerilen fiyat</Text>
-              <Text style={styles.muted}>
-                Web ile ayni: ilan kaydedildikten sonra Gemini / OSRM analizi calisir. Sonuc asagida
-                gosterilir.
+              <Text style={styles.aiInfoBody}>
+                Web ile ayni: ilan kaydedildikten sonra Gemini / OSRM analizi calisir. Sonuc
+                basari modali ile gosterilir.
               </Text>
-            </View>
-            <Field label="Liste fiyati (TL)" value={price} onChangeText={setPrice} keyboard="numeric" />
-            <Text style={styles.muted}>Onizleme: {formatCurrencyTRY(parseNum(price) ?? 0)}</Text>
-          </View>
+            </Card>
+            <TextField label="Liste fiyati (TL)" value={price} onChangeText={setPrice} keyboardType="numeric" icon="cash-outline" />
+            <Text style={styles.preview}>
+              Onizleme: {formatCurrencyTRY(parseNum(price) ?? 0)}
+            </Text>
+          </Card>
         ) : null}
 
         <View style={styles.navRow}>
-          <Pressable
-            style={[styles.ghostBtn, step === 1 && styles.btnDisabled]}
+          <SecondaryButton
+            title="Geri"
             onPress={() => setStep((s) => Math.max(1, s - 1))}
             disabled={step === 1 || loading}
-          >
-            <Text style={styles.ghostBtnText}>Geri</Text>
-          </Pressable>
+            style={styles.navHalf}
+          />
           {step < 3 ? (
-            <Pressable
-              style={[styles.primaryBtn, !canGoNext && styles.btnDisabled]}
+            <PrimaryButton
+              title="Ileri"
               onPress={() => setStep((s) => s + 1)}
               disabled={!canGoNext}
-            >
-              <Text style={styles.primaryBtnText}>Ileri</Text>
-            </Pressable>
+              style={styles.navHalf}
+            />
           ) : (
-            <Pressable
-              style={[styles.primaryBtn, !canSubmit && styles.btnDisabled]}
+            <PrimaryButton
+              title="Ilani Kaydet"
               onPress={handleCreate}
+              loading={loading}
               disabled={!canSubmit}
-            >
-              <Text style={styles.primaryBtnText}>Ilani Kaydet</Text>
-            </Pressable>
+              style={styles.navHalf}
+            />
           )}
         </View>
       </ScrollView>
 
       <Modal visible={loading} transparent animationType="fade">
         <View style={styles.overlay}>
-          <ActivityIndicator color={Colors.primary} size="large" />
+          <ActivityIndicator color={palette.brand} size="large" />
           <Text style={styles.overlayText}>Ilan olusturuluyor, AI analizi bekleniyor...</Text>
         </View>
       </Modal>
 
       <Modal visible={success} transparent animationType="fade">
         <View style={styles.overlay}>
-          <View style={styles.successCard}>
+          <Card variant="glass" padding={5} style={styles.successCard}>
             <Text style={styles.successTitle}>Ilaniniz olusturuldu</Text>
             {aiResult && aiResult.recommendedPrice > 0 ? (
-              <View style={styles.aiResultCard}>
+              <Card variant="elevated" padding={4} style={styles.aiResultCard}>
                 <Text style={styles.aiResultLabel}>Onerilen Adil Fiyat (GERCEK API)</Text>
                 <Text style={styles.aiResultPrice}>{formatCurrencyTRY(aiResult.recommendedPrice)}</Text>
-                <Text style={styles.muted}>
+                <Text style={styles.aiMeta}>
                   Aralik: {formatCurrencyTRY(aiResult.minPrice)} – {formatCurrencyTRY(aiResult.maxPrice)}
                 </Text>
-                <Text style={styles.muted}>Mesafe: {aiResult.distanceKm.toFixed(1)} km</Text>
+                <Text style={styles.aiMeta}>Mesafe: {aiResult.distanceKm.toFixed(1)} km</Text>
                 {aiResult.reasoning ? (
                   <Text style={styles.aiReason} numberOfLines={4}>
                     {aiResult.reasoning}
                   </Text>
                 ) : null}
-              </View>
+              </Card>
             ) : (
-              <Text style={styles.muted}>
-                AI fiyat onerisi su an alinamadi; ilan yine de kaydedildi (POST yaniti veya
-                /Ai/load/... endpoint).
+              <Text style={styles.aiMeta}>
+                AI fiyat onerisi su an alinamadi; ilan yine de kaydedildi.
               </Text>
             )}
-            <Pressable style={styles.primaryBtn} onPress={goToLoads}>
-              <Text style={styles.primaryBtnText}>Ilanlarim</Text>
-            </Pressable>
-          </View>
+            <PrimaryButton title="Ilanlarim" onPress={goToLoads} />
+          </Card>
         </View>
       </Modal>
     </View>
   );
 }
 
-function Field({
-  label,
-  value,
-  onChangeText,
-  keyboard,
-  multiline,
-  hint,
-}: {
-  label: string;
-  value: string;
-  onChangeText: (v: string) => void;
-  keyboard?: 'default' | 'numeric';
-  multiline?: boolean;
-  hint?: string;
-}) {
-  return (
-    <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput
-        style={[styles.input, multiline && styles.inputMulti]}
-        value={value}
-        onChangeText={onChangeText}
-        keyboardType={keyboard ?? 'default'}
-        multiline={multiline}
-        placeholderTextColor={Colors.textMuted}
-      />
-      {hint ? <Text style={styles.hint}>{hint}</Text> : null}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  scroll: { padding: 16, paddingBottom: 40 },
-  title: { color: Colors.textPrimary, fontSize: 22, fontWeight: '700' },
-  sub: { color: Colors.textSecondary, fontSize: 14, marginBottom: 12 },
-  stepRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  scroll: { padding: spacing[4], paddingBottom: spacing[10] },
+  title: { ...typography.h1 },
+  sub: { ...typography.caption, textTransform: 'none', marginBottom: spacing[3] },
+  stepBadge: { ...typography.label, color: palette.gold, marginBottom: spacing[2] },
+  stepRow: { flexDirection: 'row', gap: spacing[2], marginBottom: spacing[4] },
   stepChip: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: palette.borderLight,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.bgCard,
+    backgroundColor: palette.surface,
   },
-  stepChipOn: { borderColor: Colors.primary, backgroundColor: 'rgba(255,107,0,0.15)' },
-  stepChipDone: { borderColor: Colors.success, backgroundColor: 'rgba(16,185,129,0.12)' },
-  stepChipText: { color: Colors.textMuted, fontWeight: '700' },
-  stepChipTextOn: { color: Colors.textPrimary },
-  card: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: 12,
+  stepChipOn: { borderColor: palette.brandBorder, backgroundColor: palette.brandMuted },
+  stepChipDone: { borderColor: palette.successBorder, backgroundColor: palette.successBg },
+  stepChipText: { fontFamily: fontFamily.bold, color: palette.textMuted },
+  stepChipTextOn: { color: palette.text },
+  sectionTitle: {
+    fontFamily: fontFamily.semiBold,
+    fontSize: 15,
+    color: palette.gold,
+    marginBottom: spacing[3],
+  },
+  chipGroupLabel: { ...typography.label, marginBottom: spacing[2] },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginBottom: spacing[4] },
+  chip: {
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 14,
-    gap: 10,
-    marginBottom: 12,
+    borderColor: palette.borderLight,
+    backgroundColor: palette.input,
   },
-  sectionTitle: { color: Colors.primaryGold, fontSize: 15, fontWeight: '700', marginBottom: 4 },
-  field: { gap: 4 },
-  fieldLabel: { color: Colors.textMuted, fontSize: 12, fontWeight: '600' },
-  input: {
-    backgroundColor: Colors.bgInput,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: Colors.textPrimary,
-    fontSize: 14,
-  },
-  inputMulti: { minHeight: 72, textAlignVertical: 'top' },
-  hint: { color: Colors.textMuted, fontSize: 11 },
+  chipOn: { borderColor: palette.brandBorder, backgroundColor: palette.brandMuted },
+  chipText: { fontFamily: fontFamily.semiBold, fontSize: 13, color: palette.textSecondary },
+  chipTextOn: { color: palette.brand },
   mapPlaceholder: {
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: palette.borderLight,
     borderStyle: 'dashed',
-    borderRadius: 8,
-    padding: 20,
+    borderRadius: radius.md,
+    padding: spacing[5],
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: spacing[2],
   },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.bgInput,
-  },
-  chipOn: { borderColor: Colors.primary, backgroundColor: 'rgba(255,107,0,0.12)' },
-  chipText: { color: Colors.textSecondary, fontSize: 13, fontWeight: '600' },
-  chipTextOn: { color: Colors.primary },
-  aiInfoCard: {
-    backgroundColor: 'rgba(255,182,39,0.08)',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.primaryGold,
-    padding: 12,
-    gap: 6,
-  },
-  aiInfoTitle: { color: Colors.primaryGold, fontWeight: '700', fontSize: 14 },
-  muted: { color: Colors.textSecondary, fontSize: 13 },
-  navRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, marginTop: 8 },
-  primaryBtn: {
-    flex: 1,
-    backgroundColor: Colors.primary,
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  ghostBtn: {
-    flex: 1,
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  ghostBtnText: { color: Colors.textSecondary, fontWeight: '600' },
-  primaryBtnText: { color: Colors.bgDark, fontWeight: '700', fontSize: 15 },
-  btnDisabled: { opacity: 0.4 },
-  errorBox: {
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(239,68,68,0.3)',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-  },
-  errorText: { color: Colors.error, fontSize: 13 },
+  mapHint: { ...typography.caption, textTransform: 'none' },
+  aiInfoCard: { borderColor: palette.goldBorder, backgroundColor: palette.goldMuted, marginBottom: spacing[3] },
+  aiInfoTitle: { fontFamily: fontFamily.semiBold, fontSize: 14, color: palette.gold },
+  aiInfoBody: { ...typography.caption, textTransform: 'none', marginTop: spacing[1] },
+  preview: { ...typography.caption, textTransform: 'none', color: palette.gold },
+  navRow: { flexDirection: 'row', gap: spacing[3], marginTop: spacing[4] },
+  navHalf: { flex: 1 },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(5,6,8,0.85)',
+    backgroundColor: palette.overlay,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
+    padding: spacing[6],
   },
-  overlayText: { color: Colors.textPrimary, marginTop: 16, textAlign: 'center', fontSize: 14 },
-  successCard: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-    padding: 20,
-    width: '100%',
-    maxWidth: 360,
-    gap: 14,
+  overlayText: {
+    ...typography.body,
+    marginTop: spacing[4],
+    textAlign: 'center',
   },
-  successTitle: { color: Colors.textPrimary, fontSize: 20, fontWeight: '700', textAlign: 'center' },
-  aiResultCard: {
-    backgroundColor: 'rgba(255,182,39,0.1)',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.primaryGold,
-    padding: 14,
-    gap: 6,
-  },
-  aiResultLabel: { color: Colors.primaryGold, fontSize: 12, fontWeight: '700' },
-  aiResultPrice: { color: Colors.textPrimary, fontSize: 24, fontWeight: '800' },
-  aiReason: { color: Colors.textMuted, fontSize: 11, lineHeight: 16 },
+  successCard: { width: '100%', maxWidth: 360, gap: spacing[4] },
+  successTitle: { ...typography.h2, textAlign: 'center' },
+  aiResultCard: { borderColor: palette.goldBorder, backgroundColor: palette.goldMuted },
+  aiResultLabel: { fontFamily: fontFamily.semiBold, fontSize: 12, color: palette.gold },
+  aiResultPrice: { fontFamily: fontFamily.bold, fontSize: 26, color: palette.text, marginVertical: spacing[2] },
+  aiMeta: { ...typography.caption, textTransform: 'none' },
+  aiReason: { ...typography.caption, textTransform: 'none', marginTop: spacing[2] },
 });

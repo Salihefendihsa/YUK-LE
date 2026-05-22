@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { Colors } from '../../../src/constants/colors';
+import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ScreenHeader } from '../../../src/components/ScreenHeader';
+import { AlertBanner } from '../../../src/components/ui/AlertBanner';
+import { Card } from '../../../src/components/ui/Card';
+import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { StatusPill } from '../../../src/components/ui/StatusPill';
 import { screenRootStyle } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getWalletSummary, getWalletTransactions } from '../../../src/services/wallet.service';
 import type { WalletSummary, WalletTransaction } from '../../../src/types/wallet';
+import { palette } from '../../../src/theme/colors';
+import { fontFamily, typography } from '../../../src/theme/typography';
+import { spacing } from '../../../src/theme/spacing';
 import { formatCurrencyTRY, formatDateTR } from '../../../src/utils/format';
+import { getWalletTxStatusPill } from '../../../src/utils/statusPills';
 
 export default function DriverWalletScreen() {
   const [summary, setSummary] = useState<WalletSummary | null>(null);
@@ -46,9 +48,8 @@ export default function DriverWalletScreen() {
 
   if (loading) {
     return (
-      <View style={[screenRootStyle, styles.centered]}>
-        <ActivityIndicator color={Colors.primary} size="large" />
-        <Text style={styles.muted}>Cuzdan yukleniyor...</Text>
+      <View style={screenRootStyle}>
+        <LoadingState message="Cuzdan yukleniyor..." />
       </View>
     );
   }
@@ -60,47 +61,41 @@ export default function DriverWalletScreen() {
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={styles.list}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
         }
         ListHeaderComponent={
           <>
-            <Text style={styles.title}>Cuzdan</Text>
-            <Text style={styles.sub}>Bakiye, bekleyen tutarlar ve hareketler</Text>
-
-            {error ? (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            ) : null}
-
-            <View style={styles.hero}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.mutedSmall}>Cekilebilir bakiye</Text>
-                <Text style={styles.heroAmount}>
-                  {formatCurrencyTRY(summary?.walletBalance ?? 0)}
-                </Text>
-              </View>
+            <View style={styles.headerPad}>
+              <ScreenHeader title="Cuzdan" subtitle="Bakiye, bekleyen tutarlar ve hareketler" />
+              {error ? <AlertBanner message={error} tone="error" /> : null}
             </View>
 
+            <Card variant="glass" padding={5} style={styles.hero}>
+              <Text style={styles.heroLabel}>Cekilebilir bakiye</Text>
+              <Text style={styles.heroAmount}>
+                {formatCurrencyTRY(summary?.walletBalance ?? 0)}
+              </Text>
+            </Card>
+
             <View style={styles.statsRow}>
-              <View style={styles.statCard}>
-                <Text style={styles.mutedSmall}>Kullanilabilir</Text>
+              <Card variant="default" padding={3} style={styles.stat}>
+                <Text style={styles.statLabel}>Kullanilabilir</Text>
                 <Text style={styles.statValue}>
                   {formatCurrencyTRY(summary?.walletBalance ?? 0)}
                 </Text>
-              </View>
-              <View style={styles.statCard}>
-                <Text style={styles.mutedSmall}>Bekleyen / Blokeli</Text>
+              </Card>
+              <Card variant="default" padding={3} style={styles.stat}>
+                <Text style={styles.statLabel}>Bekleyen / Blokeli</Text>
                 <Text style={styles.statValue}>
                   {formatCurrencyTRY(summary?.pendingBalance ?? 0)}
                 </Text>
-              </View>
-              <View style={styles.statCard}>
-                <Text style={styles.mutedSmall}>Bu ay</Text>
+              </Card>
+              <Card variant="default" padding={3} style={styles.stat}>
+                <Text style={styles.statLabel}>Bu ay</Text>
                 <Text style={styles.statValue}>
                   {formatCurrencyTRY(summary?.monthAmount ?? 0)}
                 </Text>
-              </View>
+              </Card>
             </View>
 
             <Text style={styles.sectionTitle}>Islem gecmisi</Text>
@@ -108,92 +103,74 @@ export default function DriverWalletScreen() {
         }
         ListEmptyComponent={
           !error ? (
-            <View style={styles.empty}>
-              <Text style={styles.emptyTitle}>Islem bulunamadi</Text>
-              <Text style={styles.muted}>Henuz cuzdan hareketiniz yok.</Text>
-            </View>
+            <EmptyState
+              icon="💳"
+              title="Islem bulunamadi"
+              description="Henuz cuzdan hareketiniz yok."
+            />
           ) : null
         }
-        renderItem={({ item }) => (
-          <View style={styles.txRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.txDesc}>{item.description ?? '-'}</Text>
-              <Text style={styles.mutedSmall}>{formatDateTR(item.createdAt)}</Text>
-            </View>
-            <View style={styles.txRight}>
-              <Text
-                style={[
-                  styles.txAmount,
-                  item.direction === 'in' && styles.txIn,
-                  item.direction === 'out' && styles.txOut,
-                ]}
-              >
-                {item.direction === 'out' ? '-' : item.direction === 'in' ? '+' : ''}
-                {formatCurrencyTRY(item.amount)}
-              </Text>
-              <Text style={styles.txStatus}>{item.status}</Text>
-            </View>
-          </View>
-        )}
+        renderItem={({ item }) => {
+          const pill = getWalletTxStatusPill(item.status);
+          return (
+            <Card variant="default" padding={4} style={styles.txCard}>
+              <View style={styles.txRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.txDesc}>{item.description ?? '-'}</Text>
+                  <Text style={styles.txDate}>{formatDateTR(item.createdAt)}</Text>
+                </View>
+                <View style={styles.txRight}>
+                  <Text
+                    style={[
+                      styles.txAmount,
+                      item.direction === 'in' && styles.txIn,
+                      item.direction === 'out' && styles.txOut,
+                    ]}
+                  >
+                    {item.direction === 'out' ? '-' : item.direction === 'in' ? '+' : ''}
+                    {formatCurrencyTRY(item.amount)}
+                  </Text>
+                  <StatusPill label={pill.label} tone={pill.tone} />
+                </View>
+              </View>
+            </Card>
+          );
+        }}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  list: { padding: 16, paddingBottom: 32 },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
-  title: { color: Colors.textPrimary, fontSize: 22, fontWeight: '700', marginBottom: 4 },
-  sub: { color: Colors.textSecondary, fontSize: 14, marginBottom: 16 },
-  muted: { color: Colors.textSecondary, fontSize: 13 },
-  mutedSmall: { color: Colors.textMuted, fontSize: 12 },
+  list: { paddingHorizontal: spacing[4], paddingBottom: spacing[8] },
+  headerPad: { paddingTop: spacing[4] },
   hero: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-    padding: 16,
-    marginBottom: 12,
+    marginBottom: spacing[4],
+    borderColor: palette.brandBorder,
   },
-  heroAmount: { color: Colors.primaryGold, fontSize: 28, fontWeight: '800', marginTop: 6 },
-  statsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  statCard: {
-    flex: 1,
-    minWidth: 100,
-    backgroundColor: Colors.bgCard,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 12,
-    gap: 4,
+  heroLabel: { ...typography.label, color: palette.textMuted },
+  heroAmount: {
+    fontFamily: fontFamily.bold,
+    fontSize: 32,
+    color: palette.gold,
+    marginTop: spacing[2],
   },
-  statValue: { color: Colors.textPrimary, fontSize: 16, fontWeight: '700' },
-  sectionTitle: { color: Colors.textPrimary, fontSize: 16, fontWeight: '700', marginBottom: 10 },
-  txRow: {
-    flexDirection: 'row',
-    gap: 12,
-    backgroundColor: Colors.bgCard,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 12,
-    marginBottom: 8,
+  statsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginBottom: spacing[5] },
+  stat: { flex: 1, minWidth: 100 },
+  statLabel: { ...typography.caption, textTransform: 'none', color: palette.textMuted },
+  statValue: {
+    fontFamily: fontFamily.bold,
+    fontSize: 15,
+    color: palette.text,
+    marginTop: spacing[1],
   },
-  txDesc: { color: Colors.textPrimary, fontSize: 14, fontWeight: '600' },
-  txRight: { alignItems: 'flex-end' },
-  txAmount: { color: Colors.textPrimary, fontSize: 14, fontWeight: '700' },
-  txIn: { color: Colors.success },
-  txOut: { color: Colors.error },
-  txStatus: { color: Colors.textMuted, fontSize: 11, marginTop: 2 },
-  empty: { alignItems: 'center', paddingVertical: 24, gap: 6 },
-  emptyTitle: { color: Colors.textPrimary, fontSize: 15, fontWeight: '600' },
-  errorBox: {
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    borderColor: 'rgba(239,68,68,0.3)',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-  },
-  errorText: { color: Colors.error, fontSize: 13 },
+  sectionTitle: { ...typography.h3, marginBottom: spacing[3] },
+  txCard: { marginBottom: spacing[2] },
+  txRow: { flexDirection: 'row', gap: spacing[3] },
+  txDesc: { fontFamily: fontFamily.semiBold, fontSize: 14, color: palette.text },
+  txDate: { ...typography.caption, textTransform: 'none', marginTop: 2 },
+  txRight: { alignItems: 'flex-end', gap: spacing[2] },
+  txAmount: { fontFamily: fontFamily.bold, fontSize: 14, color: palette.text },
+  txIn: { color: palette.success },
+  txOut: { color: palette.error },
 });

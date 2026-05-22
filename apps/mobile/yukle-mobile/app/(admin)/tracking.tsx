@@ -1,20 +1,19 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { adminScreenStyles as s } from '../../src/constants/adminScreenStyles';
-import { Colors } from '../../src/constants/colors';
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { AlertBanner } from '../../src/components/ui/AlertBanner';
+import { Card } from '../../src/components/ui/Card';
+import { EmptyState } from '../../src/components/ui/EmptyState';
+import { LoadingState } from '../../src/components/ui/LoadingState';
+import { SectionHeader } from '../../src/components/ui/SectionHeader';
+import { StatusPill } from '../../src/components/ui/StatusPill';
 import { screenRootStyle } from '../../src/constants/layout';
 import { getApiErrorMessage } from '../../src/services/api.client';
 import { getAdminActiveDrivers } from '../../src/services/admin.service';
 import type { AdminActiveDriverRow } from '../../src/types/admin';
+import { palette } from '../../src/theme/colors';
+import { fontFamily, typography } from '../../src/theme/typography';
+import { spacing } from '../../src/theme/spacing';
 import { formatDateTimeTR } from '../../src/utils/format';
 
 const POLL_MS = 20000;
@@ -53,9 +52,8 @@ export default function AdminTrackingScreen() {
 
   if (loading) {
     return (
-      <View style={[screenRootStyle, s.centered]}>
-        <ActivityIndicator color={Colors.primary} size="large" />
-        <Text style={s.muted}>Aktif soforler yukleniyor...</Text>
+      <View style={screenRootStyle}>
+        <LoadingState message="Aktif soforler yukleniyor..." />
       </View>
     );
   }
@@ -74,56 +72,69 @@ export default function AdminTrackingScreen() {
               await fetchData();
               setRefreshing(false);
             }}
-            tintColor={Colors.primary}
+            tintColor={palette.brand}
           />
         }
         ListHeaderComponent={
           <>
-            <Pressable onPress={() => router.back()}>
-              <Text style={s.backLink}>← Geri</Text>
+            <Pressable onPress={() => router.back()} style={styles.back}>
+              <Text style={typography.link}>← Geri</Text>
             </Pressable>
-            <Text style={s.title}>Canli Takip</Text>
-            <Text style={s.sub}>
-              Gercek REST (20 sn polling). Harita yok — koordinat listesi. Web sayfasi tamamen placeholder idi.
-            </Text>
-            {error ? (
-              <View style={s.errorBox}>
-                <Text style={s.errorText}>{error}</Text>
-              </View>
-            ) : null}
+            <SectionHeader
+              title="Canli Takip"
+              subtitle="Gercek REST (20 sn polling). Harita yok — koordinat listesi."
+            />
+            {error ? <AlertBanner message={error} tone="error" /> : null}
           </>
         }
         ListEmptyComponent={
           !error ? (
-            <View style={s.empty}>
-              <Text style={s.emptyTitle}>Aktif sefer / konum yok</Text>
-              <Text style={s.muted}>Assigned, OnWay veya Arrived ilan gerekir.</Text>
-            </View>
+            <EmptyState
+              icon="📍"
+              title="Aktif sefer / konum yok"
+              description="Assigned, OnWay veya Arrived ilan gerekir."
+            />
           ) : null
         }
-        renderItem={({ item }) => (
-          <View style={s.card}>
-            <Text style={s.cardTitle}>{item.driverName}</Text>
-            <Text style={s.muted}>{item.route}</Text>
-            <Text style={s.muted}>Plaka: {item.plate || '-'}</Text>
-            <Text style={s.mono}>
-              Konum:{' '}
-              {item.lastKnownLat != null && item.lastKnownLng != null
-                ? `${item.lastKnownLat.toFixed(5)}, ${item.lastKnownLng.toFixed(5)}`
-                : 'Konum yok'}
-            </Text>
-            <Text style={s.muted}>
-              Guncelleme:{' '}
-              {item.lastLocationUpdate ? formatDateTimeTR(item.lastLocationUpdate) : '-'}
-            </Text>
-            <Text style={s.mono}>Ilan: {item.loadId.slice(0, 8)}...</Text>
-          </View>
-        )}
+        renderItem={({ item }) => {
+          const hasLoc = item.lastKnownLat != null && item.lastKnownLng != null;
+          return (
+            <Card variant="elevated" padding={4} style={styles.trackCard}>
+              <View style={styles.head}>
+                <Text style={styles.cardTitle}>{item.driverName}</Text>
+                <StatusPill label={hasLoc ? 'Konum var' : 'Konum yok'} tone={hasLoc ? 'success' : 'warning'} />
+              </View>
+              <Text style={styles.muted}>{item.route}</Text>
+              <Text style={styles.muted}>Plaka: {item.plate || '-'}</Text>
+              <Text style={styles.mono}>
+                Konum:{' '}
+                {hasLoc
+                  ? `${item.lastKnownLat!.toFixed(5)}, ${item.lastKnownLng!.toFixed(5)}`
+                  : '-'}
+              </Text>
+              <Text style={styles.muted}>
+                Guncelleme:{' '}
+                {item.lastLocationUpdate ? formatDateTimeTR(item.lastLocationUpdate) : '-'}
+              </Text>
+              <Text style={styles.mono}>Ilan: {item.loadId.slice(0, 8)}...</Text>
+            </Card>
+          );
+        }}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  list: { padding: 16, paddingBottom: 40, gap: 10 },
+  list: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[2] },
+  back: { marginBottom: spacing[2] },
+  trackCard: { marginBottom: spacing[2], gap: spacing[1] },
+  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing[2] },
+  cardTitle: { ...typography.h3, flex: 1 },
+  muted: { ...typography.caption, textTransform: 'none' },
+  mono: {
+    fontFamily: fontFamily.regular,
+    fontSize: 11,
+    color: palette.textMuted,
+  },
 });
