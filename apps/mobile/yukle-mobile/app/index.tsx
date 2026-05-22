@@ -1,7 +1,7 @@
 import { Redirect } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
-import { Colors } from '../src/constants/colors';
 import { screenRootStyle } from '../src/constants/layout';
+import { palette } from '../src/theme/colors';
 import { useStoreHydration } from '../src/hooks/useStoreHydration';
 import { LoginScreen } from '../src/screens/LoginScreen';
 import { useAuthStore } from '../src/store/auth.store';
@@ -13,7 +13,7 @@ export default function Index() {
   if (!hydrated) {
     return (
       <View style={[screenRootStyle, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={Colors.primary} size="large" />
+        <ActivityIndicator color={palette.brand} size="large" />
       </View>
     );
   }
