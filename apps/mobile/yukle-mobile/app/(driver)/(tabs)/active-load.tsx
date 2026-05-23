@@ -11,7 +11,7 @@ import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
 import { SecondaryButton } from '../../../src/components/ui/SecondaryButton';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
 import { TextField } from '../../../src/components/ui/TextField';
-import { screenRootStyle } from '../../../src/constants/layout';
+import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import {
   deliverLoad,
@@ -25,11 +25,15 @@ import { palette } from '../../../src/theme/colors';
 import { fontFamily, typography } from '../../../src/theme/typography';
 import { radius } from '../../../src/theme/radius';
 import { spacing } from '../../../src/theme/spacing';
-import { formatCurrencyTRY, formatWeightKg } from '../../../src/utils/format';
+import { formatCurrencyTRY, formatLoadTypeLabel, formatWeightKg } from '../../../src/utils/format';
 import { canDriverOpenChat } from '../../../src/utils/loadChat';
+import { LiveMapPanel } from '../../../src/components/map/LiveMapPanel';
+import type { MapMarker } from '../../../src/components/map/LiveMap.types';
+import { isValidCoordinate } from '../../../src/components/map/mapUtils';
+import { useDriverLocationTracking } from '../../../src/hooks/useDriverLocationTracking';
 import { getLoadStatusPill } from '../../../src/utils/statusPills';
 
-const STEP_LABELS = ['Atandi', 'Yukle', 'Yolda', 'Teslim'] as const;
+const STEP_LABELS = ['Atandı', 'Yükle', 'Yolda', 'Teslim'] as const;
 
 const STATUS_STEP: Record<LoadStatus, number> = {
   Active: 0,
@@ -94,6 +98,37 @@ export default function DriverActiveLoadScreen() {
   const canPickup = trip?.status === 'Assigned';
   const canDeliver = trip?.status === 'OnWay' || trip?.status === 'Arrived';
   const isDelivered = trip?.status === 'Delivered';
+  const shouldShareLocation =
+    trip != null && (trip.status === 'Assigned' || trip.status === 'OnWay');
+
+  const { statusMessage: locationStatus, lastPosition } = useDriverLocationTracking({
+    loadId: trip?.id,
+    enabled: shouldShareLocation,
+  });
+
+  const routeMapMarkers = useMemo((): MapMarker[] => {
+    if (!trip) return [];
+    const markers: MapMarker[] = [];
+    if (isValidCoordinate(trip.destinationLat, trip.destinationLng)) {
+      markers.push({
+        id: 'destination',
+        latitude: trip.destinationLat,
+        longitude: trip.destinationLng,
+        title: `Teslim · ${trip.toCity}`,
+        kind: 'destination',
+      });
+    }
+    if (lastPosition && isValidCoordinate(lastPosition.latitude, lastPosition.longitude)) {
+      markers.push({
+        id: 'driver',
+        latitude: lastPosition.latitude,
+        longitude: lastPosition.longitude,
+        title: 'Konumunuz',
+        kind: 'driver',
+      });
+    }
+    return markers;
+  }, [trip, lastPosition]);
 
   const onPickup = async () => {
     if (!trip || !canPickup) return;
@@ -103,7 +138,7 @@ export default function DriverActiveLoadScreen() {
     try {
       await pickupLoad(trip.id);
       await refreshTrip(trip.id);
-      setSuccessMsg('Yuk alindi. Yola cikabilirsiniz.');
+      setSuccessMsg('Yük alındı. Yola çıkabilirsiniz.');
     } catch (e) {
       setActionError(getApiErrorMessage(e));
     } finally {
@@ -115,7 +150,7 @@ export default function DriverActiveLoadScreen() {
     if (!trip || !canDeliver) return;
     const token = qrToken.trim();
     if (!token) {
-      setActionError('Teslimat icin musterinin QR kodunu girin veya okutun.');
+      setActionError('Teslimat için müşterinin QR kodunu girin veya okutun.');
       return;
     }
     setBusy(true);
@@ -128,7 +163,7 @@ export default function DriverActiveLoadScreen() {
         targetLng: trip.destinationLng,
       });
       await refreshTrip(trip.id);
-      setSuccessMsg('Yuk teslim edildi. Odeme cuzdaniniza aktarildi.');
+      setSuccessMsg('Yük teslim edildi. Ödeme cüzdanınıza aktarıldı.');
       setQrToken('');
     } catch (e) {
       setActionError(getApiErrorMessage(e));
@@ -139,16 +174,15 @@ export default function DriverActiveLoadScreen() {
 
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Aktif sefer yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="Aktif sefer yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
   if (!trip) {
     return (
-      <ScrollView
-        style={screenRootStyle}
+      <ScreenScroll
         contentContainerStyle={styles.scroll}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
@@ -158,20 +192,19 @@ export default function DriverActiveLoadScreen() {
         {error ? <AlertBanner message={error} tone="error" /> : null}
         <EmptyState
           icon="🚛"
-          title="Su an aktif seferiniz yok"
-          description="Yuk Panosu uzerinden is bulabilirsiniz."
-          actionLabel="Yuk Panosu"
+          title="Şu an aktif seferiniz yok"
+          description="Yük Panosu üzerinden iş bulabilirsiniz."
+          actionLabel="Yük Panosu"
           onAction={() => router.push('/(driver)/(tabs)/loads')}
         />
-      </ScrollView>
+      </ScreenScroll>
     );
   }
 
   const statusPill = getLoadStatusPill(trip.status);
 
   return (
-    <ScrollView
-      style={screenRootStyle}
+    <ScreenScroll
       contentContainerStyle={styles.scroll}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
@@ -195,7 +228,7 @@ export default function DriverActiveLoadScreen() {
 
       {canDriverOpenChat(trip) ? (
         <SecondaryButton
-          title="Musteriyle Sohbet"
+          title="Müşteriyle Sohbet"
           onPress={() => router.push({ pathname: '/chat', params: { loadId: trip.id } })}
         />
       ) : null}
@@ -209,19 +242,29 @@ export default function DriverActiveLoadScreen() {
               key={label}
               style={[styles.step, done && styles.stepDone, on && styles.stepOn]}
             >
-              <Text style={[styles.stepText, (done || on) && styles.stepTextOn]}>{label}</Text>
+              <Text style={[styles.stepText, (done || on) && styles.stepTextOn]} numberOfLines={2}>
+                {label}
+              </Text>
             </View>
           );
         })}
       </View>
 
       <Card variant="default" padding={4}>
-        <DetailRow label="Durum" value={trip.status} />
-        <DetailRow label="Liste fiyati" value={formatCurrencyTRY(trip.price)} />
-        <DetailRow label="Musteri" value={trip.ownerFullName || '-'} />
-        <DetailRow label="Yuk tipi" value={trip.loadType ?? trip.type ?? '-'} />
-        <DetailRow label="Agirlik" value={formatWeightKg(trip.weight)} />
+        <DetailRow label="Durum" value={getLoadStatusPill(trip.status).label} />
+        <DetailRow label="Liste fiyatı" value={formatCurrencyTRY(trip.price)} />
+        <DetailRow label="Müşteri" value={trip.ownerFullName || '-'} />
+        <DetailRow label="Yük tipi" value={formatLoadTypeLabel(trip.loadType ?? trip.type)} />
+        <DetailRow label="Ağırlık" value={formatWeightKg(trip.weight)} />
       </Card>
+
+      {shouldShareLocation && routeMapMarkers.length > 0 ? (
+        <LiveMapPanel markers={routeMapMarkers} height={180} />
+      ) : null}
+
+      {shouldShareLocation && locationStatus ? (
+        <AlertBanner message={locationStatus} tone="info" />
+      ) : null}
 
       {successMsg ? <AlertBanner message={successMsg} tone="success" /> : null}
       {actionError ? <AlertBanner message={actionError} tone="error" /> : null}
@@ -229,7 +272,7 @@ export default function DriverActiveLoadScreen() {
       {!isDelivered ? (
         <View style={styles.actions}>
           <PrimaryButton
-            title="Yuku Aldim"
+            title="Yükü Aldım"
             onPress={onPickup}
             loading={busy && canPickup}
             disabled={!canPickup || busy}
@@ -239,12 +282,12 @@ export default function DriverActiveLoadScreen() {
             <Card variant="default" padding={4} style={styles.qrCard}>
               <Text style={styles.qrTitle}>Teslimat QR</Text>
               <Text style={styles.qrSub}>
-                Musteri ekranindaki QR kodu okutun. Token asagiya girilir (15 dk gecerli).
+                Müşteri ekranındaki QR kodu okutun. Token aşağıya girilir (15 dk geçerli).
               </Text>
               <View style={styles.qrPreview}>
                 <Text style={styles.qrPreviewLabel}>QR token</Text>
                 <Text style={styles.qrPreviewValue} numberOfLines={3}>
-                  {qrToken.trim() || 'Musteri QR gosterdikten sonra token burada gorunur'}
+                  {qrToken.trim() || 'Müşteri QR gösterdikten sonra token burada görünür'}
                 </Text>
               </View>
               <TextField
@@ -268,10 +311,10 @@ export default function DriverActiveLoadScreen() {
       ) : (
         <Card variant="glass" padding={5}>
           <Text style={styles.doneTitle}>Sefer tamamlandi</Text>
-          <Text style={styles.qrSub}>Yeni isler icin Yuk Panosu na gidebilirsiniz.</Text>
+          <Text style={styles.qrSub}>Yeni işler için Yük Panosu’na gidebilirsiniz.</Text>
         </Card>
       )}
-    </ScrollView>
+    </ScreenScroll>
   );
 }
 
@@ -282,8 +325,11 @@ const styles = StyleSheet.create({
   districts: { ...typography.caption, textTransform: 'none', marginTop: 2 },
   progressRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] },
   step: {
-    flex: 1,
-    minWidth: 72,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: '22%',
+    minWidth: 0,
+    maxWidth: '25%',
     paddingVertical: spacing[2],
     paddingHorizontal: spacing[2],
     borderRadius: radius.md,
@@ -302,8 +348,9 @@ const styles = StyleSheet.create({
   },
   stepText: {
     fontFamily: fontFamily.semiBold,
-    fontSize: 11,
+    fontSize: 10,
     color: palette.textMuted,
+    textAlign: 'center',
   },
   stepTextOn: { color: palette.text },
   actions: { gap: spacing[3] },

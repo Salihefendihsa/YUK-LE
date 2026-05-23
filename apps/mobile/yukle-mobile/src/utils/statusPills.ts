@@ -6,11 +6,11 @@ export type StatusPillConfig = { label: string; tone: StatusTone };
 
 const LOAD_STATUS: Record<LoadStatus, StatusPillConfig> = {
   Active: { label: 'Aktif', tone: 'warning' },
-  Assigned: { label: 'Atandi', tone: 'brand' },
+  Assigned: { label: 'Atandı', tone: 'brand' },
   OnWay: { label: 'Yolda', tone: 'info' },
-  Arrived: { label: 'Varildi', tone: 'info' },
+  Arrived: { label: 'Varıldı', tone: 'info' },
   Delivered: { label: 'Teslim', tone: 'success' },
-  Cancelled: { label: 'Iptal', tone: 'error' },
+  Cancelled: { label: 'İptal', tone: 'error' },
 };
 
 export function getLoadStatusPill(status: string): StatusPillConfig {
@@ -22,7 +22,7 @@ const BID_LABELS: Record<string, string> = {
   Pending: 'Beklemede',
   Accepted: 'Kabul edildi',
   Rejected: 'Reddedildi',
-  Cancelled: 'Iptal',
+  Cancelled: 'İptal',
 };
 
 export function getBidStatusPill(status: string): StatusPillConfig {
@@ -42,14 +42,14 @@ export function getAiPriceComparePill(
 ): StatusPillConfig | null {
   if (min == null || max == null || min <= 0) return null;
   if (amount < min) return { label: 'Uygun fiyat', tone: 'success' };
-  if (amount > max) return { label: 'Yuksek teklif', tone: 'error' };
-  return { label: 'Onerilen aralikta', tone: 'warning' };
+  if (amount > max) return { label: 'Yüksek teklif', tone: 'error' };
+  return { label: 'Önerilen aralıkta', tone: 'warning' };
 }
 
 export function getDocUiStatusPill(status: DocUiStatus): StatusPillConfig {
   switch (status) {
     case 'Onayli':
-      return { label: status, tone: 'success' };
+      return { label: 'Onaylı', tone: 'success' };
     case 'Reddedildi':
       return { label: status, tone: 'error' };
     case 'Inceleniyor':
@@ -62,7 +62,7 @@ export function getDocUiStatusPill(status: DocUiStatus): StatusPillConfig {
 export function getApprovalStatusPill(status: string | undefined): StatusPillConfig {
   if (!status) return { label: 'Bilinmiyor', tone: 'neutral' };
   const s = status.toLowerCase();
-  if (s === 'active' || s.includes('approv')) return { label: 'Onayli', tone: 'success' };
+  if (s === 'active' || s.includes('approv')) return { label: 'Onaylı', tone: 'success' };
   if (s.includes('reject')) return { label: 'Reddedildi', tone: 'error' };
   if (s.includes('pending') || s.includes('manual') || s.includes('review')) {
     return { label: 'Beklemede', tone: 'warning' };
@@ -84,8 +84,8 @@ export function getSystemServicePill(value: string): StatusPillConfig {
 }
 
 export function getAiConfidencePill(score: number | null | undefined): StatusPillConfig {
-  if (score == null) return { label: 'AI: N/A', tone: 'neutral' };
-  const label = `AI %${Math.round(score)}`;
+  if (score == null) return { label: 'Güven: —', tone: 'neutral' };
+  const label = `Güven %${Math.round(score)}`;
   if (score >= 80) return { label, tone: 'success' };
   if (score >= 50) return { label, tone: 'warning' };
   return { label, tone: 'error' };

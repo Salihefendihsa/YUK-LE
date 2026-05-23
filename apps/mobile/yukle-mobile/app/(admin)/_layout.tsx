@@ -29,13 +29,6 @@ export default function AdminLayout() {
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.bgDark } }}>
       <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="loads" />
-      <Stack.Screen name="logs" />
-      <Stack.Screen name="blocked-messages" />
-      <Stack.Screen name="chats" />
-      <Stack.Screen name="ratings" />
-      <Stack.Screen name="tracking" />
-      <Stack.Screen name="settings" />
     </Stack>
   );
 }

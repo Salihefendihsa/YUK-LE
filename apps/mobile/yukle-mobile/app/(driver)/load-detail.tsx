@@ -17,7 +17,12 @@ import { PrimaryButton } from '../../src/components/ui/PrimaryButton';
 import { SecondaryButton } from '../../src/components/ui/SecondaryButton';
 import { StatusPill } from '../../src/components/ui/StatusPill';
 import { TextField } from '../../src/components/ui/TextField';
-import { screenRootStyle } from '../../src/constants/layout';
+import {
+  ScreenContainer,
+  ScreenScroll,
+  screenRootStyle,
+  useScreenInsets,
+} from '../../src/constants/layout';
 import { getApiErrorMessage } from '../../src/services/api.client';
 import { submitBid } from '../../src/services/bids.service';
 import { getLoadById } from '../../src/services/loads.service';
@@ -25,7 +30,7 @@ import type { Load } from '../../src/types/load';
 import { palette } from '../../src/theme/colors';
 import { fontFamily, typography } from '../../src/theme/typography';
 import { spacing } from '../../src/theme/spacing';
-import { formatCurrencyTRY, formatWeightKg } from '../../src/utils/format';
+import { formatCurrencyTRY, formatLoadTypeLabel, formatWeightKg } from '../../src/utils/format';
 import { canDriverOpenChat } from '../../src/utils/loadChat';
 import { getLoadStatusPill } from '../../src/utils/statusPills';
 
@@ -45,7 +50,7 @@ export default function DriverLoadDetailScreen() {
 
   const fetchLoad = useCallback(async () => {
     if (!loadId) {
-      setFetchError('Gecersiz ilan ID.');
+      setFetchError('Geçersiz ilan ID.');
       setLoading(false);
       return;
     }
@@ -71,13 +76,13 @@ export default function DriverLoadDetailScreen() {
     setBidSuccess('');
     const numericAmount = Number(amount.replace(',', '.'));
     if (Number.isNaN(numericAmount) || numericAmount < 100 || numericAmount > 9999999) {
-      setBidError('Fiyat 100 TL ile 9.999.999 TL arasinda olmalidir.');
+      setBidError('Fiyat 100 TL ile 9.999.999 TL arasinda olmalıdır.');
       return;
     }
     setSubmitting(true);
     try {
       await submitBid({ loadId, amount: numericAmount });
-      setBidSuccess('Teklifiniz iletildi, musteri onayi bekleniyor.');
+      setBidSuccess('Teklifiniz iletildi; müşteri onayı bekleniyor.');
       setBidSent(true);
       setAmount('');
     } catch (e) {
@@ -89,42 +94,43 @@ export default function DriverLoadDetailScreen() {
 
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Ilan detayi yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="İlan detayı yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
   if (fetchError || !load) {
     return (
-      <View style={[screenRootStyle, styles.centered]}>
-        <Text style={styles.pageTitle}>Yuk Detayi</Text>
-        <AlertBanner message={fetchError || 'Ilan bulunamadi.'} tone="error" />
+      <ScreenContainer style={styles.centered}>
+        <Text style={styles.pageTitle}>Yük Detayı</Text>
+        <AlertBanner message={fetchError || 'İlan bulunamadı.'} tone="error" />
         <SecondaryButton title="Geri" onPress={() => router.back()} style={{ minWidth: 120 }} />
-      </View>
+      </ScreenContainer>
     );
   }
 
-  const yukTipi = load.loadType ?? load.type ?? '-';
+  const yukTipi = formatLoadTypeLabel(load.loadType ?? load.type);
   const mesafe =
     load.distanceKm != null && load.distanceKm > 0
       ? `${load.distanceKm.toLocaleString('tr-TR')} km`
       : '-';
   const statusPill = getLoadStatusPill(load.status);
+  const { edgeStyle } = useScreenInsets();
 
   return (
     <KeyboardAvoidingView
-      style={screenRootStyle}
+      style={[screenRootStyle, edgeStyle]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScreenScroll contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Pressable onPress={() => router.back()}>
-          <Text style={typography.link}>← Yuk Panosu</Text>
+          <Text style={typography.link}>← Yük Panosu</Text>
         </Pressable>
 
         <View style={styles.titleRow}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.pageTitle}>Yuk Detayi</Text>
+            <Text style={styles.pageTitle}>Yük Detayı</Text>
             <Text style={styles.route}>
               {load.fromCity} → {load.toCity}
             </Text>
@@ -136,7 +142,7 @@ export default function DriverLoadDetailScreen() {
         </View>
 
         <Card variant="glass" padding={4}>
-          <Text style={styles.sectionLabel}>Guzergah</Text>
+          <Text style={styles.sectionLabel}>Güzergah</Text>
           <Text style={styles.routeBody}>
             {load.fromCity} ({load.fromDistrict}) → {load.toCity} ({load.toDistrict})
           </Text>
@@ -144,17 +150,17 @@ export default function DriverLoadDetailScreen() {
 
         <Card variant="default" padding={4}>
           <DetailRow label="Liste fiyati" value={formatCurrencyTRY(load.price)} />
-          <DetailRow label="Yuk tipi" value={yukTipi} />
+          <DetailRow label="Yük tipi" value={yukTipi} />
           <DetailRow label="Agirlik" value={formatWeightKg(load.weight)} />
           <DetailRow label="Hacim" value={load.volume ? `${load.volume} m3` : '-'} />
           <DetailRow label="Mesafe" value={mesafe} />
-          <DetailRow label="Musteri" value={load.ownerFullName || '-'} />
+          <DetailRow label="Müşteri" value={load.ownerFullName || '-'} />
           <DetailRow label="Teklif sayisi" value={String(load.bidCount)} />
         </Card>
 
         {load.aiSuggestedPrice != null && load.aiSuggestedPrice > 0 ? (
           <Card variant="elevated" padding={4} style={styles.aiCard}>
-            <Text style={styles.aiTitle}>AI onerilen fiyat</Text>
+            <Text style={styles.aiTitle}>Önerilen fiyat</Text>
             <Text style={styles.aiPrice}>{formatCurrencyTRY(load.aiSuggestedPrice)}</Text>
             {load.aiMinPrice != null && load.aiMaxPrice != null ? (
               <Text style={styles.aiMeta}>
@@ -176,14 +182,14 @@ export default function DriverLoadDetailScreen() {
 
         {canDriverOpenChat(load) ? (
           <SecondaryButton
-            title="Musteriyle Sohbet"
+            title="Müşteriyle Sohbet"
             onPress={() => router.push({ pathname: '/chat', params: { loadId } })}
           />
         ) : null}
 
         <Card variant="elevated" padding={5} style={styles.bidCard}>
           <Text style={styles.bidTitle}>Teklif Ver</Text>
-          <Text style={styles.bidSub}>Navlun tutarinizi TL olarak girin.</Text>
+          <Text style={styles.bidSub}>Navlun tutarınızı TL olarak girin.</Text>
 
           {bidSuccess ? <AlertBanner message={bidSuccess} tone="success" /> : null}
           {bidError ? <AlertBanner message={bidError} tone="error" /> : null}
@@ -199,13 +205,13 @@ export default function DriverLoadDetailScreen() {
           />
 
           <PrimaryButton
-            title={bidSent ? 'Teklif Gonderildi' : 'Teklif Gonder'}
+            title={bidSent ? 'Teklif Gönderildi' : 'Teklif Gönder'}
             onPress={onSubmitBid}
             loading={submitting}
             disabled={bidSent}
           />
         </Card>
-      </ScrollView>
+      </ScreenScroll>
     </KeyboardAvoidingView>
   );
 }

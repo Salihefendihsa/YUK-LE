@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
@@ -11,27 +11,32 @@ import {
   Text,
   View,
 } from 'react-native';
-import { AlertBanner } from '../../src/components/ui/AlertBanner';
-import { Card } from '../../src/components/ui/Card';
-import { EmptyState } from '../../src/components/ui/EmptyState';
-import { LoadingState } from '../../src/components/ui/LoadingState';
-import { PrimaryButton } from '../../src/components/ui/PrimaryButton';
-import { SecondaryButton } from '../../src/components/ui/SecondaryButton';
-import { StatusPill } from '../../src/components/ui/StatusPill';
-import { TextField } from '../../src/components/ui/TextField';
-import { screenRootStyle } from '../../src/constants/layout';
-import { getApiErrorMessage } from '../../src/services/api.client';
+import { AlertBanner } from '../../../src/components/ui/AlertBanner';
+import { Card } from '../../../src/components/ui/Card';
+import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
+import { SecondaryButton } from '../../../src/components/ui/SecondaryButton';
+import { StatusPill } from '../../../src/components/ui/StatusPill';
+import { TextField } from '../../../src/components/ui/TextField';
+import {
+  ScreenContainer,
+  ScreenScroll,
+  screenRootStyle,
+  useScreenInsets,
+} from '../../../src/constants/layout';
+import { getApiErrorMessage } from '../../../src/services/api.client';
 import {
   createAddress,
   deleteAddress,
   getMyAddresses,
   setDefaultAddress,
   updateAddress,
-} from '../../src/services/addresses.service';
-import type { DeliveryAddress, DeliveryAddressInput } from '../../src/types/address';
-import { palette } from '../../src/theme/colors';
-import { typography } from '../../src/theme/typography';
-import { spacing } from '../../src/theme/spacing';
+} from '../../../src/services/addresses.service';
+import type { DeliveryAddress, DeliveryAddressInput } from '../../../src/types/address';
+import { palette } from '../../../src/theme/colors';
+import { typography } from '../../../src/theme/typography';
+import { spacing } from '../../../src/theme/spacing';
 
 const EMPTY_FORM: DeliveryAddressInput = {
   title: '',
@@ -45,7 +50,6 @@ const EMPTY_FORM: DeliveryAddressInput = {
 };
 
 export default function CustomerAddressesScreen() {
-  const router = useRouter();
   const [items, setItems] = useState<DeliveryAddress[]>([]);
   const [form, setForm] = useState<DeliveryAddressInput>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -123,7 +127,7 @@ export default function CustomerAddressesScreen() {
       'Adresi sil',
       `"${addr.title}" adresini silmek istediginize emin misiniz?`,
       [
-        { text: 'Iptal', style: 'cancel' },
+        { text: 'İptal', style: 'cancel' },
         {
           text: 'Sil',
           style: 'destructive',
@@ -147,7 +151,7 @@ export default function CustomerAddressesScreen() {
       'Varsayilan adres',
       `"${addr.title}" varsayilan teslimat adresi yapilsin mi?`,
       [
-        { text: 'Iptal', style: 'cancel' },
+        { text: 'İptal', style: 'cancel' },
         {
           text: 'Onayla',
           onPress: async () => {
@@ -165,29 +169,27 @@ export default function CustomerAddressesScreen() {
 
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Adresler yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="Adresler yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
+  const { edgeStyle } = useScreenInsets();
+
   return (
     <KeyboardAvoidingView
-      style={screenRootStyle}
+      style={[screenRootStyle, edgeStyle]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView
+      <ScreenScroll
         contentContainerStyle={styles.scroll}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
         }
         keyboardShouldPersistTaps="handled"
       >
-        <Pressable onPress={() => router.back()}>
-          <Text style={typography.link}>← Profil</Text>
-        </Pressable>
-        <Text style={styles.title}>Teslimat Adreslerim</Text>
-        <Text style={styles.sub}>Sik kullandiginiz teslimat noktalarini kaydedin.</Text>
+        <ScreenHeader title="Adreslerim" subtitle="Sık kullandığınız teslimat noktalarını kaydedin" />
 
         {error ? <AlertBanner message={error} tone="error" /> : null}
 
@@ -202,7 +204,7 @@ export default function CustomerAddressesScreen() {
           <TextField label="Tam adres" value={form.address} onChangeText={(v) => setForm((s) => ({ ...s, address: v }))} multiline numberOfLines={3} />
           <View style={styles.formActions}>
             {editingId ? (
-              <SecondaryButton title="Iptal" onPress={resetForm} style={styles.actionBtn} />
+              <SecondaryButton title="İptal" onPress={resetForm} style={styles.actionBtn} />
             ) : null}
             <PrimaryButton
               title={editingId ? 'Kaydet' : 'Adres Ekle'}
@@ -217,7 +219,7 @@ export default function CustomerAddressesScreen() {
           <EmptyState
             icon="📍"
             title="Kayitli adres bulunamadi"
-            description="Yukari formdan ilk teslimat adresinizi ekleyin."
+            description="Yukarıdaki formdan ilk teslimat adresinizi ekleyin."
           />
         ) : (
           items.map((a) => (
@@ -240,7 +242,7 @@ export default function CustomerAddressesScreen() {
                     style={styles.miniBtn}
                   />
                 ) : null}
-                <SecondaryButton title="Duzenle" onPress={() => startEdit(a)} style={styles.miniBtn} />
+                <SecondaryButton title="Düzenle" onPress={() => startEdit(a)} style={styles.miniBtn} />
                 <Pressable style={styles.dangerBtn} onPress={() => confirmDelete(a)}>
                   <Text style={styles.dangerText}>Sil</Text>
                 </Pressable>
@@ -248,7 +250,7 @@ export default function CustomerAddressesScreen() {
             </Card>
           ))
         )}
-      </ScrollView>
+      </ScreenScroll>
     </KeyboardAvoidingView>
   );
 }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { ReviewsDetailModal } from '../../../src/components/admin/ReviewsDetailModal';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
@@ -7,7 +8,7 @@ import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { SectionHeader } from '../../../src/components/ui/SectionHeader';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
-import { screenRootStyle } from '../../../src/constants/layout';
+import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import {
   decideReview,
@@ -27,6 +28,7 @@ function confidenceOf(review: PendingReview): number {
 }
 
 export default function AdminReviewsTab() {
+  const { contentInset } = useScreenInsets();
   const [reviews, setReviews] = useState<PendingReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -67,7 +69,7 @@ export default function AdminReviewsTab() {
     setError('');
     try {
       await decideReview(userId, { isApproved, reason });
-      setStatusMsg(isApproved ? 'Belge onaylandi.' : 'Belge reddedildi.');
+      setStatusMsg(isApproved ? 'Belge onaylandı.' : 'Belge reddedildi.');
       setSelected(null);
       await fetchQueue();
     } catch (e) {
@@ -79,26 +81,26 @@ export default function AdminReviewsTab() {
 
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Belge kuyrugu yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="Belge kuyruğu yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={screenRootStyle}>
+    <ScreenContainer>
       <FlatList
         data={sorted}
         keyExtractor={(item) => String(item.id)}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, contentInset]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
         }
         ListHeaderComponent={
           <>
-            <SectionHeader
-              title="Belge Inceleme"
-              subtitle="AI skoruna gore sirali manuel karar"
+            <ScreenHeader
+              title="Belge Kuyruğu"
+              subtitle="Güven skoruna göre sıralı manuel karar"
             />
 
             {error ? <AlertBanner message={error} tone="error" /> : null}
@@ -115,7 +117,7 @@ export default function AdminReviewsTab() {
             <EmptyState
               icon="📄"
               title="Bekleyen belge yok"
-              description="Sofor belge yukleyip PendingReview durumuna duserse burada listelenir."
+              description="Şoför belge yükleyip inceleme bekliyor durumuna düşerse burada listelenir."
             />
           ) : null
         }
@@ -137,7 +139,7 @@ export default function AdminReviewsTab() {
                 </View>
                 <Text style={styles.muted}>{item.phone}</Text>
                 <Text style={styles.muted}>
-                  Belge: {docType} · Yukleme: {formatDateTR(item.createdAt)}
+                  Belge: {docType} · Yükleme: {formatDateTR(item.createdAt)}
                 </Text>
                 <View style={styles.pillRow}>
                   <StatusPill {...aiPill} />
@@ -159,7 +161,7 @@ export default function AdminReviewsTab() {
           onReject={(reason) => handleDecide(selected.id, false, reason)}
         />
       ) : null}
-    </View>
+    </ScreenContainer>
   );
 }
 

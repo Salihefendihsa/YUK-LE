@@ -25,7 +25,7 @@ export default function AdminLoginRoute() {
   const handleLogin = async () => {
     const loginId = email.trim();
     if (!loginId || !password) {
-      setError('E-posta ve sifre gerekli.');
+      setError('E-posta ve şifre gerekli.');
       return;
     }
     setLoading(true);
@@ -33,7 +33,7 @@ export default function AdminLoginRoute() {
     try {
       const response = await authService.login({ phone: loginId, password });
       if (response.role !== 'Admin') {
-        setError('Erisim reddedildi. Yetkisiz giris denemesi kayit altindadir.');
+        setError('Erişim reddedildi. Yetkisiz giriş denemesi kayıt altındadır.');
         return;
       }
       setAuth(response);
@@ -41,7 +41,7 @@ export default function AdminLoginRoute() {
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'E-posta veya sifre hatali.';
+        'E-posta veya sifre hatalı.';
       setError(message);
     } finally {
       setLoading(false);
@@ -55,7 +55,7 @@ export default function AdminLoginRoute() {
       footer={
         <View style={styles.footer}>
           <Text style={styles.secureNote}>
-            Bu sayfa korumalidir. Tum giris denemeleri kayit altindadir.
+            Bu sayfa korumalıdır. Tüm giriş denemeleri kayıt altındadır.
           </Text>
           <View style={s.testBox}>
             <Text style={s.testTitle}>TEST ADMIN</Text>

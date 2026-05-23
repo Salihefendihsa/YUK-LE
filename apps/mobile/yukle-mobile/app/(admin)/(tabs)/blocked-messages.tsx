@@ -1,22 +1,24 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import { AlertBanner } from '../../src/components/ui/AlertBanner';
-import { Card } from '../../src/components/ui/Card';
-import { EmptyState } from '../../src/components/ui/EmptyState';
-import { LoadingState } from '../../src/components/ui/LoadingState';
-import { SectionHeader } from '../../src/components/ui/SectionHeader';
-import { StatusPill } from '../../src/components/ui/StatusPill';
-import { screenRootStyle } from '../../src/constants/layout';
-import { getApiErrorMessage } from '../../src/services/api.client';
-import { getAdminBlockedMessages } from '../../src/services/admin.service';
-import type { AdminBlockedMessageRow } from '../../src/types/admin';
-import { palette } from '../../src/theme/colors';
-import { fontFamily, typography } from '../../src/theme/typography';
-import { spacing } from '../../src/theme/spacing';
-import { formatDateTimeTR } from '../../src/utils/format';
+import { ScreenHeader } from '../../../src/components/ScreenHeader';
+import { AlertBanner } from '../../../src/components/ui/AlertBanner';
+import { Card } from '../../../src/components/ui/Card';
+import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { SectionHeader } from '../../../src/components/ui/SectionHeader';
+import { StatusPill } from '../../../src/components/ui/StatusPill';
+import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { getApiErrorMessage } from '../../../src/services/api.client';
+import { getAdminBlockedMessages } from '../../../src/services/admin.service';
+import type { AdminBlockedMessageRow } from '../../../src/types/admin';
+import { palette } from '../../../src/theme/colors';
+import { fontFamily, typography } from '../../../src/theme/typography';
+import { spacing } from '../../../src/theme/spacing';
+import { formatDateTimeTR } from '../../../src/utils/format';
 
 export default function AdminBlockedMessagesScreen() {
+  const { contentInset } = useScreenInsets();
   const router = useRouter();
   const [rows, setRows] = useState<AdminBlockedMessageRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,18 +41,18 @@ export default function AdminBlockedMessagesScreen() {
 
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Mesajlar yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="Mesajlar yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={screenRootStyle}>
+    <ScreenContainer>
       <FlatList
         data={rows}
         keyExtractor={(item, i) => `${item.loadId}-${item.timestampUtc}-${i}`}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, contentInset]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -64,12 +66,9 @@ export default function AdminBlockedMessagesScreen() {
         }
         ListHeaderComponent={
           <>
-            <Pressable onPress={() => router.back()} style={styles.back}>
-              <Text style={typography.link}>← Geri</Text>
-            </Pressable>
-            <SectionHeader
+            <ScreenHeader
               title="Engellenen Mesajlar"
-              subtitle="Gercek API (bellek kuyrugu). Sunucu yeniden baslayinca liste sifirlanabilir."
+              subtitle="İçerik denetiminde engellenen mesajlar."
             />
             {error ? <AlertBanner message={error} tone="error" /> : null}
           </>
@@ -84,12 +83,12 @@ export default function AdminBlockedMessagesScreen() {
               <StatusPill label="Engellendi" tone="error" />
             </View>
             <Text style={styles.muted}>{formatDateTimeTR(item.timestampUtc)}</Text>
-            <Text style={styles.mono}>Ilan: {item.loadId.slice(0, 8)}...</Text>
+            <Text style={styles.mono}>İlan: {item.loadId.slice(0, 8)}...</Text>
             <Text style={styles.danger}>{item.message}</Text>
           </Card>
         )}
       />
-    </View>
+    </ScreenContainer>
   );
 }
 

@@ -56,7 +56,7 @@ export function AuthScreen({ children, title, subtitle, footer, contentStyle }: 
               <Ionicons name="cube" size={28} color={palette.brand} />
             </View>
             <Text style={styles.brand}>YUK-LE</Text>
-            <Text style={styles.tagline}>Akilli lojistik platformu</Text>
+            <Text style={styles.tagline}>Akıllı lojistik platformu</Text>
           </View>
 
           <Card variant="glass" padding={6} style={[styles.formCard, contentStyle]}>

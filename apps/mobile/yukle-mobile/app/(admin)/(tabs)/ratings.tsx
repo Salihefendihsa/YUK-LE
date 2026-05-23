@@ -10,21 +10,22 @@ import {
   Text,
   View,
 } from 'react-native';
-import { AlertBanner } from '../../src/components/ui/AlertBanner';
-import { Card } from '../../src/components/ui/Card';
-import { EmptyState } from '../../src/components/ui/EmptyState';
-import { LoadingState } from '../../src/components/ui/LoadingState';
-import { PrimaryButton } from '../../src/components/ui/PrimaryButton';
-import { SectionHeader } from '../../src/components/ui/SectionHeader';
-import { TextField } from '../../src/components/ui/TextField';
-import { screenRootStyle } from '../../src/constants/layout';
-import { getApiErrorMessage } from '../../src/services/api.client';
-import { deleteRating, getAllRatings } from '../../src/services/admin.service';
-import type { AdminRatingRow } from '../../src/types/admin';
-import { palette } from '../../src/theme/colors';
-import { fontFamily, typography } from '../../src/theme/typography';
-import { spacing } from '../../src/theme/spacing';
-import { formatDateTR } from '../../src/utils/format';
+import { ScreenHeader } from '../../../src/components/ScreenHeader';
+import { AlertBanner } from '../../../src/components/ui/AlertBanner';
+import { Card } from '../../../src/components/ui/Card';
+import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
+import { SectionHeader } from '../../../src/components/ui/SectionHeader';
+import { TextField } from '../../../src/components/ui/TextField';
+import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { getApiErrorMessage } from '../../../src/services/api.client';
+import { deleteRating, getAllRatings } from '../../../src/services/admin.service';
+import type { AdminRatingRow } from '../../../src/types/admin';
+import { palette } from '../../../src/theme/colors';
+import { fontFamily, typography } from '../../../src/theme/typography';
+import { spacing } from '../../../src/theme/spacing';
+import { formatDateTR } from '../../../src/utils/format';
 
 function starsText(n: number): string {
   const s = Math.min(5, Math.max(0, Math.round(n)));
@@ -32,6 +33,7 @@ function starsText(n: number): string {
 }
 
 export default function AdminRatingsScreen() {
+  const { contentInset } = useScreenInsets();
   const router = useRouter();
   const [rows, setRows] = useState<AdminRatingRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,18 +100,18 @@ export default function AdminRatingsScreen() {
 
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Puanlar yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="Puanlar yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={screenRootStyle}>
+    <ScreenContainer>
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, contentInset]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -123,12 +125,9 @@ export default function AdminRatingsScreen() {
         }
         ListHeaderComponent={
           <>
-            <Pressable onPress={() => router.back()} style={styles.back}>
-              <Text style={typography.link}>← Geri</Text>
-            </Pressable>
-            <SectionHeader
+            <ScreenHeader
               title="Puanlar"
-              subtitle={`Gercek API. Ortalama: ${avg.toFixed(1)} · ${filtered.length} kayit`}
+              subtitle={`Ortalama: ${avg.toFixed(1)} · ${filtered.length} kayıt`}
             />
             <TextField
               icon="filter-outline"
@@ -160,7 +159,7 @@ export default function AdminRatingsScreen() {
               {item.givenByName} → {item.givenToName}
             </Text>
             <Text style={styles.muted}>{formatDateTR(item.createdAt)}</Text>
-            <Text style={styles.mono}>Ilan: {item.loadId.slice(0, 8)}...</Text>
+            <Text style={styles.mono}>İlan: {item.loadId.slice(0, 8)}...</Text>
             <Text style={styles.muted} numberOfLines={4}>
               {item.comment || '(yorum yok)'}
             </Text>
@@ -174,7 +173,7 @@ export default function AdminRatingsScreen() {
           </Card>
         )}
       />
-    </View>
+    </ScreenContainer>
   );
 }
 

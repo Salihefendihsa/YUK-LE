@@ -8,7 +8,7 @@ import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
-import { screenRootStyle } from '../../../src/constants/layout';
+import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getActiveLoads } from '../../../src/services/loads.service';
 import type { Load } from '../../../src/types/load';
@@ -19,6 +19,7 @@ import { formatCurrencyTRY, formatWeightKg } from '../../../src/utils/format';
 import { getLoadStatusPill } from '../../../src/utils/statusPills';
 
 export default function DriverLoadsScreen() {
+  const { contentInset } = useScreenInsets();
   const router = useRouter();
   const [loads, setLoads] = useState<Load[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,23 +49,23 @@ export default function DriverLoadsScreen() {
 
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Yuk panosu yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="Yük panosu yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={screenRootStyle}>
+    <ScreenContainer>
       <View style={styles.headerPad}>
-        <ScreenHeader title="Yuk Panosu" subtitle="Aktif yuk ilanlari" />
+        <ScreenHeader title="Yük Panosu" subtitle="Aktif yük ilanları" />
         {error ? <AlertBanner message={error} tone="error" /> : null}
       </View>
 
       <FlatList
         data={loads}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, contentInset]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
         }
@@ -72,7 +73,7 @@ export default function DriverLoadsScreen() {
           !error ? (
             <EmptyState
               icon="📦"
-              title="Su an aktif yuk ilani yok"
+              title="Şu an aktif yük ilani yok"
               description="Yeni ilanlar burada listelenecek."
             />
           ) : null
@@ -111,7 +112,7 @@ export default function DriverLoadsScreen() {
                 <Text style={styles.metaLine}>
                   Arac: {item.requiredVehicleType ?? '-'} · Teklif: {item.bidCount}
                 </Text>
-                <Text style={styles.musteri}>Musteri: {item.ownerFullName}</Text>
+                <Text style={styles.musteri}>Müşteri: {item.ownerFullName}</Text>
 
                 <View style={styles.cardFooter}>
                   <Text style={styles.detailLink}>Detay ve teklif</Text>
@@ -122,7 +123,7 @@ export default function DriverLoadsScreen() {
           );
         }}
       />
-    </View>
+    </ScreenContainer>
   );
 }
 

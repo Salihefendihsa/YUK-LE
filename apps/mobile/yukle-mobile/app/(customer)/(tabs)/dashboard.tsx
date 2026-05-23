@@ -8,7 +8,7 @@ import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
-import { screenRootStyle } from '../../../src/constants/layout';
+import { ScreenContainer, ScreenScroll } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getCustomerDashboard } from '../../../src/services/dashboard.service';
 import { getCustomerLoads } from '../../../src/services/loads.service';
@@ -24,7 +24,7 @@ import { getLoadStatusPill } from '../../../src/utils/statusPills';
 export default function CustomerDashboardScreen() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
-  const firstName = user?.fullName?.trim().split(/\s+/)[0] ?? 'Musteri';
+  const firstName = user?.fullName?.trim().split(/\s+/)[0] ?? 'Müşteri';
 
   const [stats, setStats] = useState<CustomerDashboard | null>(null);
   const [recentLoads, setRecentLoads] = useState<Load[]>([]);
@@ -55,29 +55,28 @@ export default function CustomerDashboardScreen() {
 
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Panel yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="Panel yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
   return (
-    <ScrollView
-      style={screenRootStyle}
+    <ScreenScroll
       contentContainerStyle={styles.scroll}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
       }
     >
       <ScreenHeader
-        title="Musteri Paneli"
+        title="Müşteri Paneli"
         subtitle="Canli istatistikler ve son ilanlar"
         right={
           <Pressable
             style={styles.createBtn}
             onPress={() => router.push('/(customer)/(tabs)/create-load')}
           >
-            <Text style={styles.createBtnText}>+ Ilan</Text>
+            <Text style={styles.createBtnText}>+ İlan</Text>
           </Pressable>
         }
       />
@@ -91,7 +90,7 @@ export default function CustomerDashboardScreen() {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.heroHello}>Merhaba, {firstName}</Text>
-            <Text style={styles.heroSub}>Lojistik operasyonlarinizin ozeti</Text>
+            <Text style={styles.heroSub}>Lojistik operasyonlarınızın özeti</Text>
           </View>
         </View>
         <Text style={styles.heroSpend}>
@@ -100,8 +99,8 @@ export default function CustomerDashboardScreen() {
       </Card>
 
       <View style={styles.grid}>
-        <StatCard label="Aktif Ilanlar" value={String(stats?.activeLoadCount ?? 0)} icon="cube-outline" />
-        <StatCard label="Yolda Yukler" value={String(stats?.onWayLoadCount ?? 0)} icon="navigate-outline" />
+        <StatCard label="Aktif İlanlar" value={String(stats?.activeLoadCount ?? 0)} icon="cube-outline" />
+        <StatCard label="Yolda Yükler" value={String(stats?.onWayLoadCount ?? 0)} icon="navigate-outline" />
         <StatCard label="Teslim Edilen" value={String(stats?.deliveredLoadCount ?? 0)} icon="checkmark-done-outline" />
         <StatCard
           label="Toplam Harcama"
@@ -115,9 +114,9 @@ export default function CustomerDashboardScreen() {
       {recentLoads.length === 0 ? (
         <EmptyState
           icon="📋"
-          title="Henuz ilan yok"
-          description="Ilan Olustur ile baslayin."
-          actionLabel="Ilan Olustur"
+          title="Henüz ilan yok"
+          description="İlan Oluştur ile başlayın."
+          actionLabel="İlan Oluştur"
           onAction={() => router.push('/(customer)/(tabs)/create-load')}
         />
       ) : (
@@ -147,7 +146,7 @@ export default function CustomerDashboardScreen() {
           );
         })
       )}
-    </ScrollView>
+    </ScreenScroll>
   );
 }
 
@@ -209,7 +208,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing[3],
   },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] },
-  stat: { width: '47%', flexGrow: 1, minWidth: 140 },
+  stat: { width: '47%', flexGrow: 1, flexShrink: 1, minWidth: 0, maxWidth: '48%' },
   statWide: { width: '100%' },
   statValue: {
     fontFamily: fontFamily.bold,

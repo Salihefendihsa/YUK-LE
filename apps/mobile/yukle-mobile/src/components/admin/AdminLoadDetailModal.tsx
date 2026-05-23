@@ -57,7 +57,7 @@ export function AdminLoadDetailModal({ row, visible, onClose }: Props) {
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.root}>
         <View style={styles.header}>
-          <Text style={styles.title}>Ilan Detayi</Text>
+          <Text style={styles.title}>İlan Detayı</Text>
           <Pressable onPress={onClose}>
             <Text style={styles.close}>Kapat</Text>
           </Pressable>
@@ -72,14 +72,13 @@ export function AdminLoadDetailModal({ row, visible, onClose }: Props) {
               <StatusPill {...statusPill} />
             </View>
             <Text style={styles.muted}>Fiyat: {formatCurrencyTRY(row.price)}</Text>
-            <Text style={styles.muted}>Olusturma: {formatDateTR(row.createdAt)}</Text>
+            <Text style={styles.muted}>Oluşturma: {formatDateTR(row.createdAt)}</Text>
             <Text style={styles.mono}>ID: {row.id}</Text>
           </Card>
 
           <View style={styles.mockNote}>
             <Text style={styles.mockNoteText}>
-              Web ilan detayindaki teklif listesi (MOCK_OFFERS) ve harita yer tutucu
-              gosterilmiyor.
+              Teklif listesi ve harita önizlemesi bu ekranda gösterilmez.
             </Text>
           </View>
 
@@ -88,15 +87,15 @@ export function AdminLoadDetailModal({ row, visible, onClose }: Props) {
 
           {load ? (
             <Card variant="elevated" padding={4}>
-              <Text style={styles.sectionTitle}>GET /Loads/{'{id}'} (gercek)</Text>
-              <Text style={styles.muted}>Musteri: {load.ownerFullName}</Text>
+              <Text style={styles.sectionTitle}>İlan özeti</Text>
+              <Text style={styles.muted}>Müşteri: {load.ownerFullName}</Text>
               <Text style={styles.muted}>
-                Sofor ID: {load.driverId != null ? String(load.driverId) : '-'}
+                Şoför ID: {load.driverId != null ? String(load.driverId) : '-'}
               </Text>
-              <Text style={styles.muted}>Agirlik: {formatWeightKg(load.weight)}</Text>
-              <Text style={styles.muted}>Yuk tipi: {load.loadType ?? load.type}</Text>
+              <Text style={styles.muted}>Ağırlık: {formatWeightKg(load.weight)}</Text>
+              <Text style={styles.muted}>Yük tipi: {load.loadType ?? load.type}</Text>
               {load.description ? (
-                <Text style={styles.muted}>Aciklama: {load.description}</Text>
+                <Text style={styles.muted}>Açıklama: {load.description}</Text>
               ) : null}
             </Card>
           ) : null}

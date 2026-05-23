@@ -12,12 +12,12 @@ function normalizeSummary(raw: unknown): WalletSummary {
 
 function txDescription(loadId: unknown, status: string): string {
   const id = loadId ? String(loadId).slice(0, 8) : '';
-  if (status === 'Released') return id ? `Yuk odemesi (${id}...)` : 'Yuk odemesi';
+  if (status === 'Released') return id ? `Yük ödemesi (${id}...)` : 'Yük ödemesi';
   if (status === 'Blocked') return id ? `Bloke tutar (${id}...)` : 'Bloke tutar';
   if (status === 'Pending') return 'Bekleyen islem';
   if (status === 'Refunded') return 'Iade';
   if (status === 'Failed') return 'Basarisiz islem';
-  return 'Cuzdan hareketi';
+  return 'Cüzdan hareketi';
 }
 
 function txDirection(status: string): WalletTransaction['direction'] {

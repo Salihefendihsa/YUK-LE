@@ -26,20 +26,20 @@ export function LoginScreen() {
 
   useEffect(() => {
     if (params.verified === '1') {
-      setInfo('Hesabiniz dogrulandi, giris yapabilirsiniz.');
+      setInfo('Hesabınız doğrulandı, giriş yapabilirsiniz.');
       if (params.phone) {
         const d = String(params.phone).replace(/\D/g, '').slice(0, 10);
         if (d) setPhone(d);
       }
     } else if (params.reset === '1') {
-      setInfo('Sifreniz guncellendi. Giris yapabilirsiniz.');
+      setInfo('Şifreniz güncellendi. Giriş yapabilirsiniz.');
     }
   }, [params.verified, params.phone, params.reset]);
 
   const handleLogin = async () => {
     const digits = phone.replace(/\D/g, '');
     if (!digits || !password) {
-      setError('Telefon numarasi ve sifre gerekli');
+      setError('Telefon numarası ve şifre gerekli');
       return;
     }
     setLoading(true);
@@ -57,7 +57,7 @@ export function LoginScreen() {
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Telefon numarasi veya sifre hatali';
+        'Telefon numarası veya şifre hatalı';
       setError(message);
     } finally {
       setLoading(false);
@@ -66,14 +66,14 @@ export function LoginScreen() {
 
   return (
     <AuthScreen
-      title="Giris Yap"
-      subtitle="Hesabiniza devam edin"
+      title="Giriş Yap"
+      subtitle="Hesabınıza devam edin"
       footer={
         <View style={styles.footer}>
           <View style={s.testBox}>
             <Text style={s.testTitle}>TEST KULLANICILARI</Text>
-            <Text style={s.testItem}>Musteri: 5000000001 / Test123!</Text>
-            <Text style={s.testItem}>Sofor: 5000000002 / Test123!</Text>
+            <Text style={s.testItem}>Müşteri: 5000000001 / Test123!</Text>
+            <Text style={s.testItem}>Şoför: 5000000002 / Test123!</Text>
           </View>
         </View>
       }
@@ -105,16 +105,16 @@ export function LoginScreen() {
       />
 
       <Pressable style={styles.forgot} onPress={() => router.push('/(auth)/forgot-password')}>
-        <Text style={typography.link}>Sifremi Unuttum</Text>
+        <Text style={typography.link}>Şifremi Unuttum</Text>
       </Pressable>
 
       {info ? <AlertBanner message={info} tone="success" /> : null}
       {error ? <AlertBanner message={error} tone="error" /> : null}
 
-      <PrimaryButton title="Giris Yap" onPress={handleLogin} loading={loading} />
+      <PrimaryButton title="Giriş Yap" onPress={handleLogin} loading={loading} />
 
       <Pressable style={styles.registerLink} onPress={() => router.push('/(auth)/register')}>
-        <Text style={styles.registerText}>Hesabiniz yok mu? Kayit Ol</Text>
+        <Text style={styles.registerText}>Hesabınız yok mu? Kayıt Ol</Text>
       </Pressable>
 
       <Pressable style={styles.adminLink} onPress={() => router.push('/(auth)/admin-login')}>

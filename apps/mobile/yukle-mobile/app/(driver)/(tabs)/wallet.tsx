@@ -6,7 +6,7 @@ import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
-import { screenRootStyle } from '../../../src/constants/layout';
+import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getWalletSummary, getWalletTransactions } from '../../../src/services/wallet.service';
 import type { WalletSummary, WalletTransaction } from '../../../src/types/wallet';
@@ -17,6 +17,7 @@ import { formatCurrencyTRY, formatDateTR } from '../../../src/utils/format';
 import { getWalletTxStatusPill } from '../../../src/utils/statusPills';
 
 export default function DriverWalletScreen() {
+  const { contentInset } = useScreenInsets();
   const [summary, setSummary] = useState<WalletSummary | null>(null);
   const [tx, setTx] = useState<WalletTransaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,25 +49,25 @@ export default function DriverWalletScreen() {
 
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Cuzdan yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="Cüzdan yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={screenRootStyle}>
+    <ScreenContainer>
       <FlatList
         data={tx}
         keyExtractor={(item) => String(item.id)}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, contentInset]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
         }
         ListHeaderComponent={
           <>
             <View style={styles.headerPad}>
-              <ScreenHeader title="Cuzdan" subtitle="Bakiye, bekleyen tutarlar ve hareketler" />
+              <ScreenHeader title="Cüzdan" subtitle="Bakiye, bekleyen tutarlar ve hareketler" />
               {error ? <AlertBanner message={error} tone="error" /> : null}
             </View>
 
@@ -79,7 +80,7 @@ export default function DriverWalletScreen() {
 
             <View style={styles.statsRow}>
               <Card variant="default" padding={3} style={styles.stat}>
-                <Text style={styles.statLabel}>Kullanilabilir</Text>
+                <Text style={styles.statLabel}>Kullanılabilir</Text>
                 <Text style={styles.statValue}>
                   {formatCurrencyTRY(summary?.walletBalance ?? 0)}
                 </Text>
@@ -98,15 +99,15 @@ export default function DriverWalletScreen() {
               </Card>
             </View>
 
-            <Text style={styles.sectionTitle}>Islem gecmisi</Text>
+            <Text style={styles.sectionTitle}>İşlem geçmişi</Text>
           </>
         }
         ListEmptyComponent={
           !error ? (
             <EmptyState
               icon="💳"
-              title="Islem bulunamadi"
-              description="Henuz cuzdan hareketiniz yok."
+              title="İşlem bulunamadı"
+              description="Henüz cüzdan hareketiniz yok."
             />
           ) : null
         }
@@ -137,7 +138,7 @@ export default function DriverWalletScreen() {
           );
         }}
       />
-    </View>
+    </ScreenContainer>
   );
 }
 
@@ -156,7 +157,7 @@ const styles = StyleSheet.create({
     marginTop: spacing[2],
   },
   statsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginBottom: spacing[5] },
-  stat: { flex: 1, minWidth: 100 },
+  stat: { flex: 1, flexShrink: 1, minWidth: 0, maxWidth: '50%' },
   statLabel: { ...typography.caption, textTransform: 'none', color: palette.textMuted },
   statValue: {
     fontFamily: fontFamily.bold,

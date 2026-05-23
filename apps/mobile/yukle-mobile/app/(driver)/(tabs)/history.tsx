@@ -1,23 +1,23 @@
-import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import { AlertBanner } from '../../src/components/ui/AlertBanner';
-import { Card } from '../../src/components/ui/Card';
-import { EmptyState } from '../../src/components/ui/EmptyState';
-import { LoadingState } from '../../src/components/ui/LoadingState';
-import { StatusPill } from '../../src/components/ui/StatusPill';
-import { screenRootStyle } from '../../src/constants/layout';
-import { getApiErrorMessage } from '../../src/services/api.client';
-import { getDriverLoadHistory } from '../../src/services/history.service';
-import type { DriverHistoryRow } from '../../src/types/history';
-import { palette } from '../../src/theme/colors';
-import { fontFamily, typography } from '../../src/theme/typography';
-import { spacing } from '../../src/theme/spacing';
-import { formatCurrencyTRY, formatDateTR } from '../../src/utils/format';
-import { getLoadStatusPill } from '../../src/utils/statusPills';
+import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ScreenHeader } from '../../../src/components/ScreenHeader';
+import { AlertBanner } from '../../../src/components/ui/AlertBanner';
+import { Card } from '../../../src/components/ui/Card';
+import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { StatusPill } from '../../../src/components/ui/StatusPill';
+import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { getApiErrorMessage } from '../../../src/services/api.client';
+import { getDriverLoadHistory } from '../../../src/services/history.service';
+import type { DriverHistoryRow } from '../../../src/types/history';
+import { palette } from '../../../src/theme/colors';
+import { fontFamily, typography } from '../../../src/theme/typography';
+import { spacing } from '../../../src/theme/spacing';
+import { formatCurrencyTRY, formatDateTR } from '../../../src/utils/format';
+import { getLoadStatusPill } from '../../../src/utils/statusPills';
 
 export default function DriverHistoryScreen() {
-  const router = useRouter();
+  const { contentInset } = useScreenInsets();
   const [items, setItems] = useState<DriverHistoryRow[]>([]);
   const [totalEarn, setTotalEarn] = useState(0);
   const [tripCount, setTripCount] = useState(0);
@@ -50,28 +50,24 @@ export default function DriverHistoryScreen() {
 
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Gecmis seferler yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="Geçmiş seferler yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={screenRootStyle}>
+    <ScreenContainer>
       <FlatList
         data={items}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, contentInset]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
         }
         ListHeaderComponent={
           <>
-            <Pressable onPress={() => router.back()}>
-              <Text style={typography.link}>← Profil</Text>
-            </Pressable>
-            <Text style={styles.title}>Gecmis Seferlerim</Text>
-            <Text style={styles.sub}>Tamamlanan isler ve kazanc ozeti</Text>
+            <ScreenHeader title="Geçmiş" subtitle="Tamamlanan işler ve kazanç özeti" />
 
             {error ? <AlertBanner message={error} tone="error" /> : null}
 
@@ -87,7 +83,7 @@ export default function DriverHistoryScreen() {
           !error ? (
             <EmptyState
               icon="📜"
-              title="Henuz tamamlanmis seferiniz yok"
+              title="Henüz tamamlanmış seferiniz yok"
               description="Teslim edilen seferler burada listelenecek."
             />
           ) : null
@@ -102,7 +98,7 @@ export default function DriverHistoryScreen() {
                 </Text>
                 <StatusPill label={pill.label} tone={pill.tone} />
               </View>
-              <Text style={styles.meta}>Musteri: {item.customerName ?? '-'}</Text>
+              <Text style={styles.meta}>Müşteri: {item.customerName ?? '-'}</Text>
               <Text style={styles.meta}>
                 Tarih: {item.deliveryDate ? formatDateTR(item.deliveryDate) : '-'}
               </Text>
@@ -111,7 +107,7 @@ export default function DriverHistoryScreen() {
           );
         }}
       />
-    </View>
+    </ScreenContainer>
   );
 }
 

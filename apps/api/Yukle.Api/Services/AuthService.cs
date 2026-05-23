@@ -599,7 +599,7 @@ public class AuthService : IAuthService
                 userId, documentType);
 
             await MarkManualApprovalRequiredAsync(user,
-                reason: "AI servisi geçici olarak yanıt vermedi, hesabınız manuel onay için işaretlendi.");
+                reason: "Belge doğrulama hizmeti geçici olarak yanıt vermedi; hesabınız manuel onay için işaretlendi.");
 
             return BuildResponse(user, documentType, ocr: null);
         }
@@ -613,7 +613,7 @@ public class AuthService : IAuthService
 
             await MarkManualApprovalRequiredAsync(user,
                 reason: ocr.ValidationMessage
-                        ?? "AI analizi tamamlanamadı; hesabınız manuel onay için işaretlendi.");
+                        ?? "Belge analizi tamamlanamadı; hesabınız manuel onay için işaretlendi.");
 
             return BuildResponse(user, documentType, ocr);
         }
@@ -652,7 +652,7 @@ public class AuthService : IAuthService
             // Controller'da BadRequest (400) olarak yakalanacak
             throw new ApplicationException(
                 ocr.ValidationMessage
-                ?? "Yüklenen belge AI denetiminden geçemedi. Lütfen geçerli bir belge yükleyin.");
+                ?? "Yüklenen belge doğrulamadan geçemedi. Lütfen geçerli bir belge yükleyin.");
         }
 
         // ── 3.5. v2.5.2 · Kimlik Uyuşmazlık Kontrolü (Ad-Soyad + TC) ─────────
@@ -710,7 +710,7 @@ public class AuthService : IAuthService
         {
             user.ApprovalStatus        = ApprovalStatus.Active;
             user.IsActive              = true;
-            user.LastValidationMessage = "Tüm zorunlu belgeler AI tarafından onaylandı.";
+            user.LastValidationMessage = "Tüm zorunlu belgeler onaylandı.";
         }
         else
         {

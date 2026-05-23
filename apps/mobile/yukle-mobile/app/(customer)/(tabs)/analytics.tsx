@@ -1,7 +1,7 @@
-import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Card } from '../../src/components/ui/Card';
-import { StatusPill } from '../../src/components/ui/StatusPill';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScreenHeader } from '../../../src/components/ScreenHeader';
+import { Card } from '../../../src/components/ui/Card';
+import { StatusPill } from '../../../src/components/ui/StatusPill';
 import {
   DEMO_ANALYTICS_MONTHS,
   DEMO_CARBON_REDUCTION_PCT,
@@ -11,34 +11,27 @@ import {
   DEMO_MONTHLY_SPEND,
   DEMO_SPEND_CHART_MAX,
   DEMO_TOP_ROUTES,
-} from '../../src/constants/customer-analytics-demo';
-import { screenRootStyle } from '../../src/constants/layout';
-import { palette } from '../../src/theme/colors';
-import { fontFamily, typography } from '../../src/theme/typography';
-import { radius } from '../../src/theme/radius';
-import { spacing } from '../../src/theme/spacing';
-import { formatCurrencyTRY } from '../../src/utils/format';
+} from '../../../src/constants/customer-analytics-demo';
+import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { palette } from '../../../src/theme/colors';
+import { fontFamily, typography } from '../../../src/theme/typography';
+import { radius } from '../../../src/theme/radius';
+import { spacing } from '../../../src/theme/spacing';
+import { formatCurrencyTRY } from '../../../src/utils/format';
 
 export default function CustomerAnalyticsScreen() {
-  const router = useRouter();
-
   return (
-    <ScrollView style={screenRootStyle} contentContainerStyle={styles.scroll}>
-      <Pressable onPress={() => router.back()}>
-        <Text style={typography.link}>← Profil</Text>
-      </Pressable>
-
-      <Text style={styles.title}>Analitik</Text>
-      <Text style={styles.sub}>Harcama, guzergah ve surdurulebilirlik ozeti</Text>
+    <ScreenScroll contentContainerStyle={styles.scroll}>
+      <ScreenHeader title="Analitik" subtitle="Harcama, güzergah ve sürdürülebilirlik özeti" />
 
       <Card variant="elevated" padding={3} style={styles.demoBanner}>
-        <StatusPill label="DEMO VERI" tone="warning" />
-        <Text style={styles.demoBannerText}>Gercek API baglantisi yok (web ile ayni)</Text>
+        <StatusPill label="ÖRNEK VERİ" tone="warning" />
+        <Text style={styles.demoBannerText}>Bu ekran örnek verilerle gösterilir</Text>
       </Card>
 
       <Card variant="glass" padding={4}>
         <Text style={styles.cardTitle}>Toplam harcama</Text>
-        <Text style={styles.cardSub}>Aylik trend (demo)</Text>
+        <Text style={styles.cardSub}>Aylık trend (örnek)</Text>
         <View style={styles.barChart}>
           {DEMO_MONTHLY_SPEND.map((v, i) => (
             <View key={DEMO_ANALYTICS_MONTHS[i]} style={styles.barWrap}>
@@ -55,7 +48,7 @@ export default function CustomerAnalyticsScreen() {
       </Card>
 
       <Card variant="default" padding={4}>
-        <Text style={styles.cardTitle}>En cok kullanilan guzergahlar</Text>
+        <Text style={styles.cardTitle}>En çok kullanılan güzergahlar</Text>
         {DEMO_TOP_ROUTES.map((route, i) => (
           <View key={route} style={styles.routeRow}>
             <Text style={styles.routeIndex}>{i + 1}</Text>
@@ -65,25 +58,25 @@ export default function CustomerAnalyticsScreen() {
       </Card>
 
       <Card variant="default" padding={4}>
-        <Text style={styles.cardTitle}>Sofor memnuniyeti</Text>
+        <Text style={styles.cardTitle}>Şoför memnuniyeti</Text>
         <Text style={styles.bigStat}>{DEMO_DRIVER_SATISFACTION.toFixed(1)}</Text>
-        <Text style={styles.cardSub}>Son 90 gun ortalamasi (demo)</Text>
+        <Text style={styles.cardSub}>Son 90 gün ortalaması (örnek)</Text>
       </Card>
 
       <Card variant="default" padding={4}>
         <Text style={styles.cardTitle}>Karbon ayak izi</Text>
         <Text style={styles.bodyText}>
-          Tahmini emisyon: <Text style={styles.strong}>{DEMO_CARBON_TONNES} t CO2e</Text> bu ay. Yesil
-          arac tercihi ile <Text style={styles.strong}>%{DEMO_CARBON_REDUCTION_PCT}</Text> azaltilabilir.
+          Tahmini emisyon: <Text style={styles.strong}>{DEMO_CARBON_TONNES} t CO₂e</Text> bu ay. Yeşil
+          araç tercihi ile <Text style={styles.strong}>%{DEMO_CARBON_REDUCTION_PCT}</Text> azaltılabilir.
         </Text>
       </Card>
 
       <Card variant="glass" padding={4} style={styles.savingsCard}>
         <Text style={styles.cardTitle}>Bu ay tasarruf</Text>
         <Text style={styles.bigStatGold}>{formatCurrencyTRY(DEMO_MONTHLY_SAVINGS_TRY)}</Text>
-        <Text style={styles.cardSub}>Akilli eslestirme ve guzergah optimizasyonu ile (demo).</Text>
+        <Text style={styles.cardSub}>Akıllı eşleştirme ve güzergah optimizasyonu ile (örnek).</Text>
       </Card>
-    </ScrollView>
+    </ScreenScroll>
   );
 }
 

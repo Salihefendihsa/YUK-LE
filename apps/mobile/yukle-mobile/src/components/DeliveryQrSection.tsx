@@ -57,7 +57,7 @@ export function DeliveryQrSection({ loadId }: Props) {
         <QRCode value={token} size={200} color={Colors.bgDark} backgroundColor="#FFFFFF" />
       </View>
       <Text style={styles.tokenHint} selectable>
-        Yuk ID: {loadId}
+        Yük ID: {loadId}
       </Text>
     </View>
   );

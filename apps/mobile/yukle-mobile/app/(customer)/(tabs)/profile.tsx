@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
@@ -8,7 +9,7 @@ import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
 import { SecondaryButton } from '../../../src/components/ui/SecondaryButton';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
 import { TextField } from '../../../src/components/ui/TextField';
-import { screenRootStyle } from '../../../src/constants/layout';
+import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { changePassword, getUserProfile, updateUserProfile } from '../../../src/services/user.service';
 import { useAuthStore } from '../../../src/store/auth.store';
@@ -106,11 +107,11 @@ export default function CustomerProfileTabScreen() {
       return;
     }
     if (newPassword !== newPassword2) {
-      setPwdError('Yeni sifreler eslesmiyor.');
+      setPwdError('Yeni şifreler eşleşmiyor.');
       return;
     }
     if (newPassword.length < 8) {
-      setPwdError('Yeni sifre en az 8 karakter olmalidir.');
+      setPwdError('Yeni şifre en az 8 karakter olmalıdır.');
       return;
     }
     setPwdSaving(true);
@@ -118,7 +119,7 @@ export default function CustomerProfileTabScreen() {
     setPwdStatus('');
     try {
       await changePassword({ currentPassword, newPassword });
-      setPwdStatus('Sifre guncellendi.');
+      setPwdStatus('Şifre güncellendi.');
       setCurrentPassword('');
       setNewPassword('');
       setNewPassword2('');
@@ -136,16 +137,15 @@ export default function CustomerProfileTabScreen() {
 
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Profil yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="Profil yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
   return (
-    <ScrollView style={screenRootStyle} contentContainerStyle={styles.scroll}>
-      <Text style={styles.title}>Musteri Profili</Text>
-      <Text style={styles.sub}>Hesap, sirket ve guvenlik</Text>
+    <ScreenScroll contentContainerStyle={styles.scroll}>
+      <ScreenHeader title="Profil" subtitle="Hesap, şirket ve güvenlik" />
 
       {error ? <AlertBanner message={error} tone="error" /> : null}
       {status ? <AlertBanner message={status} tone="success" /> : null}
@@ -177,26 +177,26 @@ export default function CustomerProfileTabScreen() {
       </Card>
 
       <Card variant="default" padding={4}>
-        <Text style={styles.sectionTitle}>Sifre Degistir</Text>
-        <TextField label="Mevcut sifre" value={currentPassword} onChangeText={setCurrentPassword} secureTextEntry />
-        <TextField label="Yeni sifre" value={newPassword} onChangeText={setNewPassword} secureTextEntry />
-        <TextField label="Yeni sifre (tekrar)" value={newPassword2} onChangeText={setNewPassword2} secureTextEntry />
+        <Text style={styles.sectionTitle}>Şifre Değiştir</Text>
+        <TextField label="Mevcut şifre" value={currentPassword} onChangeText={setCurrentPassword} secureTextEntry />
+        <TextField label="Yeni şifre" value={newPassword} onChangeText={setNewPassword} secureTextEntry />
+        <TextField label="Yeni şifre (tekrar)" value={newPassword2} onChangeText={setNewPassword2} secureTextEntry />
         {pwdError ? <AlertBanner message={pwdError} tone="error" /> : null}
         {pwdStatus ? <AlertBanner message={pwdStatus} tone="success" /> : null}
         <PrimaryButton
-          title="Sifreyi Guncelle"
+          title="Şifreyi Güncelle"
           onPress={handleChangePassword}
           loading={pwdSaving}
           style={styles.goldBtn}
         />
       </Card>
 
-      <SecondaryButton title="Adreslerim" onPress={() => router.push('/(customer)/addresses')} />
-      <SecondaryButton title="Gecmis Seferlerim" onPress={() => router.push('/(customer)/history')} />
-      <SecondaryButton title="Analitik" onPress={() => router.push('/(customer)/analytics')} />
+      <SecondaryButton title="Adreslerim" onPress={() => router.push('/(customer)/(tabs)/addresses')} />
+      <SecondaryButton title="Geçmiş Seferlerim" onPress={() => router.push('/(customer)/(tabs)/history')} />
+      <SecondaryButton title="Analitik" onPress={() => router.push('/(customer)/(tabs)/analytics')} />
 
-      <SecondaryButton title="Logout" onPress={handleLogout} style={styles.logoutBtn} />
-    </ScrollView>
+      <SecondaryButton title="Çıkış Yap" onPress={handleLogout} style={styles.logoutBtn} />
+    </ScreenScroll>
   );
 }
 

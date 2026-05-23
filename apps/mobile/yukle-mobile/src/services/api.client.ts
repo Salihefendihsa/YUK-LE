@@ -31,7 +31,7 @@ export function getApiErrorMessage(error: unknown): string {
   if (payload?.detail) return payload.detail;
   if (payload?.title) return payload.title;
 
-  if (err.response.status === 401) return 'Oturum gecersiz. Tekrar giris yapin.';
+  if (err.response.status === 401) return 'Oturum geçersiz. Tekrar giriş yapın.';
   if (err.response.status === 403) return 'Bu islem icin yetkiniz yok.';
   if (err.response.status === 404) return 'Kaynak bulunamadi.';
   if (err.response.status >= 500) return 'Sunucu hatasi. Tekrar deneyin.';

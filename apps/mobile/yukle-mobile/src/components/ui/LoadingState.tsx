@@ -7,7 +7,7 @@ type Props = {
   message?: string;
 };
 
-export function LoadingState({ message = 'Yukleniyor...' }: Props) {
+export function LoadingState({ message = 'Yükleniyor...' }: Props) {
   return (
     <View style={styles.wrap}>
       <ActivityIndicator size="large" color={palette.brand} />

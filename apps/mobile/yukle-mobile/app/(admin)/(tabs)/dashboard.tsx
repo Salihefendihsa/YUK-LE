@@ -1,13 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
-import { screenRootStyle } from '../../../src/constants/layout';
+import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getAdminDashboard } from '../../../src/services/admin.service';
 import type { AdminDashboardStats } from '../../../src/types/admin';
@@ -45,9 +44,7 @@ function KpiCard({
 }
 
 export default function AdminDashboardScreen() {
-  const router = useRouter();
   const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -74,24 +71,18 @@ export default function AdminDashboardScreen() {
     setRefreshing(false);
   };
 
-  const handleLogout = () => {
-    logout();
-    router.replace('/');
-  };
-
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Komuta merkezi yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="Komuta merkezi yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
   const sys = stats?.systemStatus;
 
   return (
-    <ScrollView
-      style={screenRootStyle}
+    <ScreenScroll
       contentContainerStyle={styles.scroll}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
@@ -99,12 +90,7 @@ export default function AdminDashboardScreen() {
     >
       <ScreenHeader
         title="Komuta Merkezi"
-        subtitle={`Canli operasyon — ${user?.fullName ?? 'Admin'}`}
-        right={
-          <Pressable style={styles.logoutBtn} onPress={handleLogout}>
-            <Text style={styles.logoutText}>Cikis</Text>
-          </Pressable>
-        }
+        subtitle={`Canlı operasyon — ${user?.fullName ?? 'Admin'}`}
       />
 
       {error ? <AlertBanner message={error} tone="error" /> : null}
@@ -125,7 +111,7 @@ export default function AdminDashboardScreen() {
 
           <View style={styles.statusRow}>
             {sys?.api ? (
-              <StatusPill {...getSystemServicePill(sys.api)} label={`API: ${sys.api}`} />
+              <StatusPill {...getSystemServicePill(sys.api)} label={`Servis: ${sys.api}`} />
             ) : null}
             {sys?.db ? (
               <StatusPill {...getSystemServicePill(sys.db)} label={`DB: ${sys.db}`} />
@@ -174,7 +160,7 @@ export default function AdminDashboardScreen() {
           </Card>
         </>
       ) : null}
-    </ScrollView>
+    </ScreenScroll>
   );
 }
 

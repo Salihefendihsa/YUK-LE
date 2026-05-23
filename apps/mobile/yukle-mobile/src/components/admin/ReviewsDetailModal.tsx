@@ -71,7 +71,7 @@ export function ReviewsDetailModal({ review, visible, busy, onClose, onApprove, 
   const confirmApprove = () => {
     Alert.alert(
       'Belgeyi onayla',
-      'Bu belgeyi onayliyorsunuz. Sofor sisteme erisim kazanacak. Devam edilsin mi?',
+      'Bu belgeyi onaylıyorsunuz. Şoför sisteme erişim kazanacak. Devam edilsin mi?',
       [
         { text: 'Vazgec', style: 'cancel' },
         {
@@ -88,7 +88,7 @@ export function ReviewsDetailModal({ review, visible, busy, onClose, onApprove, 
 
   const submitReject = async () => {
     if (combinedReject.length < 20) {
-      Alert.alert('Red sebebi', 'Aciklama en az 20 karakter olmalidir.');
+      Alert.alert('Red sebebi', 'Aciklama en az 20 karakter olmalıdır.');
       return;
     }
     await onReject(combinedReject);
@@ -113,7 +113,7 @@ export function ReviewsDetailModal({ review, visible, busy, onClose, onApprove, 
               <Image source={{ uri: imageUri }} style={styles.previewImg} resizeMode="contain" />
             ) : (
               <Text style={styles.previewPlaceholder}>
-                Belge gorseli API yanitinda yok. AI analiz bilgileri asagida.
+                Belge gorseli API yanitinda yok. Belge analiz bilgileri aşağıda.
               </Text>
             )}
           </View>
@@ -127,7 +127,7 @@ export function ReviewsDetailModal({ review, visible, busy, onClose, onApprove, 
 
           <Card variant="elevated" padding={4}>
             <View style={styles.sectionHead}>
-              <Text style={styles.sectionTitle}>AI analiz sonucu</Text>
+              <Text style={styles.sectionTitle}>Belge analiz sonucu</Text>
               <StatusPill {...aiPill} />
             </View>
             <AiRow label="Belge tipi" value={ai.documentType ?? '-'} />

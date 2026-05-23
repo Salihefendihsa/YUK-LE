@@ -81,7 +81,7 @@ export default function VerifyPhoneScreen() {
       title="Telefon Dogrulama"
       subtitle={`${phone || '?'} numarasina gonderilen 6 haneli kodu girin`}
     >
-      <Text style={styles.hint}>Development: 123456</Text>
+      <Text style={styles.hint}>Test ortamında doğrulama kodu: 123456</Text>
 
       {error ? <AlertBanner message={error} tone="error" /> : null}
 
@@ -119,7 +119,7 @@ export default function VerifyPhoneScreen() {
       ) : (
         <Pressable onPress={() => void handleResend()} disabled={resendBusy} style={styles.resendBtn}>
           <Text style={typography.link}>
-            {resendBusy ? 'Gonderiliyor...' : 'Kodu Tekrar Gonder'}
+            {resendBusy ? 'Gönderiliyor...' : 'Kodu Tekrar Gönder'}
           </Text>
         </Pressable>
       )}

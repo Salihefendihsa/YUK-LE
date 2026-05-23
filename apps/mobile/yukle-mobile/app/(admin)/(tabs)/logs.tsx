@@ -1,21 +1,23 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import { AlertBanner } from '../../src/components/ui/AlertBanner';
-import { Card } from '../../src/components/ui/Card';
-import { EmptyState } from '../../src/components/ui/EmptyState';
-import { LoadingState } from '../../src/components/ui/LoadingState';
-import { SectionHeader } from '../../src/components/ui/SectionHeader';
-import { screenRootStyle } from '../../src/constants/layout';
-import { getApiErrorMessage } from '../../src/services/api.client';
-import { getAdminLogs } from '../../src/services/admin.service';
-import type { AdminLogRow } from '../../src/types/admin';
-import { palette } from '../../src/theme/colors';
-import { typography } from '../../src/theme/typography';
-import { spacing } from '../../src/theme/spacing';
-import { formatDateTimeTR } from '../../src/utils/format';
+import { ScreenHeader } from '../../../src/components/ScreenHeader';
+import { AlertBanner } from '../../../src/components/ui/AlertBanner';
+import { Card } from '../../../src/components/ui/Card';
+import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { SectionHeader } from '../../../src/components/ui/SectionHeader';
+import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { getApiErrorMessage } from '../../../src/services/api.client';
+import { getAdminLogs } from '../../../src/services/admin.service';
+import type { AdminLogRow } from '../../../src/types/admin';
+import { palette } from '../../../src/theme/colors';
+import { typography } from '../../../src/theme/typography';
+import { spacing } from '../../../src/theme/spacing';
+import { formatDateTimeTR } from '../../../src/utils/format';
 
 export default function AdminLogsScreen() {
+  const { contentInset } = useScreenInsets();
   const router = useRouter();
   const [logs, setLogs] = useState<AdminLogRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,18 +40,18 @@ export default function AdminLogsScreen() {
 
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Loglar yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="Loglar yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={screenRootStyle}>
+    <ScreenContainer>
       <FlatList
         data={logs}
         keyExtractor={(item) => String(item.id)}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, contentInset]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -63,12 +65,9 @@ export default function AdminLogsScreen() {
         }
         ListHeaderComponent={
           <>
-            <Pressable onPress={() => router.back()} style={styles.back}>
-              <Text style={typography.link}>← Geri</Text>
-            </Pressable>
-            <SectionHeader
-              title="Sistem Loglari"
-              subtitle="Gercek: adminId, action, target, note, zaman. IP webde sahte."
+            <ScreenHeader
+              title="Loglar"
+              subtitle="İşlem kayıtları, action, target, note, zaman. IP webde sahte."
             />
             {error ? <AlertBanner message={error} tone="error" /> : null}
           </>
@@ -86,7 +85,7 @@ export default function AdminLogsScreen() {
           </Card>
         )}
       />
-    </View>
+    </ScreenContainer>
   );
 }
 

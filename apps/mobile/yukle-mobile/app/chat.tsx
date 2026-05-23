@@ -36,9 +36,9 @@ function normalizeHubMessage(raw: unknown): ChatMessage {
 }
 
 const STATUS_LABEL: Record<ChatConnectionState, string> = {
-  connecting: 'Baglaniyor...',
+  connecting: 'Bağlanıyor...',
   connected: 'Canli',
-  reconnecting: 'Yeniden baglaniyor...',
+  reconnecting: 'Yeniden bağlanıyor...',
   disconnected: 'Baglanti koptu',
 };
 
@@ -151,7 +151,7 @@ export default function ChatScreen() {
   if (!loadId) {
     return (
       <View style={[screenRootStyle, styles.centered]}>
-        <Text style={styles.errorText}>Gecersiz ilan ID</Text>
+        <Text style={styles.errorText}>Geçersiz ilan ID</Text>
         <Pressable onPress={() => router.back()}>
           <Text style={styles.backLink}>Geri</Text>
         </Pressable>
@@ -192,7 +192,7 @@ export default function ChatScreen() {
           keyExtractor={(item, i) => item.id || `m-${i}`}
           contentContainerStyle={styles.list}
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
-          ListEmptyComponent={<Text style={styles.empty}>Henuz mesaj yok.</Text>}
+          ListEmptyComponent={<Text style={styles.empty}>Henüz mesaj yok.</Text>}
           renderItem={({ item }) => {
             const mine = item.senderId === userId;
             return (
@@ -217,7 +217,7 @@ export default function ChatScreen() {
       <View style={[styles.composer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <TextInput
           style={styles.input}
-          placeholder="Mesajinizi yazin..."
+          placeholder="Mesajınızı yazın..."
           placeholderTextColor={Colors.textMuted}
           value={text}
           onChangeText={setText}
@@ -228,7 +228,7 @@ export default function ChatScreen() {
           onPress={() => void sendMessage()}
           disabled={connState !== 'connected' || !text.trim()}
         >
-          <Text style={styles.sendBtnText}>Gonder</Text>
+          <Text style={styles.sendBtnText}>Gönder</Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>

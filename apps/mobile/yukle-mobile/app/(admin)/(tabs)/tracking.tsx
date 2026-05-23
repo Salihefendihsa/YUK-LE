@@ -1,25 +1,28 @@
-import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import { AlertBanner } from '../../src/components/ui/AlertBanner';
-import { Card } from '../../src/components/ui/Card';
-import { EmptyState } from '../../src/components/ui/EmptyState';
-import { LoadingState } from '../../src/components/ui/LoadingState';
-import { SectionHeader } from '../../src/components/ui/SectionHeader';
-import { StatusPill } from '../../src/components/ui/StatusPill';
-import { screenRootStyle } from '../../src/constants/layout';
-import { getApiErrorMessage } from '../../src/services/api.client';
-import { getAdminActiveDrivers } from '../../src/services/admin.service';
-import type { AdminActiveDriverRow } from '../../src/types/admin';
-import { palette } from '../../src/theme/colors';
-import { fontFamily, typography } from '../../src/theme/typography';
-import { spacing } from '../../src/theme/spacing';
-import { formatDateTimeTR } from '../../src/utils/format';
+import { LiveMapPanel } from '../../../src/components/map/LiveMapPanel';
+import type { MapMarker } from '../../../src/components/map/LiveMap.types';
+import { isValidCoordinate } from '../../../src/components/map/mapUtils';
+import { ScreenHeader } from '../../../src/components/ScreenHeader';
+import { AlertBanner } from '../../../src/components/ui/AlertBanner';
+import { Card } from '../../../src/components/ui/Card';
+import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { SectionHeader } from '../../../src/components/ui/SectionHeader';
+import { StatusPill } from '../../../src/components/ui/StatusPill';
+import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { getApiErrorMessage } from '../../../src/services/api.client';
+import { getAdminActiveDrivers } from '../../../src/services/admin.service';
+import type { AdminActiveDriverRow } from '../../../src/types/admin';
+import { palette } from '../../../src/theme/colors';
+import { fontFamily, typography } from '../../../src/theme/typography';
+import { spacing } from '../../../src/theme/spacing';
+import { formatDateTimeTR } from '../../../src/utils/format';
 
 const POLL_MS = 20000;
 
 export default function AdminTrackingScreen() {
-  const router = useRouter();
+  const { contentInset } = useScreenInsets();
   const [rows, setRows] = useState<AdminActiveDriverRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -50,20 +53,38 @@ export default function AdminTrackingScreen() {
     };
   }, [fetchData]);
 
+  const mapMarkers = useMemo((): MapMarker[] => {
+    return rows
+      .filter(
+        (r) =>
+          isValidCoordinate(r.lastKnownLat, r.lastKnownLng) &&
+          r.lastKnownLat != null &&
+          r.lastKnownLng != null
+      )
+      .map((r) => ({
+        id: `${r.loadId}-${r.driverId}`,
+        latitude: r.lastKnownLat!,
+        longitude: r.lastKnownLng!,
+        title: r.driverName,
+        description: r.route,
+        kind: 'driver' as const,
+      }));
+  }, [rows]);
+
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Aktif soforler yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="Aktif şoförler yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={screenRootStyle}>
+    <ScreenContainer>
       <FlatList
         data={rows}
         keyExtractor={(item) => `${item.loadId}-${item.driverId}`}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, contentInset]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -77,13 +98,13 @@ export default function AdminTrackingScreen() {
         }
         ListHeaderComponent={
           <>
-            <Pressable onPress={() => router.back()} style={styles.back}>
-              <Text style={typography.link}>← Geri</Text>
-            </Pressable>
-            <SectionHeader
-              title="Canli Takip"
-              subtitle="Gercek REST (20 sn polling). Harita yok — koordinat listesi."
+            <ScreenHeader
+              title="Canlı Takip"
+              subtitle="Aktif konumlar periyodik güncellenir (harita + liste)."
             />
+            {mapMarkers.length > 0 ? (
+              <LiveMapPanel markers={mapMarkers} height={260} style={styles.map} />
+            ) : null}
             {error ? <AlertBanner message={error} tone="error" /> : null}
           </>
         }
@@ -92,7 +113,7 @@ export default function AdminTrackingScreen() {
             <EmptyState
               icon="📍"
               title="Aktif sefer / konum yok"
-              description="Assigned, OnWay veya Arrived ilan gerekir."
+              description="Atanmış, yolda veya varış aşamasındaki ilan gerekir."
             />
           ) : null
         }
@@ -116,17 +137,18 @@ export default function AdminTrackingScreen() {
                 Guncelleme:{' '}
                 {item.lastLocationUpdate ? formatDateTimeTR(item.lastLocationUpdate) : '-'}
               </Text>
-              <Text style={styles.mono}>Ilan: {item.loadId.slice(0, 8)}...</Text>
+              <Text style={styles.mono}>İlan: {item.loadId.slice(0, 8)}...</Text>
             </Card>
           );
         }}
       />
-    </View>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
   list: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[2] },
+  map: { marginBottom: spacing[2] },
   back: { marginBottom: spacing[2] },
   trackCard: { marginBottom: spacing[2], gap: spacing[1] },
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing[2] },

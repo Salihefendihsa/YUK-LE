@@ -10,24 +10,25 @@ import {
   Text,
   View,
 } from 'react-native';
-import { AdminLoadDetailModal } from '../../src/components/admin/AdminLoadDetailModal';
-import { AlertBanner } from '../../src/components/ui/AlertBanner';
-import { Card } from '../../src/components/ui/Card';
-import { EmptyState } from '../../src/components/ui/EmptyState';
-import { LoadingState } from '../../src/components/ui/LoadingState';
-import { PrimaryButton } from '../../src/components/ui/PrimaryButton';
-import { SectionHeader } from '../../src/components/ui/SectionHeader';
-import { StatusPill } from '../../src/components/ui/StatusPill';
-import { TextField } from '../../src/components/ui/TextField';
-import { screenRootStyle } from '../../src/constants/layout';
-import { getApiErrorMessage } from '../../src/services/api.client';
-import { cancelAdminLoad, getAdminLoads } from '../../src/services/admin.service';
-import type { AdminLoadRow } from '../../src/types/admin';
-import { palette } from '../../src/theme/colors';
-import { fontFamily, typography } from '../../src/theme/typography';
-import { spacing } from '../../src/theme/spacing';
-import { formatCurrencyTRY, formatDateTR } from '../../src/utils/format';
-import { getLoadStatusPill } from '../../src/utils/statusPills';
+import { ScreenHeader } from '../../../src/components/ScreenHeader';
+import { AdminLoadDetailModal } from '../../../src/components/admin/AdminLoadDetailModal';
+import { AlertBanner } from '../../../src/components/ui/AlertBanner';
+import { Card } from '../../../src/components/ui/Card';
+import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
+import { SectionHeader } from '../../../src/components/ui/SectionHeader';
+import { StatusPill } from '../../../src/components/ui/StatusPill';
+import { TextField } from '../../../src/components/ui/TextField';
+import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { getApiErrorMessage } from '../../../src/services/api.client';
+import { cancelAdminLoad, getAdminLoads } from '../../../src/services/admin.service';
+import type { AdminLoadRow } from '../../../src/types/admin';
+import { palette } from '../../../src/theme/colors';
+import { fontFamily, typography } from '../../../src/theme/typography';
+import { spacing } from '../../../src/theme/spacing';
+import { formatCurrencyTRY, formatDateTR } from '../../../src/utils/format';
+import { getLoadStatusPill } from '../../../src/utils/statusPills';
 
 const CANCELLABLE = new Set(['Active', 'Assigned', 'OnWay', 'Arrived']);
 
@@ -36,6 +37,7 @@ function canCancelLoad(status: string): boolean {
 }
 
 export default function AdminLoadsScreen() {
+  const { contentInset } = useScreenInsets();
   const router = useRouter();
   const [loads, setLoads] = useState<AdminLoadRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,12 +75,12 @@ export default function AdminLoadsScreen() {
 
   const confirmCancel = (row: AdminLoadRow) => {
     Alert.alert(
-      'Ilani iptal et',
-      `${row.fromCity} → ${row.toCity} ilani iptal edilecek. Bu islem geri alinamaz. Devam?`,
+      'İlanı iptal et',
+      `${row.fromCity} → ${row.toCity} ilanı iptal edilecek. Bu işlem geri alınamaz. Devam?`,
       [
         { text: 'Vazgec', style: 'cancel' },
         {
-          text: 'Iptal Et',
+          text: 'İptal Et',
           style: 'destructive',
           onPress: () => void doCancel(row),
         },
@@ -91,7 +93,7 @@ export default function AdminLoadsScreen() {
     setStatusMsg('');
     try {
       await cancelAdminLoad(row.id);
-      setStatusMsg('Ilan iptal edildi.');
+      setStatusMsg('İlan iptal edildi.');
       setSelected(null);
       await fetchData();
     } catch (e) {
@@ -103,34 +105,31 @@ export default function AdminLoadsScreen() {
 
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Ilanlar yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="İlanlar yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={screenRootStyle}>
+    <ScreenContainer>
       <FlatList
         data={loads}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, contentInset]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
         }
         ListHeaderComponent={
           <>
-            <Pressable onPress={() => router.back()} style={styles.back}>
-              <Text style={typography.link}>← Geri</Text>
-            </Pressable>
-            <SectionHeader
-              title="Ilan Yonetimi"
-              subtitle="Tum ilanlar — API listesinde musteri/sofor yok"
+            <ScreenHeader
+              title="İlanlar"
+              subtitle="Tüm ilanlar — API listesinde müşteri/şoför yok"
             />
 
             <TextField
               icon="filter-outline"
-              placeholder="Durum (Active, Assigned, ...)"
+              placeholder="Durum filtrele"
               value={statusFilter}
               onChangeText={setStatusFilter}
               autoCapitalize="none"
@@ -149,7 +148,7 @@ export default function AdminLoadsScreen() {
         }
         ListEmptyComponent={
           !error ? (
-            <EmptyState icon="📦" title="Ilan bulunamadi" description="Filtreyi degistirin." />
+            <EmptyState icon="📦" title="İlan bulunamadı" description="Filtreyi değiştirin." />
           ) : null
         }
         renderItem={({ item }) => {
@@ -174,7 +173,7 @@ export default function AdminLoadsScreen() {
                   </View>
                 ) : (
                   <Pressable style={styles.cancelBtn} onPress={() => confirmCancel(item)}>
-                    <Text style={styles.cancelBtnText}>Iptal Et</Text>
+                    <Text style={styles.cancelBtnText}>İptal Et</Text>
                   </Pressable>
                 )
               ) : null}
@@ -190,7 +189,7 @@ export default function AdminLoadsScreen() {
           onClose={() => setSelected(null)}
         />
       ) : null}
-    </View>
+    </ScreenContainer>
   );
 }
 

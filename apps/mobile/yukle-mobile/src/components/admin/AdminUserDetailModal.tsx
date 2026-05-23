@@ -75,7 +75,7 @@ export function AdminUserDetailModal({ item, visible, onClose }: Props) {
           <Card variant="elevated" padding={4}>
             <Text style={styles.name}>{item.fullName}</Text>
             <View style={styles.pillRow}>
-              <StatusPill label={item.role === 'Driver' ? 'Sofor' : 'Musteri'} tone="brand" />
+              <StatusPill label={item.role === 'Driver' ? 'Şoför' : 'Müşteri'} tone="brand" />
               <StatusPill label={activePill.label} tone={activePill.tone} />
               {approvalPill ? <StatusPill {...approvalPill} /> : null}
             </View>
@@ -99,8 +99,7 @@ export function AdminUserDetailModal({ item, visible, onClose }: Props) {
 
           <View style={styles.mockNote}>
             <Text style={styles.mockNoteText}>
-              Web detay sayfasindaki gecmis seferler, finans ve admin notlari MOCK — mobilde
-              gosterilmiyor.
+              Geçmiş seferler, finans ve admin notları bu ekranda gösterilmez.
             </Text>
           </View>
 
@@ -109,7 +108,7 @@ export function AdminUserDetailModal({ item, visible, onClose }: Props) {
 
           {profile ? (
             <Card variant="elevated" padding={4}>
-              <Text style={styles.sectionTitle}>GET /Users/{'{id}'} (gercek)</Text>
+              <Text style={styles.sectionTitle}>Profil özeti</Text>
               <DetailRow label="Ad soyad" value={profile.fullName} />
               <DetailRow label="E-posta" value={profile.email} />
               <DetailRow label="Telefon" value={profile.phone} />

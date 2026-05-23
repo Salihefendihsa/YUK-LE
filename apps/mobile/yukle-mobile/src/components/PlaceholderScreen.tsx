@@ -23,7 +23,7 @@ export function PlaceholderScreen({ title, showLogout }: Props) {
       <Text style={styles.title}>{title}</Text>
       {showLogout ? (
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Text style={styles.logoutText}>Logout</Text>
+          <Text style={styles.logoutText}>Çıkış Yap</Text>
         </TouchableOpacity>
       ) : null}
     </View>

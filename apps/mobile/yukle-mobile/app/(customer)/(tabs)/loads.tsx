@@ -7,7 +7,7 @@ import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
-import { screenRootStyle } from '../../../src/constants/layout';
+import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getCustomerLoads } from '../../../src/services/loads.service';
 import type { Load } from '../../../src/types/load';
@@ -18,6 +18,7 @@ import { formatCurrencyTRY } from '../../../src/utils/format';
 import { getLoadStatusPill } from '../../../src/utils/statusPills';
 
 export default function CustomerLoadsScreen() {
+  const { contentInset } = useScreenInsets();
   const router = useRouter();
   const [loads, setLoads] = useState<Load[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,25 +48,25 @@ export default function CustomerLoadsScreen() {
 
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Ilanlar yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="İlanlar yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={screenRootStyle}>
+    <ScreenContainer>
       <FlatList
         data={loads}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, contentInset]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
         }
         ListHeaderComponent={
           <View style={styles.headerPad}>
             <ScreenHeader
-              title="Ilanlarim"
+              title="İlanlarım"
               subtitle="Tum ilanlar ve durumlari"
               right={
                 <Pressable
@@ -83,9 +84,9 @@ export default function CustomerLoadsScreen() {
           !error ? (
             <EmptyState
               icon="📦"
-              title="Henuz ilaniniz yok"
-              description="Ilan Olustur ile baslayin."
-              actionLabel="Ilan Olustur"
+              title="Henüz ilaniniz yok"
+              description="İlan Oluştur ile başlayın."
+              actionLabel="İlan Oluştur"
               onAction={() => router.push('/(customer)/(tabs)/create-load')}
             />
           ) : null
@@ -122,7 +123,7 @@ export default function CustomerLoadsScreen() {
           );
         }}
       />
-    </View>
+    </ScreenContainer>
   );
 }
 

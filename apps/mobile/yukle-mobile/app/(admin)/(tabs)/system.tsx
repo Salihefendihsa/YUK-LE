@@ -2,13 +2,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { SectionHeader } from '../../../src/components/ui/SectionHeader';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
 import { adminScreenStyles as s } from '../../../src/constants/adminScreenStyles';
-import { screenRootStyle } from '../../../src/constants/layout';
+import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getAdminSystemFull } from '../../../src/services/admin.service';
 import type { AdminSystemInfo, SystemExternalStatus } from '../../../src/types/admin';
@@ -19,18 +20,18 @@ import { formatDateTimeTR } from '../../../src/utils/format';
 import { getSystemServicePill } from '../../../src/utils/statusPills';
 
 const MENU: { title: string; sub: string; href: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { title: 'Ilan Yonetimi', sub: 'Tum ilanlar, iptal (gercek API)', href: '/(admin)/loads', icon: 'cube-outline' },
-  { title: 'Sistem Loglari', sub: 'Admin islem kayitlari', href: '/(admin)/logs', icon: 'list-outline' },
+  { title: 'İlan Yönetimi', sub: 'Tüm ilanlar ve iptal işlemleri', href: '/(admin)/(tabs)/loads', icon: 'cube-outline' },
+  { title: 'Sistem Logları', sub: 'Admin işlem kayıtları', href: '/(admin)/(tabs)/logs', icon: 'list-outline' },
   {
     title: 'Engellenen Mesajlar',
     sub: 'Moderasyon kayitlari (bellek)',
-    href: '/(admin)/blocked-messages',
+    href: '/(admin)/(tabs)/blocked-messages',
     icon: 'ban-outline',
   },
-  { title: 'Sohbetler', sub: 'Konu ozeti + mesaj gecmisi', href: '/(admin)/chats', icon: 'chatbubbles-outline' },
-  { title: 'Puanlar', sub: 'Yorum listesi, silme', href: '/(admin)/ratings', icon: 'star-outline' },
-  { title: 'Canli Takip', sub: 'Aktif sofor konumlari (REST)', href: '/(admin)/tracking', icon: 'navigate-outline' },
-  { title: 'Ayarlar', sub: 'UI only — kaydedilmiyor', href: '/(admin)/settings', icon: 'options-outline' },
+  { title: 'Sohbetler', sub: 'Konu ozeti + mesaj gecmisi', href: '/(admin)/(tabs)/chats', icon: 'chatbubbles-outline' },
+  { title: 'Puanlar', sub: 'Yorum listesi, silme', href: '/(admin)/(tabs)/ratings', icon: 'star-outline' },
+  { title: 'Canli Takip', sub: 'Aktif sofor konumlari (REST)', href: '/(admin)/(tabs)/tracking', icon: 'navigate-outline' },
+  { title: 'Ayarlar', sub: 'Hesap ve bildirim tercihleri (yakında)', href: '/(admin)/(tabs)/settings', icon: 'options-outline' },
 ];
 
 export default function AdminSystemTab() {
@@ -68,21 +69,20 @@ export default function AdminSystemTab() {
 
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Sistem durumu yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="Sistem durumu yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
   return (
-    <ScrollView
-      style={screenRootStyle}
+    <ScreenScroll
       contentContainerStyle={styles.scroll}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
       }
     >
-      <SectionHeader title="Sistem ve Yonetim" subtitle="Gercek API durumu + moduller" />
+      <ScreenHeader title="Sistem" subtitle="Sistem durumu ve yönetim modülleri" />
 
       {error ? <AlertBanner message={error} tone="error" /> : null}
 
@@ -90,7 +90,7 @@ export default function AdminSystemTab() {
         <Text style={styles.cardTitle}>API / Veritabani</Text>
         <View style={styles.pillRow}>
           {system?.api ? (
-            <StatusPill {...getSystemServicePill(system.api)} label={`API: ${system.api}`} />
+            <StatusPill {...getSystemServicePill(system.api)} label={`Servis: ${system.api}`} />
           ) : null}
           {system?.db ? (
             <StatusPill {...getSystemServicePill(system.db)} label={`DB: ${system.db}`} />
@@ -100,12 +100,12 @@ export default function AdminSystemTab() {
           U-ETDS kuyruk (bekleyen): {system?.workers?.uetdsPending ?? 0}
         </Text>
         <Text style={styles.note}>
-          Webdeki Redis/Gemini/uptime metrikleri placeholder — gosterilmiyor.
+          Ek sistem metrikleri bu sürümde gösterilmez.
         </Text>
       </Card>
 
       <Card variant="elevated" padding={4}>
-        <Text style={styles.cardTitle}>Sunucu (GET /System/status)</Text>
+        <Text style={styles.cardTitle}>Sunucu durumu</Text>
         <Text style={styles.muted}>{external?.message ?? '-'}</Text>
         <Text style={styles.muted}>Ortam: {external?.environment ?? '-'}</Text>
         <Text style={styles.muted}>Framework: {external?.framework ?? '-'}</Text>
@@ -114,7 +114,7 @@ export default function AdminSystemTab() {
         </Text>
       </Card>
 
-      <Text style={styles.sectionLabel}>Moduller</Text>
+      <Text style={styles.sectionLabel}>Modüller</Text>
       {MENU.map((item) => (
         <Pressable key={item.href} style={s.linkBtn} onPress={() => router.push(item.href as never)}>
           <View style={styles.linkRow}>
@@ -129,7 +129,7 @@ export default function AdminSystemTab() {
           </View>
         </Pressable>
       ))}
-    </ScrollView>
+    </ScreenScroll>
   );
 }
 

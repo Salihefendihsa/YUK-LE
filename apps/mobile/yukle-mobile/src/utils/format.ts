@@ -15,14 +15,28 @@ function normalizeStatus(raw: unknown): LoadStatus {
   return 'Active';
 }
 
+const LOAD_TYPE_DISPLAY: Record<string, string> = {
+  General: 'Genel',
+  Paletli: 'Paletli',
+  Dokme: 'Dökme',
+  SogukZincir: 'Soğuk Zincir',
+  TehlikeliMadde: 'Tehlikeli Madde',
+  Parsiyel: 'Parsiyel',
+};
+
+const LOAD_TYPE_BY_INDEX = ['Paletli', 'Dökme', 'Soğuk Zincir', 'Tehlikeli Madde', 'Parsiyel'];
+
+/** API enum/string veya indeks → kullanıcıya gösterilen yük tipi etiketi */
+export function formatLoadTypeLabel(raw: unknown): string {
+  if (raw == null || raw === '') return '-';
+  if (typeof raw === 'number') return LOAD_TYPE_BY_INDEX[raw] ?? String(raw);
+  const s = String(raw);
+  return LOAD_TYPE_DISPLAY[s] ?? s;
+}
+
 function normalizeEnumLabel(raw: unknown): string {
   if (raw == null) return '';
-  if (typeof raw === 'string') return raw;
-  if (typeof raw === 'number') {
-    const labels = ['Paletli', 'Dokme', 'SogukZincir', 'TehlikeliMadde', 'Parsiyel'];
-    return labels[raw] ?? String(raw);
-  }
-  return String(raw);
+  return formatLoadTypeLabel(raw === '' ? null : raw);
 }
 
 export function formatCurrencyTRY(value: number): string {

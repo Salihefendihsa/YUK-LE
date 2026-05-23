@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import {
   PlusJakartaSans_400Regular,
   PlusJakartaSans_500Medium,
@@ -9,6 +10,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Text, TextInput, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { screenRootStyle } from '../src/constants/layout';
 import { palette } from '../src/theme/colors';
@@ -69,14 +71,16 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider style={screenRootStyle}>
-      <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: palette.bg, flex: 1 },
-        }}
-      />
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider style={screenRootStyle}>
+        <StatusBar style="light" />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: palette.bg, flex: 1 },
+          }}
+        />
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

@@ -1,21 +1,21 @@
-import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { AlertBanner } from '../../src/components/ui/AlertBanner';
-import { Card } from '../../src/components/ui/Card';
-import { PrimaryButton } from '../../src/components/ui/PrimaryButton';
-import { SecondaryButton } from '../../src/components/ui/SecondaryButton';
-import { StatusPill } from '../../src/components/ui/StatusPill';
-import { screenRootStyle } from '../../src/constants/layout';
-import { getApiErrorMessage } from '../../src/services/api.client';
-import { uploadDocumentOcr, uploadDriverDocument } from '../../src/services/documents.service';
-import { useAuthStore } from '../../src/store/auth.store';
-import type { DocUiStatus, DriverDocType, PickedDocumentFile } from '../../src/types/document';
-import { palette } from '../../src/theme/colors';
-import { fontFamily, typography } from '../../src/theme/typography';
-import { spacing } from '../../src/theme/spacing';
-import { pickDocumentImage } from '../../src/utils/pickDocument';
-import { getApprovalStatusPill, getDocUiStatusPill } from '../../src/utils/statusPills';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScreenHeader } from '../../../src/components/ScreenHeader';
+import { AlertBanner } from '../../../src/components/ui/AlertBanner';
+import { Card } from '../../../src/components/ui/Card';
+import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
+import { SecondaryButton } from '../../../src/components/ui/SecondaryButton';
+import { StatusPill } from '../../../src/components/ui/StatusPill';
+import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { getApiErrorMessage } from '../../../src/services/api.client';
+import { uploadDocumentOcr, uploadDriverDocument } from '../../../src/services/documents.service';
+import { useAuthStore } from '../../../src/store/auth.store';
+import type { DocUiStatus, DriverDocType, PickedDocumentFile } from '../../../src/types/document';
+import { palette } from '../../../src/theme/colors';
+import { fontFamily, typography } from '../../../src/theme/typography';
+import { spacing } from '../../../src/theme/spacing';
+import { pickDocumentImage } from '../../../src/utils/pickDocument';
+import { getApprovalStatusPill, getDocUiStatusPill } from '../../../src/utils/statusPills';
 
 type DocKey = 'license' | 'src' | 'psychotechnic';
 
@@ -59,7 +59,6 @@ function mapApprovalToUi(status: string): DocUiStatus {
 }
 
 export default function DriverDocumentsScreen() {
-  const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const [error, setError] = useState('');
   const [docs, setDocs] = useState<Record<DocKey, DocState>>({
@@ -109,7 +108,7 @@ export default function DriverDocumentsScreen() {
             ...prev[card.key],
             loading: false,
             status: 'Reddedildi',
-            resultText: ocr.validationMessage ?? 'Belge AI analizinden gecemedi.',
+            resultText: ocr.validationMessage ?? 'Belge analizinden geçemedi.',
           },
         }));
         return;
@@ -129,7 +128,7 @@ export default function DriverDocumentsScreen() {
           resultText:
             upload.message ??
             upload.validationMessage ??
-            `OCR: ${ocr.fullName ?? 'OK'} | Onay: ${approval || 'islem tamam'}`,
+            (ocr.fullName ? `Belge okundu: ${ocr.fullName}` : 'Belge işlendi.'),
         },
       }));
     } catch (e) {
@@ -142,21 +141,16 @@ export default function DriverDocumentsScreen() {
   };
 
   return (
-    <ScrollView style={screenRootStyle} contentContainerStyle={styles.scroll}>
-      <Pressable onPress={() => router.back()}>
-        <Text style={typography.link}>← Geri</Text>
-      </Pressable>
-
-      <Text style={styles.title}>Belgelerim</Text>
-      <Text style={styles.sub}>
-        Ehliyet, SRC ve psikoteknik belgelerinizi yukleyin.{' '}
-        {Platform.OS === 'web' ? 'Web: dosya secici' : 'Native: galeri'}.
-      </Text>
+    <ScreenScroll contentContainerStyle={styles.scroll}>
+      <ScreenHeader
+        title="Belgeler"
+        subtitle={`Ehliyet, SRC ve psikoteknik belgelerinizi yükleyin. ${Platform.OS === 'web' ? 'Dosya seçici' : 'Galeriden seçim'} kullanılır.`}
+      />
 
       <Card variant="glass" padding={4}>
         <Text style={styles.accountLabel}>Hesap onay durumu</Text>
         <View style={styles.accountRow}>
-          <Text style={styles.accountHint}>ApprovalStatus</Text>
+          <Text style={styles.accountHint}>Onay durumu</Text>
           <StatusPill label={accountPill.label} tone={accountPill.tone} />
         </View>
       </Card>
@@ -176,15 +170,11 @@ export default function DriverDocumentsScreen() {
               <StatusPill label={pill.label} tone={pill.tone} />
             </View>
 
-            {state.approvalStatus ? (
-              <Text style={styles.approvalRaw}>API: {state.approvalStatus}</Text>
-            ) : null}
-
-            <SecondaryButton title="Dosya Sec" onPress={() => pickFile(card.key)} disabled={state.loading} />
+            <SecondaryButton title="Dosya Seç" onPress={() => pickFile(card.key)} disabled={state.loading} />
             <Text style={styles.fileLabel}>{state.fileLabel}</Text>
 
             <PrimaryButton
-              title="AI Analiz Et ve Kaydet"
+              title="Analiz Et ve Kaydet"
               onPress={() => handleAnalyzeAndUpload(card)}
               loading={state.loading}
               disabled={!state.file || state.loading}
@@ -194,7 +184,7 @@ export default function DriverDocumentsScreen() {
           </Card>
         );
       })}
-    </ScrollView>
+    </ScreenScroll>
   );
 }
 

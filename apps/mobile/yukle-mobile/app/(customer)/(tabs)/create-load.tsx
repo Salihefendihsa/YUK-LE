@@ -9,12 +9,13 @@ import {
   Text,
   View,
 } from 'react-native';
+import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
 import { SecondaryButton } from '../../../src/components/ui/SecondaryButton';
 import { TextField } from '../../../src/components/ui/TextField';
-import { screenRootStyle } from '../../../src/constants/layout';
+import { ScreenScroll } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { createLoad, getLoadPriceSuggestion } from '../../../src/services/loads.service';
 import type { AiMarketAnalysis, CreateLoadPayload, LoadTypeValue, VehicleTypeValue } from '../../../src/types/create-load';
@@ -47,9 +48,9 @@ const VEHICLE_OPTIONS: { value: VehicleTypeValue; label: string }[] = [
 
 const LOAD_TYPE_OPTIONS: { value: LoadTypeValue; label: string }[] = [
   { value: 0, label: 'Paletli' },
-  { value: 1, label: 'Dokme' },
-  { value: 2, label: 'SogukZincir' },
-  { value: 3, label: 'TehlikeliMadde' },
+  { value: 1, label: 'Dökme' },
+  { value: 2, label: 'Soğuk Zincir' },
+  { value: 3, label: 'Tehlikeli Madde' },
   { value: 4, label: 'Parsiyel' },
 ];
 
@@ -201,12 +202,14 @@ export default function CustomerCreateLoadScreen() {
   };
 
   return (
-    <View style={screenRootStyle}>
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Ilan Olustur</Text>
-        <Text style={styles.sub}>3 adimli ilan olusturma (harita sonraki faz)</Text>
+    <>
+      <ScreenScroll
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+      >
+        <ScreenHeader title="İlan Oluştur" subtitle="3 adımlı ilan oluşturma" />
 
-        <Text style={styles.stepBadge}>Adim {step} / 3</Text>
+        <Text style={styles.stepBadge}>Adım {step} / 3</Text>
         <View style={styles.stepRow}>
           {[1, 2, 3].map((n) => (
             <View
@@ -224,26 +227,26 @@ export default function CustomerCreateLoadScreen() {
 
         {step === 1 ? (
           <Card variant="default" padding={4}>
-            <Text style={styles.sectionTitle}>Guzergah ve zaman</Text>
-            <TextField label="Cikis sehir" value={fromCity} onChangeText={setFromCity} />
-            <TextField label="Cikis ilce" value={fromDistrict} onChangeText={setFromDistrict} />
-            <TextField label="Cikis enlem (lat)" value={fromLat} onChangeText={setFromLat} keyboardType="numeric" />
-            <TextField label="Cikis boylam (lng)" value={fromLng} onChangeText={setFromLng} keyboardType="numeric" />
-            <TextField label="Varis sehir" value={toCity} onChangeText={setToCity} />
-            <TextField label="Varis ilce" value={toDistrict} onChangeText={setToDistrict} />
-            <TextField label="Varis enlem (lat)" value={toLat} onChangeText={setToLat} keyboardType="numeric" />
-            <TextField label="Varis boylam (lng)" value={toLng} onChangeText={setToLng} keyboardType="numeric" />
-            <TextField label="Yukleme tarihi (ISO)" value={pickupDate} onChangeText={setPickupDate} />
+            <Text style={styles.sectionTitle}>Güzergah ve zaman</Text>
+            <TextField label="Çıkış şehir" value={fromCity} onChangeText={setFromCity} />
+            <TextField label="Çıkış ilçe" value={fromDistrict} onChangeText={setFromDistrict} />
+            <TextField label="Çıkış enlem (lat)" value={fromLat} onChangeText={setFromLat} keyboardType="numeric" />
+            <TextField label="Çıkış boylam (lng)" value={fromLng} onChangeText={setFromLng} keyboardType="numeric" />
+            <TextField label="Varış şehir" value={toCity} onChangeText={setToCity} />
+            <TextField label="Varış ilçe" value={toDistrict} onChangeText={setToDistrict} />
+            <TextField label="Varış enlem (lat)" value={toLat} onChangeText={setToLat} keyboardType="numeric" />
+            <TextField label="Varış boylam (lng)" value={toLng} onChangeText={setToLng} keyboardType="numeric" />
+            <TextField label="Yükleme tarihi (ISO)" value={pickupDate} onChangeText={setPickupDate} />
             <TextField label="Teslim tarihi (ISO)" value={deliveryDate} onChangeText={setDeliveryDate} />
             <View style={styles.mapPlaceholder}>
-              <Text style={styles.mapHint}>Harita onizleme — sonraki faz</Text>
+              <Text style={styles.mapHint}>Harita önizlemesi yakında</Text>
             </View>
           </Card>
         ) : null}
 
         {step === 2 ? (
           <Card variant="default" padding={4}>
-            <Text style={styles.sectionTitle}>Yuk detayi</Text>
+            <Text style={styles.sectionTitle}>Yük detayı</Text>
             <Text style={styles.chipGroupLabel}>Arac tipi</Text>
             <View style={styles.chipRow}>
               {VEHICLE_OPTIONS.map((o) => (
@@ -258,7 +261,7 @@ export default function CustomerCreateLoadScreen() {
                 </Pressable>
               ))}
             </View>
-            <Text style={styles.chipGroupLabel}>Yuk tipi</Text>
+            <Text style={styles.chipGroupLabel}>Yük tipi</Text>
             <View style={styles.chipRow}>
               {LOAD_TYPE_OPTIONS.map((o) => (
                 <Pressable
@@ -272,10 +275,10 @@ export default function CustomerCreateLoadScreen() {
                 </Pressable>
               ))}
             </View>
-            <TextField label="Agirlik (kg)" value={weight} onChangeText={setWeight} keyboardType="numeric" />
-            <TextField label="Hacim (m3)" value={volume} onChangeText={setVolume} keyboardType="numeric" />
+            <TextField label="Ağırlık (kg)" value={weight} onChangeText={setWeight} keyboardType="numeric" />
+            <TextField label="Hacim (m³)" value={volume} onChangeText={setVolume} keyboardType="numeric" />
             <TextField
-              label="Aciklama"
+              label="Açıklama"
               value={description}
               onChangeText={setDescription}
               multiline
@@ -286,17 +289,16 @@ export default function CustomerCreateLoadScreen() {
 
         {step === 3 ? (
           <Card variant="default" padding={4}>
-            <Text style={styles.sectionTitle}>Fiyatlandirma</Text>
+            <Text style={styles.sectionTitle}>Fiyatlandırma</Text>
             <Card variant="elevated" padding={4} style={styles.aiInfoCard}>
-              <Text style={styles.aiInfoTitle}>AI onerilen fiyat</Text>
+              <Text style={styles.aiInfoTitle}>Önerilen fiyat</Text>
               <Text style={styles.aiInfoBody}>
-                Web ile ayni: ilan kaydedildikten sonra Gemini / OSRM analizi calisir. Sonuc
-                basari modali ile gosterilir.
+                İlan kaydedildikten sonra önerilen fiyat hesaplanır ve sonuç ekranda gösterilir.
               </Text>
             </Card>
-            <TextField label="Liste fiyati (TL)" value={price} onChangeText={setPrice} keyboardType="numeric" icon="cash-outline" />
+            <TextField label="Liste fiyatı (TL)" value={price} onChangeText={setPrice} keyboardType="numeric" icon="cash-outline" />
             <Text style={styles.preview}>
-              Onizleme: {formatCurrencyTRY(parseNum(price) ?? 0)}
+              Önizleme: {formatCurrencyTRY(parseNum(price) ?? 0)}
             </Text>
           </Card>
         ) : null}
@@ -310,14 +312,14 @@ export default function CustomerCreateLoadScreen() {
           />
           {step < 3 ? (
             <PrimaryButton
-              title="Ileri"
+              title="İleri"
               onPress={() => setStep((s) => s + 1)}
               disabled={!canGoNext}
               style={styles.navHalf}
             />
           ) : (
             <PrimaryButton
-              title="Ilani Kaydet"
+              title="İlanı Kaydet"
               onPress={handleCreate}
               loading={loading}
               disabled={!canSubmit}
@@ -325,25 +327,25 @@ export default function CustomerCreateLoadScreen() {
             />
           )}
         </View>
-      </ScrollView>
+      </ScreenScroll>
 
       <Modal visible={loading} transparent animationType="fade">
         <View style={styles.overlay}>
           <ActivityIndicator color={palette.brand} size="large" />
-          <Text style={styles.overlayText}>Ilan olusturuluyor, AI analizi bekleniyor...</Text>
+          <Text style={styles.overlayText}>İlan oluşturuluyor, fiyat hesaplanıyor...</Text>
         </View>
       </Modal>
 
       <Modal visible={success} transparent animationType="fade">
         <View style={styles.overlay}>
           <Card variant="glass" padding={5} style={styles.successCard}>
-            <Text style={styles.successTitle}>Ilaniniz olusturuldu</Text>
+            <Text style={styles.successTitle}>İlanınız oluşturuldu</Text>
             {aiResult && aiResult.recommendedPrice > 0 ? (
               <Card variant="elevated" padding={4} style={styles.aiResultCard}>
-                <Text style={styles.aiResultLabel}>Onerilen Adil Fiyat (GERCEK API)</Text>
+                <Text style={styles.aiResultLabel}>Önerilen Adil Fiyat</Text>
                 <Text style={styles.aiResultPrice}>{formatCurrencyTRY(aiResult.recommendedPrice)}</Text>
                 <Text style={styles.aiMeta}>
-                  Aralik: {formatCurrencyTRY(aiResult.minPrice)} – {formatCurrencyTRY(aiResult.maxPrice)}
+                  Aralık: {formatCurrencyTRY(aiResult.minPrice)} – {formatCurrencyTRY(aiResult.maxPrice)}
                 </Text>
                 <Text style={styles.aiMeta}>Mesafe: {aiResult.distanceKm.toFixed(1)} km</Text>
                 {aiResult.reasoning ? (
@@ -354,14 +356,14 @@ export default function CustomerCreateLoadScreen() {
               </Card>
             ) : (
               <Text style={styles.aiMeta}>
-                AI fiyat onerisi su an alinamadi; ilan yine de kaydedildi.
+                Önerilen fiyat şu an hesaplanamadı; ilan yine de kaydedildi.
               </Text>
             )}
-            <PrimaryButton title="Ilanlarim" onPress={goToLoads} />
+            <PrimaryButton title="İlanlarım" onPress={goToLoads} />
           </Card>
         </View>
       </Modal>
-    </View>
+    </>
   );
 }
 
@@ -400,9 +402,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.borderLight,
     backgroundColor: palette.input,
+    flexShrink: 1,
+    maxWidth: '100%',
   },
   chipOn: { borderColor: palette.brandBorder, backgroundColor: palette.brandMuted },
-  chipText: { fontFamily: fontFamily.semiBold, fontSize: 13, color: palette.textSecondary },
+  chipText: {
+    fontFamily: fontFamily.semiBold,
+    fontSize: 13,
+    color: palette.textSecondary,
+    flexShrink: 1,
+  },
   chipTextOn: { color: palette.brand },
   mapPlaceholder: {
     borderWidth: 1,

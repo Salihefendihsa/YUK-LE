@@ -268,13 +268,12 @@ public sealed class GeminiServiceClient : IGeminiService
         "• Ağır yük (>10 ton) → dingil vergisi + lastik aşınması: ton başına +50–80 TL ekle.\n" +
         "• Kış/olumsuz hava koşulları güzergahı → +%5–15 ekle.\n\n" +
 
-        "═══ REASONING ALANI — SAMİMİ ŞOFÖRe HİTAP (3 ZORUNLU CEVAP) ═══════\n" +
-        "Reasoning alanında şoföre doğrudan 'Aga' diye hitap ederek samimi ve anlaşılır yaz.\n" +
-        "Teknik terimler yerine sokak dili kullan. Şu 3 soruyu yanıtla:\n" +
-        "1. Yakıt payı: \"Aga bu yolda yakıtın seni X TL'ye mal olur, toplam fiyatın %Y'si.\"\n" +
-        "2. Zorluk payı: \"[Güzergah/Araç tipi] nedeniyle X TL zorluk payı eklendi çünkü [1 cümle gerekçe].\"\n" +
-        "3. Net kazanç: \"Mazot, otoyol ve amortisman düşünce cebine net tahminen X TL kalır. " +
-        "[Boş dönüş, dönüş yükü gibi varsa ek yorum ekle.]\"\n\n" +
+        "═══ REASONING ALANI — PROFESYONEL ŞOFÖR BİLGİLENDİRMESİ (3 ZORUNLU CEVAP) ═══════\n" +
+        "Reasoning alanında şoföre saygılı, net ve anlaşılır Türkçe kullan. Şu 3 soruyu yanıtla:\n" +
+        "1. Yakıt payı: \"Bu güzergahta tahmini yakıt maliyetiniz X TL olur; toplam fiyatın yaklaşık %Y'sini oluşturur.\"\n" +
+        "2. Zorluk payı: \"[Güzergah/Araç tipi] nedeniyle X TL zorluk payı eklendi; gerekçe: [1 cümle].\"\n" +
+        "3. Net kazanç: \"Yakıt, otoyol ve amortisman düşüldükten sonra net kazancınız tahmini X TL olur. " +
+        "[Boş dönüş veya dönüş yükü varsa kısaca belirtin.]\"\n\n" +
 
         "ÇIKTI: Sadece JSON, başka HİÇBİR şey yazma.\n" +
         "Şema (tüm alanlar sayısal, reasoning string):\n" +
@@ -430,7 +429,7 @@ public sealed class GeminiServiceClient : IGeminiService
             _logger.LogWarning(
                 "Gemini circuit breaker AÇIK — evrak denetimi atlandı. {DocType}. {R}",
                 documentType, ex.Message);
-            return BuildUnreadableResult(documentType, "AI servisi şu anda erişilemez, lütfen tekrar deneyin.");
+            return BuildUnreadableResult(documentType, "Belge doğrulama hizmeti şu anda erişilemez. Lütfen tekrar deneyin.");
         }
         catch (Exception ex)
         {
@@ -649,11 +648,11 @@ public sealed class GeminiServiceClient : IGeminiService
         "   - 3+: +20 | 1-2: +12 | Yok: +0\n\n" +
 
         "═══ PERSONELİZE MESAJ KURALI ══════════════════════════════════════\n" +
-        "PersonalizedReason alanında şoföre doğrudan 'Aga' diye hitap et.\n" +
-        "Samimi, sokak dili, kısa (1-2 cümle). Puana göre ton:\n" +
-        "- Yüksek (≥80): Coşkulu ve özgüvenli — 'Aga bu yük sanki senin için yazılmış!'\n" +
-        "- Orta (50-79): Teşvik edici — 'Aga bu güzergahta deneyim kazanmak için iyi fırsat.'\n" +
-        "- Normal (<50): Dürüst — 'Aga bu yük biraz farklı bölge, ama araç tipine uygun.'\n\n" +
+        "PersonalizedReason alanında şoföre saygılı, profesyonel ve kısa (1-2 cümle) yaz.\n" +
+        "Puana göre ton:\n" +
+        "- Yüksek (≥80): Olumlu ve net — 'Bu yük profilinize ve güzergah deneyiminize çok uygun.'\n" +
+        "- Orta (50-79): Teşvik edici — 'Bu güzergahta deneyim kazanmak için uygun bir fırsat.'\n" +
+        "- Normal (<50): Dürüst — 'Farklı bir bölge olsa da araç tipinize uygundur.'\n\n" +
 
         "ÇIKTI: Sadece JSON array, başka HİÇBİR şey yazma.\n" +
         "Şema: [{\"key\": \"l1\", \"matchScore\": 0, \"personalizedReason\": \"\"}]";
@@ -731,21 +730,20 @@ public sealed class GeminiServiceClient : IGeminiService
         {
             score  = vehicleMatch ? 70 : 40;
             reason = vehicleMatch
-                ? $"Yeni Gakgoş, aramıza hoş geldin! {candidate.FromCity} → {candidate.ToCity} " +
-                  $"güzergahı {ctx.VehicleType}'ına uygun, ilk yükünle tecrübe kazanmaya ne dersin?"
-                : $"Yeni Gakgoş, aramıza hoş geldin! Bu yük için araç tipini kontrol et, " +
-                  $"ama sen doğru yoldasın!";
+                ? $"Hoş geldiniz. {candidate.FromCity} → {candidate.ToCity} güzergahı " +
+                  $"{ctx.VehicleType} tipinize uygun; ilk yükünüz için iyi bir başlangıç olabilir."
+                : $"Hoş geldiniz. Bu yük için araç tipinizi kontrol edin; uygunsa değerlendirebilirsiniz.";
         }
         else if (vehicleMatch)
         {
             score  = 60;
-            reason = $"Aga araç tipin uygun ama bu güzergahta geçmiş verimiz yok şimdilik. " +
-                     $"Denemeye değer olabilir!";
+            reason = $"Araç tipiniz uygun; bu güzergahta henüz geçmiş kaydınız yok. " +
+                     $"Değerlendirmeye alınabilir.";
         }
         else
         {
             score  = 35;
-            reason = $"Aga bu yük farklı bir araç tipi gerektiriyor, dikkat et.";
+            reason = $"Bu yük farklı bir araç tipi gerektiriyor; lütfen uygunluğu kontrol edin.";
         }
 
         return new DriverMatchResultDto
@@ -855,15 +853,13 @@ public sealed class GeminiServiceClient : IGeminiService
             : 0m;
 
         var reasoning =
-            $"[Fallback Analiz] " +
-            $"Aga bu yolda yakıtın seni {fuelCost:N0} TL'ye mal olur, " +
-            $"toplam fiyatın %{fuelPct}'i. " +
-            $"Otoyol/köprü tahminen {tollCost:N0} TL, " +
+            $"Bu güzergahta tahmini yakıt maliyetiniz {fuelCost:N0} TL olur " +
+            $"(toplam fiyatın yaklaşık %{fuelPct}'i). " +
+            $"Otoyol ve köprü payı tahmini {tollCost:N0} TL, " +
             $"araç amortismanı {amortCost:N0} TL. " +
-            $"{distStr} km × {consumptionPer100Km} lt/100km × {fuelStr} TL/lt = {fuelCost:N0} TL yakıt. " +
-            $"{wStr} ton yük için {weightSurcharge:N0} TL sürşarj eklendi. " +
-            $"Mazot, otoyol ve amortisman düşünce cebine net tahminen {netProfit:N0} TL kalır. " +
-            $"(Not: Bu tahmin AI analizi yerine matematiksel modelden geliyor.)";
+            $"{distStr} km mesafe, {consumptionPer100Km} lt/100 km tüketim ve {fuelStr} TL/lt yakıt fiyatı baz alındı. " +
+            $"{wStr} ton yük için {weightSurcharge:N0} TL ek yük payı uygulandı. " +
+            $"Tüm giderler düşüldükten sonra net kazancınız tahmini {netProfit:N0} TL.";
 
         return new AiPriceSuggestionDto(
             RecommendedPrice:  recommended,

@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { AdminUserDetailModal } from '../../../src/components/admin/AdminUserDetailModal';
+import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
@@ -18,7 +19,7 @@ import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
 import { SectionHeader } from '../../../src/components/ui/SectionHeader';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
 import { TextField } from '../../../src/components/ui/TextField';
-import { screenRootStyle } from '../../../src/constants/layout';
+import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import {
   customerToListItem,
@@ -43,6 +44,7 @@ function activePill(isActive: boolean) {
 }
 
 export default function AdminUsersTab() {
+  const { contentInset } = useScreenInsets();
   const [tab, setTab] = useState<UserTab>('Driver');
   const [drivers, setDrivers] = useState<AdminUserListItem[]>([]);
   const [customers, setCustomers] = useState<AdminUserListItem[]>([]);
@@ -90,7 +92,7 @@ export default function AdminUsersTab() {
       'Hesap durumu',
       `${item.fullName} kullanicisini ${action} istiyor musunuz?`,
       [
-        { text: 'Iptal', style: 'cancel' },
+        { text: 'İptal', style: 'cancel' },
         {
           text: 'Onayla',
           style: nextActive ? 'default' : 'destructive',
@@ -122,24 +124,24 @@ export default function AdminUsersTab() {
 
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Kullanicilar yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="Kullanıcılar yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={screenRootStyle}>
+    <ScreenContainer>
       <FlatList
         data={list}
         keyExtractor={(item) => `${item.role}-${item.id}`}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, contentInset]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
         }
         ListHeaderComponent={
           <>
-            <SectionHeader title="Kullanicilar" subtitle="Sofor ve musteri yonetimi" />
+            <ScreenHeader title="Kullanıcılar" subtitle="Şoför ve müşteri yönetimi" />
 
             <View style={styles.tabRow}>
               <Pressable
@@ -147,7 +149,7 @@ export default function AdminUsersTab() {
                 onPress={() => setTab('Driver')}
               >
                 <Text style={[styles.tabText, tab === 'Driver' && styles.tabTextActive]}>
-                  Soforler ({drivers.length})
+                  Şoförler ({drivers.length})
                 </Text>
               </Pressable>
               <Pressable
@@ -155,7 +157,7 @@ export default function AdminUsersTab() {
                 onPress={() => setTab('Customer')}
               >
                 <Text style={[styles.tabText, tab === 'Customer' && styles.tabTextActive]}>
-                  Musteriler ({customers.length})
+                  Müşteriler ({customers.length})
                 </Text>
               </Pressable>
             </View>
@@ -181,8 +183,8 @@ export default function AdminUsersTab() {
           !error ? (
             <EmptyState
               icon="👥"
-              title={tab === 'Driver' ? 'Sofor bulunamadi' : 'Musteri bulunamadi'}
-              description="Arama kriterlerini degistirin veya yenileyin."
+              title={tab === 'Driver' ? 'Şoför bulunamadı' : 'Müşteri bulunamadı'}
+              description="Arama kriterlerini değiştirin veya yenileyin."
             />
           ) : null
         }
@@ -205,7 +207,7 @@ export default function AdminUsersTab() {
                 <Text style={styles.muted}>{item.phone}</Text>
                 <View style={styles.pillRow}>
                   <StatusPill
-                    label={item.role === 'Driver' ? 'Sofor' : 'Musteri'}
+                    label={item.role === 'Driver' ? 'Şoför' : 'Müşteri'}
                     tone="brand"
                   />
                   {approvalPill ? <StatusPill {...approvalPill} /> : null}
@@ -215,7 +217,7 @@ export default function AdminUsersTab() {
                 ) : null}
                 {item.role === 'Customer' ? (
                   <Text style={styles.muted}>
-                    Ilan: {item.totalLoadCount ?? 0} · Harcama:{' '}
+                    İlan: {item.totalLoadCount ?? 0} · Harcama:{' '}
                     {formatCurrencyTRY(item.totalSpent ?? 0)}
                   </Text>
                 ) : null}
@@ -245,7 +247,7 @@ export default function AdminUsersTab() {
           onClose={() => setSelected(null)}
         />
       ) : null}
-    </View>
+    </ScreenContainer>
   );
 }
 

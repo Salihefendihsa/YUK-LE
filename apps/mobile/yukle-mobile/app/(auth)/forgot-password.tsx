@@ -14,8 +14,8 @@ type Step = 1 | 2 | 3;
 
 const stepSub: Record<Step, string> = {
   1: 'Telefon numaranizi girin, OTP gonderelim.',
-  2: 'Telefonunuza gelen 6 haneli kodu girin (Development: 123456).',
-  3: 'Yeni sifrenizi belirleyin.',
+  2: 'Telefonunuza gelen 6 haneli kodu girin.',
+  3: 'Yeni şifrenizi belirleyin.',
 };
 
 export default function ForgotPasswordScreen() {
@@ -70,7 +70,7 @@ export default function ForgotPasswordScreen() {
 
   const submitReset = async () => {
     if (newPassword.length < 8 || newPassword !== newPassword2) {
-      setError('Yeni sifre en az 8 karakter ve tekrar eslesmeli');
+      setError('Yeni şifre en az 8 karakter ve tekrar eslesmeli');
       return;
     }
     setLoading(true);
@@ -93,7 +93,7 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <AuthScreen title="Sifremi Unuttum" subtitle={stepSub[step]}>
+    <AuthScreen title="Şifremi Unuttum" subtitle={stepSub[step]}>
       {error ? <AlertBanner message={error} tone="error" /> : null}
 
       {step === 1 ? (
@@ -107,7 +107,7 @@ export default function ForgotPasswordScreen() {
             keyboardType="phone-pad"
             maxLength={13}
           />
-          <PrimaryButton title="OTP Gonder" onPress={submitPhone} loading={loading} />
+          <PrimaryButton title="OTP Gönder" onPress={submitPhone} loading={loading} />
         </>
       ) : null}
 
@@ -129,7 +129,7 @@ export default function ForgotPasswordScreen() {
       {step === 3 ? (
         <>
           <TextField
-            label="Yeni sifre"
+            label="Yeni şifre"
             icon="lock-closed-outline"
             placeholder="En az 8 karakter"
             value={newPassword}
@@ -137,14 +137,14 @@ export default function ForgotPasswordScreen() {
             secureTextEntry
           />
           <TextField
-            label="Yeni sifre tekrar"
+            label="Yeni şifre tekrar"
             icon="lock-closed-outline"
             placeholder="Tekrar girin"
             value={newPassword2}
             onChangeText={setNewPassword2}
             secureTextEntry
           />
-          <PrimaryButton title="Sifreyi Sifirla" onPress={submitReset} loading={loading} />
+          <PrimaryButton title="Şifreyi Sıfırla" onPress={submitReset} loading={loading} />
         </>
       ) : null}
 

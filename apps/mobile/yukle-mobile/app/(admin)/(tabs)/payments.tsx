@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
@@ -16,7 +17,7 @@ import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
 import { SectionHeader } from '../../../src/components/ui/SectionHeader';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
 import { TextField } from '../../../src/components/ui/TextField';
-import { screenRootStyle } from '../../../src/constants/layout';
+import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getAdminPayments, releaseAdminPayment } from '../../../src/services/admin.service';
 import type { AdminPaymentRow } from '../../../src/types/admin';
@@ -31,6 +32,7 @@ function canRelease(status: string): boolean {
 }
 
 export default function AdminPaymentsTab() {
+  const { contentInset } = useScreenInsets();
   const [payments, setPayments] = useState<AdminPaymentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -96,26 +98,26 @@ export default function AdminPaymentsTab() {
 
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Odemeler yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="Ödemeler yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={screenRootStyle}>
+    <ScreenContainer>
       <FlatList
         data={payments}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, contentInset]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
         }
         ListHeaderComponent={
           <>
-            <SectionHeader
-              title="Odeme ve Havuz"
-              subtitle="Gercek API alanlari — sahte komisyon KPI yok"
+            <ScreenHeader
+              title="Ödemeler"
+              subtitle="Ödeme kayıtları — sahte komisyon KPI yok"
             />
 
             <View style={styles.kpiRow}>
@@ -139,7 +141,7 @@ export default function AdminPaymentsTab() {
 
             <TextField
               icon="filter-outline"
-              placeholder="Durum (Blocked, Released, ...)"
+              placeholder="Durum filtrele"
               value={statusFilter}
               onChangeText={setStatusFilter}
               autoCapitalize="none"
@@ -156,7 +158,7 @@ export default function AdminPaymentsTab() {
         }
         ListEmptyComponent={
           !error ? (
-            <EmptyState icon="💳" title="Odeme kaydi yok" description="Filtreyi degistirin." />
+            <EmptyState icon="💳" title="Ödeme kaydı yok" description="Filtreyi değiştirin." />
           ) : null
         }
         renderItem={({ item }) => {
@@ -167,7 +169,7 @@ export default function AdminPaymentsTab() {
                 <Text style={styles.amount}>{formatCurrencyTRY(item.amount)}</Text>
                 <StatusPill {...pill} />
               </View>
-              <Text style={styles.muted}>Ilan: {item.loadId.slice(0, 8)}...</Text>
+              <Text style={styles.muted}>İlan: {item.loadId.slice(0, 8)}...</Text>
               <Text style={styles.muted}>Islem: {item.transactionId || '-'}</Text>
               <Text style={styles.muted}>Tarih: {formatDateTR(item.createdAt)}</Text>
               {canRelease(item.status) ? (
@@ -187,7 +189,7 @@ export default function AdminPaymentsTab() {
           );
         }}
       />
-    </View>
+    </ScreenContainer>
   );
 }
 

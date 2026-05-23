@@ -6,7 +6,7 @@ import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
-import { screenRootStyle } from '../../../src/constants/layout';
+import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
 import { getDriverDashboard } from '../../../src/services/dashboard.service';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import type { DriverDashboard } from '../../../src/types/dashboard';
@@ -19,7 +19,7 @@ import { formatCurrencyTRY } from '../../../src/utils/format';
 export default function DriverDashboardScreen() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
-  const firstName = user?.fullName?.trim().split(/\s+/)[0] ?? 'Sofor';
+  const firstName = user?.fullName?.trim().split(/\s+/)[0] ?? 'Şoför';
 
   const [stats, setStats] = useState<DriverDashboard | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,21 +48,20 @@ export default function DriverDashboardScreen() {
 
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Panel yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="Panel yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
   return (
-    <ScrollView
-      style={screenRootStyle}
+    <ScreenScroll
       contentContainerStyle={styles.scroll}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
       }
     >
-      <ScreenHeader title="Sofor Paneli" subtitle="Ozet istatistikler" />
+      <ScreenHeader title="Şoför Paneli" subtitle="Özet istatistikler" />
 
       {error ? <AlertBanner message={error} tone="error" /> : null}
 
@@ -94,7 +93,7 @@ export default function DriverDashboardScreen() {
         />
       </View>
 
-      <Pressable onPress={() => router.push('/(driver)/documents')}>
+      <Pressable onPress={() => router.push('/(driver)/(tabs)/documents')}>
         <Card variant="elevated" padding={5} style={styles.docsCard}>
           <View style={styles.docsRow}>
             <Ionicons name="document-text-outline" size={22} color={palette.brand} />
@@ -106,7 +105,7 @@ export default function DriverDashboardScreen() {
           </View>
         </Card>
       </Pressable>
-    </ScrollView>
+    </ScreenScroll>
   );
 }
 
@@ -162,7 +161,7 @@ const styles = StyleSheet.create({
   },
   heroMeta: { ...typography.caption, textTransform: 'none' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] },
-  stat: { width: '47%', flexGrow: 1, minWidth: 140 },
+  stat: { width: '47%', flexGrow: 1, flexShrink: 1, minWidth: 0, maxWidth: '48%' },
   statWide: { width: '100%' },
   statValue: {
     fontFamily: fontFamily.bold,

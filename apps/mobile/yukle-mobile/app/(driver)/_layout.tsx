@@ -30,9 +30,6 @@ export default function DriverLayout() {
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.bgDark } }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="load-detail" />
-      <Stack.Screen name="documents" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="history" />
-      <Stack.Screen name="bids" />
     </Stack>
   );
 }

@@ -1,22 +1,24 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import { AlertBanner } from '../../src/components/ui/AlertBanner';
-import { Card } from '../../src/components/ui/Card';
-import { EmptyState } from '../../src/components/ui/EmptyState';
-import { LoadingState } from '../../src/components/ui/LoadingState';
-import { StatusPill } from '../../src/components/ui/StatusPill';
-import { screenRootStyle } from '../../src/constants/layout';
-import { getApiErrorMessage } from '../../src/services/api.client';
-import { getDriverBids } from '../../src/services/bids.service';
-import type { DriverBid } from '../../src/types/bid';
-import { palette } from '../../src/theme/colors';
-import { fontFamily, typography } from '../../src/theme/typography';
-import { spacing } from '../../src/theme/spacing';
-import { formatCurrencyTRY, formatDateTR } from '../../src/utils/format';
-import { getBidStatusPill } from '../../src/utils/statusPills';
+import { ScreenHeader } from '../../../src/components/ScreenHeader';
+import { AlertBanner } from '../../../src/components/ui/AlertBanner';
+import { Card } from '../../../src/components/ui/Card';
+import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { StatusPill } from '../../../src/components/ui/StatusPill';
+import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { getApiErrorMessage } from '../../../src/services/api.client';
+import { getDriverBids } from '../../../src/services/bids.service';
+import type { DriverBid } from '../../../src/types/bid';
+import { palette } from '../../../src/theme/colors';
+import { fontFamily, typography } from '../../../src/theme/typography';
+import { spacing } from '../../../src/theme/spacing';
+import { formatCurrencyTRY, formatDateTR } from '../../../src/utils/format';
+import { getBidStatusPill } from '../../../src/utils/statusPills';
 
 export default function DriverBidsScreen() {
+  const { contentInset } = useScreenInsets();
   const router = useRouter();
   const [bids, setBids] = useState<DriverBid[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,28 +48,24 @@ export default function DriverBidsScreen() {
 
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Teklifler yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="Teklifler yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={screenRootStyle}>
+    <ScreenContainer>
       <FlatList
         data={bids}
         keyExtractor={(item) => String(item.id)}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, contentInset]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
         }
         ListHeaderComponent={
           <>
-            <Pressable onPress={() => router.back()}>
-              <Text style={typography.link}>← Profil</Text>
-            </Pressable>
-            <Text style={styles.title}>Tekliflerim</Text>
-            <Text style={styles.sub}>Verdiginiz yuk teklifleri</Text>
+            <ScreenHeader title="Tekliflerim" subtitle="Verdiğiniz yük teklifleri" />
             {error ? <AlertBanner message={error} tone="error" /> : null}
           </>
         }
@@ -75,8 +73,8 @@ export default function DriverBidsScreen() {
           !error ? (
             <EmptyState
               icon="🏷️"
-              title="Henuz teklifiniz yok"
-              description="Yuk panosundan ilanlara teklif verebilirsiniz."
+              title="Henüz teklifiniz yok"
+              description="Yük panosundan ilanlara teklif verebilirsiniz."
             />
           ) : null
         }
@@ -103,7 +101,7 @@ export default function DriverBidsScreen() {
           );
         }}
       />
-    </View>
+    </ScreenContainer>
   );
 }
 

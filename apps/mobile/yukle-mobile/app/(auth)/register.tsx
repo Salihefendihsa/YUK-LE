@@ -56,11 +56,11 @@ export default function RegisterScreen() {
       return false;
     }
     if (!validatePhone(p)) {
-      setError('Telefon 5 ile baslayan 10 hane olmali');
+      setError('Telefon 5 ile başlayan 10 hane olmalı');
       return false;
     }
     if (!validateEmail(email)) {
-      setError('Gecerli e-posta girin');
+      setError('Geçerli e-posta girin');
       return false;
     }
     setError('');
@@ -72,37 +72,37 @@ export default function RegisterScreen() {
     const tcDigits = digitsOnly(tcIdentityNumber).slice(0, 11);
     if (role === 'Customer') {
       if (companyName.trim().length < 2) {
-        setError('Sirket adi en az 2 karakter');
+        setError('Şirket adı en az 2 karakter');
         return false;
       }
       if (!validateTaxNumber(taxDigits)) {
-        setError('Vergi numarasi 10 hane olmali');
+        setError('Vergi numarası 10 hane olmalı');
         return false;
       }
       if (companyAddress.trim().length < 10) {
-        setError('Sirket adresi en az 10 karakter');
+        setError('Şirket adresi en az 10 karakter');
         return false;
       }
     } else {
       if (!validateTC(tcDigits)) {
-        setError('TC kimlik 11 hane olmali');
+        setError('TC kimlik 11 hane olmalı');
         return false;
       }
       if (!birthDate.trim()) {
-        setError('Dogum tarihi gerekli (YYYY-MM-DD)');
+        setError('Doğum tarihi gerekli (YYYY-MM-DD)');
         return false;
       }
       if (!isAdult(birthDate)) {
-        setError('18 yasindan buyuk olmalisiniz');
+        setError('18 yaşından büyük olmalısınız');
         return false;
       }
       const ibanNorm = iban.replace(/\s/g, '').toUpperCase();
       if (!validateIBAN(ibanNorm)) {
-        setError('IBAN TR + 24 hane olmali');
+        setError('IBAN TR + 24 hane olmalı');
         return false;
       }
       if (address.trim().length < 10) {
-        setError('Ikametgah adresi en az 10 karakter');
+        setError('İkametgah adresi en az 10 karakter');
         return false;
       }
     }
@@ -112,15 +112,15 @@ export default function RegisterScreen() {
 
   const handleSubmit = async () => {
     if (password !== confirmPassword) {
-      setError('Sifreler eslesmiyor');
+      setError('Şifreler eşleşmiyor');
       return;
     }
     if (!passwordState.valid) {
-      setError('Sifre en az 8 karakter, buyuk-kucuk harf ve rakam icermeli');
+      setError('Şifre en az 8 karakter, büyük-küçük harf ve rakam içermeli');
       return;
     }
     if (!acceptedKvkk || !acceptedTerms) {
-      setError('KVKK ve kullanim kosullari zorunlu');
+      setError('KVKK ve kullanım koşulları zorunludur');
       return;
     }
     if (role === 'Driver' && !acceptedLocationTracking) {
@@ -168,23 +168,23 @@ export default function RegisterScreen() {
   };
 
   return (
-    <AuthScreen title="Hesap Olustur" subtitle="Platforma ucretsiz katilin">
+    <AuthScreen title="Hesap Oluştur" subtitle="Platforma ücretsiz katılın">
         <View style={s.roleRow}>
           <Pressable
             style={[s.roleBtn, role === 'Customer' && s.roleBtnActive]}
             onPress={() => setRole('Customer')}
           >
-            <Text style={[s.roleBtnText, role === 'Customer' && s.roleBtnTextActive]}>Musteri</Text>
+            <Text style={[s.roleBtnText, role === 'Customer' && s.roleBtnTextActive]}>Müşteri</Text>
           </Pressable>
           <Pressable
             style={[s.roleBtn, role === 'Driver' && s.roleBtnActive]}
             onPress={() => setRole('Driver')}
           >
-            <Text style={[s.roleBtnText, role === 'Driver' && s.roleBtnTextActive]}>Sofor</Text>
+            <Text style={[s.roleBtnText, role === 'Driver' && s.roleBtnTextActive]}>Şoför</Text>
           </Pressable>
         </View>
 
-        <Text style={s.stepBadge}>Adim {step} / 3</Text>
+        <Text style={s.stepBadge}>Adım {step} / 3</Text>
         {error ? <AlertBanner message={error} tone="error" /> : null}
 
         {step === 1 ? (
@@ -223,7 +223,7 @@ export default function RegisterScreen() {
                 style={[s.stepBtn, s.stepBtnPrimary]}
                 onPress={() => validateStep1() && setStep(2)}
               >
-                <Text style={s.stepBtnTextPrimary}>Ileri</Text>
+                <Text style={s.stepBtnTextPrimary}>İleri</Text>
               </Pressable>
             </View>
           </>
@@ -233,7 +233,7 @@ export default function RegisterScreen() {
           <>
             {role === 'Customer' ? (
               <>
-                <Text style={s.label}>Vergi Numarasi *</Text>
+                <Text style={s.label}>Vergi Numarası *</Text>
                 <TextInput
                   style={s.input}
                   value={taxNumber}
@@ -242,14 +242,14 @@ export default function RegisterScreen() {
                   maxLength={10}
                   placeholderTextColor={palette.textMuted}
                 />
-                <Text style={s.label}>Sirket Adi *</Text>
+                <Text style={s.label}>Şirket Adı *</Text>
                 <TextInput
                   style={s.input}
                   value={companyName}
                   onChangeText={setCompanyName}
                   placeholderTextColor={palette.textMuted}
                 />
-                <Text style={s.label}>Sirket Adresi *</Text>
+                <Text style={s.label}>Şirket Adresi *</Text>
                 <TextInput
                   style={s.input}
                   value={companyAddress}
@@ -268,7 +268,7 @@ export default function RegisterScreen() {
                   maxLength={11}
                   placeholderTextColor={palette.textMuted}
                 />
-                <Text style={s.label}>Dogum Tarihi * (YYYY-MM-DD)</Text>
+                <Text style={s.label}>Doğum Tarihi * (YYYY-MM-DD)</Text>
                 <TextInput
                   style={s.input}
                   value={birthDate}
@@ -276,7 +276,7 @@ export default function RegisterScreen() {
                   placeholder="1990-05-15"
                   placeholderTextColor={palette.textMuted}
                 />
-                <Text style={s.label}>Ehliyet Sinifi *</Text>
+                <Text style={s.label}>Ehliyet Sınıfı *</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
                   {LICENSE_CLASSES.map((c) => (
                     <Pressable
@@ -296,7 +296,7 @@ export default function RegisterScreen() {
                   placeholder="TR00 0000..."
                   placeholderTextColor={palette.textMuted}
                 />
-                <Text style={s.label}>Ikametgah Adresi *</Text>
+                <Text style={s.label}>İkametgah Adresi *</Text>
                 <TextInput
                   style={s.input}
                   value={address}
@@ -313,7 +313,7 @@ export default function RegisterScreen() {
                 style={[s.stepBtn, s.stepBtnPrimary]}
                 onPress={() => validateStep2() && setStep(3)}
               >
-                <Text style={s.stepBtnTextPrimary}>Ileri</Text>
+                <Text style={s.stepBtnTextPrimary}>İleri</Text>
               </Pressable>
             </View>
           </>
@@ -321,7 +321,7 @@ export default function RegisterScreen() {
 
         {step === 3 ? (
           <>
-            <Text style={s.label}>Sifre *</Text>
+            <Text style={s.label}>Şifre *</Text>
             <TextInput
               style={s.input}
               value={password}
@@ -329,8 +329,8 @@ export default function RegisterScreen() {
               secureTextEntry
               placeholderTextColor={palette.textMuted}
             />
-            <Text style={[s.sub, { marginTop: -8 }]}>Guc: {passwordState.strength}</Text>
-            <Text style={s.label}>Sifre Tekrar *</Text>
+            <Text style={[s.sub, { marginTop: -8 }]}>Güç: {passwordState.strength}</Text>
+            <Text style={s.label}>Şifre Tekrar *</Text>
             <TextInput
               style={s.input}
               value={confirmPassword}
@@ -344,7 +344,7 @@ export default function RegisterScreen() {
             </View>
             <View style={s.checkRow}>
               <Switch value={acceptedTerms} onValueChange={setAcceptedTerms} trackColor={{ true: palette.brand }} />
-              <Text style={s.checkLabel}>Kullanim kosullarini kabul ediyorum</Text>
+              <Text style={s.checkLabel}>Kullanım koşullarını kabul ediyorum</Text>
             </View>
             {role === 'Driver' ? (
               <View style={s.checkRow}>
@@ -356,7 +356,7 @@ export default function RegisterScreen() {
                 <Text style={s.checkLabel}>Aktif seferde konum takibine onay veriyorum</Text>
               </View>
             ) : null}
-            <PrimaryButton title="Hesap Olustur" onPress={handleSubmit} loading={loading} />
+            <PrimaryButton title="Hesap Oluştur" onPress={handleSubmit} loading={loading} />
             <Pressable style={s.stepBtn} onPress={() => setStep(2)}>
               <Text style={[s.stepBtnText, { textAlign: 'center', marginTop: 8 }]}>Geri</Text>
             </Pressable>
@@ -364,7 +364,7 @@ export default function RegisterScreen() {
         ) : null}
 
         <Pressable onPress={() => router.push('/(auth)/login')}>
-          <Text style={s.link}>Zaten hesabiniz var mi? Giris Yap</Text>
+          <Text style={s.link}>Zaten hesabınız var mı? Giriş Yap</Text>
         </Pressable>
     </AuthScreen>
   );

@@ -283,9 +283,9 @@ public class LoadService : ILoadService
             if (load.DriverId != driverId)
                 throw new UnauthorizedAccessException("Bu yük size atanmamış.");
 
-            if (load.Status != LoadStatus.OnWay)
+            if (load.Status != LoadStatus.OnWay && load.Status != LoadStatus.Arrived)
                 throw new InvalidOperationException(
-                    $"Yük 'OnWay' durumunda değil. Mevcut durum: {load.Status}.");
+                    $"Yük teslim edilemez. Mevcut durum: {load.Status} (OnWay veya Arrived olmalı).");
 
             load.Status = LoadStatus.Delivered;
 

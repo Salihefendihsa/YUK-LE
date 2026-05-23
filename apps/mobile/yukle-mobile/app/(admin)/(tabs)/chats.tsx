@@ -11,22 +11,24 @@ import {
   Text,
   View,
 } from 'react-native';
-import { AlertBanner } from '../../src/components/ui/AlertBanner';
-import { Card } from '../../src/components/ui/Card';
-import { EmptyState } from '../../src/components/ui/EmptyState';
-import { LoadingState } from '../../src/components/ui/LoadingState';
-import { SectionHeader } from '../../src/components/ui/SectionHeader';
-import { StatusPill } from '../../src/components/ui/StatusPill';
-import { screenRootStyle } from '../../src/constants/layout';
-import { getApiErrorMessage } from '../../src/services/api.client';
-import { getAdminChatMessages, getAdminChats } from '../../src/services/admin.service';
-import type { AdminChatMessageRow, AdminChatSummaryRow } from '../../src/types/admin';
-import { palette } from '../../src/theme/colors';
-import { fontFamily, typography } from '../../src/theme/typography';
-import { spacing } from '../../src/theme/spacing';
-import { formatDateTimeTR } from '../../src/utils/format';
+import { ScreenHeader } from '../../../src/components/ScreenHeader';
+import { AlertBanner } from '../../../src/components/ui/AlertBanner';
+import { Card } from '../../../src/components/ui/Card';
+import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { SectionHeader } from '../../../src/components/ui/SectionHeader';
+import { StatusPill } from '../../../src/components/ui/StatusPill';
+import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { getApiErrorMessage } from '../../../src/services/api.client';
+import { getAdminChatMessages, getAdminChats } from '../../../src/services/admin.service';
+import type { AdminChatMessageRow, AdminChatSummaryRow } from '../../../src/types/admin';
+import { palette } from '../../../src/theme/colors';
+import { fontFamily, typography } from '../../../src/theme/typography';
+import { spacing } from '../../../src/theme/spacing';
+import { formatDateTimeTR } from '../../../src/utils/format';
 
 export default function AdminChatsScreen() {
+  const { contentInset } = useScreenInsets();
   const router = useRouter();
   const [chats, setChats] = useState<AdminChatSummaryRow[]>([]);
   const [messages, setMessages] = useState<AdminChatMessageRow[]>([]);
@@ -65,18 +67,18 @@ export default function AdminChatsScreen() {
 
   if (loading) {
     return (
-      <View style={screenRootStyle}>
-        <LoadingState message="Sohbetler yukleniyor..." />
-      </View>
+      <ScreenContainer>
+        <LoadingState message="Sohbetler yükleniyor..." />
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={screenRootStyle}>
+    <ScreenContainer>
       <FlatList
         data={chats}
         keyExtractor={(item) => item.loadId}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, contentInset]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -90,13 +92,7 @@ export default function AdminChatsScreen() {
         }
         ListHeaderComponent={
           <>
-            <Pressable onPress={() => router.back()} style={styles.back}>
-              <Text style={typography.link}>← Geri</Text>
-            </Pressable>
-            <SectionHeader
-              title="Sohbetler"
-              subtitle="Ozet: GET /Admin/chats — Mesaj: GET /Admin/chats/loadId"
-            />
+            <ScreenHeader title="Sohbetler" subtitle="Konu özeti ve mesaj geçmişi" />
             {error && !selected ? <AlertBanner message={error} tone="error" /> : null}
           </>
         }
@@ -106,9 +102,9 @@ export default function AdminChatsScreen() {
         renderItem={({ item }) => (
           <Pressable onPress={() => void openChat(item)}>
             <Card variant="elevated" padding={4} style={styles.chatCard}>
-              <Text style={styles.cardTitle}>{item.route || `Ilan ${item.loadId.slice(0, 8)}`}</Text>
+              <Text style={styles.cardTitle}>{item.route || `İlan ${item.loadId.slice(0, 8)}`}</Text>
               <Text style={styles.muted}>
-                Musteri: {item.customerName} | Sofor: {item.driverName}
+                Müşteri: {item.customerName} | Şoför: {item.driverName}
               </Text>
               <Text style={styles.muted} numberOfLines={2}>
                 Son: {item.lastMessage}
@@ -122,9 +118,9 @@ export default function AdminChatsScreen() {
       />
 
       <Modal visible={selected != null} animationType="slide" onRequestClose={() => setSelected(null)}>
-        <View style={[screenRootStyle, styles.modal]}>
+        <ScreenContainer style={styles.modal}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Mesaj Gecmisi</Text>
+            <Text style={styles.modalTitle}>Mesaj Geçmişi</Text>
             <Pressable onPress={() => setSelected(null)}>
               <Text style={typography.link}>Kapat</Text>
             </Pressable>
@@ -137,7 +133,7 @@ export default function AdminChatsScreen() {
           {msgLoading ? (
             <ActivityIndicator color={palette.brand} style={{ marginTop: spacing[6] }} />
           ) : (
-            <ScrollView contentContainerStyle={styles.msgScroll}>
+            <ScrollView contentContainerStyle={[styles.msgScroll, contentInset]}>
               {messages.map((m) => (
                 <Card
                   key={m.id}
@@ -161,9 +157,9 @@ export default function AdminChatsScreen() {
               ) : null}
             </ScrollView>
           )}
-        </View>
+        </ScreenContainer>
       </Modal>
-    </View>
+    </ScreenContainer>
   );
 }
 
