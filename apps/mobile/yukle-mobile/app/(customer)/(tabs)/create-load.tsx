@@ -1,9 +1,8 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
-  Pressable,
   StyleSheet,
   Text,
   View,
@@ -13,6 +12,10 @@ import { TrLocationFields } from '../../../src/components/location/TrLocationFie
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
+import { Chip } from '../../../src/components/ui/Chip';
+import { FadeInView } from '../../../src/components/ui/FadeInView';
+import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { PressableScale } from '../../../src/components/ui/PressableScale';
 import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
 import { SecondaryButton } from '../../../src/components/ui/SecondaryButton';
 import { TextField } from '../../../src/components/ui/TextField';
@@ -20,13 +23,14 @@ import { ScreenScroll } from '../../../src/constants/layout';
 import { resolveCoordinates } from '../../../src/data/tr-location';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getMyAddresses } from '../../../src/services/addresses.service';
-import { createLoad, getLoadPriceSuggestion } from '../../../src/services/loads.service';
+import { createLoad, getLoadById, getLoadPriceSuggestion, updateLoad } from '../../../src/services/loads.service';
+import { getBidsForLoad } from '../../../src/services/bids.service';
 import type { DeliveryAddress } from '../../../src/types/address';
 import type { AiMarketAnalysis, CreateLoadPayload, LoadTypeValue, VehicleTypeValue } from '../../../src/types/create-load';
 import { palette } from '../../../src/theme/colors';
-import { fontFamily, typography } from '../../../src/theme/typography';
+import { typography } from '../../../src/theme/typography';
 import { radius } from '../../../src/theme/radius';
-import { spacing } from '../../../src/theme/spacing';
+import { space, spacing } from '../../../src/theme/spacing';
 import { formatCurrencyTRY } from '../../../src/utils/format';
 
 const VEHICLE_OPTIONS: { value: VehicleTypeValue; label: string }[] = [
@@ -58,8 +62,13 @@ function coordsFromAddress(addr: DeliveryAddress) {
 
 export default function CustomerCreateLoadScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ id?: string; editId?: string }>();
+  const editId = params.editId ?? params.id;
+  const isEdit = Boolean(editId);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [prefillLoading, setPrefillLoading] = useState(isEdit);
+  const [openBidCount, setOpenBidCount] = useState(0);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [aiResult, setAiResult] = useState<AiMarketAnalysis | null>(null);
@@ -92,6 +101,38 @@ export default function CustomerCreateLoadScreen() {
   useEffect(() => {
     void getMyAddresses().then(setAddresses).catch(() => setAddresses([]));
   }, []);
+
+  useEffect(() => {
+    if (!editId) return;
+    let cancelled = false;
+    setPrefillLoading(true);
+    void Promise.all([getLoadById(editId), getBidsForLoad(editId)])
+      .then(([load, bids]) => {
+        if (cancelled) return;
+        setFromCity(load.fromCity);
+        setFromDistrict(load.fromDistrict);
+        setToCity(load.toCity);
+        setToDistrict(load.toDistrict);
+        setWeight(String(load.weight));
+        setVolume(load.volume > 0 ? String(load.volume) : '');
+        setPrice(String(load.price));
+        setDescription(load.description ?? '');
+        setPickupDate(new Date(load.pickupDate));
+        setDeliveryDate(new Date(load.deliveryDate));
+        setOpenBidCount(bids.filter((b) => b.status === 'Pending').length);
+        const fromC = resolveCoordinates(load.fromCity, load.fromDistrict);
+        const toC = resolveCoordinates(load.toCity, load.toDistrict);
+        if (fromC) setFromCoordsOverride(fromC);
+        if (toC) setToCoordsOverride(toC);
+      })
+      .catch((e) => setError(getApiErrorMessage(e)))
+      .finally(() => {
+        if (!cancelled) setPrefillLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [editId]);
 
   const fromCoords = useMemo(() => {
     if (fromCoordsOverride) return fromCoordsOverride;
@@ -190,6 +231,22 @@ export default function CustomerCreateLoadScreen() {
     setLoading(true);
     setError('');
     try {
+      if (isEdit && editId) {
+        const updated = await updateLoad(editId, buildPayload());
+        setAiResult(
+          updated.load.aiSuggestedPrice
+            ? {
+                recommendedPrice: updated.load.aiSuggestedPrice,
+                minPrice: updated.load.aiMinPrice ?? 0,
+                maxPrice: updated.load.aiMaxPrice ?? 0,
+                reasoning: updated.load.aiPriceReasoning ?? '',
+                distanceKm: updated.load.distanceKm ?? 0,
+              }
+            : null
+        );
+        setSuccess(true);
+        return;
+      }
       const created = await createLoad(buildPayload(), { signal: ac.signal });
       let ai = created.aiMarketAnalysis ?? null;
       if (created.load?.id) {
@@ -223,6 +280,10 @@ export default function CustomerCreateLoadScreen() {
 
   const goToLoads = () => {
     setSuccess(false);
+    if (isEdit && editId) {
+      router.replace({ pathname: '/(customer)/load-detail', params: { id: editId } });
+      return;
+    }
     router.replace('/(customer)/(tabs)/loads');
   };
 
@@ -238,10 +299,28 @@ export default function CustomerCreateLoadScreen() {
     return Number.isNaN(d.getTime()) ? pickupMin : d;
   }, [pickupDate, pickupMin]);
 
+  if (prefillLoading) {
+    return (
+      <ScreenScroll contentContainerStyle={styles.scroll}>
+        <LoadingState message="İlan yükleniyor…" variant="skeleton" />
+      </ScreenScroll>
+    );
+  }
+
   return (
     <>
       <ScreenScroll contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <ScreenHeader title="İlan Oluştur" subtitle="3 adımlı ilan oluşturma" />
+        <ScreenHeader
+          title={isEdit ? 'İlanı Düzenle' : 'İlan Oluştur'}
+          subtitle={isEdit ? 'Açık teklifler bilgilendirilecek' : '3 adımlı ilan oluşturma'}
+        />
+
+        {isEdit && openBidCount > 0 ? (
+          <AlertBanner
+            message={`${openBidCount} açık teklif var — güncelleme sonrası teklif verenler bilgilendirilecek.`}
+            tone="info"
+          />
+        ) : null}
 
         <Text style={styles.stepBadge}>Adım {step} / 3</Text>
         <View style={styles.stepRow}>
@@ -321,29 +400,23 @@ export default function CustomerCreateLoadScreen() {
             <Text style={styles.chipGroupLabel}>Araç tipi</Text>
             <View style={styles.chipRow}>
               {VEHICLE_OPTIONS.map((o) => (
-                <Pressable
+                <Chip
                   key={o.value}
-                  style={[styles.chip, vehicleType === o.value && styles.chipOn]}
+                  label={o.label}
+                  selected={vehicleType === o.value}
                   onPress={() => setVehicleType(o.value)}
-                >
-                  <Text style={[styles.chipText, vehicleType === o.value && styles.chipTextOn]}>
-                    {o.label}
-                  </Text>
-                </Pressable>
+                />
               ))}
             </View>
             <Text style={styles.chipGroupLabel}>Yük tipi</Text>
             <View style={styles.chipRow}>
               {LOAD_TYPE_OPTIONS.map((o) => (
-                <Pressable
+                <Chip
                   key={o.value}
-                  style={[styles.chip, loadType === o.value && styles.chipOn]}
+                  label={o.label}
+                  selected={loadType === o.value}
                   onPress={() => setLoadType(o.value)}
-                >
-                  <Text style={[styles.chipText, loadType === o.value && styles.chipTextOn]}>
-                    {o.label}
-                  </Text>
-                </Pressable>
+                />
               ))}
             </View>
             <TextField label="Ağırlık (kg)" value={weight} onChangeText={setWeight} keyboardType="numeric" />
@@ -404,18 +477,19 @@ export default function CustomerCreateLoadScreen() {
         <View style={styles.addressModal}>
           <View style={styles.addressModalHead}>
             <Text style={styles.addressModalTitle}>Kayıtlı adresler</Text>
-            <Pressable onPress={() => setAddressPickerOpen(false)}>
+            <PressableScale onPress={() => setAddressPickerOpen(false)}>
               <Text style={styles.addressModalClose}>Kapat</Text>
-            </Pressable>
+            </PressableScale>
           </View>
           {addresses.map((addr) => (
-            <View key={addr.id} style={styles.addressRow}>
+            <FadeInView key={addr.id}>
+            <View style={styles.addressRow}>
               <Text style={styles.addressTitle}>{addr.title}</Text>
               <Text style={styles.addressMeta}>
                 {addr.city}/{addr.district}
               </Text>
               <View style={styles.addressActions}>
-                <Pressable
+                <PressableScale
                   style={styles.addressBtn}
                   onPress={() => {
                     applyAddress(addr, 'from');
@@ -423,8 +497,8 @@ export default function CustomerCreateLoadScreen() {
                   }}
                 >
                   <Text style={styles.addressBtnText}>Çıkış olarak</Text>
-                </Pressable>
-                <Pressable
+                </PressableScale>
+                <PressableScale
                   style={[styles.addressBtn, styles.addressBtnAlt]}
                   onPress={() => {
                     applyAddress(addr, 'to');
@@ -432,9 +506,10 @@ export default function CustomerCreateLoadScreen() {
                   }}
                 >
                   <Text style={styles.addressBtnText}>Varış olarak</Text>
-                </Pressable>
+                </PressableScale>
               </View>
             </View>
+            </FadeInView>
           ))}
         </View>
       </Modal>
@@ -442,7 +517,9 @@ export default function CustomerCreateLoadScreen() {
       <Modal visible={loading} transparent animationType="fade">
         <View style={styles.overlay}>
           <ActivityIndicator color={palette.brand} size="large" />
-          <Text style={styles.overlayText}>İlan oluşturuluyor, rota ve fiyat hesaplanıyor…</Text>
+          <Text style={styles.overlayText}>
+            {isEdit ? 'İlan güncelleniyor…' : 'İlan oluşturuluyor, rota ve fiyat hesaplanıyor…'}
+          </Text>
           <Text style={styles.overlaySub}>Bu işlem bir dakikaya kadar sürebilir.</Text>
           <SecondaryButton title="İptal" onPress={cancelCreate} style={styles.cancelBtn} />
         </View>
@@ -450,20 +527,20 @@ export default function CustomerCreateLoadScreen() {
 
       <Modal visible={success} transparent animationType="fade">
         <View style={styles.overlay}>
+          <FadeInView>
           <Card variant="glass" padding={5} style={styles.successCard}>
-            <Text style={styles.successTitle}>İlanınız oluşturuldu</Text>
+            <Text style={styles.successTitle}>
+              {isEdit ? 'İlanınız güncellendi' : 'İlanınız oluşturuldu'}
+            </Text>
             {aiResult && aiResult.recommendedPrice > 0 ? (
               <Card variant="elevated" padding={4} style={styles.aiResultCard}>
-                <Text style={styles.aiResultLabel}>Önerilen Adil Fiyat</Text>
+                <Text style={styles.aiResultLabel}>Önerilen fiyat</Text>
                 <Text style={styles.aiResultPrice}>{formatCurrencyTRY(aiResult.recommendedPrice)}</Text>
                 <Text style={styles.aiMeta}>
                   Aralık: {formatCurrencyTRY(aiResult.minPrice)} – {formatCurrencyTRY(aiResult.maxPrice)}
                 </Text>
-                <Text style={styles.aiMeta}>Mesafe: {aiResult.distanceKm.toFixed(1)} km</Text>
-                {aiResult.reasoning ? (
-                  <Text style={styles.aiReason} numberOfLines={4}>
-                    {aiResult.reasoning}
-                  </Text>
+                {aiResult.distanceKm > 0 ? (
+                  <Text style={styles.aiMeta}>Mesafe: {aiResult.distanceKm.toFixed(1)} km</Text>
                 ) : null}
               </Card>
             ) : (
@@ -473,6 +550,7 @@ export default function CustomerCreateLoadScreen() {
             )}
             <PrimaryButton title="İlanlarım" onPress={goToLoads} />
           </Card>
+          </FadeInView>
         </View>
       </Modal>
     </>
@@ -480,9 +558,9 @@ export default function CustomerCreateLoadScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { padding: spacing[4], paddingBottom: spacing[10] },
-  stepBadge: { ...typography.label, color: palette.gold, marginBottom: spacing[2] },
-  stepRow: { flexDirection: 'row', gap: spacing[2], marginBottom: spacing[4] },
+  scroll: { padding: space.md, paddingBottom: spacing[10] },
+  stepBadge: { ...typography.label, color: palette.gold, marginBottom: space.sm },
+  stepRow: { flexDirection: 'row', gap: space.sm, marginBottom: space.md },
   stepChip: {
     width: 40,
     height: 40,
@@ -495,54 +573,31 @@ const styles = StyleSheet.create({
   },
   stepChipOn: { borderColor: palette.brandBorder, backgroundColor: palette.brandMuted },
   stepChipDone: { borderColor: palette.successBorder, backgroundColor: palette.successBg },
-  stepChipText: { fontFamily: fontFamily.bold, color: palette.textMuted },
+  stepChipText: { ...typography.bodySmall, fontFamily: typography.bodyMedium.fontFamily, color: palette.textMuted },
   stepChipTextOn: { color: palette.text },
-  sectionTitle: {
-    fontFamily: fontFamily.semiBold,
-    fontSize: 15,
-    color: palette.gold,
-    marginBottom: spacing[3],
-  },
-  addressBlock: { marginBottom: spacing[4], gap: spacing[2] },
+  sectionTitle: { ...typography.h3, color: palette.gold, marginBottom: spacing[3] },
+  addressBlock: { marginBottom: space.md, gap: space.sm },
   addressLabel: { ...typography.label },
   coordHint: {
     ...typography.caption,
     textTransform: 'none',
     color: palette.textMuted,
-    marginTop: spacing[2],
+    marginTop: space.sm,
   },
-  chipGroupLabel: { ...typography.label, marginBottom: spacing[2] },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginBottom: spacing[4] },
-  chip: {
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[2],
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: palette.borderLight,
-    backgroundColor: palette.input,
-    flexShrink: 1,
-    maxWidth: '100%',
-  },
-  chipOn: { borderColor: palette.brandBorder, backgroundColor: palette.brandMuted },
-  chipText: {
-    fontFamily: fontFamily.semiBold,
-    fontSize: 13,
-    color: palette.textSecondary,
-    flexShrink: 1,
-  },
-  chipTextOn: { color: palette.brand },
+  chipGroupLabel: { ...typography.label, marginBottom: space.sm },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginBottom: space.md },
   aiInfoCard: { borderColor: palette.goldBorder, backgroundColor: palette.goldMuted, marginBottom: spacing[3] },
-  aiInfoTitle: { fontFamily: fontFamily.semiBold, fontSize: 14, color: palette.gold },
-  aiInfoBody: { ...typography.caption, textTransform: 'none', marginTop: spacing[1] },
+  aiInfoTitle: { ...typography.bodySmall, color: palette.gold },
+  aiInfoBody: { ...typography.caption, textTransform: 'none', marginTop: space.xs },
   preview: { ...typography.caption, textTransform: 'none', color: palette.gold },
-  navRow: { flexDirection: 'row', gap: spacing[3], marginTop: spacing[4] },
+  navRow: { flexDirection: 'row', gap: spacing[3], marginTop: space.md },
   navHalf: { flex: 1 },
-  addressModal: { flex: 1, backgroundColor: palette.bg, paddingTop: spacing[8], paddingHorizontal: spacing[4] },
+  addressModal: { flex: 1, backgroundColor: palette.bg, paddingTop: space.xl, paddingHorizontal: space.md },
   addressModalHead: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing[4],
+    marginBottom: space.md,
   },
   addressModalTitle: { ...typography.h2, fontSize: 18 },
   addressModalClose: { ...typography.link },
@@ -550,44 +605,43 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.borderLight,
     borderRadius: radius.md,
-    padding: spacing[4],
+    padding: space.md,
     marginBottom: spacing[3],
-    gap: spacing[2],
+    gap: space.sm,
   },
-  addressTitle: { fontFamily: fontFamily.semiBold, fontSize: 15, color: palette.text },
+  addressTitle: { ...typography.bodyMedium },
   addressMeta: { ...typography.caption, textTransform: 'none' },
-  addressActions: { flexDirection: 'row', gap: spacing[2], marginTop: spacing[2] },
+  addressActions: { flexDirection: 'row', gap: space.sm, marginTop: space.sm },
   addressBtn: {
     flex: 1,
-    paddingVertical: spacing[2],
+    paddingVertical: space.sm,
     borderRadius: radius.md,
     backgroundColor: palette.brandMuted,
     alignItems: 'center',
   },
   addressBtnAlt: { backgroundColor: palette.goldMuted },
-  addressBtnText: { fontFamily: fontFamily.semiBold, fontSize: 12, color: palette.text },
+  addressBtnText: { ...typography.caption, fontSize: 12, color: palette.text },
   overlay: {
     flex: 1,
     backgroundColor: palette.overlay,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: spacing[6],
+    padding: space.lg,
   },
-  overlayText: { ...typography.body, marginTop: spacing[4], textAlign: 'center' },
+  overlayText: { ...typography.body, marginTop: space.md, textAlign: 'center' },
   overlaySub: {
     ...typography.caption,
     textTransform: 'none',
     color: palette.textMuted,
     textAlign: 'center',
-    marginTop: spacing[2],
-    marginBottom: spacing[4],
+    marginTop: space.sm,
+    marginBottom: space.md,
   },
   cancelBtn: { minWidth: 140 },
-  successCard: { width: '100%', maxWidth: 360, gap: spacing[4] },
+  successCard: { width: '100%', maxWidth: 360, gap: space.md },
   successTitle: { ...typography.h2, textAlign: 'center' },
   aiResultCard: { borderColor: palette.goldBorder, backgroundColor: palette.goldMuted },
-  aiResultLabel: { fontFamily: fontFamily.semiBold, fontSize: 12, color: palette.gold },
-  aiResultPrice: { fontFamily: fontFamily.bold, fontSize: 26, color: palette.text, marginVertical: spacing[2] },
+  aiResultLabel: { ...typography.caption, color: palette.gold },
+  aiResultPrice: { ...typography.h1, fontSize: 26, marginVertical: space.sm },
   aiMeta: { ...typography.caption, textTransform: 'none' },
-  aiReason: { ...typography.caption, textTransform: 'none', marginTop: spacing[2] },
 });

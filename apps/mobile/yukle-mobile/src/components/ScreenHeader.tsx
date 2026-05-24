@@ -2,19 +2,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
 import { useNavigation } from 'expo-router';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { palette } from '../theme/colors';
-import { fontFamily } from '../theme/typography';
-import { spacing } from '../theme/spacing';
+import { typography } from '../theme/typography';
+import { space } from '../theme/spacing';
+import { radius } from '../theme/radius';
+import { sizes } from '../theme/sizes';
 import { NotificationBell } from './NotificationBell';
+import { PressableScale } from './ui/PressableScale';
 
 type Props = {
   title: string;
   subtitle?: string;
   right?: ReactNode;
-  /** Drawer ekranlarında hamburger (varsayılan: true) */
   showMenu?: boolean;
-  /** Stack detay ekranlarında geri */
   showBack?: boolean;
 };
 
@@ -43,18 +44,18 @@ export function ScreenHeader({
     <View style={styles.row}>
       <View style={styles.leading}>
         {showLeading ? (
-          <Pressable
+          <PressableScale
             onPress={onLeadingPress}
-            style={({ pressed }) => [styles.menuBtn, pressed && styles.menuBtnPressed]}
+            style={styles.menuBtn}
             accessibilityRole="button"
             accessibilityLabel={showBack ? 'Geri' : 'Menü'}
           >
             <Ionicons
               name={showBack ? 'arrow-back' : 'menu'}
-              size={24}
+              size={sizes.icon.md}
               color={palette.text}
             />
-          </Pressable>
+          </PressableScale>
         ) : null}
         <View style={styles.textCol}>
           <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
@@ -80,33 +81,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: spacing[2],
-    marginBottom: spacing[4],
+    gap: space.sm,
+    marginBottom: space.md,
   },
   leading: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: spacing[2],
+    gap: space.sm,
     minWidth: 0,
   },
   menuBtn: {
-    padding: spacing[1],
-    marginTop: 2,
-    borderRadius: 8,
+    width: sizes.header.menuHit,
+    height: sizes.header.menuHit,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.sm,
   },
-  menuBtnPressed: { opacity: 0.7 },
-  textCol: { flex: 1, flexShrink: 1, gap: spacing[1], minWidth: 0 },
-  title: {
-    fontFamily: fontFamily.bold,
-    fontSize: 22,
-    color: palette.text,
-    letterSpacing: -0.3,
-  },
-  sub: {
-    fontFamily: fontFamily.regular,
-    fontSize: 13,
-    color: palette.textSecondary,
-  },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: spacing[1] },
+  textCol: { flex: 1, flexShrink: 1, gap: space.xs, minWidth: 0, paddingTop: space.xs },
+  title: typography.h2,
+  sub: typography.bodySmall,
+  actions: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
 });

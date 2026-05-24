@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../../../src/components/ui/PressableScale';
+import { FadeInView } from '../../../src/components/ui/FadeInView';
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
@@ -58,7 +60,7 @@ export default function CustomerDashboardScreen() {
   if (loading) {
     return (
       <ScreenContainer>
-        <LoadingState message="Panel yükleniyor..." />
+        <LoadingState message="Panel yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -73,20 +75,21 @@ export default function CustomerDashboardScreen() {
       <ScreenHeader
         title="Müşteri Paneli"
         subtitle="Canli istatistikler ve son ilanlar"
-        right={
-          <Pressable
-            style={styles.createBtn}
-            onPress={() => router.push('/(customer)/(tabs)/create-load')}
-          >
-            <Text style={styles.createBtnText}>+ İlan</Text>
-          </Pressable>
-        }
+              right={
+                <PressableScale
+                  style={styles.createBtn}
+                  onPress={() => router.push('/(customer)/(tabs)/create-load')}
+                >
+                  <Text style={styles.createBtnText}>+ İlan</Text>
+                </PressableScale>
+              }
       />
 
       {hubError ? <AlertBanner message={hubError} tone="info" /> : null}
       {error ? <AlertBanner message={error} tone="error" /> : null}
 
-      <Card variant="glass" padding={5} style={styles.hero}>
+      <FadeInView>
+        <Card variant="glass" padding={5} style={styles.hero}>
         <View style={styles.heroTop}>
           <View style={styles.heroIcon}>
             <Ionicons name="business-outline" size={26} color={palette.brand} />
@@ -100,7 +103,9 @@ export default function CustomerDashboardScreen() {
           Toplam harcama: {formatCurrencyTRY(stats?.totalSpent ?? 0)}
         </Text>
       </Card>
+      </FadeInView>
 
+      <FadeInView delay={60}>
       <View style={styles.grid}>
         <StatCard label="Aktif İlanlar" value={String(stats?.activeLoadCount ?? 0)} icon="cube-outline" />
         <StatCard label="Yolda Yükler" value={String(stats?.onWayLoadCount ?? 0)} icon="navigate-outline" />
@@ -112,6 +117,7 @@ export default function CustomerDashboardScreen() {
           wide
         />
       </View>
+      </FadeInView>
 
       <Text style={styles.sectionTitle}>Son 5 ilan</Text>
       <Text style={styles.sectionSub}>Tüm ilanlar için İlanlarım sekmesine gidin</Text>
@@ -124,10 +130,11 @@ export default function CustomerDashboardScreen() {
           onAction={() => router.push('/(customer)/(tabs)/create-load')}
         />
       ) : (
-        recentLoads.map((load) => {
+        recentLoads.map((load, index) => {
           const pill = getLoadStatusPill(load.status);
           return (
-            <Pressable
+            <FadeInView key={load.id} delay={80 + index * 40}>
+            <PressableScale
               key={load.id}
               onPress={() =>
                 router.push({ pathname: '/(customer)/load-detail', params: { id: load.id } })
@@ -146,7 +153,8 @@ export default function CustomerDashboardScreen() {
                 </Text>
                 <Text style={styles.loadDate}>{formatDateTR(load.createdAt)}</Text>
               </Card>
-            </Pressable>
+            </PressableScale>
+            </FadeInView>
           );
         })
       )}

@@ -1,8 +1,11 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { palette } from '../../theme/colors';
 import { typography } from '../../theme/typography';
-import { spacing } from '../../theme/spacing';
+import { space } from '../../theme/spacing';
+import { radius } from '../../theme/radius';
+import { shadows } from '../../theme/shadows';
 import { SecondaryButton } from './SecondaryButton';
+import { FadeInView } from './FadeInView';
 
 type Props = {
   icon?: string;
@@ -14,21 +17,21 @@ type Props = {
 
 export function EmptyState({ icon = '📭', title, description, actionLabel, onAction }: Props) {
   return (
-    <View style={styles.wrap}>
+    <FadeInView style={styles.wrap}>
       <Text style={styles.icon}>{icon}</Text>
       <Text style={styles.title}>{title}</Text>
       {description ? <Text style={styles.desc}>{description}</Text> : null}
       {actionLabel && onAction ? (
         <SecondaryButton title={actionLabel} onPress={onAction} style={styles.btn} />
       ) : null}
-    </View>
+    </FadeInView>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', padding: spacing[8], gap: spacing[3] },
-  icon: { fontSize: 40, marginBottom: spacing[2] },
+  wrap: { alignItems: 'center', padding: space.xl, gap: space.sm + 4 },
+  icon: { fontSize: 40, marginBottom: space.sm },
   title: { ...typography.h3, textAlign: 'center' },
-  desc: { ...typography.caption, textAlign: 'center', color: palette.textMuted },
-  btn: { marginTop: spacing[4], minWidth: 160 },
+  desc: { ...typography.bodySmall, textAlign: 'center', color: palette.textMuted },
+  btn: { marginTop: space.md, minWidth: 160, borderRadius: radius.md, ...shadows.sm },
 });

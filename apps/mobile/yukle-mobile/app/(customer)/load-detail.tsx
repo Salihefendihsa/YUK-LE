@@ -1,11 +1,15 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { DeliveryQrSection } from '../../src/components/DeliveryQrSection';
 import { DetailRow } from '../../src/components/driver/DetailRow';
 import { AlertBanner } from '../../src/components/ui/AlertBanner';
 import { Card } from '../../src/components/ui/Card';
+import { EmptyState } from '../../src/components/ui/EmptyState';
+import { FadeInView } from '../../src/components/ui/FadeInView';
+import { GhostButton } from '../../src/components/ui/GhostButton';
 import { LoadingState } from '../../src/components/ui/LoadingState';
+import { PressableScale } from '../../src/components/ui/PressableScale';
 import { PrimaryButton } from '../../src/components/ui/PrimaryButton';
 import { SecondaryButton } from '../../src/components/ui/SecondaryButton';
 import { StatusPill } from '../../src/components/ui/StatusPill';
@@ -16,12 +20,13 @@ import { LiveMapPanel } from '../../src/components/map/LiveMapPanel';
 import type { MapMarker } from '../../src/components/map/LiveMap.types';
 import { isValidCoordinate } from '../../src/components/map/mapUtils';
 import { useCustomerDriverLocation } from '../../src/hooks/useCustomerDriverLocation';
-import { getLoadById } from '../../src/services/loads.service';
+import { getLoadById, cancelLoad } from '../../src/services/loads.service';
 import type { LoadBid } from '../../src/types/bid';
 import type { Load } from '../../src/types/load';
 import { palette } from '../../src/theme/colors';
-import { fontFamily, typography } from '../../src/theme/typography';
-import { spacing } from '../../src/theme/spacing';
+import { typography } from '../../src/theme/typography';
+import { space, spacing } from '../../src/theme/spacing';
+import { radius } from '../../src/theme/radius';
 import { formatCurrencyTRY, formatLoadTypeLabel, formatWeightKg } from '../../src/utils/format';
 import { canCustomerOpenChat } from '../../src/utils/loadChat';
 import { LoadStatusTimeline } from '../../src/components/load/LoadStatusTimeline';
@@ -55,7 +60,7 @@ function AcceptedPaymentSummary({ amount }: { amount: number }) {
   if (!settlement) return null;
 
   return (
-    <View style={{ marginTop: spacing[2] }}>
+    <View style={{ marginTop: space.sm }}>
       <Text style={styles.paymentTitle}>Ödeme özeti</Text>
       <SettlementBreakdown settlement={settlement} mode="customer" />
     </View>
@@ -111,7 +116,7 @@ function BidCard({
           onPress={() => onAccept(bid)}
           loading={accepting}
           disabled={accepting}
-          style={{ marginTop: spacing[2] }}
+          style={{ marginTop: space.sm }}
         />
       ) : null}
     </View>
@@ -128,6 +133,7 @@ export default function CustomerLoadDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState('');
   const [actionError, setActionError] = useState('');
+  const [cancelling, setCancelling] = useState(false);
   const [actionMsg, setActionMsg] = useState('');
   const [acceptingId, setAcceptingId] = useState<number | null>(null);
   const [showRating, setShowRating] = useState(false);
@@ -230,10 +236,45 @@ export default function CustomerLoadDetailScreen() {
       });
   };
 
+  const canCancel =
+    load?.status === 'Active' && !bids.some((b) => b.status === 'Accepted');
+  const canEdit = canCancel;
+
+  const onCancelPress = () => {
+    if (!load) return;
+    Alert.alert(
+      'İlanı iptal et',
+      'İlan iptal edilecek ve açık teklifler kapatılacak. Devam?',
+      [
+        { text: 'Vazgec', style: 'cancel' },
+        {
+          text: 'Iptal Et',
+          style: 'destructive',
+          onPress: () => {
+            setCancelling(true);
+            setActionError('');
+            void cancelLoad(load.id)
+              .then((res) => {
+                setActionMsg(res.message || 'İlan iptal edildi.');
+                return refresh();
+              })
+              .catch((e) => setActionError(getApiErrorMessage(e)))
+              .finally(() => setCancelling(false));
+          },
+        },
+      ]
+    );
+  };
+
+  const onEditPress = () => {
+    if (!load) return;
+    router.push({ pathname: '/(customer)/edit-load', params: { id: load.id } });
+  };
+
   if (loading) {
     return (
       <ScreenContainer>
-        <LoadingState message="İlan detayı yükleniyor..." />
+        <LoadingState message="İlan detayı yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -264,10 +305,9 @@ export default function CustomerLoadDetailScreen() {
 
   return (
     <ScreenScroll contentContainerStyle={styles.scroll}>
-      <Pressable onPress={() => router.back()}>
-        <Text style={typography.link}>← Geri</Text>
-      </Pressable>
+      <GhostButton title="← Geri" onPress={() => router.back()} style={styles.backBtn} />
 
+      <FadeInView>
       <View style={styles.titleRow}>
         <View style={{ flex: 1 }}>
           <Text style={styles.pageTitle}>İlan Detayı</Text>
@@ -277,14 +317,16 @@ export default function CustomerLoadDetailScreen() {
         </View>
         <StatusPill label={statusPill.label} tone={statusPill.tone} />
       </View>
+      </FadeInView>
 
       {actionError ? <AlertBanner message={actionError} tone="error" /> : null}
       {actionMsg ? <AlertBanner message={actionMsg} tone="success" /> : null}
 
+      <FadeInView delay={40}>
       <Card variant="default" padding={4}>
         <Text style={styles.cardTitle}>Yük bilgileri</Text>
         <DetailRow label="Yük tipi" value={String(yukTipi)} />
-        <DetailRow label="Agirlik" value={formatWeightKg(load.weight)} />
+        <DetailRow label="Ağırlık" value={formatWeightKg(load.weight)} />
         <DetailRow label="İlan fiyatı" value={formatCurrencyTRY(load.price)} />
         {acceptedBid ? (
           <>
@@ -295,6 +337,7 @@ export default function CustomerLoadDetailScreen() {
         {load.description ? <Text style={styles.desc}>{load.description}</Text> : null}
         <LoadStatusTimeline status={load.status} />
       </Card>
+      </FadeInView>
 
       {driverTracking.shouldShow ? (
         <Card variant="glass" padding={4}>
@@ -336,11 +379,8 @@ export default function CustomerLoadDetailScreen() {
           <Text style={styles.aiPrice}>{formatCurrencyTRY(load.aiSuggestedPrice)}</Text>
           {load.aiMinPrice != null && load.aiMaxPrice != null ? (
             <Text style={styles.aiMeta}>
-              Aralik: {formatCurrencyTRY(load.aiMinPrice)} – {formatCurrencyTRY(load.aiMaxPrice)}
+              Aralık: {formatCurrencyTRY(load.aiMinPrice)} – {formatCurrencyTRY(load.aiMaxPrice)}
             </Text>
-          ) : null}
-          {load.aiPriceReasoning ? (
-            <Text style={styles.aiReason}>{load.aiPriceReasoning}</Text>
           ) : null}
         </Card>
       ) : null}
@@ -359,6 +399,17 @@ export default function CustomerLoadDetailScreen() {
         />
       ) : null}
 
+      {canEdit ? (
+        <FadeInView delay={80} style={{ gap: space.sm }}>
+          <SecondaryButton title="İlanı Düzenle" onPress={onEditPress} />
+          <PrimaryButton
+            title={cancelling ? 'İptal ediliyor…' : 'İlanı İptal Et'}
+            onPress={onCancelPress}
+            disabled={cancelling}
+          />
+        </FadeInView>
+      ) : null}
+
       {load.status === 'Delivered' && load.driverId ? (
         showRating ? (
           <DriverRatingForm
@@ -375,16 +426,21 @@ export default function CustomerLoadDetailScreen() {
       <Card variant="glass" padding={4}>
         <Text style={styles.cardTitle}>Gelen teklifler ({bids.length})</Text>
         {bids.length === 0 ? (
-          <Text style={styles.emptyBid}>Henüz teklif gelmedi.</Text>
+          <EmptyState
+            icon="💬"
+            title="Henüz teklif gelmedi"
+            description="İlanınız yayında; teklifler burada listelenecek."
+          />
         ) : (
-          bids.map((bid) => (
+          bids.map((bid, index) => (
+            <FadeInView key={bid.id} delay={100 + index * 40}>
             <BidCard
-              key={bid.id}
               bid={bid}
               load={load}
               accepting={acceptingId === bid.id}
               onAccept={onAcceptPress}
             />
+            </FadeInView>
           ))
         )}
       </Card>
@@ -393,58 +449,55 @@ export default function CustomerLoadDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[4] },
+  scroll: { padding: space.md, paddingBottom: spacing[10], gap: space.md },
+  backBtn: { alignSelf: 'flex-start', marginBottom: space.xs },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: spacing[6],
-    gap: spacing[4],
+    padding: space.lg,
+    gap: space.md,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: spacing[3],
-    marginTop: spacing[2],
+    marginTop: space.sm,
   },
   pageTitle: { ...typography.h1 },
-  route: { fontFamily: fontFamily.bold, fontSize: 18, color: palette.gold, marginTop: spacing[1] },
+  route: { ...typography.h2, fontSize: 18, color: palette.gold, marginTop: space.xs },
   cardTitle: { ...typography.h3, marginBottom: spacing[3] },
   paymentTitle: {
-    fontFamily: fontFamily.semiBold,
-    fontSize: 13,
+    ...typography.bodySmall,
     color: palette.textSecondary,
-    marginBottom: spacing[1],
+    marginBottom: space.xs,
   },
   driverName: {
-    fontFamily: fontFamily.semiBold,
-    fontSize: 15,
-    color: palette.text,
-    marginBottom: spacing[1],
+    ...typography.bodyMedium,
+    marginBottom: space.xs,
   },
   locSummary: { ...typography.body, color: palette.textSecondary },
-  locCoords: { ...typography.caption, textTransform: 'none', marginTop: spacing[2] },
-  desc: { ...typography.body, marginTop: spacing[2] },
+  locCoords: { ...typography.caption, textTransform: 'none', marginTop: space.sm },
+  desc: { ...typography.body, marginTop: space.sm },
   aiCard: { borderColor: palette.goldBorder, backgroundColor: palette.goldMuted },
-  aiTitle: { fontFamily: fontFamily.semiBold, fontSize: 13, color: palette.gold },
-  aiPrice: { fontFamily: fontFamily.bold, fontSize: 22, color: palette.text, marginVertical: spacing[1] },
+  aiTitle: { ...typography.bodySmall, color: palette.gold },
+  aiPrice: { ...typography.h2, fontSize: 22, marginVertical: space.xs },
   aiMeta: { ...typography.caption, textTransform: 'none' },
-  aiReason: { ...typography.caption, textTransform: 'none', marginTop: spacing[2] },
   bidItem: {
     borderTopWidth: 1,
     borderTopColor: palette.borderSubtle,
-    paddingTop: spacing[4],
-    marginTop: spacing[2],
-    gap: spacing[2],
+    paddingTop: space.md,
+    marginTop: space.sm,
+    gap: space.sm,
   },
   bidItemAccepted: {
     borderLeftWidth: 3,
     borderLeftColor: palette.success,
     paddingLeft: spacing[3],
+    borderRadius: radius.sm,
   },
-  bidTop: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing[2] },
-  bidDriver: { fontFamily: fontFamily.bold, fontSize: 15, color: palette.text, flex: 1 },
-  bidAmount: { fontFamily: fontFamily.bold, fontSize: 16, color: palette.gold },
-  bidMetaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] },
-  emptyBid: { ...typography.caption, textTransform: 'none' },
+  bidTop: { flexDirection: 'row', justifyContent: 'space-between', gap: space.sm },
+  bidDriver: { ...typography.bodyMedium, flex: 1 },
+  bidAmount: { ...typography.bodyMedium, fontSize: 16, color: palette.gold },
+  bidMetaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

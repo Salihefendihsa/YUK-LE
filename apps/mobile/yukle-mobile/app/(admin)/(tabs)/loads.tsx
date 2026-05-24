@@ -23,6 +23,7 @@ import { TextField } from '../../../src/components/ui/TextField';
 import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { cancelAdminLoad, getAdminLoads } from '../../../src/services/admin.service';
+import { previewSettlement } from '../../../src/services/settlement.service';
 import type { AdminLoadRow } from '../../../src/types/admin';
 import { palette } from '../../../src/theme/colors';
 import { fontFamily, typography } from '../../../src/theme/typography';
@@ -30,10 +31,18 @@ import { spacing } from '../../../src/theme/spacing';
 import { formatCurrencyTRY, formatDateTR } from '../../../src/utils/format';
 import { getLoadStatusPill } from '../../../src/utils/statusPills';
 
-const CANCELLABLE = new Set(['Active', 'Assigned', 'OnWay', 'Arrived']);
+const CANCELLABLE = new Set(['Active', 'Assigned']);
 
 function canCancelLoad(status: string): boolean {
   return CANCELLABLE.has(status);
+}
+
+function blockCancelMessage(status: string): string {
+  if (status === 'OnWay' || status === 'Arrived')
+    return 'Sefer basladigi icin iptal edilemez; destek ile iletisime gecin.';
+  if (status === 'Delivered') return 'Teslim edilmis ilan iptal edilemez.';
+  if (status === 'Cancelled') return 'Ilan zaten iptal edilmis.';
+  return 'Bu ilan iptal edilemez.';
 }
 
 export default function AdminLoadsScreen() {
@@ -73,27 +82,40 @@ export default function AdminLoadsScreen() {
     setRefreshing(false);
   };
 
-  const confirmCancel = (row: AdminLoadRow) => {
-    Alert.alert(
-      'İlanı iptal et',
-      `${row.fromCity} → ${row.toCity} ilanı iptal edilecek. Bu işlem geri alınamaz. Devam?`,
-      [
-        { text: 'Vazgec', style: 'cancel' },
-        {
-          text: 'İptal Et',
-          style: 'destructive',
-          onPress: () => void doCancel(row),
-        },
-      ]
-    );
+  const confirmCancel = async (row: AdminLoadRow) => {
+    if (!canCancelLoad(row.status)) {
+      Alert.alert('Iptal edilemez', blockCancelMessage(row.status));
+      return;
+    }
+
+    let message = `${row.fromCity} → ${row.toCity} ilani iptal edilecek. Bu islem geri alinamaz.`;
+    if (row.status === 'Assigned' && row.price > 0) {
+      try {
+        const s = await previewSettlement(row.price);
+        message = `${message}\n\nMusteriye iade: ${formatCurrencyTRY(s.customerTotal)}`;
+      } catch {
+        message = `${message}\n\nMusteriye tam iade yapilacak.`;
+      }
+    }
+
+    Alert.alert('Ilani iptal et', message, [
+      { text: 'Vazgec', style: 'cancel' },
+      {
+        text: 'Iptal Et',
+        style: 'destructive',
+        onPress: () => void doCancel(row),
+      },
+    ]);
   };
 
   const doCancel = async (row: AdminLoadRow) => {
     setBusyId(row.id);
     setStatusMsg('');
     try {
-      await cancelAdminLoad(row.id);
-      setStatusMsg('İlan iptal edildi.');
+      const res = await cancelAdminLoad(row.id);
+      setStatusMsg(res.refundAmount != null && res.refundAmount > 0
+        ? `${res.message} Iade: ${formatCurrencyTRY(res.refundAmount)}`
+        : res.message || 'Ilan iptal edildi.');
       setSelected(null);
       await fetchData();
     } catch (e) {

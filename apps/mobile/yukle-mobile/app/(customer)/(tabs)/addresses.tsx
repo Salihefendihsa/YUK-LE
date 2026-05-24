@@ -4,7 +4,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -14,7 +13,9 @@ import {
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { FadeInView } from '../../../src/components/ui/FadeInView';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { PressableScale } from '../../../src/components/ui/PressableScale';
 import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
 import { SecondaryButton } from '../../../src/components/ui/SecondaryButton';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
@@ -36,7 +37,8 @@ import {
 import type { DeliveryAddress, DeliveryAddressInput } from '../../../src/types/address';
 import { palette } from '../../../src/theme/colors';
 import { typography } from '../../../src/theme/typography';
-import { spacing } from '../../../src/theme/spacing';
+import { space, spacing } from '../../../src/theme/spacing';
+import { radius } from '../../../src/theme/radius';
 
 const EMPTY_FORM: DeliveryAddressInput = {
   title: '',
@@ -170,7 +172,7 @@ export default function CustomerAddressesScreen() {
   if (loading) {
     return (
       <ScreenContainer>
-        <LoadingState message="Adresler yükleniyor..." />
+        <LoadingState message="Adresler yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -194,13 +196,13 @@ export default function CustomerAddressesScreen() {
         {error ? <AlertBanner message={error} tone="error" /> : null}
 
         <Card variant="glass" padding={4}>
-          <Text style={styles.formTitle}>{editingId ? 'Adresi duzenle' : 'Yeni adres'}</Text>
-          <TextField label="Baslik" value={form.title} onChangeText={(v) => setForm((s) => ({ ...s, title: v }))} />
-          <TextField label="Sirket adi" value={form.companyName} onChangeText={(v) => setForm((s) => ({ ...s, companyName: v }))} />
-          <TextField label="Yetkili kisi" value={form.contactPerson} onChangeText={(v) => setForm((s) => ({ ...s, contactPerson: v }))} />
+          <Text style={styles.formTitle}>{editingId ? 'Adresi düzenle' : 'Yeni adres'}</Text>
+          <TextField label="Başlık" value={form.title} onChangeText={(v) => setForm((s) => ({ ...s, title: v }))} />
+          <TextField label="Şirket adı" value={form.companyName} onChangeText={(v) => setForm((s) => ({ ...s, companyName: v }))} />
+          <TextField label="Yetkili kişi" value={form.contactPerson} onChangeText={(v) => setForm((s) => ({ ...s, contactPerson: v }))} />
           <TextField label="Telefon" value={form.contactPhone} onChangeText={(v) => setForm((s) => ({ ...s, contactPhone: v }))} keyboardType="phone-pad" />
-          <TextField label="Sehir" value={form.city} onChangeText={(v) => setForm((s) => ({ ...s, city: v }))} />
-          <TextField label="Ilce" value={form.district} onChangeText={(v) => setForm((s) => ({ ...s, district: v }))} />
+          <TextField label="Şehir" value={form.city} onChangeText={(v) => setForm((s) => ({ ...s, city: v }))} />
+          <TextField label="İlçe" value={form.district} onChangeText={(v) => setForm((s) => ({ ...s, district: v }))} />
           <TextField label="Tam adres" value={form.address} onChangeText={(v) => setForm((s) => ({ ...s, address: v }))} multiline numberOfLines={3} />
           <View style={styles.formActions}>
             {editingId ? (
@@ -218,15 +220,16 @@ export default function CustomerAddressesScreen() {
         {items.length === 0 ? (
           <EmptyState
             icon="📍"
-            title="Kayitli adres bulunamadi"
+            title="Kayıtlı adres bulunamadı"
             description="Yukarıdaki formdan ilk teslimat adresinizi ekleyin."
           />
         ) : (
-          items.map((a) => (
-            <Card key={a.id} variant="default" padding={4} style={styles.addrCard}>
+          items.map((a, index) => (
+            <FadeInView key={a.id} delay={Math.min(index * 40, 200)}>
+            <Card variant="default" padding={4} style={styles.addrCard}>
               <View style={styles.cardHead}>
                 <Text style={styles.cardTitle}>{a.title}</Text>
-                {a.isDefault ? <StatusPill label="Varsayilan" tone="success" /> : null}
+                {a.isDefault ? <StatusPill label="Varsayılan" tone="success" /> : null}
               </View>
               <Text style={styles.addrMeta}>
                 {a.companyName} · {a.contactPerson} ({a.contactPhone})
@@ -237,17 +240,18 @@ export default function CustomerAddressesScreen() {
               <View style={styles.cardActions}>
                 {!a.isDefault ? (
                   <SecondaryButton
-                    title="Varsayilan Yap"
+                    title="Varsayılan Yap"
                     onPress={() => confirmSetDefault(a)}
                     style={styles.miniBtn}
                   />
                 ) : null}
                 <SecondaryButton title="Düzenle" onPress={() => startEdit(a)} style={styles.miniBtn} />
-                <Pressable style={styles.dangerBtn} onPress={() => confirmDelete(a)}>
+                <PressableScale style={styles.dangerBtn} onPress={() => confirmDelete(a)}>
                   <Text style={styles.dangerText}>Sil</Text>
-                </Pressable>
+                </PressableScale>
               </View>
             </Card>
+            </FadeInView>
           ))
         )}
       </ScreenScroll>
@@ -256,24 +260,22 @@ export default function CustomerAddressesScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[4] },
-  title: { ...typography.h1 },
-  sub: { ...typography.caption, textTransform: 'none' },
-  formTitle: { ...typography.h3, marginBottom: spacing[2] },
-  formActions: { flexDirection: 'row', gap: spacing[2], marginTop: spacing[2], flexWrap: 'wrap' },
+  scroll: { padding: space.md, paddingBottom: spacing[10], gap: space.md },
+  formTitle: { ...typography.h3, marginBottom: space.sm },
+  formActions: { flexDirection: 'row', gap: space.sm, marginTop: space.sm, flexWrap: 'wrap' },
   actionBtn: { flex: 1, minWidth: 120 },
-  addrCard: { gap: spacing[2] },
-  cardHead: { flexDirection: 'row', alignItems: 'center', gap: spacing[2], flexWrap: 'wrap' },
+  addrCard: { gap: space.sm },
+  cardHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
   cardTitle: { ...typography.h3, flex: 1 },
   addrMeta: { ...typography.caption, textTransform: 'none' },
-  cardActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginTop: spacing[3] },
+  cardActions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: spacing[3] },
   miniBtn: { paddingHorizontal: spacing[3] },
   dangerBtn: {
     paddingVertical: spacing[3],
     paddingHorizontal: spacing[3],
-    borderRadius: 8,
+    borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: palette.errorBorder,
   },
-  dangerText: { color: palette.error, fontSize: 13, fontWeight: '600' },
+  dangerText: { ...typography.bodySmall, color: palette.error, fontFamily: typography.bodyMedium.fontFamily },
 });

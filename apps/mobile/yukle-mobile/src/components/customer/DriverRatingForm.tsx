@@ -1,15 +1,18 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AlertBanner } from '../ui/AlertBanner';
 import { Card } from '../ui/Card';
+import { FadeInView } from '../ui/FadeInView';
+import { PressableScale } from '../ui/PressableScale';
 import { PrimaryButton } from '../ui/PrimaryButton';
 import { TextField } from '../ui/TextField';
 import { getApiErrorMessage } from '../../services/api.client';
 import { submitRating } from '../../services/ratings.service';
 import { palette } from '../../theme/colors';
-import { fontFamily, typography } from '../../theme/typography';
-import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
+import { space } from '../../theme/spacing';
+import { sizes } from '../../theme/sizes';
 
 type Props = {
   loadId: string;
@@ -53,39 +56,41 @@ export function DriverRatingForm({ loadId, driverUserId, driverName, onRated }: 
   }
 
   return (
-    <Card variant="default" padding={4} style={styles.card}>
-      <Text style={styles.title}>Şoförü puanlayın</Text>
-      <Text style={styles.sub}>
-        {driverName ? `${driverName} · ` : ''}Teslim sonrası deneyiminizi paylaşın.
-      </Text>
-      {error ? <AlertBanner message={error} tone="error" /> : null}
-      <View style={styles.stars}>
-        {[1, 2, 3, 4, 5].map((n) => (
-          <Pressable key={n} onPress={() => setScore(n)} accessibilityLabel={`${n} yıldız`}>
-            <Ionicons
-              name={n <= score ? 'star' : 'star-outline'}
-              size={32}
-              color={n <= score ? palette.gold : palette.textMuted}
-            />
-          </Pressable>
-        ))}
-      </View>
-      <TextField
-        label="Yorum (isteğe bağlı)"
-        placeholder="Kısa değerlendirme"
-        value={comment}
-        onChangeText={setComment}
-        editable={!busy}
-        multiline
-      />
-      <PrimaryButton title="Puanı Gönder" onPress={onSubmit} loading={busy} disabled={busy || score < 1} />
-    </Card>
+    <FadeInView>
+      <Card variant="default" padding={4} style={styles.card}>
+        <Text style={styles.title}>Şoförü puanlayın</Text>
+        <Text style={styles.sub}>
+          {driverName ? `${driverName} · ` : ''}Teslim sonrası deneyiminizi paylaşın.
+        </Text>
+        {error ? <AlertBanner message={error} tone="error" /> : null}
+        <View style={styles.stars}>
+          {[1, 2, 3, 4, 5].map((n) => (
+            <PressableScale key={n} onPress={() => setScore(n)} accessibilityLabel={`${n} yıldız`}>
+              <Ionicons
+                name={n <= score ? 'star' : 'star-outline'}
+                size={sizes.icon.lg}
+                color={n <= score ? palette.gold : palette.textMuted}
+              />
+            </PressableScale>
+          ))}
+        </View>
+        <TextField
+          label="Yorum (isteğe bağlı)"
+          placeholder="Kısa değerlendirme"
+          value={comment}
+          onChangeText={setComment}
+          editable={!busy}
+          multiline
+        />
+        <PrimaryButton title="Puanı Gönder" onPress={onSubmit} loading={busy} disabled={busy || score < 1} />
+      </Card>
+    </FadeInView>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { gap: spacing[3] },
-  title: { fontFamily: fontFamily.semiBold, fontSize: 15, color: palette.gold },
+  card: { gap: space.md },
+  title: { ...typography.h3, color: palette.gold },
   sub: { ...typography.caption, textTransform: 'none' },
-  stars: { flexDirection: 'row', justifyContent: 'center', gap: spacing[2], paddingVertical: spacing[2] },
+  stars: { flexDirection: 'row', justifyContent: 'center', gap: space.sm, paddingVertical: space.sm },
 });

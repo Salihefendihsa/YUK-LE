@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
@@ -13,7 +12,9 @@ import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { FadeInView } from '../../../src/components/ui/FadeInView';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { PressableScale } from '../../../src/components/ui/PressableScale';
 import { SecondaryButton } from '../../../src/components/ui/SecondaryButton';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
 import { ScreenContainer, useScreenInsets } from '../../../src/constants/layout';
@@ -26,8 +27,8 @@ import {
 } from '../../../src/services/wallet.service';
 import type { CustomerHistoryRow } from '../../../src/types/history';
 import { palette } from '../../../src/theme/colors';
-import { fontFamily, typography } from '../../../src/theme/typography';
-import { spacing } from '../../../src/theme/spacing';
+import { typography } from '../../../src/theme/typography';
+import { space, spacing } from '../../../src/theme/spacing';
 import { formatCurrencyTRY, formatDateTR } from '../../../src/utils/format';
 import { getLoadStatusPill } from '../../../src/utils/statusPills';
 
@@ -107,7 +108,7 @@ export default function CustomerHistoryScreen() {
   if (loading) {
     return (
       <ScreenContainer>
-        <LoadingState message="Geçmiş seferler yükleniyor..." />
+        <LoadingState message="Geçmiş seferler yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -161,12 +162,13 @@ export default function CustomerHistoryScreen() {
           if (hasMore && !loadingMore) void loadMore();
         }}
         onEndReachedThreshold={0.3}
-        renderItem={({ item }) => {
+        renderItem={({ item, index }) => {
           const pill = getLoadStatusPill(item.status ?? 'Delivered');
           const spend =
             item.actualSpend != null && item.actualSpend > 0 ? item.actualSpend : null;
           return (
-            <Pressable
+            <FadeInView delay={Math.min(index * 40, 200)}>
+            <PressableScale
               onPress={() =>
                 router.push({ pathname: '/(customer)/load-detail', params: { id: item.id } })
               }
@@ -191,7 +193,8 @@ export default function CustomerHistoryScreen() {
                   <Text style={styles.listHint}>Ödenen tutar</Text>
                 )}
               </Card>
-            </Pressable>
+            </PressableScale>
+            </FadeInView>
           );
         }}
       />
@@ -200,33 +203,23 @@ export default function CustomerHistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { padding: spacing[4], paddingBottom: spacing[8], gap: spacing[3] },
-  summaryCard: { marginBottom: spacing[4], borderColor: palette.goldBorder },
+  list: { padding: space.md, paddingBottom: space.xl, gap: spacing[3] },
+  summaryCard: { marginBottom: space.md, borderColor: palette.goldBorder },
   summaryLabel: { ...typography.label, color: palette.textMuted },
-  summaryValue: {
-    fontFamily: fontFamily.bold,
-    fontSize: 22,
-    color: palette.gold,
-    marginTop: spacing[1],
-  },
-  summaryHint: { ...typography.caption, textTransform: 'none', marginTop: spacing[1], color: palette.textMuted },
-  card: { marginBottom: spacing[2] },
+  summaryValue: { ...typography.h2, color: palette.gold, marginTop: space.xs },
+  summaryHint: { ...typography.caption, textTransform: 'none', marginTop: space.xs, color: palette.textMuted },
+  card: { marginBottom: space.sm },
   cardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    gap: spacing[2],
-    marginBottom: spacing[2],
+    gap: space.sm,
+    marginBottom: space.sm,
   },
-  route: { fontFamily: fontFamily.bold, fontSize: 16, color: palette.text, flex: 1 },
+  route: { ...typography.bodyMedium, fontSize: 16, flex: 1 },
   meta: { ...typography.caption, textTransform: 'none' },
-  price: {
-    fontFamily: fontFamily.bold,
-    fontSize: 15,
-    color: palette.brand,
-    marginTop: spacing[2],
-  },
-  listHint: { ...typography.caption, textTransform: 'none', color: palette.textMuted, marginTop: 2 },
-  footer: { paddingVertical: spacing[4] },
-  footerPad: { height: spacing[4] },
+  price: { ...typography.bodyMedium, color: palette.brand, marginTop: space.sm },
+  listHint: { ...typography.caption, textTransform: 'none', color: palette.textMuted, marginTop: space.xs },
+  footer: { paddingVertical: space.md },
+  footerPad: { height: space.md },
 });

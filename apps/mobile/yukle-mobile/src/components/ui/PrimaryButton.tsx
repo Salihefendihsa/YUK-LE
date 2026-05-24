@@ -1,8 +1,10 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, type ViewStyle } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, type ViewStyle } from 'react-native';
 import { palette } from '../../theme/colors';
-import { fontFamily } from '../../theme/typography';
-import { radius } from '../../theme/radius';
+import { typography } from '../../theme/typography';
+import { sizes } from '../../theme/sizes';
 import { shadows } from '../../theme/shadows';
+import { radius } from '../../theme/radius';
+import { PressableScale } from './PressableScale';
 
 type Props = {
   title: string;
@@ -15,43 +17,32 @@ type Props = {
 export function PrimaryButton({ title, onPress, loading, disabled, style }: Props) {
   const off = disabled || loading;
   return (
-    <Pressable
-      style={({ pressed }) => [
-        styles.btn,
-        shadows.brand,
-        pressed && !off && styles.pressed,
-        off && styles.disabled,
-        style,
-      ]}
+    <PressableScale
       onPress={onPress}
       disabled={off}
+      style={[styles.btn, shadows.brand, off && styles.disabled, style]}
     >
       {loading ? (
         <ActivityIndicator color={palette.onBrand} size="small" />
       ) : (
         <Text style={styles.text}>{title}</Text>
       )}
-    </Pressable>
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   btn: {
-    height: 52,
+    height: sizes.button.primary,
     borderRadius: radius.md,
     backgroundColor: palette.brand,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
   },
-  pressed: {
-    backgroundColor: palette.brandPress,
-    transform: [{ scale: 0.98 }],
-  },
   disabled: { opacity: 0.5 },
   text: {
-    fontFamily: fontFamily.semiBold,
-    fontSize: 15,
+    ...typography.bodyMedium,
     color: palette.onBrand,
   },
 });

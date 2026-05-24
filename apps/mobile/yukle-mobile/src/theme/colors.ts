@@ -39,12 +39,38 @@ export const palette = {
 
   info: '#3B82F6',
   infoBg: 'rgba(59, 130, 246, 0.12)',
+  infoBorder: 'rgba(59, 130, 246, 0.35)',
 
   glass: 'rgba(28, 32, 41, 0.72)',
   glassBorder: 'rgba(255, 255, 255, 0.08)',
 
   overlay: 'rgba(5, 6, 8, 0.85)',
   onBrand: '#050608',
+
+  /** Notr gri skala (50 acik .. 900 koyu arka plan) */
+  gray50: '#F9FAFB',
+  gray100: '#F3F4F6',
+  gray200: '#E5E7EB',
+  gray300: '#D1D5DB',
+  gray400: '#9CA3AF',
+  gray500: '#6B7280',
+  gray600: '#4B5563',
+  gray700: '#374151',
+  gray800: '#1F2937',
+  gray900: '#050608',
+} as const;
+
+export const gray = {
+  50: palette.gray50,
+  100: palette.gray100,
+  200: palette.gray200,
+  300: palette.gray300,
+  400: palette.gray400,
+  500: palette.gray500,
+  600: palette.gray600,
+  700: palette.gray700,
+  800: palette.gray800,
+  900: palette.gray900,
 } as const;
 
 /** Geriye uyumluluk — mevcut Colors importlari */

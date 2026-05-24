@@ -313,8 +313,19 @@ export async function getAdminLoads(params?: {
 }
 
 /** POST /Admin/loads/{loadId}/cancel */
-export async function cancelAdminLoad(loadId: string): Promise<void> {
-  await apiClient.post(`/Admin/loads/${loadId}/cancel`);
+export async function cancelAdminLoad(loadId: string, reason?: string): Promise<{
+  message: string;
+  refundAmount?: number | null;
+}> {
+  const res = await apiClient.post(`/Admin/loads/${loadId}/cancel`, { reason: reason ?? null });
+  const d = res.data as Record<string, unknown>;
+  return {
+    message: String(d.message ?? d.Message ?? 'Ilan iptal edildi.'),
+    refundAmount:
+      d.refundAmount != null || d.RefundAmount != null
+        ? Number(d.refundAmount ?? d.RefundAmount)
+        : null,
+  };
 }
 
 /** GET /Admin/payments */

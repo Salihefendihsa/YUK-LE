@@ -2,7 +2,6 @@ import { StyleSheet, Text, type ViewStyle } from 'react-native';
 import { palette } from '../../theme/colors';
 import { typography } from '../../theme/typography';
 import { radius } from '../../theme/radius';
-import { space } from '../../theme/spacing';
 import { sizes } from '../../theme/sizes';
 import { PressableScale } from './PressableScale';
 
@@ -13,7 +12,7 @@ type Props = {
   style?: ViewStyle;
 };
 
-export function SecondaryButton({ title, onPress, disabled, style }: Props) {
+export function GhostButton({ title, onPress, disabled, style }: Props) {
   return (
     <PressableScale
       onPress={onPress}
@@ -27,20 +26,15 @@ export function SecondaryButton({ title, onPress, disabled, style }: Props) {
 
 const styles = StyleSheet.create({
   btn: {
-    height: sizes.button.secondary,
+    height: sizes.button.compact,
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: palette.border,
-    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: space.md,
-    width: '100%',
+    paddingHorizontal: sizes.hitSlop * 2,
   },
   disabled: { opacity: 0.45 },
   text: {
-    ...typography.bodySmall,
-    fontFamily: typography.bodyMedium.fontFamily,
-    color: palette.text,
+    ...typography.link,
+    color: palette.gold,
   },
 });

@@ -160,3 +160,53 @@ export async function getDeliveryQr(loadId: string): Promise<{
     expiresInMinutes: Number(d.expiresInMinutes ?? d.ExpiresInMinutes ?? 15),
   };
 }
+
+export interface CancelLoadResult {
+  loadId: string;
+  status: string;
+  message: string;
+  alreadyCancelled?: boolean;
+  refundAmount?: number | null;
+  closedBids?: number;
+}
+
+export async function cancelLoad(
+  loadId: string,
+  reason?: string
+): Promise<CancelLoadResult> {
+  const res = await apiClient.post(`/Loads/${loadId}/cancel`, { reason: reason ?? null });
+  const d = res.data as Record<string, unknown>;
+  return {
+    loadId: String(d.loadId ?? loadId),
+    status: String(d.status ?? d.Status ?? ''),
+    message: String(d.message ?? d.Message ?? ''),
+    alreadyCancelled: Boolean(d.alreadyCancelled ?? d.AlreadyCancelled),
+    refundAmount:
+      d.refundAmount != null || d.RefundAmount != null
+        ? Number(d.refundAmount ?? d.RefundAmount)
+        : null,
+    closedBids: Number(d.closedBids ?? d.ClosedBids ?? 0),
+  };
+}
+
+export interface UpdateLoadResult {
+  load: Load;
+  materialChanged: boolean;
+  notifiedDrivers: boolean;
+  message: string;
+}
+
+export async function updateLoad(
+  loadId: string,
+  payload: CreateLoadPayload
+): Promise<UpdateLoadResult> {
+  const res = await apiClient.put(`/Loads/${loadId}`, payload, { timeout: 60000 });
+  const d = res.data as Record<string, unknown>;
+  const loadRaw = d.load ?? d.Load;
+  return {
+    load: normalizeLoad(loadRaw),
+    materialChanged: Boolean(d.materialChanged ?? d.MaterialChanged),
+    notifiedDrivers: Boolean(d.notifiedDrivers ?? d.NotifiedDrivers),
+    message: String(d.message ?? d.Message ?? ''),
+  };
+}

@@ -51,6 +51,12 @@ export const typography = {
     lineHeight: 22,
     color: palette.text,
   } as TextStyle,
+  bodySmall: {
+    fontFamily: fontFamily.regular,
+    fontSize: 13,
+    lineHeight: 18,
+    color: palette.textSecondary,
+  } as TextStyle,
   bodyMedium: {
     fontFamily: fontFamily.medium,
     fontSize: 15,

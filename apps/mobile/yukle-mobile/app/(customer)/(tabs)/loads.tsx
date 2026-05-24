@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
@@ -13,7 +12,9 @@ import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { FadeInView } from '../../../src/components/ui/FadeInView';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { PressableScale } from '../../../src/components/ui/PressableScale';
 import { SecondaryButton } from '../../../src/components/ui/SecondaryButton';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
 import { TextField } from '../../../src/components/ui/TextField';
@@ -22,8 +23,10 @@ import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getActiveLoadsPaged } from '../../../src/services/loads.service';
 import type { Load } from '../../../src/types/load';
 import { palette } from '../../../src/theme/colors';
-import { fontFamily, typography } from '../../../src/theme/typography';
-import { spacing } from '../../../src/theme/spacing';
+import { typography } from '../../../src/theme/typography';
+import { space, spacing } from '../../../src/theme/spacing';
+import { radius } from '../../../src/theme/radius';
+import { sizes } from '../../../src/theme/sizes';
 import { formatCurrencyTRY } from '../../../src/utils/format';
 import { getLoadStatusPill } from '../../../src/utils/statusPills';
 
@@ -97,7 +100,7 @@ export default function CustomerLoadsScreen() {
   if (loading && loads.length === 0) {
     return (
       <ScreenContainer>
-        <LoadingState message="İlanlar yükleniyor..." />
+        <LoadingState message="İlanlar yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -117,12 +120,12 @@ export default function CustomerLoadsScreen() {
               title="İlanlarım"
               subtitle="Tüm ilanlar ve durumları"
               right={
-                <Pressable
+                <PressableScale
                   style={styles.createBtn}
                   onPress={() => router.push('/(customer)/(tabs)/create-load')}
                 >
                   <Text style={styles.createBtnText}>+ Yeni</Text>
-                </Pressable>
+                </PressableScale>
               }
             />
             {error ? <AlertBanner message={error} tone="error" /> : null}
@@ -171,7 +174,7 @@ export default function CustomerLoadsScreen() {
                 disabled={loadingMore}
               />
               {loadingMore ? (
-                <ActivityIndicator color={palette.brand} style={{ marginTop: spacing[2] }} />
+                <ActivityIndicator color={palette.brand} style={{ marginTop: space.sm }} />
               ) : null}
             </View>
           ) : (
@@ -182,35 +185,37 @@ export default function CustomerLoadsScreen() {
           if (hasMore && !loadingMore) void loadMore();
         }}
         onEndReachedThreshold={0.3}
-        renderItem={({ item }) => {
+        renderItem={({ item, index }) => {
           const pill = getLoadStatusPill(item.status);
           const bidCount = item.bidCount ?? 0;
           return (
-            <Pressable
-              onPress={() =>
-                router.push({ pathname: '/(customer)/load-detail', params: { id: item.id } })
-              }
-            >
-              <Card variant="glass" padding={4} style={styles.card}>
-                <View style={styles.cardTop}>
-                  <Text style={styles.route}>
-                    {item.fromCity} → {item.toCity}
-                  </Text>
-                  <StatusPill label={pill.label} tone={pill.tone} />
-                </View>
-                <Text style={styles.meta}>
-                  {item.loadType ?? item.type ?? '-'} · {formatCurrencyTRY(item.price)}
-                </Text>
-                <View style={styles.bidRow}>
-                  <Text style={styles.bidLabel}>Gelen teklif</Text>
-                  <View style={[styles.bidBadge, bidCount > 0 && styles.bidBadgeHot]}>
-                    <Text style={[styles.bidCount, bidCount > 0 && styles.bidCountHot]}>
-                      {bidCount}
+            <FadeInView delay={Math.min(index * 40, 200)}>
+              <PressableScale
+                onPress={() =>
+                  router.push({ pathname: '/(customer)/load-detail', params: { id: item.id } })
+                }
+              >
+                <Card variant="glass" padding={4} style={styles.card}>
+                  <View style={styles.cardTop}>
+                    <Text style={styles.route}>
+                      {item.fromCity} → {item.toCity}
                     </Text>
+                    <StatusPill label={pill.label} tone={pill.tone} />
                   </View>
-                </View>
-              </Card>
-            </Pressable>
+                  <Text style={styles.meta}>
+                    {item.loadType ?? item.type ?? '-'} · {formatCurrencyTRY(item.price)}
+                  </Text>
+                  <View style={styles.bidRow}>
+                    <Text style={styles.bidLabel}>Gelen teklif</Text>
+                    <View style={[styles.bidBadge, bidCount > 0 && styles.bidBadgeHot]}>
+                      <Text style={[styles.bidCount, bidCount > 0 && styles.bidCountHot]}>
+                        {bidCount}
+                      </Text>
+                    </View>
+                  </View>
+                </Card>
+              </PressableScale>
+            </FadeInView>
           );
         }}
       />
@@ -219,42 +224,44 @@ export default function CustomerLoadsScreen() {
 }
 
 const styles = StyleSheet.create({
-  headerPad: { paddingHorizontal: spacing[4], paddingTop: spacing[4], gap: spacing[3] },
-  filterCard: { gap: spacing[3], marginBottom: spacing[2] },
-  filterActions: { flexDirection: 'row', gap: spacing[2] },
+  headerPad: { paddingHorizontal: space.md, paddingTop: space.md, gap: spacing[3] },
+  filterCard: { gap: spacing[3], marginBottom: space.sm },
+  filterActions: { flexDirection: 'row', gap: space.sm },
   resultCount: { ...typography.caption, textTransform: 'none', color: palette.textMuted },
-  list: { paddingHorizontal: spacing[4], paddingBottom: spacing[8], gap: spacing[3] },
+  list: { paddingHorizontal: space.md, paddingBottom: space.xl, gap: spacing[3] },
   createBtn: {
     backgroundColor: palette.brand,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     paddingHorizontal: spacing[3],
-    paddingVertical: spacing[2],
+    paddingVertical: space.sm,
+    minHeight: sizes.button.compact,
+    justifyContent: 'center',
   },
-  createBtnText: { fontFamily: fontFamily.bold, fontSize: 13, color: palette.onBrand },
+  createBtnText: { ...typography.bodySmall, fontFamily: typography.bodyMedium.fontFamily, color: palette.onBrand },
   card: { marginBottom: spacing[3] },
   cardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    gap: spacing[2],
-    marginBottom: spacing[2],
+    gap: space.sm,
+    marginBottom: space.sm,
   },
-  route: { fontFamily: fontFamily.bold, fontSize: 16, color: palette.text, flex: 1 },
+  route: { ...typography.bodyMedium, fontSize: 16, flex: 1 },
   meta: { ...typography.caption, textTransform: 'none' },
   bidRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: spacing[3],
-    paddingTop: spacing[2],
+    paddingTop: space.sm,
     borderTopWidth: 1,
     borderTopColor: palette.borderSubtle,
   },
-  bidLabel: { fontFamily: fontFamily.medium, fontSize: 13, color: palette.textSecondary },
+  bidLabel: { ...typography.bodySmall, color: palette.textSecondary },
   bidBadge: {
     minWidth: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: radius.full,
     backgroundColor: palette.surface,
     borderWidth: 1,
     borderColor: palette.borderLight,
@@ -265,8 +272,8 @@ const styles = StyleSheet.create({
     backgroundColor: palette.brandMuted,
     borderColor: palette.brandBorder,
   },
-  bidCount: { fontFamily: fontFamily.bold, fontSize: 14, color: palette.textMuted },
+  bidCount: { ...typography.bodySmall, fontFamily: typography.bodyMedium.fontFamily, color: palette.textMuted },
   bidCountHot: { color: palette.brand },
-  footer: { paddingVertical: spacing[4] },
-  footerPad: { height: spacing[4] },
+  footer: { paddingVertical: space.md },
+  footerPad: { height: space.md },
 });

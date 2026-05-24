@@ -1,6 +1,7 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { Card } from '../../../src/components/ui/Card';
+import { FadeInView } from '../../../src/components/ui/FadeInView';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
 import {
   DEMO_ANALYTICS_MONTHS,
@@ -14,9 +15,9 @@ import {
 } from '../../../src/constants/customer-analytics-demo';
 import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
 import { palette } from '../../../src/theme/colors';
-import { fontFamily, typography } from '../../../src/theme/typography';
+import { typography } from '../../../src/theme/typography';
 import { radius } from '../../../src/theme/radius';
-import { spacing } from '../../../src/theme/spacing';
+import { space, spacing } from '../../../src/theme/spacing';
 import { formatCurrencyTRY } from '../../../src/utils/format';
 
 export default function CustomerAnalyticsScreen() {
@@ -24,6 +25,7 @@ export default function CustomerAnalyticsScreen() {
     <ScreenScroll contentContainerStyle={styles.scroll}>
       <ScreenHeader title="Analitik (Demo)" subtitle="Örnek veriler — gerçek rapor API'si bağlı değil" />
 
+      <FadeInView>
       <Card variant="elevated" padding={3} style={styles.demoBanner}>
         <StatusPill label="DEMO / ÖRNEK VERİ" tone="warning" />
         <Text style={styles.demoBannerText}>
@@ -31,7 +33,9 @@ export default function CustomerAnalyticsScreen() {
           gösterilmez.
         </Text>
       </Card>
+      </FadeInView>
 
+      <FadeInView delay={40}>
       <Card variant="glass" padding={4}>
         <Text style={styles.cardTitle}>Toplam harcama</Text>
         <Text style={styles.cardSub}>Aylık trend (örnek)</Text>
@@ -49,7 +53,9 @@ export default function CustomerAnalyticsScreen() {
           ))}
         </View>
       </Card>
+      </FadeInView>
 
+      <FadeInView delay={80}>
       <Card variant="default" padding={4}>
         <Text style={styles.cardTitle}>En çok kullanılan güzergahlar</Text>
         {DEMO_TOP_ROUTES.map((route, i) => (
@@ -59,13 +65,17 @@ export default function CustomerAnalyticsScreen() {
           </View>
         ))}
       </Card>
+      </FadeInView>
 
+      <FadeInView delay={120}>
       <Card variant="default" padding={4}>
         <Text style={styles.cardTitle}>Şoför memnuniyeti</Text>
         <Text style={styles.bigStat}>{DEMO_DRIVER_SATISFACTION.toFixed(1)}</Text>
         <Text style={styles.cardSub}>Son 90 gün ortalaması (örnek)</Text>
       </Card>
+      </FadeInView>
 
+      <FadeInView delay={160}>
       <Card variant="default" padding={4}>
         <Text style={styles.cardTitle}>Karbon ayak izi</Text>
         <Text style={styles.bodyText}>
@@ -73,24 +83,25 @@ export default function CustomerAnalyticsScreen() {
           araç tercihi ile <Text style={styles.strong}>%{DEMO_CARBON_REDUCTION_PCT}</Text> azaltılabilir.
         </Text>
       </Card>
+      </FadeInView>
 
+      <FadeInView delay={200}>
       <Card variant="glass" padding={4} style={styles.savingsCard}>
         <Text style={styles.cardTitle}>Bu ay tasarruf</Text>
         <Text style={styles.bigStatGold}>{formatCurrencyTRY(DEMO_MONTHLY_SAVINGS_TRY)}</Text>
         <Text style={styles.cardSub}>Akıllı eşleştirme ve güzergah optimizasyonu ile (örnek).</Text>
       </Card>
+      </FadeInView>
     </ScreenScroll>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[4] },
-  title: { ...typography.h1 },
-  sub: { ...typography.caption, textTransform: 'none' },
+  scroll: { padding: space.md, paddingBottom: spacing[10], gap: space.md },
   demoBanner: {
     borderColor: palette.goldBorder,
     backgroundColor: palette.goldMuted,
-    gap: spacing[2],
+    gap: space.sm,
     alignItems: 'center',
   },
   demoBannerText: {
@@ -100,15 +111,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   cardTitle: { ...typography.h3 },
-  cardSub: { ...typography.caption, textTransform: 'none', marginTop: spacing[1] },
+  cardSub: { ...typography.caption, textTransform: 'none', marginTop: space.xs },
   barChart: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: spacing[2],
+    gap: space.sm,
     height: 160,
-    marginTop: spacing[4],
+    marginTop: space.md,
   },
-  barWrap: { flex: 1, alignItems: 'center', height: '100%', justifyContent: 'flex-end', gap: spacing[2] },
+  barWrap: { flex: 1, alignItems: 'center', height: '100%', justifyContent: 'flex-end', gap: space.sm },
   bar: {
     width: '100%',
     maxWidth: 32,
@@ -118,27 +129,12 @@ const styles = StyleSheet.create({
     minHeight: 8,
   },
   barLabel: { ...typography.caption, textTransform: 'none', fontSize: 10 },
-  routeRow: { flexDirection: 'row', gap: spacing[3], marginTop: spacing[2] },
-  routeIndex: {
-    fontFamily: fontFamily.bold,
-    fontSize: 14,
-    color: palette.brand,
-    width: 20,
-  },
+  routeRow: { flexDirection: 'row', gap: spacing[3], marginTop: space.sm },
+  routeIndex: { ...typography.bodySmall, color: palette.brand, width: 20, fontFamily: typography.bodyMedium.fontFamily },
   routeLine: { ...typography.body, flex: 1 },
-  bigStat: {
-    fontFamily: fontFamily.bold,
-    fontSize: 42,
-    color: palette.brand,
-    marginVertical: spacing[2],
-  },
-  bigStatGold: {
-    fontFamily: fontFamily.bold,
-    fontSize: 32,
-    color: palette.gold,
-    marginVertical: spacing[2],
-  },
+  bigStat: { ...typography.h1, fontSize: 42, color: palette.brand, marginVertical: space.sm },
+  bigStatGold: { ...typography.h2, fontSize: 32, color: palette.gold, marginVertical: space.sm },
   bodyText: { ...typography.body, color: palette.textSecondary },
-  strong: { color: palette.text, fontFamily: fontFamily.semiBold },
+  strong: { color: palette.text, fontFamily: typography.bodyMedium.fontFamily },
   savingsCard: { borderColor: palette.goldBorder },
 });

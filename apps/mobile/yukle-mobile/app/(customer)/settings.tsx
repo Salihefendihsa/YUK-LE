@@ -1,12 +1,14 @@
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Switch, Text, View } from 'react-native';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
 import { Card } from '../../src/components/ui/Card';
+import { FadeInView } from '../../src/components/ui/FadeInView';
+import { GhostButton } from '../../src/components/ui/GhostButton';
 import { ScreenScroll } from '../../src/constants/layout';
 import { useNotificationPrefsStore } from '../../src/store/notification-prefs.store';
 import { palette } from '../../src/theme/colors';
-import { fontFamily, typography } from '../../src/theme/typography';
-import { spacing } from '../../src/theme/spacing';
+import { typography } from '../../src/theme/typography';
+import { space, spacing } from '../../src/theme/spacing';
 
 export default function CustomerSettingsScreen() {
   const router = useRouter();
@@ -19,15 +21,14 @@ export default function CustomerSettingsScreen() {
 
   return (
     <ScreenScroll contentContainerStyle={styles.scroll}>
-      <Pressable onPress={() => router.back()}>
-        <Text style={typography.link}>← Profil</Text>
-      </Pressable>
+      <GhostButton title="← Profil" onPress={() => router.back()} style={styles.back} />
 
       <ScreenHeader
         title="Ayarlar"
         subtitle="Bildirim tercihleri (cihazda saklanır)"
       />
 
+      <FadeInView>
       <Card variant="default" padding={4} style={styles.card}>
         <Text style={styles.sectionTitle}>Bildirim tercihleri</Text>
         <PrefRow
@@ -52,6 +53,7 @@ export default function CustomerSettingsScreen() {
           Tercihler bu cihazda saklanır. Sunucu tarafı eşleştirme sonraki sürümde eklenecek.
         </Text>
       </Card>
+      </FadeInView>
     </ScreenScroll>
   );
 }
@@ -84,14 +86,10 @@ function PrefRow({
 }
 
 const styles = StyleSheet.create({
-  scroll: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[4] },
-  card: { gap: spacing[2] },
-  sectionTitle: {
-    fontFamily: fontFamily.semiBold,
-    fontSize: 15,
-    color: palette.gold,
-    marginBottom: spacing[2],
-  },
+  scroll: { padding: space.md, paddingBottom: spacing[10], gap: space.md },
+  back: { alignSelf: 'flex-start' },
+  card: { gap: space.sm },
+  sectionTitle: { ...typography.h3, color: palette.gold, marginBottom: space.sm },
   prefRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -100,7 +98,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: palette.borderSubtle,
   },
-  prefLabel: { fontFamily: fontFamily.semiBold, fontSize: 14, color: palette.text },
-  prefHint: { ...typography.caption, textTransform: 'none', marginTop: 2 },
+  prefLabel: { ...typography.bodySmall, fontFamily: typography.bodyMedium.fontFamily, color: palette.text },
+  prefHint: { ...typography.caption, textTransform: 'none', marginTop: space.xs },
   note: { ...typography.caption, textTransform: 'none', color: palette.textMuted, marginTop: spacing[3] },
 });

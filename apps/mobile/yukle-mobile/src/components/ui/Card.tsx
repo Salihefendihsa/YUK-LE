@@ -3,14 +3,28 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { palette } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { shadows } from '../../theme/shadows';
-import { spacing } from '../../theme/spacing';
+import { space } from '../../theme/spacing';
 
 type Props = {
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
   variant?: 'default' | 'glass' | 'elevated';
-  padding?: keyof typeof spacing;
+  padding?: keyof typeof import('../../theme/spacing').spacing;
 };
+
+const paddingMap = {
+  0: 0,
+  1: space.xs,
+  2: space.sm,
+  3: 12,
+  4: space.md,
+  5: 20,
+  6: space.lg,
+  8: space.xl,
+  10: 40,
+  12: space.xxl,
+  16: 64,
+} as const;
 
 export function Card({ children, style, variant = 'glass', padding = 6 }: Props) {
   return (
@@ -20,7 +34,7 @@ export function Card({ children, style, variant = 'glass', padding = 6 }: Props)
         variant === 'glass' && styles.glass,
         variant === 'elevated' && styles.elevated,
         variant === 'default' && styles.default,
-        { padding: spacing[padding] },
+        { padding: paddingMap[padding] ?? space.lg },
         shadows.card,
         style,
       ]}

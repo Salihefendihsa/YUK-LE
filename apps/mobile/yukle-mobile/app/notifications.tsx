@@ -1,16 +1,19 @@
 import { Redirect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
-  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors } from '../src/constants/colors';
+import { AlertBanner } from '../src/components/ui/AlertBanner';
+import { EmptyState } from '../src/components/ui/EmptyState';
+import { FadeInView } from '../src/components/ui/FadeInView';
+import { GhostButton } from '../src/components/ui/GhostButton';
+import { LoadingState } from '../src/components/ui/LoadingState';
+import { PressableScale } from '../src/components/ui/PressableScale';
 import { screenRootStyle } from '../src/constants/layout';
 import { getApiErrorMessage } from '../src/services/api.client';
 import {
@@ -21,6 +24,10 @@ import {
 import { useAuthStore } from '../src/store/auth.store';
 import { useNotificationsStore } from '../src/store/notifications.store';
 import type { NotificationRow } from '../src/types/notification';
+import { palette } from '../src/theme/colors';
+import { typography } from '../src/theme/typography';
+import { space, spacing } from '../src/theme/spacing';
+import { radius } from '../src/theme/radius';
 import { formatDateTimeTR } from '../src/utils/format';
 
 export default function NotificationsScreen() {
@@ -107,7 +114,7 @@ export default function NotificationsScreen() {
   if (loading) {
     return (
       <View style={[screenRootStyle, styles.centered, { paddingTop: insets.top }]}>
-        <ActivityIndicator color={Colors.primary} size="large" />
+        <LoadingState message="Bildirimler yükleniyor..." variant="skeleton" />
       </View>
     );
   }
@@ -115,50 +122,41 @@ export default function NotificationsScreen() {
   return (
     <View style={[screenRootStyle, { paddingTop: insets.top }]}>
       <View style={styles.topBar}>
-        <Pressable onPress={() => router.back()}>
-          <Text style={styles.back}>← Geri</Text>
-        </Pressable>
-        <Pressable style={styles.readAllBtn} onPress={() => void onReadAll()} disabled={busyAll}>
-          <Text style={styles.readAllText}>{busyAll ? '...' : 'Tumunu okundu yap'}</Text>
-        </Pressable>
+        <GhostButton title="← Geri" onPress={() => router.back()} />
+        <PressableScale style={styles.readAllBtn} onPress={() => void onReadAll()} disabled={busyAll}>
+          <Text style={styles.readAllText}>{busyAll ? '...' : 'Tümünü okundu yap'}</Text>
+        </PressableScale>
       </View>
 
       <Text style={styles.title}>Bildirimler</Text>
 
-      {hubError ? (
-        <View style={styles.hubBox}>
-          <Text style={styles.hubText}>{hubError}</Text>
-        </View>
-      ) : null}
-
-      {error ? (
-        <View style={styles.errorBox}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      ) : null}
+      {hubError ? <AlertBanner message={hubError} tone="info" /> : null}
+      {error ? <AlertBanner message={error} tone="error" /> : null}
 
       <FlatList
         data={items}
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={styles.list}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
         }
         ListEmptyComponent={
-          <Text style={styles.empty}>Bildirim yok.</Text>
+          <EmptyState icon="🔔" title="Bildirim yok" description="Yeni bildirimler burada görünecek." />
         }
-        renderItem={({ item }) => (
-          <Pressable
-            style={[styles.card, !item.isRead && styles.cardUnread]}
-            onPress={() => void onMarkRead(item)}
-          >
-            <View style={styles.cardHead}>
-              <Text style={styles.cardTitle}>{item.title || 'Bildirim'}</Text>
-              {!item.isRead ? <View style={styles.dot} /> : null}
-            </View>
-            <Text style={styles.cardMsg}>{item.message}</Text>
-            <Text style={styles.cardTime}>{formatDateTimeTR(item.createdAt)}</Text>
-          </Pressable>
+        renderItem={({ item, index }) => (
+          <FadeInView delay={Math.min(index * 35, 175)}>
+            <PressableScale
+              style={[styles.card, !item.isRead && styles.cardUnread]}
+              onPress={() => void onMarkRead(item)}
+            >
+              <View style={styles.cardHead}>
+                <Text style={styles.cardTitle}>{item.title || 'Bildirim'}</Text>
+                {!item.isRead ? <View style={styles.dot} /> : null}
+              </View>
+              <Text style={styles.cardMsg}>{item.message}</Text>
+              <Text style={styles.cardTime}>{formatDateTimeTR(item.createdAt)}</Text>
+            </PressableScale>
+          </FadeInView>
         )}
       />
     </View>
@@ -171,66 +169,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingHorizontal: space.md,
+    paddingTop: space.sm,
   },
-  back: { color: Colors.primary, fontSize: 15, fontWeight: '600' },
   readAllBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 8,
+    paddingVertical: spacing[3] - 6,
+    paddingHorizontal: spacing[3],
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: Colors.primaryGold,
+    borderColor: palette.goldBorder,
   },
-  readAllText: { color: Colors.primaryGold, fontSize: 12, fontWeight: '600' },
-  title: {
-    color: Colors.textPrimary,
-    fontSize: 22,
-    fontWeight: '700',
-    paddingHorizontal: 16,
-    marginBottom: 8,
-  },
-  list: { padding: 16, paddingBottom: 40, gap: 10 },
-  empty: { color: Colors.textMuted, textAlign: 'center', marginTop: 40 },
+  readAllText: { ...typography.caption, color: palette.gold },
+  title: { ...typography.h1, paddingHorizontal: space.md, marginBottom: space.sm },
+  list: { padding: space.md, paddingBottom: spacing[10], gap: spacing[3] },
   card: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: 12,
+    backgroundColor: palette.card,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 14,
-    gap: 6,
-    marginBottom: 10,
+    borderColor: palette.borderSubtle,
+    padding: spacing[3] + 2,
+    gap: spacing[3] - 2,
+    marginBottom: spacing[3],
   },
   cardUnread: {
-    borderColor: Colors.primary,
-    backgroundColor: 'rgba(255,107,0,0.08)',
+    borderColor: palette.brandBorder,
+    backgroundColor: palette.brandMuted,
   },
   cardHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardTitle: { color: Colors.textPrimary, fontSize: 16, fontWeight: '700', flex: 1 },
+  cardTitle: { ...typography.bodyMedium, flex: 1 },
   dot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.primary,
+    borderRadius: radius.full,
+    backgroundColor: palette.brand,
   },
-  cardMsg: { color: Colors.textSecondary, fontSize: 14, lineHeight: 20 },
-  cardTime: { color: Colors.textMuted, fontSize: 12 },
-  hubBox: {
-    marginHorizontal: 16,
-    marginBottom: 8,
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: 'rgba(59,130,246,0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(59,130,246,0.35)',
-  },
-  hubText: { color: Colors.textSecondary, fontSize: 13, lineHeight: 18 },
-  errorBox: {
-    marginHorizontal: 16,
-    marginBottom: 8,
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: 'rgba(239,68,68,0.12)',
-  },
-  errorText: { color: '#fca5a5', fontSize: 13 },
+  cardMsg: { ...typography.bodySmall, color: palette.textSecondary },
+  cardTime: { ...typography.caption, textTransform: 'none', color: palette.textMuted },
 });
