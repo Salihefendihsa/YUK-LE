@@ -21,6 +21,8 @@ namespace Yukle.Api.Controllers;
 [EnableRateLimiting("global-policy")]   // Phase 2.2: TokenBucket, 10 istek/sn
 public sealed class LoadsController(
     ILoadService             loadService,
+    ICancellationService     cancellationService,
+    ILoadEditService         loadEditService,
     YukleDbContext           db,
     PricingService           pricingService,
     ILogger<LoadsController> logger,
@@ -68,8 +70,8 @@ public sealed class LoadsController(
 
         try
         {
-            // Yakıt fiyatını DB'den önceden çek — yanıta da koyacağız
-            resolvedFuelPrice = await pricingService.GetCurrentFuelPriceAsync(dto.FromCity);
+            var vehicleTypeEarly = dto.RequiredVehicleType.ToString();
+            resolvedFuelPrice = await pricingService.ResolveFuelUnitPriceAsync(dto.FromCity, vehicleTypeEarly);
 
             // OSRM → gerçek karayolu mesafesi
             var routeService = HttpContext.RequestServices.GetRequiredService<IRouteService>();
@@ -96,7 +98,8 @@ public sealed class LoadsController(
                 fromCity:          dto.FromCity,
                 toCity:            dto.ToCity,
                 userId:            userIdClaim,
-                fuelPriceOverride: resolvedFuelPrice);
+                fuelPriceOverride: resolvedFuelPrice,
+                volumeM3:          dto.Volume ?? 0);
 
             // ── 3. AI sonucunu yüke mühürle ──────────────────────────────────
             await loadService.UpdateAiPriceAsync(
@@ -248,6 +251,61 @@ public sealed class LoadsController(
             return NotFound(new { Message = $"'{id}' ID'sine sahip yük ilanı bulunamadı." });
 
         return Ok(load);
+    }
+
+    // ── POST api/loads/{id}/cancel ─────────────────────────────────────────────
+
+    [HttpPost("{id:guid}/cancel")]
+    [Authorize(Roles = "Customer,Admin")]
+    public async Task<IActionResult> CancelLoad(Guid id, [FromBody] CancelLoadRequestDto? dto)
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return Unauthorized(new { Message = "Gecerli bir kullanici kimligi bulunamadi." });
+
+        var isAdmin = User.IsInRole("Admin");
+
+        try
+        {
+            var result = await cancellationService.CancelAsync(
+                id, userId, isAdmin, dto?.Reason);
+
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { Message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { Message = ex.Message });
+        }
+    }
+
+    // ── PUT api/loads/{id} ─────────────────────────────────────────────────────
+
+    [HttpPut("{id:guid}")]
+    [Authorize(Roles = "Customer")]
+    public async Task<IActionResult> UpdateLoad(Guid id, [FromBody] CreateLoadDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return Unauthorized(new { Message = "Gecerli bir kullanici kimligi bulunamadi." });
+
+        try
+        {
+            var result = await loadEditService.UpdateAsync(id, userId, isAdmin: false, dto);
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { Message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { Message = ex.Message });
+        }
     }
 
     // ── POST api/loads/{id}/pickup ─────────────────────────────────────────────

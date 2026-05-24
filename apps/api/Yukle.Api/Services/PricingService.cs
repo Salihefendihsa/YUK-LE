@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Yukle.Api.Data;
 using Yukle.Api.DTOs;
 using Yukle.Api.Hubs;
+using Yukle.Api.Infrastructure;
 using Yukle.Api.Models;
 
 namespace Yukle.Api.Services;
@@ -11,7 +12,7 @@ namespace Yukle.Api.Services;
 /// <summary>
 /// Gemini'ye gitmeden önce iki kritik veriyi otomatik hazırlayan orkestrasyon servisi:
 /// <list type="number">
-///   <item>DB'den o günkü en güncel Motorin fiyatını çeker.</item>
+///   <item>DB'den arac yakit tipine gore canli birim fiyati ceker (motorin/benzin/LPG) veya config.</item>
 ///   <item>OSRM üzerinden gerçek karayolu mesafesini hesaplar.</item>
 /// </list>
 /// Temizlenmiş verilerle <see cref="IGeminiService.CalculateFairPriceAsync"/> çağrılır.
@@ -22,10 +23,10 @@ public class PricingService(
     IRouteService                routeService,
     YukleDbContext               db,
     IHubContext<NotificationHub> hubContext,
-    ILogger<PricingService>      logger)
+    ILogger<PricingService>      logger,
+    PricingOptions               pricingOptions,
+    FuelOptions                  fuelOptions)
 {
-    // Yakıt fiyatı çekilemezse kullanılacak son çare sabit fiyat (TL/lt)
-    private const decimal DefaultFuelPriceTl = 42.50m;
 
     // ── Ana Metod ─────────────────────────────────────────────────────────────
 
@@ -62,28 +63,33 @@ public class PricingService(
         string?  userId               = null,
         double?  manualDistanceKm     = null,
         decimal? fuelPriceOverride    = null,
+        double?  volumeM3             = null,
         CancellationToken ct          = default)
     {
         // 1. Karayolu mesafesi
         var distanceKm = await ResolveDistanceAsync(
             originLat, originLng, destLat, destLng, manualDistanceKm, ct);
 
-        // 2. Yakıt fiyatı
+        // 2. Arac tipine gore birim yakit/enerji fiyati
         var fuelPrice = fuelPriceOverride
-                        ?? await GetCurrentFuelPriceAsync(fromCity, ct);
+                        ?? await ResolveFuelUnitPriceAsync(fromCity, vehicleType, ct);
 
         // 3. Rota bağlamı
         var routeContext = $"{fromCity} → {toCity}";
         var weightTon    = weightKg / 1000.0;
 
+        var volume = volumeM3 ?? 0;
+        var profile = pricingOptions.GetVehicleProfile(vehicleType);
+
         logger.LogDebug(
-            "PricingService → Gemini: mesafe={Dist:F1}km, yakıt={Fuel}TL/lt, " +
-            "araç={Vehicle}, ağırlık={Weight}t, güzergah={Route}",
-            distanceKm, fuelPrice, vehicleType, weightTon, routeContext);
+            "PricingService → Gemini: mesafe={Dist:F1}km, birimFiyat={Fuel} {Unit}, yakitTipi={Kind}, " +
+            "arac={Vehicle}, agirlik={Weight}t, hacim={Volume}m3, guzergah={Route}",
+            distanceKm, fuelPrice, VehicleFuelKindMapper.PriceUnitLabel(profile.FuelKind),
+            profile.FuelKind, vehicleType, weightTon, volume, routeContext);
 
         // 4. Gemini AI fiyat analizi
         var result = await geminiService.CalculateFairPriceAsync(
-            distanceKm, vehicleType, fuelPrice, weightTon, routeContext);
+            distanceKm, vehicleType, fuelPrice, weightTon, routeContext, volume);
 
         // 5. SignalR bildirim
         if (!string.IsNullOrEmpty(userId))
@@ -107,15 +113,17 @@ public class PricingService(
         string   toCity,
         string?  userId            = null,
         decimal? fuelPriceOverride = null,
+        double?  volumeM3          = null,
         CancellationToken ct       = default)
     {
         var fuelPrice    = fuelPriceOverride
-                           ?? await GetCurrentFuelPriceAsync(fromCity, ct);
+                           ?? await ResolveFuelUnitPriceAsync(fromCity, vehicleType, ct);
         var routeContext = $"{fromCity} → {toCity}";
         var weightTon    = weightKg / 1000.0;
 
+        var volume = volumeM3 ?? 0;
         var result = await geminiService.CalculateFairPriceAsync(
-            distanceKm, vehicleType, fuelPrice, weightTon, routeContext);
+            distanceKm, vehicleType, fuelPrice, weightTon, routeContext, volume);
 
         if (!string.IsNullOrEmpty(userId))
         {
@@ -125,72 +133,76 @@ public class PricingService(
         return result;
     }
 
-    // ── Yakıt Fiyatı Çekme ────────────────────────────────────────────────────
+    // ── Yakıt / Enerji Birim Fiyatı ─────────────────────────────────────────
+
+    /// <summary>Arac tipinin tipik yakit turune gore il bazli canli birim fiyat (DB veya config).</summary>
+    public Task<decimal> ResolveFuelUnitPriceAsync(
+        string city,
+        string vehicleType,
+        CancellationToken ct = default)
+    {
+        var profile = pricingOptions.GetVehicleProfile(vehicleType);
+        if (profile.FuelKind == VehicleFuelKind.Electric)
+        {
+            var electric = pricingOptions.ElectricityPriceTlPerKwh > 0
+                ? pricingOptions.ElectricityPriceTlPerKwh
+                : fuelOptions.Fallback.Electric;
+            return Task.FromResult(electric);
+        }
+
+        var dbType = VehicleFuelKindMapper.ToDbFuelType(profile.FuelKind);
+        return GetCurrentFuelPriceAsync(city, dbType, ct);
+    }
+
+    /// <summary>Geriye donuk uyumluluk — motorin.</summary>
+    public Task<decimal> GetCurrentFuelPriceAsync(string city, CancellationToken ct = default)
+        => GetCurrentFuelPriceAsync(city, FuelType.Motorin, ct);
 
     /// <summary>
-    /// İl adına göre DB'den bugünkü Motorin fiyatını döner.
-    /// Bugünkü kayıt yoksa son 7 günlük en güncel fiyatı kullanır.
-    /// Hiç kayıt bulunamazsa <see cref="DefaultFuelPriceTl"/> sabitini döner ve uyarı loglar.
+    /// Il ve yakit turune gore DB'den guncel fiyat. Yoksa son 7 gun, ulusal ortalama, config fallback.
     /// </summary>
     public async Task<decimal> GetCurrentFuelPriceAsync(
         string city,
+        FuelType fuelType,
         CancellationToken ct = default)
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var plateCode = TurkeyPlateRegistry.TryGetPlateCode(city);
 
-        // Önce bugünkü fiyatı dene
-        var todayPrice = await db.FuelPrices
-            .Where(f => f.City == city
-                        && f.FuelType == FuelType.Motorin
-                        && f.Date == today)
+        if (plateCode.HasValue)
+        {
+            var byPlate = await db.FuelPrices
+                .Where(f => f.PlateCode == plateCode.Value && f.FuelType == fuelType)
+                .OrderByDescending(f => f.FetchedAt)
+                .Select(f => (decimal?)f.PriceTL)
+                .FirstOrDefaultAsync(ct);
+
+            if (byPlate.HasValue)
+            {
+                logger.LogDebug(
+                    "Plaka {Plate} ({City}) {Fuel}: {Price} TL (DB)",
+                    plateCode.Value, city, fuelType, byPlate.Value);
+                return byPlate.Value;
+            }
+        }
+
+        // Geriye donuk: eski il adi kayitlari
+        var byCity = await db.FuelPrices
+            .Where(f => f.City == city && f.FuelType == fuelType)
+            .OrderByDescending(f => f.FetchedAt)
             .Select(f => (decimal?)f.PriceTL)
             .FirstOrDefaultAsync(ct);
 
-        if (todayPrice.HasValue)
+        if (byCity.HasValue)
         {
-            logger.LogDebug("{City} Motorin fiyatı DB'den alındı: {Price} TL/lt (bugün)", city, todayPrice.Value);
-            return todayPrice.Value;
+            logger.LogDebug("{City} {Fuel}: {Price} TL (DB, il adi)", city, fuelType, byCity.Value);
+            return byCity.Value;
         }
 
-        // Bugün yoksa son 7 günün en güncel kaydını kullan
-        var lastKnown = await db.FuelPrices
-            .Where(f => f.City == city
-                        && f.FuelType == FuelType.Motorin
-                        && f.Date >= today.AddDays(-7))
-            .OrderByDescending(f => f.Date)
-            .Select(f => new { f.PriceTL, f.Date })
-            .FirstOrDefaultAsync(ct);
-
-        if (lastKnown != null)
-        {
-            logger.LogDebug(
-                "{City} Motorin fiyatı DB'den alındı: {Price} TL/lt (son kayıt: {Date})",
-                city, lastKnown.PriceTL, lastKnown.Date);
-            return lastKnown.PriceTL;
-        }
-
-        // Hiç kayıt yok — ülke geneli ortalamasına bak
-        var nationalAvg = await db.FuelPrices
-            .Where(f => f.FuelType == FuelType.Motorin)
-            .OrderByDescending(f => f.Date)
-            .Select(f => (decimal?)f.PriceTL)
-            .FirstOrDefaultAsync(ct);
-
-        if (nationalAvg.HasValue)
-        {
-            logger.LogWarning(
-                "Warning: Fuel API unreachable, using last cached price. " +
-                "{City} için kayıt yok; ulusal ortalama kullanılıyor: {Price} TL/lt",
-                city, nationalAvg.Value);
-            return nationalAvg.Value;
-        }
-
-        // Kesinlikle hiç veri yok — hardcoded fallback
+        var fallback = fuelOptions.GetFallbackPrice(fuelType);
         logger.LogWarning(
-            "Warning: Fuel API unreachable, using last cached price. " +
-            "DB'de hiç yakıt kaydı yok; varsayılan {Default} TL/lt kullanılıyor.",
-            DefaultFuelPriceTl);
-        return DefaultFuelPriceTl;
+            "Warning: Fuel price cache miss for {City} (plate {Plate}); config fallback {Price} TL.",
+            city, plateCode, fallback);
+        return fallback;
     }
 
     // ── Mesafe Çözme ─────────────────────────────────────────────────────────

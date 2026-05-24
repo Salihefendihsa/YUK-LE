@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Yukle.Api.DTOs;
 
 /// <summary>
@@ -37,25 +39,13 @@ public sealed class AiMarketAnalysisDto
     /// <summary>Kullanılan karayolu mesafesi (km). OSRM veya Haversine hesabı.</summary>
     public double  DistanceKm       { get; init; }
 
-    /// <summary>Kullanılan Motorin fiyatı (TL/lt). DB'den veya fallback sabitten.</summary>
-    public decimal FuelPriceTl      { get; init; }
-
-    /// <summary>
-    /// True ise fiyat Gemini API'den; False ise matematiksel fallback modelinden geldi.
-    /// </summary>
+    /// <summary>True ise fiyat Gemini API'den; False ise matematiksel fallback.</summary>
     public bool    IsAiGenerated    { get; init; }
 
-    // ── Şoför Maliyet Dökümü ─────────────────────────────────────────────────
-
-    /// <summary>Toplam tahmini yakıt gideri (TL).</summary>
-    public decimal FuelCost           { get; init; }
-
-    /// <summary>Tahmini otoyol ve köprü masrafları (TL).</summary>
-    public decimal TollCost           { get; init; }
-
-    /// <summary>Tahmini araç yıpranma payı / amortisman (TL).</summary>
-    public decimal AmortizationCost   { get; init; }
-
-    /// <summary>Şoförün cebine kalacak tahmini net kazanç (TL).</summary>
-    public decimal EstimatedNetProfit { get; init; }
+    // Maliyet dokumu kullaniciya acilmaz — yalnizca sunucu tarafinda hesaplanir.
+    [JsonIgnore] public decimal FuelPriceTl           { get; init; }
+    [JsonIgnore] public decimal FuelCost              { get; init; }
+    [JsonIgnore] public decimal TollCost              { get; init; }
+    [JsonIgnore] public decimal AmortizationCost      { get; init; }
+    [JsonIgnore] public decimal EstimatedNetProfit    { get; init; }
 }

@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Yukle.Api.Data;
+using Yukle.Api.Infrastructure;
 using Yukle.Api.Models;
 
 namespace Yukle.Api.Services;
@@ -110,5 +111,57 @@ public class MockPaymentService : IPaymentService
             "Release (Mock): Load={LoadId} Tx={TxId} driver={DriverId} (ledger updated)",
             loadId, activeTx.TransactionId, driverUserId);
         return true;
+    }
+
+    public async Task<RefundEscrowResult?> RefundEscrowAsync(
+        Guid loadId, int customerUserId, decimal bidAmount, decimal refundPercent, decimal cancellationFee,
+        CancellationToken ct = default)
+    {
+        await PostgresRowLock.LockPaymentForLoadAsync(_context, loadId, ct);
+
+        var payment = await _context.PaymentTransactions
+            .FirstOrDefaultAsync(p => p.LoadId == loadId, ct);
+
+        if (payment is null)
+            return null;
+
+        if (payment.Status == PaymentStatus.Refunded)
+            return new RefundEscrowResult(0m, AlreadyRefunded: true);
+
+        if (payment.Status != PaymentStatus.Blocked)
+            return null;
+
+        var customerRefundReason = WalletRefundAudit.CustomerRefundReason(loadId);
+        var alreadyRefunded = await _context.WalletAuditLogs
+            .AnyAsync(l => l.LoadId == loadId
+                        && l.UserId == customerUserId
+                        && l.Type == WalletAuditLogType.Refund
+                        && l.Reason == customerRefundReason, ct);
+
+        if (alreadyRefunded)
+            return new RefundEscrowResult(0m, AlreadyRefunded: true);
+
+        var driverId = await _context.Loads.AsNoTracking()
+            .Where(l => l.Id == loadId)
+            .Select(l => l.DriverId)
+            .FirstOrDefaultAsync(ct);
+
+        if (driverId is not int resolvedDriverId)
+            return null;
+
+        // payment.Amount = CustomerTotal (bid + musteri komisyonu) — hold sirasinda yazildi
+        var grossRefund = Math.Round(payment.Amount * refundPercent / 100m, 2, MidpointRounding.AwayFromZero);
+        var refundAmount = Math.Max(0m, grossRefund - cancellationFee);
+
+        await _ledger.ApplyRefundAsync(loadId, customerUserId, resolvedDriverId, refundAmount, bidAmount, ct);
+
+        payment.Status    = PaymentStatus.Refunded;
+        payment.UpdatedAt = DateTime.UtcNow;
+
+        _logger.LogInformation(
+            "Refund (Mock): Load={LoadId} Customer={CustomerId} Bid={Bid:N2} CustomerTotal={Total:N2} Refund={Refund:N2}",
+            loadId, customerUserId, bidAmount, payment.Amount, refundAmount);
+
+        return new RefundEscrowResult(refundAmount, AlreadyRefunded: false);
     }
 }

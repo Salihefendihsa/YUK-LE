@@ -21,12 +21,14 @@ public interface IGeminiService
     /// <param name="route">
     /// İsteğe bağlı güzergah bağlamı (ör: "İstanbul → Erzurum", "Doğu Anadolu dağlık arazi").
     /// </param>
+    /// <param name="volumeM3">Yük hacmi (m³); hacimsel agirlik hesabi icin.</param>
     Task<AiPriceSuggestionDto> CalculateFairPriceAsync(
         double  distance,
         string  vehicleType,
         decimal fuelPrice,
         double  weightTon,
-        string? route = null);
+        string? route = null,
+        double  volumeM3 = 0);
 
     /// <summary>
     /// <see cref="CalculateFairPriceAsync"/> için geriye dönük uyumlu sarmalayıcı.
@@ -37,7 +39,8 @@ public interface IGeminiService
         string  vehicleType,
         decimal fuelPrice,
         double  weight,
-        string? route = null);
+        string? route = null,
+        double  volumeM3 = 0);
 
     // ── Evrak OCR ─────────────────────────────────────────────────────────────
 

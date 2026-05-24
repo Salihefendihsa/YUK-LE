@@ -19,5 +19,6 @@ public class Bid
     // Durum ve Zaman
     public BidStatus Status { get; set; } = BidStatus.Pending;
     public string? Note { get; set; }
+    public string? CloseReason { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

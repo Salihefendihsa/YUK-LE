@@ -29,6 +29,7 @@ public class AdminController : ControllerBase
     private readonly IDistributedCache _cache;
     private readonly IChatModerationService _chatModerationService;
     private readonly IPaymentService _paymentService;
+    private readonly ICancellationService _cancellationService;
     private readonly IDriverReviewDocumentStore _reviewDocumentStore;
 
     private static readonly ApprovalStatus[] DocumentQueueStatuses =
@@ -44,6 +45,7 @@ public class AdminController : ControllerBase
         IDistributedCache cache,
         IChatModerationService chatModerationService,
         IPaymentService paymentService,
+        ICancellationService cancellationService,
         IDriverReviewDocumentStore reviewDocumentStore)
     {
         _context = context;
@@ -51,6 +53,7 @@ public class AdminController : ControllerBase
         _cache = cache;
         _chatModerationService = chatModerationService;
         _paymentService = paymentService;
+        _cancellationService = cancellationService;
         _reviewDocumentStore = reviewDocumentStore;
     }
 
@@ -447,25 +450,33 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("loads/{loadId:guid}/cancel")]
-    public async Task<IActionResult> CancelLoad(Guid loadId)
+    public async Task<IActionResult> CancelLoad(Guid loadId, [FromBody] CancelLoadRequestDto? dto)
     {
         var adminId = RequireAdminId();
-        var load = await _context.Loads.SingleOrDefaultAsync(x => x.Id == loadId);
-        if (load is null)
-            throw new ApplicationException("İlan bulunamadı.");
 
-        load.Status = LoadStatus.Cancelled;
-        await _context.SaveChangesAsync();
+        try
+        {
+            var result = await _cancellationService.CancelAsync(
+                loadId, adminId, isAdmin: true, dto?.Reason);
 
-        var targetUserId = load.DriverId ?? load.UserId;
-        await WriteAdminActionLogAsync(
-            adminId,
-            targetUserId,
-            "CancelLoad",
-            note: $"Load {loadId} cancelled",
-            loadId: loadId);
+            var customerId = await _context.Loads.AsNoTracking()
+                .Where(l => l.Id == loadId)
+                .Select(l => l.UserId)
+                .FirstOrDefaultAsync();
 
-        return Ok(new { load.Id, Status = load.Status.ToString() });
+            await WriteAdminActionLogAsync(
+                adminId,
+                customerId > 0 ? customerId : adminId,
+                "CancelLoad",
+                note: result.Message,
+                loadId: loadId);
+
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { Message = ex.Message });
+        }
     }
 
     [HttpGet("payments")]

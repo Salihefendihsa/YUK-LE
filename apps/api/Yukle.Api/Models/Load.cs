@@ -55,6 +55,10 @@ public class Load
     public LoadStatus Status { get; set; } = LoadStatus.Active;
     public bool ProximityNotified { get; set; } = false;
 
+    public DateTime? CancelledAt { get; set; }
+    public string?   CancellationReason { get; set; }
+    public int?      CancelledBy { get; set; }
+
     // ── İlişkiler ─────────────────────────────────────────────────────────────
     public int UserId { get; set; }
     public User Owner { get; set; } = null!;

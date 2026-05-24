@@ -23,6 +23,10 @@ public class PriceAnalysisRequestDto
     [Range(0.01, 50_000, ErrorMessage = "Ağırlık 0,01 ile 50.000 kg arasında olmalıdır.")]
     public double Weight { get; set; }
 
+    /// <summary>Yuk hacmi (m³). Opsiyonel; hacimsel agirlik hesabinda kullanilir.</summary>
+    [Range(0, 10_000, ErrorMessage = "Hacim 0 ile 10.000 m³ arasinda olmalidir.")]
+    public double? Volume { get; set; }
+
     // ── Akıllı Mod: Koordinatlar (opsiyonel, OSRM mesafesi için) ─────────────
 
     /// <summary>Kalkış enlemi. <c>DestLat/Lng</c> ile birlikte verilirse OSRM sorgulanır.</summary>

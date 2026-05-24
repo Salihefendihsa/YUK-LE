@@ -117,6 +117,8 @@ builder.Services.AddSingleton<Yukle.Api.Services.IEncryptionService,
 
 builder.Services.AddScoped<Yukle.Api.Services.ITokenService,        Yukle.Api.Services.TokenService>();
 builder.Services.AddScoped<Yukle.Api.Services.ILoadService,         Yukle.Api.Services.LoadService>();
+builder.Services.AddScoped<Yukle.Api.Services.ICancellationService, Yukle.Api.Services.CancellationService>();
+builder.Services.AddScoped<Yukle.Api.Services.ILoadEditService,     Yukle.Api.Services.LoadEditService>();
 builder.Services.AddSingleton<Yukle.Api.Services.IDriverReviewDocumentStore, Yukle.Api.Services.DriverReviewDocumentStore>();
 builder.Services.AddScoped<Yukle.Api.Services.IAuthService,         Yukle.Api.Services.AuthService>();
 builder.Services.AddYukleSms(builder.Configuration);
@@ -124,6 +126,9 @@ builder.Services.AddScoped<Yukle.Api.Services.IBidService,          Yukle.Api.Se
 builder.Services.AddScoped<Yukle.Api.Services.INotificationService, Yukle.Api.Services.NotificationService>();
 builder.Services.AddScoped<Yukle.Api.Services.IDashboardService,    Yukle.Api.Services.DashboardService>();
 builder.Services.AddScoped<Yukle.Api.Services.AiPricingService>();
+builder.Services.AddSingleton(
+    sp => Yukle.Api.Infrastructure.PricingOptions.FromConfiguration(sp.GetRequiredService<IConfiguration>()));
+builder.Services.AddScoped<Yukle.Api.Services.FreightPricingEngine>();
 builder.Services.AddScoped<Yukle.Api.Services.PricingService>();
 builder.Services.AddScoped<Yukle.Api.Services.IWalletSettlementCalculator, Yukle.Api.Services.WalletSettlementCalculator>();
 builder.Services.AddScoped<Yukle.Api.Services.IWalletLedgerService,        Yukle.Api.Services.WalletLedgerService>();
@@ -139,11 +144,15 @@ builder.Services.AddHttpClient<Yukle.Api.Services.RouteService>(client =>
 builder.Services.AddScoped<Yukle.Api.Services.IRouteService>(
     sp => sp.GetRequiredService<Yukle.Api.Services.RouteService>());
 
-// ── Yakıt Fiyatı Worker (CollectAPI) ─────────────────────────────────────
-builder.Services.AddHttpClient("CollectAPI", client =>
+// ── Yakit fiyati (canli kaynak + DB cache) ───────────────────────────────
+builder.Services.AddSingleton(
+    sp => Yukle.Api.Infrastructure.FuelOptions.FromConfiguration(sp.GetRequiredService<IConfiguration>()));
+builder.Services.AddHttpClient("OpetFuel", client =>
 {
-    client.Timeout = TimeSpan.FromSeconds(15);
+    client.Timeout = TimeSpan.FromSeconds(20);
 });
+builder.Services.AddSingleton<Yukle.Api.Services.OpetFuelPriceClient>();
+builder.Services.AddScoped<Yukle.Api.Services.FuelPriceRefreshService>();
 builder.Services.AddHostedService<Yukle.Api.BackgroundServices.FuelPriceUpdateWorker>();
 
 // ── Phase 2.5.7 · Admin Kurulum Servisi ──────────────────────────────────

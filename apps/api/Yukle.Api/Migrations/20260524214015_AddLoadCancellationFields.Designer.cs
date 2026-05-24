@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Yukle.Api.Data;
 namespace Yukle.Api.Migrations
 {
     [DbContext(typeof(YukleDbContext))]
-    partial class YukleDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260524214015_AddLoadCancellationFields")]
+    partial class AddLoadCancellationFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -754,11 +757,6 @@ namespace Yukle.Api.Migrations
                     b.HasIndex("LoadId");
 
                     b.HasIndex("UserId", "CreatedAt");
-
-                    b.HasIndex("LoadId", "UserId", "Reason")
-                        .IsUnique()
-                        .HasDatabaseName("IX_WalletAuditLogs_CustomerRefund_Unique")
-                        .HasFilter("\"Type\" = 5 AND \"Reason\" LIKE 'Iptal/Iade REFUND load=%'");
 
                     b.ToTable("WalletAuditLogs");
                 });

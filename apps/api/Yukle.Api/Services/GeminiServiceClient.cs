@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Yukle.Api.DTOs;
+using Yukle.Api.Infrastructure;
 
 namespace Yukle.Api.Services;
 
@@ -43,14 +44,19 @@ public sealed class GeminiServiceClient : IGeminiService
     private readonly string                       _apiKey;
     private readonly string                       _flashModel;
     private readonly string                       _proModel;
+    private readonly PricingOptions               _pricing;
+    private readonly FreightPricingEngine         _freightPricing;
 
     public GeminiServiceClient(
         HttpClient                   httpClient,
         IConfiguration               configuration,
+        FreightPricingEngine         freightPricing,
         ILogger<GeminiServiceClient> logger)
     {
         _httpClient = httpClient;
         _logger     = logger;
+        _pricing = PricingOptions.FromConfiguration(configuration);
+        _freightPricing = freightPricing;
 
         _apiKey = configuration["GeminiAI:ApiKey"]
                   ?? throw new ArgumentException("GeminiAI:ApiKey eksik.");
@@ -105,33 +111,45 @@ public sealed class GeminiServiceClient : IGeminiService
         string  vehicleType,
         decimal fuelPrice,
         double  weightTon,
-        string? route = null)
+        string? route = null,
+        double  volumeM3 = 0)
     {
         try
         {
-            // ── CultureInfo.InvariantCulture ile güvenli sayı formatlaması ────
             var distStr   = distance.ToString("F1", CultureInfo.InvariantCulture);
             var fuelStr   = fuelPrice.ToString("F2", CultureInfo.InvariantCulture);
             var weightStr = weightTon.ToString("F3", CultureInfo.InvariantCulture);
+            var volumeStr = volumeM3.ToString("F1", CultureInfo.InvariantCulture);
             var routeCtx  = string.IsNullOrWhiteSpace(route) ? "Belirtilmedi" : route;
 
-            // Araç tipine özgü tüketim — prompt içinde ön-hesap olarak sunulur
-            var consumption    = GetVehicleConsumption(vehicleType);
-            var consumptionStr = consumption.ToString("F1", CultureInfo.InvariantCulture);
+            var profile = _pricing.GetVehicleProfile(vehicleType);
+            var consumptionStr = profile.ConsumptionPer100Km.ToString("F1", CultureInfo.InvariantCulture);
+            var fuelUnit = VehicleFuelKindMapper.UnitLabel(profile.FuelKind);
+            var priceUnit = VehicleFuelKindMapper.PriceUnitLabel(profile.FuelKind);
 
-            // Ön-hesap yakıt maliyeti — Gemini'nin reasoning'ini sabitleyen referans nokta
-            var fuelCost    = (decimal)distance * fuelPrice * consumption / 100m;
+            var volumetricTon = volumeM3 > 0
+                ? Math.Round(volumeM3 * (double)_pricing.VolumetricKgPerM3 / 1000.0, 3)
+                : 0;
+            var effectiveTon = Math.Max(weightTon, volumetricTon);
+            var effectiveStr = effectiveTon.ToString("F3", CultureInfo.InvariantCulture);
+
+            var fuelCost    = FreightPricingEngine.CalculateFuelCost(
+                (decimal)distance, profile, fuelPrice);
             var fuelCostStr = fuelCost.ToString("F2", CultureInfo.InvariantCulture);
 
             var userPrompt =
                 $"HESAPLAMA GİRDİLERİ:\n" +
                 $"- Mesafe                 : {distStr} km\n" +
                 $"- Araç Tipi              : {vehicleType}\n" +
-                $"- Güncel Yakıt Fiyatı    : {fuelStr} TL/litre\n" +
-                $"- Araç Tüketimi          : {consumptionStr} lt/100 km\n" +
-                $"- Ön-Hesap Yakıt Maliyeti: {fuelCostStr} TL\n" +
-                $"  (= {distStr} km × {fuelStr} TL/lt × {consumptionStr} lt ÷ 100)\n" +
+                $"- Yakıt/Enerji Tipi      : {profile.FuelKind}\n" +
+                $"- Güncel Birim Fiyat     : {fuelStr} {priceUnit}\n" +
+                $"- Araç Tüketimi          : {consumptionStr} {fuelUnit}/100 km\n" +
+                $"- Ön-Hesap Enerji Maliyeti: {fuelCostStr} TL\n" +
+                $"  (= {distStr} km × {fuelStr} {priceUnit} × {consumptionStr} {fuelUnit} ÷ 100)\n" +
                 $"- Yük Ağırlığı           : {weightStr} ton\n" +
+                $"- Yük Hacmi              : {volumeStr} m³\n" +
+                $"- Hacimsel Agirlik       : {volumetricTon:F3} ton ({_pricing.VolumetricKgPerM3} kg/m³)\n" +
+                $"- Fatura Tonaji          : {effectiveStr} ton (agirlik ve hacimden buyuk olan)\n" +
                 $"- Güzergah Bağlamı       : {routeCtx}\n\n" +
                 "Tahmini Otoyol/Köprü giderleri ve Araç Amortismanını Türkiye 2026 piyasasına\n" +
                 "göre kendin hesapla. Formülü ve 3 zorunlu soruyu Reasoning alanına yaz.\n" +
@@ -162,7 +180,7 @@ public sealed class GeminiServiceClient : IGeminiService
             if (string.IsNullOrWhiteSpace(jsonText))
             {
                 _logger.LogWarning("Gemini Flash returned empty price text. Falling back.");
-                return FallbackPriceSuggestion(distance, vehicleType, fuelPrice, weightTon);
+                return ApplyFallback(distance, vehicleType, fuelPrice, weightTon, volumeM3);
             }
 
             var suggestion = JsonSerializer.Deserialize<GeminiPriceResponse>(
@@ -171,7 +189,7 @@ public sealed class GeminiServiceClient : IGeminiService
             if (suggestion is null)
             {
                 _logger.LogWarning("Gemini Flash price deserialized as null. Falling back.");
-                return FallbackPriceSuggestion(distance, vehicleType, fuelPrice, weightTon);
+                return ApplyFallback(distance, vehicleType, fuelPrice, weightTon, volumeM3);
             }
 
             // Toplam kısıt kontrolü: dört bileşen toplamı ≈ RecommendedPrice
@@ -191,10 +209,10 @@ public sealed class GeminiServiceClient : IGeminiService
             if (gapRatio > 0.05 || (finalFuel == 0 && finalToll == 0 && finalAmort == 0))
             {
                 // Breakdown tutarsız — fuelCost'u sabit hesapla, geri kalan net'e at
-                var rebuildConsumption = GetVehicleConsumption(vehicleType);
-                finalFuel  = Math.Round((decimal)distance / 100m * rebuildConsumption * fuelPrice, 2);
-                finalToll  = Math.Round((decimal)distance * GetTollPerKm(vehicleType), 2);
-                finalAmort = Math.Round((decimal)distance * GetAmortPerKm(vehicleType), 2);
+                var rebuildProfile = _pricing.GetVehicleProfile(vehicleType);
+                finalFuel  = FreightPricingEngine.CalculateFuelCost((decimal)distance, rebuildProfile, fuelPrice);
+                finalToll  = Math.Round((decimal)distance * rebuildProfile.TollTlPerKm, 2);
+                finalAmort = Math.Round((decimal)distance * rebuildProfile.AmortizationTlPerKm, 2);
                 finalNet   = Math.Round(suggestion.RecommendedPrice - finalFuel - finalToll - finalAmort, 2);
 
                 _logger.LogDebug(
@@ -226,14 +244,19 @@ public sealed class GeminiServiceClient : IGeminiService
             _logger.LogWarning(
                 "Gemini circuit breaker OPEN — serving fallback for {Dist}km {Vehicle}. Reason: {R}",
                 distance, vehicleType, ex.Message);
-            return FallbackPriceSuggestion(distance, vehicleType, fuelPrice, weightTon);
+            return ApplyFallback(distance, vehicleType, fuelPrice, weightTon, volumeM3);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Gemini Flash price call failed. Applying fallback.");
-            return FallbackPriceSuggestion(distance, vehicleType, fuelPrice, weightTon);
+            return ApplyFallback(distance, vehicleType, fuelPrice, weightTon, volumeM3);
         }
     }
+
+    private AiPriceSuggestionDto ApplyFallback(
+        double distance, string vehicleType, decimal fuelPrice, double weightTon, double volumeM3)
+        => _freightPricing.Calculate(new FreightPricingInput(
+            distance, vehicleType, fuelPrice, weightTon, volumeM3, null));
 
     // ── Matematiksel Prompt Mühendisliği — Adil Fiyat Uzmanı ─────────────────
     private const string FairPriceSystemInstruction =
@@ -247,7 +270,7 @@ public sealed class GeminiServiceClient : IGeminiService
         "  + TahminiOtoyolKöprüGiderleri                      ← Türkiye 2026 tarifesi [tollCost]\n" +
         "  + AraçAmortismanı                                   ← araç tipine göre TL/km: [amortizationCost]\n" +
         "      TIR ~3.50 TL/km | Kamyon ~2.50 TL/km | Kamyonet ~1.20 TL/km | Panelvan ~0.80 TL/km\n" +
-        "  + ŞoförMinimumKârMarjı                             ← yakıt maliyetinin %40'ı [estimatedNetProfit]\n\n" +
+        "  + ŞoförMinimumKârMarjı                             ← temel maliyetin %25'i (kar marji) [estimatedNetProfit]\n\n" +
 
         "═══ FİYAT KISITLARI (İhlal edilemez) ══════════════════════════════════\n" +
         "MinPrice         = TemelMaliyet × 1.40   ← şoförün kırmızı çizgisi\n" +
@@ -266,6 +289,7 @@ public sealed class GeminiServiceClient : IGeminiService
         "• İstanbul/büyükşehir içi → zaman maliyeti: +%8–12 ekle.\n" +
         "• Boş dönüş imkânı yüksek bölge → fiyatı -%5–10 kır.\n" +
         "• Ağır yük (>10 ton) → dingil vergisi + lastik aşınması: ton başına +50–80 TL ekle.\n" +
+        "• Hacimli ama hafif yük → fatura tonajini max(gercek ton, hacim×333kg/m³) ile hesapla.\n" +
         "• Kış/olumsuz hava koşulları güzergahı → +%5–15 ekle.\n\n" +
 
         "═══ REASONING ALANI — PROFESYONEL ŞOFÖR BİLGİLENDİRMESİ (3 ZORUNLU CEVAP) ═══════\n" +
@@ -294,8 +318,9 @@ public sealed class GeminiServiceClient : IGeminiService
         string  vehicleType,
         decimal fuelPrice,
         double  weight,
-        string? route = null)
-        => CalculateFairPriceAsync(distance, vehicleType, fuelPrice, weight / 1000.0, route);
+        string? route = null,
+        double  volumeM3 = 0)
+        => CalculateFairPriceAsync(distance, vehicleType, fuelPrice, weight / 1000.0, route, volumeM3);
 
     // =========================================================================
     // Evrak Denetimi — AnalyzeDocumentAsync (Multimodal · Pro Vision · v2.5.0)
@@ -773,103 +798,17 @@ public sealed class GeminiServiceClient : IGeminiService
     // Fallback: Araç Tipine Özel Deterministik Model
     // =========================================================================
 
-    /// <summary>
-    /// Gemini erişilemediğinde veya circuit breaker açıkken devreye giren
-    /// Türkiye piyasası deterministik fiyat modeli.
-    /// <para>
-    /// Breakdown alanları (FuelCost, TollCost, AmortizationCost, EstimatedNetProfit)
-    /// tam olarak hesaplanır ve toplamları RecommendedPrice'a eşit olur.
-    /// </para>
-    /// <paramref name="weightTon"/> ton cinsindendir.
-    /// </summary>
+    /// <summary>Gemini erisilemediginde devreye giren deterministik model (testler icin de kullanilir).</summary>
     internal static AiPriceSuggestionDto FallbackPriceSuggestion(
         double  distance,
         string  vehicleType,
         decimal fuelPrice,
-        double  weightTon)
+        double  weightTon,
+        double  volumeM3 = 0)
     {
-        var vt   = vehicleType.ToUpperInvariant();
-        var dist = (decimal)distance;
-        var wTon = (decimal)weightTon;
-
-        // ── Araç tipine özel sabitler ──────────────────────────────────────
-        var consumptionPer100Km = GetVehicleConsumption(vehicleType);
-
-        var overheadMultiplier = vt switch
-        {
-            "TIR"      => 2.40m,
-            "KAMYON"   => 2.20m,
-            "KAMYONET" => 1.80m,
-            "PANELVAN" => 1.60m,
-            _          => 2.20m
-        };
-
-        var weightFactorPerTon = vt switch
-        {
-            "TIR"      => 15m,
-            "KAMYON"   => 12m,
-            "KAMYONET" => 8m,
-            "PANELVAN" => 5m,
-            _          => 10m
-        };
-
-        var (minBand, maxBand) = vt switch
-        {
-            "TIR"      => (0.82m, 1.25m),
-            "KAMYON"   => (0.85m, 1.22m),
-            "KAMYONET" => (0.88m, 1.18m),
-            "PANELVAN" => (0.90m, 1.15m),
-            _          => (0.85m, 1.20m)
-        };
-
-        // ── Maliyet Bileşenleri (4 toplam = RecommendedPrice) ─────────────
-
-        // 1. Yakıt gideri
-        var fuelCost  = Math.Round(dist / 100m * consumptionPer100Km * fuelPrice, 2);
-
-        // 2. Otoyol/Köprü — araç tipine göre TL/km tahmini
-        var tollCost  = Math.Round(dist * GetTollPerKm(vehicleType), 2);
-
-        // 3. Amortisman — araç tipine göre TL/km tahmini
-        var amortCost = Math.Round(dist * GetAmortPerKm(vehicleType), 2);
-
-        // 4. Ağırlık sürşarjı — ana fiyata entegre (net kâr üzerine eklenmez)
-        var weightSurcharge = Math.Round(wTon * weightFactorPerTon, 2);
-
-        // RecommendedPrice: (yakıt × genel_çarpan) + ağırlık_sürşarjı
-        var recommended = Math.Round(fuelCost * overheadMultiplier + weightSurcharge, 2);
-        var min         = Math.Round(recommended * minBand, 2);
-        var max         = Math.Round(recommended * maxBand, 2);
-
-        // 5. Net kâr = Önerilen fiyat - tüm giderler (garanti pozitif)
-        var netProfit   = Math.Max(0m, Math.Round(recommended - fuelCost - tollCost - amortCost, 2));
-
-        // ── Şoföre Samimi Reasoning ────────────────────────────────────────
-        var distStr    = distance.ToString("F0", CultureInfo.InvariantCulture);
-        var fuelStr    = fuelPrice.ToString("F2", CultureInfo.InvariantCulture);
-        var wStr       = weightTon.ToString("F1", CultureInfo.InvariantCulture);
-        var fuelPct    = recommended > 0
-            ? Math.Round(fuelCost / recommended * 100, 0)
-            : 0m;
-
-        var reasoning =
-            $"Bu güzergahta tahmini yakıt maliyetiniz {fuelCost:N0} TL olur " +
-            $"(toplam fiyatın yaklaşık %{fuelPct}'i). " +
-            $"Otoyol ve köprü payı tahmini {tollCost:N0} TL, " +
-            $"araç amortismanı {amortCost:N0} TL. " +
-            $"{distStr} km mesafe, {consumptionPer100Km} lt/100 km tüketim ve {fuelStr} TL/lt yakıt fiyatı baz alındı. " +
-            $"{wStr} ton yük için {weightSurcharge:N0} TL ek yük payı uygulandı. " +
-            $"Tüm giderler düşüldükten sonra net kazancınız tahmini {netProfit:N0} TL.";
-
-        return new AiPriceSuggestionDto(
-            RecommendedPrice:  recommended,
-            MinPrice:          min,
-            MaxPrice:          max,
-            Reasoning:         reasoning,
-            FuelCost:          fuelCost,
-            TollCost:          tollCost,
-            AmortizationCost:  amortCost,
-            EstimatedNetProfit:netProfit);
+        var engine = new FreightPricingEngine(PricingOptions.FromConfiguration(null));
+        return engine.Calculate(new FreightPricingInput(
+            distance, vehicleType, fuelPrice, weightTon, volumeM3, null));
     }
 
     // =========================================================================
@@ -878,20 +817,6 @@ public sealed class GeminiServiceClient : IGeminiService
 
     private string BuildUrl(string model)
         => $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={_apiKey}";
-
-    /// <summary>
-    /// Araç tipine göre ortalama yakıt tüketimini lt/100km cinsinden döner.
-    /// Hem prompt zenginleştirme hem fallback formülü tarafından kullanılır.
-    /// </summary>
-    private static decimal GetVehicleConsumption(string vehicleType)
-        => vehicleType.ToUpperInvariant() switch
-        {
-            "TIR"      => 38m,
-            "KAMYON"   => 28m,
-            "KAMYONET" => 14m,
-            "PANELVAN" => 10m,
-            _          => 30m
-        };
 
     /// <summary>Gemini yanıt zarfından metin içeriğini çıkarır.</summary>
     private static async Task<string?> ExtractGeminiTextAsync(HttpResponseMessage response)
@@ -930,26 +855,4 @@ public sealed class GeminiServiceClient : IGeminiService
         decimal  TollCost           = 0m,
         decimal  AmortizationCost   = 0m,
         decimal  EstimatedNetProfit = 0m);
-
-    /// <summary>Araç tipine göre otoyol/köprü gideri tahmini (TL/km) — Türkiye 2026.</summary>
-    private static decimal GetTollPerKm(string vehicleType)
-        => vehicleType.ToUpperInvariant() switch
-        {
-            "TIR"      => 2.00m,
-            "KAMYON"   => 1.50m,
-            "KAMYONET" => 0.80m,
-            "PANELVAN" => 0.50m,
-            _          => 1.50m
-        };
-
-    /// <summary>Araç tipine göre amortisman/yıpranma payı (TL/km) — Türkiye 2026.</summary>
-    private static decimal GetAmortPerKm(string vehicleType)
-        => vehicleType.ToUpperInvariant() switch
-        {
-            "TIR"      => 3.50m,
-            "KAMYON"   => 2.50m,
-            "KAMYONET" => 1.20m,
-            "PANELVAN" => 0.80m,
-            _          => 2.50m
-        };
 }

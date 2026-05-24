@@ -86,6 +86,84 @@ public sealed class WalletLedgerService(
             loadId, driverUserId, h, driver.WalletBalance, driver.PendingBalance);
     }
 
+    public async Task<decimal> ApplyRefundAsync(
+        Guid loadId, int customerUserId, int driverUserId, decimal refundAmount, decimal bidAmount,
+        CancellationToken ct = default)
+    {
+        var customerRefundReason = WalletRefundAudit.CustomerRefundReason(loadId);
+
+        var existingCustomerRefund = await context.WalletAuditLogs
+            .AnyAsync(l => l.LoadId == loadId
+                        && l.UserId == customerUserId
+                        && l.Type == WalletAuditLogType.Refund
+                        && l.Reason == customerRefundReason, ct);
+
+        if (existingCustomerRefund)
+            return 0m;
+
+        var holdLog = await context.WalletAuditLogs
+            .AsNoTracking()
+            .Where(l => l.LoadId == loadId
+                     && l.UserId == driverUserId
+                     && l.Type == WalletAuditLogType.Hold)
+            .OrderByDescending(l => l.CreatedAt)
+            .FirstOrDefaultAsync(ct);
+
+        var driver = await context.Users
+            .FirstOrDefaultAsync(u => u.Id == driverUserId, ct)
+            ?? throw new InvalidOperationException($"Driver user {driverUserId} not found.");
+
+        if (holdLog is not null)
+        {
+            if (driver.PendingBalance < holdLog.Amount)
+            {
+                throw new InvalidOperationException(
+                    $"Insufficient pending balance for refund reversal. Pending={driver.PendingBalance:N2} required={holdLog.Amount:N2}");
+            }
+
+            var pendingBefore = driver.PendingBalance;
+            driver.PendingBalance -= holdLog.Amount;
+
+            await AddLogAsync(driverUserId, loadId, holdLog.Amount, WalletAuditLogType.Refund,
+                pendingBefore, driver.PendingBalance,
+                $"{WalletRefundAudit.HoldReversalReasonPrefix} net={holdLog.Amount:N2}", ct);
+        }
+
+        if (bidAmount > 0)
+        {
+            var settlement = calculator.Calculate(bidAmount, driver.IsCorporate);
+            var bal = driver.PendingBalance;
+
+            await AddLogAsync(driverUserId, loadId, settlement.DriverCommission, WalletAuditLogType.Refund,
+                bal, bal, $"Iptal/Iade driver {WalletRefundAudit.CommissionReversalSuffix}", ct);
+
+            await AddLogAsync(driverUserId, loadId, settlement.CustomerCommission, WalletAuditLogType.Refund,
+                bal, bal, $"Iptal/Iade customer {WalletRefundAudit.CommissionReversalSuffix}", ct);
+
+            if (settlement.Withholding > 0)
+            {
+                await AddLogAsync(driverUserId, loadId, settlement.Withholding, WalletAuditLogType.Refund,
+                    bal, bal, $"Iptal/Iade stopaj {WalletRefundAudit.CommissionReversalSuffix}", ct);
+            }
+        }
+
+        var customer = await context.Users
+            .FirstOrDefaultAsync(u => u.Id == customerUserId, ct)
+            ?? throw new InvalidOperationException($"Customer user {customerUserId} not found.");
+
+        var walletBefore = customer.WalletBalance;
+        customer.WalletBalance += refundAmount;
+
+        await AddLogAsync(customerUserId, loadId, refundAmount, WalletAuditLogType.Refund,
+            walletBefore, customer.WalletBalance, customerRefundReason, ct);
+
+        logger.LogInformation(
+            "Wallet refund Load={LoadId} Customer={CustomerId} Amount={Amount:N2} Bid={Bid:N2}",
+            loadId, customerUserId, refundAmount, bidAmount);
+
+        return refundAmount;
+    }
+
     private static string Pct(decimal rate) => $"{rate * 100m:0.##}%";
 
     private async Task AddLogAsync(

@@ -1,17 +1,19 @@
 namespace Yukle.Api.Models;
 
 /// <summary>
-/// İl bazlı günlük yakıt fiyat kaydı.
-/// <c>FuelPriceUpdateWorker</c> tarafından her gün CollectAPI'dan çekilerek güncellenir.
+/// Il bazli guncel yakit birim fiyati (plaka kodu anahtar).
 /// </summary>
 public class FuelPrice
 {
     public int      Id        { get; set; }
 
-    /// <summary>Türkiye il adı — Türkçe tam yazım (örn: "Elazığ", "Malatya").</summary>
+    /// <summary>Il plaka kodu (01-81) — fiyatlandirma join anahtari.</summary>
+    public int?     PlateCode { get; set; }
+
+    /// <summary>Turkiye il adi (goruntuleme / geriye donuk uyumluluk).</summary>
     public string   City      { get; set; } = string.Empty;
 
-    /// <summary>Litre başına fiyat (TL).</summary>
+    /// <summary>Litre veya kWh basina fiyat (TL) — Amount.</summary>
     public decimal  PriceTL   { get; set; }
 
     /// <summary>Yakıt türü: Motorin (mazot), Benzin veya LPG.</summary>

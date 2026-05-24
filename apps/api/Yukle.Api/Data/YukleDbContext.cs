@@ -272,8 +272,8 @@ public class YukleDbContext : DbContext
             entity.Property(f => f.PriceTL).HasPrecision(10, 4);
             entity.Property(f => f.Source).HasMaxLength(50);
 
-            // En güncel il+yakıt türü fiyatını hızlı getirmek için bileşik index
             entity.HasIndex(f => new { f.City, f.FuelType, f.Date });
+            entity.HasIndex(f => new { f.PlateCode, f.FuelType });
         });
 
         // ── Phase 4.1 PaymentTransaction ──────────────────────────────────────
@@ -299,6 +299,10 @@ public class YukleDbContext : DbContext
             entity.Property(w => w.Reason).HasMaxLength(500);
             entity.HasIndex(w => new { w.UserId, w.CreatedAt });
             entity.HasIndex(w => w.LoadId);
+            entity.HasIndex(w => new { w.LoadId, w.UserId, w.Reason })
+                .IsUnique()
+                .HasDatabaseName("IX_WalletAuditLogs_CustomerRefund_Unique")
+                .HasFilter("\"Type\" = 5 AND \"Reason\" LIKE 'Iptal/Iade REFUND load=%'");
         });
 
         // ── Phase 4.3 UetdsOutbox ─────────────────────────────────────────────

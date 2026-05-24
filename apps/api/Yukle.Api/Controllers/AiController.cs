@@ -76,7 +76,8 @@ public sealed class AiController(
                 toCity:            request.ToCity   ?? string.Empty,
                 userId:            userId,
                 manualDistanceKm:  null,
-                fuelPriceOverride: request.FuelPrice);
+                fuelPriceOverride: request.FuelPrice,
+                volumeM3:          request.Volume);
 
             return Ok(result);
         }
@@ -95,7 +96,8 @@ public sealed class AiController(
                 fromCity:          request.FromCity,
                 toCity:            request.ToCity ?? string.Empty,
                 userId:            userId,
-                fuelPriceOverride: request.FuelPrice);
+                fuelPriceOverride: request.FuelPrice,
+                volumeM3:          request.Volume);
 
             return Ok(result);
         }
@@ -229,7 +231,8 @@ public sealed class AiController(
             weightKg:    load.Weight,
             fromCity:    load.FromCity,
             toCity:      load.ToCity,
-            userId:      userId);
+            userId:      userId,
+            volumeM3:    load.Volume > 0 ? load.Volume : null);
 
         return Ok(new { LoadId = id, Suggestion = suggestion });
     }
