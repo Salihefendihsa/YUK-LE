@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
+import { FadeInView } from '../../../src/components/ui/FadeInView';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
 import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
@@ -12,8 +13,9 @@ import { getAdminDashboard } from '../../../src/services/admin.service';
 import type { AdminDashboardStats } from '../../../src/types/admin';
 import { useAuthStore } from '../../../src/store/auth.store';
 import { palette } from '../../../src/theme/colors';
-import { fontFamily, typography } from '../../../src/theme/typography';
-import { spacing } from '../../../src/theme/spacing';
+import { typography } from '../../../src/theme/typography';
+import { space, spacing } from '../../../src/theme/spacing';
+import { radius } from '../../../src/theme/radius';
 import { formatCurrencyTRY } from '../../../src/utils/format';
 import { getSystemServicePill } from '../../../src/utils/statusPills';
 
@@ -74,7 +76,7 @@ export default function AdminDashboardScreen() {
   if (loading) {
     return (
       <ScreenContainer>
-        <LoadingState message="Komuta merkezi yükleniyor..." />
+        <LoadingState message="Komuta merkezi yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -97,17 +99,19 @@ export default function AdminDashboardScreen() {
 
       {stats ? (
         <>
+          <FadeInView>
           <Card variant="glass" padding={5} style={styles.hero}>
             <View style={styles.heroTop}>
               <View style={styles.heroIcon}>
                 <Ionicons name="shield-checkmark" size={26} color={palette.gold} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.heroTitle}>Operasyon ozeti</Text>
-                <Text style={styles.heroSub}>Platform genel bakis</Text>
+                <Text style={styles.heroTitle}>Operasyon özeti</Text>
+                <Text style={styles.heroSub}>Platform genel bakış</Text>
               </View>
             </View>
           </Card>
+          </FadeInView>
 
           <View style={styles.statusRow}>
             {sys?.api ? (
@@ -122,8 +126,8 @@ export default function AdminDashboardScreen() {
           </View>
 
           <View style={styles.kpiGrid}>
-            <KpiCard label="Toplam kullanici" value={String(stats.totalUsers)} />
-            <KpiCard label="Aktif ilan" value={String(stats.activeLoadCount)} badge="Yayinda" />
+            <KpiCard label="Toplam kullanıcı" value={String(stats.totalUsers)} />
+            <KpiCard label="Aktif ilan" value={String(stats.activeLoadCount)} badge="Yayında" />
             <KpiCard
               label="Bekleyen belge onayi"
               value={String(stats.pendingReviewCount)}
@@ -139,10 +143,11 @@ export default function AdminDashboardScreen() {
           <Card variant="elevated" padding={4}>
             <Text style={styles.cardTitle}>Canli aktivite</Text>
             {stats.recentActions.length === 0 ? (
-              <Text style={styles.muted}>Aktivite bulunamadi.</Text>
+              <Text style={styles.muted}>Aktivite bulunamadı.</Text>
             ) : (
-              stats.recentActions.slice(0, 10).map((a) => (
-                <View key={a.id} style={styles.actionRow}>
+              stats.recentActions.slice(0, 10).map((a, index) => (
+                <FadeInView key={a.id} delay={Math.min(index * 35, 175)}>
+                <View style={styles.actionRow}>
                   <Text style={styles.actionTime}>
                     {a.timestampUtc
                       ? new Date(a.timestampUtc).toLocaleTimeString('tr-TR', {
@@ -155,6 +160,7 @@ export default function AdminDashboardScreen() {
                     {a.note ?? a.action ?? 'Aksiyon'}
                   </Text>
                 </View>
+                </FadeInView>
               ))
             )}
           </Card>
@@ -165,13 +171,13 @@ export default function AdminDashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[3] },
-  hero: { marginBottom: spacing[1] },
+  scroll: { padding: space.md, paddingBottom: spacing[10], gap: spacing[3] },
+  hero: { marginBottom: space.xs },
   heroTop: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
   heroIcon: {
     width: 48,
     height: 48,
-    borderRadius: 12,
+    borderRadius: radius.md,
     backgroundColor: palette.goldMuted,
     borderWidth: 1,
     borderColor: palette.goldBorder,
@@ -179,63 +185,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   heroTitle: { ...typography.h3, color: palette.text },
-  heroSub: { ...typography.caption, textTransform: 'none', marginTop: 2 },
-  logoutBtn: {
-    paddingVertical: spacing[2],
-    paddingHorizontal: spacing[3],
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: palette.borderLight,
-  },
-  logoutText: {
-    fontFamily: fontFamily.semiBold,
-    fontSize: 12,
-    color: palette.textSecondary,
-  },
-  statusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] },
-  kpiGrid: { gap: spacing[2] },
+  heroSub: { ...typography.caption, textTransform: 'none', marginTop: space.xs },
+  statusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  kpiGrid: { gap: space.sm },
   kpiHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   kpiLabel: { ...typography.caption, textTransform: 'none' },
   kpiBadge: {
     borderWidth: 1,
     borderColor: palette.goldBorder,
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    borderRadius: radius.sm,
+    paddingHorizontal: space.sm - 2,
+    paddingVertical: space.xs,
     backgroundColor: palette.goldMuted,
   },
-  kpiBadgeText: {
-    fontFamily: fontFamily.bold,
-    fontSize: 10,
-    color: palette.gold,
-  },
-  kpiValue: {
-    fontFamily: fontFamily.bold,
-    fontSize: 22,
-    color: palette.text,
-    letterSpacing: -0.5,
-  },
+  kpiBadgeText: { ...typography.caption, fontSize: 10, color: palette.gold },
+  kpiValue: { ...typography.h2, fontSize: 22, letterSpacing: -0.5 },
   kpiValueDanger: { color: palette.error },
   kpiDanger: { borderColor: palette.errorBorder },
-  cardTitle: { ...typography.h3, marginBottom: spacing[2] },
+  cardTitle: { ...typography.h3, marginBottom: space.sm },
   muted: { ...typography.caption, textTransform: 'none' },
   actionRow: {
     flexDirection: 'row',
     gap: spacing[3],
-    paddingVertical: spacing[2],
+    paddingVertical: space.sm,
     borderBottomWidth: 1,
     borderBottomColor: palette.borderSubtle,
   },
-  actionTime: {
-    fontFamily: fontFamily.regular,
-    fontSize: 11,
-    color: palette.textMuted,
-    width: 48,
-  },
-  actionNote: {
-    fontFamily: fontFamily.regular,
-    fontSize: 13,
-    color: palette.textSecondary,
-    flex: 1,
-  },
+  actionTime: { ...typography.caption, fontSize: 11, color: palette.textMuted, width: 48 },
+  actionNote: { ...typography.bodySmall, color: palette.textSecondary, flex: 1 },
 });

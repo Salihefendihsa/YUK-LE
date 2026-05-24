@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
@@ -14,7 +13,9 @@ import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { FadeInView } from '../../../src/components/ui/FadeInView';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { PressableScale } from '../../../src/components/ui/PressableScale';
 import { SecondaryButton } from '../../../src/components/ui/SecondaryButton';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
 import { TextField } from '../../../src/components/ui/TextField';
@@ -23,8 +24,8 @@ import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getActiveLoadsPaged } from '../../../src/services/loads.service';
 import type { Load } from '../../../src/types/load';
 import { palette } from '../../../src/theme/colors';
-import { fontFamily, typography } from '../../../src/theme/typography';
-import { spacing } from '../../../src/theme/spacing';
+import { typography } from '../../../src/theme/typography';
+import { space, spacing } from '../../../src/theme/spacing';
 import { formatCurrencyTRY, formatWeightKg } from '../../../src/utils/format';
 import { getLoadStatusPill } from '../../../src/utils/statusPills';
 
@@ -114,7 +115,7 @@ export default function DriverLoadsScreen() {
   if (loading && loads.length === 0) {
     return (
       <ScreenContainer>
-        <LoadingState message="Yük panosu yükleniyor..." />
+        <LoadingState message="Yük panosu yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -176,7 +177,7 @@ export default function DriverLoadsScreen() {
                 disabled={loadingMore}
               />
               {loadingMore ? (
-                <ActivityIndicator color={palette.brand} style={{ marginTop: spacing[2] }} />
+                <ActivityIndicator color={palette.brand} style={{ marginTop: space.sm }} />
               ) : null}
             </View>
           ) : (
@@ -187,48 +188,50 @@ export default function DriverLoadsScreen() {
           if (hasMore && !loadingMore) void loadMore();
         }}
         onEndReachedThreshold={0.3}
-        renderItem={({ item }) => {
+        renderItem={({ item, index }) => {
           const pill = getLoadStatusPill(item.status);
           return (
-            <Pressable
-              onPress={() =>
-                router.push({
-                  pathname: '/(driver)/load-detail',
-                  params: { id: item.id },
-                })
-              }
-            >
-              <Card variant="glass" padding={4} style={styles.loadCard}>
-                <View style={styles.cardTop}>
-                  <View style={styles.routeCol}>
-                    <Text style={styles.route}>
-                      {item.fromCity} → {item.toCity}
-                    </Text>
-                    <Text style={styles.districts}>
-                      {item.fromDistrict} / {item.toDistrict}
-                    </Text>
+            <FadeInView delay={Math.min(index * 40, 200)}>
+              <PressableScale
+                onPress={() =>
+                  router.push({
+                    pathname: '/(driver)/load-detail',
+                    params: { id: item.id },
+                  })
+                }
+              >
+                <Card variant="glass" padding={4} style={styles.loadCard}>
+                  <View style={styles.cardTop}>
+                    <View style={styles.routeCol}>
+                      <Text style={styles.route}>
+                        {item.fromCity} → {item.toCity}
+                      </Text>
+                      <Text style={styles.districts}>
+                        {item.fromDistrict} / {item.toDistrict}
+                      </Text>
+                    </View>
+                    <Text style={styles.price}>{formatCurrencyTRY(item.price)}</Text>
                   </View>
-                  <Text style={styles.price}>{formatCurrencyTRY(item.price)}</Text>
-                </View>
 
-                <View style={styles.metaRow}>
-                  <Text style={styles.meta}>
-                    {item.loadType ?? item.type ?? '-'} · {formatWeightKg(item.weight)}
+                  <View style={styles.metaRow}>
+                    <Text style={styles.meta}>
+                      {item.loadType ?? item.type ?? '-'} · {formatWeightKg(item.weight)}
+                    </Text>
+                    <StatusPill label={pill.label} tone={pill.tone} />
+                  </View>
+
+                  <Text style={styles.metaLine}>
+                    Araç: {item.requiredVehicleType ?? '-'} · Teklif: {item.bidCount}
                   </Text>
-                  <StatusPill label={pill.label} tone={pill.tone} />
-                </View>
+                  <Text style={styles.musteri}>Müşteri: {item.ownerFullName}</Text>
 
-                <Text style={styles.metaLine}>
-                  Araç: {item.requiredVehicleType ?? '-'} · Teklif: {item.bidCount}
-                </Text>
-                <Text style={styles.musteri}>Müşteri: {item.ownerFullName}</Text>
-
-                <View style={styles.cardFooter}>
-                  <Text style={styles.detailLink}>Detay ve teklif</Text>
-                  <Ionicons name="chevron-forward" size={16} color={palette.brand} />
-                </View>
-              </Card>
-            </Pressable>
+                  <View style={styles.cardFooter}>
+                    <Text style={styles.detailLink}>Detay ve teklif</Text>
+                    <Ionicons name="chevron-forward" size={16} color={palette.brand} />
+                  </View>
+                </Card>
+              </PressableScale>
+            </FadeInView>
           );
         }}
       />
@@ -237,43 +240,38 @@ export default function DriverLoadsScreen() {
 }
 
 const styles = StyleSheet.create({
-  headerBlock: { gap: spacing[3], marginBottom: spacing[2] },
+  headerBlock: { gap: spacing[3], marginBottom: space.sm },
   filterCard: { gap: spacing[3] },
-  filterActions: { flexDirection: 'row', gap: spacing[2] },
+  filterActions: { flexDirection: 'row', gap: space.sm },
   resultCount: { ...typography.caption, textTransform: 'none', color: palette.textMuted },
-  list: { paddingHorizontal: spacing[4], paddingBottom: spacing[8], gap: spacing[3] },
+  list: { paddingHorizontal: space.md, paddingBottom: space.xl, gap: spacing[3] },
   loadCard: { marginBottom: spacing[3] },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing[3], marginBottom: spacing[2] },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing[3], marginBottom: space.sm },
   routeCol: { flex: 1 },
-  route: { fontFamily: fontFamily.bold, fontSize: 16, color: palette.text },
-  districts: { ...typography.caption, textTransform: 'none', marginTop: 2 },
-  price: { fontFamily: fontFamily.bold, fontSize: 15, color: palette.gold },
+  route: { ...typography.bodyMedium, fontSize: 16 },
+  districts: { ...typography.caption, textTransform: 'none', marginTop: space.xs },
+  price: { ...typography.bodyMedium, color: palette.gold },
   metaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: spacing[2],
-    marginBottom: spacing[2],
+    gap: space.sm,
+    marginBottom: space.sm,
   },
   meta: { ...typography.caption, textTransform: 'none', flex: 1 },
   metaLine: { ...typography.caption, textTransform: 'none', color: palette.textMuted },
-  musteri: {
-    fontFamily: fontFamily.regular,
-    fontSize: 12,
-    color: palette.textMuted,
-    marginTop: spacing[1],
-  },
+  musteri: { ...typography.caption, textTransform: 'none', color: palette.textMuted, marginTop: space.xs },
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    gap: spacing[1],
+    gap: space.xs,
     marginTop: spacing[3],
-    paddingTop: spacing[2],
+    paddingTop: space.sm,
     borderTopWidth: 1,
     borderTopColor: palette.borderSubtle,
   },
-  detailLink: { fontFamily: fontFamily.semiBold, fontSize: 12, color: palette.brand },
-  footer: { paddingVertical: spacing[4], gap: spacing[2] },
-  footerPad: { height: spacing[4] },
+  detailLink: { ...typography.caption, color: palette.brand, fontFamily: typography.bodyMedium.fontFamily },
+  footer: { paddingVertical: space.md, gap: space.sm },
+  footerPad: { height: space.md },
 });

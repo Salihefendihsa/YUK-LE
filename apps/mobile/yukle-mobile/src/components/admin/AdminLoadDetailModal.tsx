@@ -13,8 +13,9 @@ import { getLoadById } from '../../services/loads.service';
 import type { AdminLoadRow } from '../../types/admin';
 import type { Load } from '../../types/load';
 import { palette } from '../../theme/colors';
-import { fontFamily, typography } from '../../theme/typography';
-import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
+import { radius } from '../../theme/radius';
+import { space, spacing } from '../../theme/spacing';
 import { formatCurrencyTRY, formatDateTR, formatWeightKg } from '../../utils/format';
 import { getLoadStatusPill } from '../../utils/statusPills';
 import { Card } from '../ui/Card';
@@ -113,56 +114,38 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing[4],
+    paddingHorizontal: space.md,
     paddingTop: 48,
-    paddingBottom: spacing[3],
+    paddingBottom: space.md,
     borderBottomWidth: 1,
     borderBottomColor: palette.borderSubtle,
   },
   title: { ...typography.h2 },
   close: { ...typography.link },
-  scroll: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[3] },
+  scroll: { padding: space.md, paddingBottom: spacing[10], gap: space.md },
   routeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    gap: spacing[2],
-    marginBottom: spacing[2],
+    gap: space.sm,
+    marginBottom: space.sm,
   },
-  route: {
-    fontFamily: fontFamily.bold,
-    fontSize: 18,
-    color: palette.gold,
-    flex: 1,
-  },
-  sectionTitle: {
-    fontFamily: fontFamily.bold,
-    fontSize: 14,
-    color: palette.gold,
-    marginBottom: spacing[2],
-  },
+  route: { ...typography.h3, color: palette.gold, flex: 1 },
+  sectionTitle: { ...typography.h3, color: palette.gold, marginBottom: space.sm },
   muted: { ...typography.caption, textTransform: 'none' },
-  mono: {
-    fontFamily: fontFamily.regular,
-    fontSize: 11,
-    color: palette.textMuted,
-  },
+  mono: { ...typography.caption, fontSize: 11, color: palette.textMuted, textTransform: 'none' },
   mockNote: {
     backgroundColor: palette.goldMuted,
     borderWidth: 1,
     borderColor: palette.goldBorder,
-    borderRadius: 10,
-    padding: spacing[3],
+    borderRadius: radius.md,
+    padding: space.md,
   },
   mockNoteText: {
-    fontFamily: fontFamily.regular,
-    fontSize: 12,
+    ...typography.caption,
     color: palette.gold,
     lineHeight: 18,
+    textTransform: 'none',
   },
-  error: {
-    fontFamily: fontFamily.regular,
-    fontSize: 13,
-    color: palette.error,
-  },
+  error: { ...typography.bodySmall, color: palette.error },
 });

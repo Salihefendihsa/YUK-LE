@@ -4,6 +4,7 @@ import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { FadeInView } from '../../../src/components/ui/FadeInView';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
 import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
@@ -13,8 +14,8 @@ import { getWalletSummary, getWalletTransactions } from '../../../src/services/w
 import { buildDriverSettlementsFromTransactions } from '../../../src/utils/walletSettlement';
 import type { WalletSummary, WalletTransaction } from '../../../src/types/wallet';
 import { palette } from '../../../src/theme/colors';
-import { fontFamily, typography } from '../../../src/theme/typography';
-import { spacing } from '../../../src/theme/spacing';
+import { typography } from '../../../src/theme/typography';
+import { space, spacing } from '../../../src/theme/spacing';
 import { formatCurrencyTRY, formatDateTR } from '../../../src/utils/format';
 import { getWalletTxStatusPill } from '../../../src/utils/statusPills';
 
@@ -54,7 +55,7 @@ export default function DriverWalletScreen() {
   if (loading) {
     return (
       <ScreenContainer>
-        <LoadingState message="Cüzdan yükleniyor..." />
+        <LoadingState message="Cüzdan yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -76,7 +77,7 @@ export default function DriverWalletScreen() {
             </View>
 
             <Card variant="glass" padding={5} style={styles.hero}>
-              <Text style={styles.heroLabel}>Cekilebilir bakiye</Text>
+              <Text style={styles.heroLabel}>Çekilebilir bakiye</Text>
               <Text style={styles.heroAmount}>
                 {formatCurrencyTRY(summary?.walletBalance ?? 0)}
               </Text>
@@ -106,14 +107,16 @@ export default function DriverWalletScreen() {
             {loadSettlements.length > 0 ? (
               <>
                 <Text style={styles.sectionTitle}>Yük bazlı ödeme dökümü</Text>
-                {loadSettlements.slice(0, 5).map((item) => (
-                  <Card key={item.loadId} variant="default" padding={4} style={styles.settleCard}>
+                {loadSettlements.slice(0, 5).map((item, index) => (
+                  <FadeInView key={item.loadId} delay={index * 40}>
+                  <Card variant="default" padding={4} style={styles.settleCard}>
                     <Text style={styles.settleLoad}>
                       Yük {item.loadId.slice(0, 8)}…
                       {item.hasRelease ? ' · Ödendi' : ' · Beklemede'}
                     </Text>
                     <SettlementBreakdown settlement={item.settlement} mode="driver" compact />
                   </Card>
+                  </FadeInView>
                 ))}
               </>
             ) : null}
@@ -130,9 +133,10 @@ export default function DriverWalletScreen() {
             />
           ) : null
         }
-        renderItem={({ item }) => {
+        renderItem={({ item, index }) => {
           const pill = getWalletTxStatusPill(item.status);
           return (
+            <FadeInView delay={Math.min(index * 35, 175)}>
             <Card variant="default" padding={4} style={styles.txCard}>
               <View style={styles.txRow}>
                 <View style={{ flex: 1 }}>
@@ -160,6 +164,7 @@ export default function DriverWalletScreen() {
                 </View>
               </View>
             </Card>
+            </FadeInView>
           );
         }}
       />
@@ -168,42 +173,24 @@ export default function DriverWalletScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { paddingHorizontal: spacing[4], paddingBottom: spacing[8] },
-  headerPad: { paddingTop: spacing[4] },
-  hero: {
-    marginBottom: spacing[4],
-    borderColor: palette.brandBorder,
-  },
+  list: { paddingHorizontal: space.md, paddingBottom: space.xl },
+  headerPad: { paddingTop: space.md },
+  hero: { marginBottom: space.md, borderColor: palette.brandBorder },
   heroLabel: { ...typography.label, color: palette.textMuted },
-  heroAmount: {
-    fontFamily: fontFamily.bold,
-    fontSize: 32,
-    color: palette.gold,
-    marginTop: spacing[2],
-  },
-  statsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginBottom: spacing[5] },
+  heroAmount: { ...typography.h1, fontSize: 32, color: palette.gold, marginTop: space.sm },
+  statsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginBottom: spacing[5] },
   stat: { flex: 1, flexShrink: 1, minWidth: 0, maxWidth: '50%' },
   statLabel: { ...typography.caption, textTransform: 'none', color: palette.textMuted },
-  statValue: {
-    fontFamily: fontFamily.bold,
-    fontSize: 15,
-    color: palette.text,
-    marginTop: spacing[1],
-  },
+  statValue: { ...typography.bodyMedium, fontSize: 15, marginTop: space.xs },
   sectionTitle: { ...typography.h3, marginBottom: spacing[3] },
-  settleCard: { marginBottom: spacing[2] },
-  settleLoad: {
-    fontFamily: fontFamily.semiBold,
-    fontSize: 12,
-    color: palette.textMuted,
-    marginBottom: spacing[1],
-  },
-  txCard: { marginBottom: spacing[2] },
+  settleCard: { marginBottom: space.sm },
+  settleLoad: { ...typography.caption, color: palette.textMuted, marginBottom: space.xs },
+  txCard: { marginBottom: space.sm },
   txRow: { flexDirection: 'row', gap: spacing[3] },
-  txDesc: { fontFamily: fontFamily.semiBold, fontSize: 14, color: palette.text },
-  txDate: { ...typography.caption, textTransform: 'none', marginTop: 2 },
-  txRight: { alignItems: 'flex-end', gap: spacing[2] },
-  txAmount: { fontFamily: fontFamily.bold, fontSize: 14, color: palette.text },
+  txDesc: { ...typography.bodySmall, fontFamily: typography.bodyMedium.fontFamily },
+  txDate: { ...typography.caption, textTransform: 'none', marginTop: space.xs },
+  txRight: { alignItems: 'flex-end', gap: space.sm },
+  txAmount: { ...typography.bodySmall, fontFamily: typography.bodyMedium.fontFamily },
   txIn: { color: palette.success },
   txOut: { color: palette.error },
 });

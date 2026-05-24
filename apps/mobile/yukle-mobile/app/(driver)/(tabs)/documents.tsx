@@ -3,6 +3,7 @@ import { Platform, StyleSheet, Text, View } from 'react-native';
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
+import { FadeInView } from '../../../src/components/ui/FadeInView';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
 import { SecondaryButton } from '../../../src/components/ui/SecondaryButton';
@@ -14,8 +15,8 @@ import { getUserProfile } from '../../../src/services/user.service';
 import { useAuthStore } from '../../../src/store/auth.store';
 import type { DocUiStatus, DriverDocType, PickedDocumentFile } from '../../../src/types/document';
 import { palette } from '../../../src/theme/colors';
-import { fontFamily, typography } from '../../../src/theme/typography';
-import { spacing } from '../../../src/theme/spacing';
+import { typography } from '../../../src/theme/typography';
+import { space, spacing } from '../../../src/theme/spacing';
 import { pickDocumentImage } from '../../../src/utils/pickDocument';
 import { getApprovalStatusPill, getDocUiStatusPill } from '../../../src/utils/statusPills';
 
@@ -181,7 +182,7 @@ export default function DriverDocumentsScreen() {
             ...prev[card.key],
             loading: false,
             status: 'Reddedildi',
-            resultText: ocr.validationMessage ?? 'Belge analizinden geçemedi.',
+            resultText: ocr.validationMessage ?? 'Belge doğrulamasından geçemedi.',
           },
         }));
         return;
@@ -204,7 +205,7 @@ export default function DriverDocumentsScreen() {
           resultText:
             upload.message ??
             upload.validationMessage ??
-            (ocr.fullName ? `Belge okundu: ${ocr.fullName}` : 'Belge işlendi.'),
+            (ocr.fullName ? `Belge işlendi: ${ocr.fullName}` : 'Belge işlendi.'),
         },
       }));
 
@@ -224,7 +225,7 @@ export default function DriverDocumentsScreen() {
   if (profileLoading) {
     return (
       <ScreenContainer>
-        <LoadingState message="Belge durumu yükleniyor..." />
+        <LoadingState message="Belge durumu yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -246,14 +247,15 @@ export default function DriverDocumentsScreen() {
 
       {error ? <AlertBanner message={error} tone="error" /> : null}
 
-      {DOC_CARDS.map((card) => {
+      {DOC_CARDS.map((card, index) => {
         const state = docs[card.key];
         const pill = getDocUiStatusPill(state.status);
         const serverApproved = flags[card.approvedFlag];
         const canReupload = state.status === 'Reddedildi' || (!serverApproved && state.status !== 'Onayli');
 
         return (
-          <Card key={card.key} variant="default" padding={4} style={styles.docCard}>
+          <FadeInView key={card.key} delay={index * 50}>
+          <Card variant="default" padding={4} style={styles.docCard}>
             <View style={styles.docHead}>
               <Text style={styles.docTitle}>
                 {card.icon} {card.title}
@@ -266,7 +268,7 @@ export default function DriverDocumentsScreen() {
                 <SecondaryButton title="Dosya Seç" onPress={() => pickFile(card.key)} disabled={state.loading} />
                 <Text style={styles.fileLabel}>{state.fileLabel}</Text>
                 <PrimaryButton
-                  title={state.status === 'Reddedildi' ? 'Yeniden yükle' : 'Analiz Et ve Kaydet'}
+                  title={state.status === 'Reddedildi' ? 'Yeniden yükle' : 'Belgeyi yükle'}
                   onPress={() => handleAnalyzeAndUpload(card)}
                   loading={state.loading}
                   disabled={!state.file || state.loading}
@@ -278,6 +280,7 @@ export default function DriverDocumentsScreen() {
 
             {state.resultText ? <Text style={styles.result}>{state.resultText}</Text> : null}
           </Card>
+          </FadeInView>
         );
       })}
     </ScreenScroll>
@@ -285,13 +288,13 @@ export default function DriverDocumentsScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[4] },
-  accountLabel: { ...typography.label, marginBottom: spacing[2] },
-  accountRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing[2] },
+  scroll: { padding: space.md, paddingBottom: spacing[10], gap: space.md },
+  accountLabel: { ...typography.label, marginBottom: space.sm },
+  accountRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
   accountHint: { ...typography.caption, textTransform: 'none', color: palette.textMuted },
   docCard: { gap: spacing[3] },
-  docHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: spacing[2] },
-  docTitle: { fontFamily: fontFamily.semiBold, fontSize: 15, color: palette.text, flex: 1 },
+  docHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: space.sm },
+  docTitle: { ...typography.bodyMedium, flex: 1 },
   fileLabel: { ...typography.caption, textTransform: 'none', textAlign: 'center' },
   result: { ...typography.caption, textTransform: 'none', lineHeight: 18 },
   approvedHint: { ...typography.caption, textTransform: 'none', color: palette.textMuted },

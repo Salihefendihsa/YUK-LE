@@ -1,21 +1,22 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
-import { SectionHeader } from '../../../src/components/ui/SectionHeader';
+import { PressableScale } from '../../../src/components/ui/PressableScale';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
 import { adminScreenStyles as s } from '../../../src/constants/adminScreenStyles';
-import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { ScreenContainer, ScreenScroll } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getAdminSystemFull } from '../../../src/services/admin.service';
 import type { AdminSystemInfo, SystemExternalStatus } from '../../../src/types/admin';
 import { palette } from '../../../src/theme/colors';
-import { fontFamily, typography } from '../../../src/theme/typography';
-import { spacing } from '../../../src/theme/spacing';
+import { typography } from '../../../src/theme/typography';
+import { radius } from '../../../src/theme/radius';
+import { space, spacing } from '../../../src/theme/spacing';
 import { formatDateTimeTR } from '../../../src/utils/format';
 import { getSystemServicePill } from '../../../src/utils/statusPills';
 
@@ -24,13 +25,13 @@ const MENU: { title: string; sub: string; href: string; icon: keyof typeof Ionic
   { title: 'Sistem Logları', sub: 'Admin işlem kayıtları', href: '/(admin)/(tabs)/logs', icon: 'list-outline' },
   {
     title: 'Engellenen Mesajlar',
-    sub: 'Moderasyon kayitlari (bellek)',
+    sub: 'Moderasyon kayıtları (bellek)',
     href: '/(admin)/(tabs)/blocked-messages',
     icon: 'ban-outline',
   },
-  { title: 'Sohbetler', sub: 'Konu ozeti + mesaj gecmisi', href: '/(admin)/(tabs)/chats', icon: 'chatbubbles-outline' },
+  { title: 'Sohbetler', sub: 'Konu özeti + mesaj geçmişi', href: '/(admin)/(tabs)/chats', icon: 'chatbubbles-outline' },
   { title: 'Puanlar', sub: 'Yorum listesi, silme', href: '/(admin)/(tabs)/ratings', icon: 'star-outline' },
-  { title: 'Canli Takip', sub: 'Aktif sofor konumlari (REST)', href: '/(admin)/(tabs)/tracking', icon: 'navigate-outline' },
+  { title: 'Canlı Takip', sub: 'Aktif şoför konumları (REST)', href: '/(admin)/(tabs)/tracking', icon: 'navigate-outline' },
   { title: 'Ayarlar', sub: 'Hesap ve bildirim tercihleri (yakında)', href: '/(admin)/(tabs)/settings', icon: 'options-outline' },
 ];
 
@@ -70,7 +71,7 @@ export default function AdminSystemTab() {
   if (loading) {
     return (
       <ScreenContainer>
-        <LoadingState message="Sistem durumu yükleniyor..." />
+        <LoadingState message="Sistem durumu yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -87,7 +88,7 @@ export default function AdminSystemTab() {
       {error ? <AlertBanner message={error} tone="error" /> : null}
 
       <Card variant="elevated" padding={4}>
-        <Text style={styles.cardTitle}>API / Veritabani</Text>
+        <Text style={styles.cardTitle}>API / Veritabanı</Text>
         <View style={styles.pillRow}>
           {system?.api ? (
             <StatusPill {...getSystemServicePill(system.api)} label={`Servis: ${system.api}`} />
@@ -116,7 +117,7 @@ export default function AdminSystemTab() {
 
       <Text style={styles.sectionLabel}>Modüller</Text>
       {MENU.map((item) => (
-        <Pressable key={item.href} style={s.linkBtn} onPress={() => router.push(item.href as never)}>
+        <PressableScale key={item.href} style={s.linkBtn} onPress={() => router.push(item.href as never)}>
           <View style={styles.linkRow}>
             <View style={styles.linkIcon}>
               <Ionicons name={item.icon} size={20} color={palette.brand} />
@@ -127,34 +128,35 @@ export default function AdminSystemTab() {
             </View>
             <Ionicons name="chevron-forward" size={18} color={palette.textMuted} />
           </View>
-        </Pressable>
+        </PressableScale>
       ))}
     </ScreenScroll>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[3] },
-  cardTitle: { ...typography.h3, marginBottom: spacing[2] },
-  pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginBottom: spacing[2] },
+  scroll: { padding: space.md, paddingBottom: spacing[10], gap: space.md },
+  cardTitle: { ...typography.h3, marginBottom: space.sm },
+  pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginBottom: space.sm },
   muted: { ...typography.caption, textTransform: 'none' },
   note: {
-    fontFamily: fontFamily.regular,
+    ...typography.caption,
     fontSize: 11,
     color: palette.textMuted,
-    marginTop: spacing[2],
+    marginTop: space.sm,
     lineHeight: 16,
+    textTransform: 'none',
   },
   sectionLabel: {
     ...typography.caption,
     color: palette.textMuted,
-    marginTop: spacing[2],
+    marginTop: space.sm,
   },
-  linkRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
+  linkRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   linkIcon: {
     width: 40,
     height: 40,
-    borderRadius: 10,
+    borderRadius: radius.md,
     backgroundColor: palette.brandMuted,
     borderWidth: 1,
     borderColor: palette.brandBorder,

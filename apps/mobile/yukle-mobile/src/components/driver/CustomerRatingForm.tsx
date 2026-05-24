@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { AlertBanner } from '../ui/AlertBanner';
 import { Card } from '../ui/Card';
+import { FadeInView } from '../ui/FadeInView';
 import { PrimaryButton } from '../ui/PrimaryButton';
 import { TextField } from '../ui/TextField';
 import { getApiErrorMessage } from '../../services/api.client';
 import { submitRating } from '../../services/ratings.service';
 import { palette } from '../../theme/colors';
-import { fontFamily, typography } from '../../theme/typography';
-import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
+import { space } from '../../theme/spacing';
 
 type Props = {
   loadId: string;
@@ -49,41 +50,41 @@ export function CustomerRatingForm({ loadId, customerUserId, customerName, onRat
   };
 
   if (done) {
-    return (
-      <AlertBanner message="Müşteri puanlamanız kaydedildi. Teşekkürler!" tone="success" />
-    );
+    return <AlertBanner message="Müşteri puanlamanız kaydedildi. Teşekkürler!" tone="success" />;
   }
 
   return (
-    <Card variant="default" padding={4} style={styles.card}>
-      <Text style={styles.title}>Müşteriyi puanlayın</Text>
-      <Text style={styles.sub}>
-        {customerName ? `${customerName} · ` : ''}Teslim sonrası 1–5 arası puan verin.
-      </Text>
-      {error ? <AlertBanner message={error} tone="error" /> : null}
-      <TextField
-        label="Puan (1–5)"
-        keyboardType="number-pad"
-        placeholder="Örn: 5"
-        value={score}
-        onChangeText={setScore}
-        editable={!busy}
-      />
-      <TextField
-        label="Yorum (isteğe bağlı)"
-        placeholder="Kısa değerlendirme"
-        value={comment}
-        onChangeText={setComment}
-        editable={!busy}
-        multiline
-      />
-      <PrimaryButton title="Puanı Gönder" onPress={onSubmit} loading={busy} disabled={busy} />
-    </Card>
+    <FadeInView>
+      <Card variant="default" padding={4} style={styles.card}>
+        <Text style={styles.title}>Müşteriyi puanlayın</Text>
+        <Text style={styles.sub}>
+          {customerName ? `${customerName} · ` : ''}Teslim sonrası 1–5 arası puan verin.
+        </Text>
+        {error ? <AlertBanner message={error} tone="error" /> : null}
+        <TextField
+          label="Puan (1–5)"
+          keyboardType="number-pad"
+          placeholder="Örn: 5"
+          value={score}
+          onChangeText={setScore}
+          editable={!busy}
+        />
+        <TextField
+          label="Yorum (isteğe bağlı)"
+          placeholder="Kısa değerlendirme"
+          value={comment}
+          onChangeText={setComment}
+          editable={!busy}
+          multiline
+        />
+        <PrimaryButton title="Puanı Gönder" onPress={onSubmit} loading={busy} disabled={busy} />
+      </Card>
+    </FadeInView>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { gap: spacing[3] },
-  title: { fontFamily: fontFamily.semiBold, fontSize: 15, color: palette.gold },
+  card: { gap: space.md },
+  title: { ...typography.h3, color: palette.gold },
   sub: { ...typography.caption, textTransform: 'none' },
 });

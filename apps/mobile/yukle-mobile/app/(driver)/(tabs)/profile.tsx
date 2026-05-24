@@ -1,21 +1,22 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
+import { FadeInView } from '../../../src/components/ui/FadeInView';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
 import { SecondaryButton } from '../../../src/components/ui/SecondaryButton';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
 import { TextField } from '../../../src/components/ui/TextField';
-import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { ScreenContainer, ScreenScroll } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { changePassword, getUserProfile, updateUserProfile } from '../../../src/services/user.service';
 import { useAuthStore } from '../../../src/store/auth.store';
 import { palette } from '../../../src/theme/colors';
-import { fontFamily, typography } from '../../../src/theme/typography';
-import { spacing } from '../../../src/theme/spacing';
+import { typography } from '../../../src/theme/typography';
+import { space, spacing } from '../../../src/theme/spacing';
 import { getApprovalStatusPill } from '../../../src/utils/statusPills';
 
 export default function DriverProfileScreen() {
@@ -110,7 +111,7 @@ export default function DriverProfileScreen() {
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword) {
-      setPwdError('Mevcut ve yeni sifre zorunludur.');
+      setPwdError('Mevcut ve yeni şifre zorunludur.');
       return;
     }
     if (newPassword !== newPassword2) {
@@ -145,7 +146,7 @@ export default function DriverProfileScreen() {
   if (loading) {
     return (
       <ScreenContainer>
-        <LoadingState message="Profil yükleniyor..." />
+        <LoadingState message="Profil yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -160,6 +161,7 @@ export default function DriverProfileScreen() {
       {error ? <AlertBanner message={error} tone="error" /> : null}
       {status ? <AlertBanner message={status} tone="success" /> : null}
 
+      <FadeInView>
       <Card variant="glass" padding={4}>
         <Text style={styles.sectionTitle}>Hesap bilgileri</Text>
         <View style={styles.approvalRow}>
@@ -173,14 +175,16 @@ export default function DriverProfileScreen() {
         <TextField label="T.C. Kimlik" value={tcMasked} editable={false} />
         <TextField label="Rol" value={role} editable={false} />
         <TextField label="IBAN" value={iban} onChangeText={setIban} autoCapitalize="characters" />
-        <TextField label="Ikametgah" value={homeAddress} onChangeText={setHomeAddress} />
-        <TextField label="Ehliyet sinifi" value={licenseClass} editable={false} />
+        <TextField label="İkametgah" value={homeAddress} onChangeText={setHomeAddress} />
+        <TextField label="Ehliyet sınıfı" value={licenseClass} editable={false} />
         <TextField label="Plaka" value={vehiclePlate} editable={false} />
-        <TextField label="Arac tipi" value={vehicleType} editable={false} />
+        <TextField label="Araç tipi" value={vehicleType} editable={false} />
 
         <PrimaryButton title="Kaydet" onPress={handleSave} loading={saving} />
       </Card>
+      </FadeInView>
 
+      <FadeInView delay={50}>
       <Card variant="default" padding={4}>
         <Text style={styles.sectionTitle}>Şifre Değiştir</Text>
         <TextField
@@ -205,26 +209,21 @@ export default function DriverProfileScreen() {
           style={styles.goldBtn}
         />
       </Card>
+      </FadeInView>
 
-      <SecondaryButton title="Belgelerim" onPress={() => router.push('/(driver)/(tabs)/documents')} />
-      <SecondaryButton title="Geçmiş Seferlerim" onPress={() => router.push('/(driver)/(tabs)/history')} />
-      <SecondaryButton title="Tekliflerim" onPress={() => router.push('/(driver)/(tabs)/bids')} />
-
-      <SecondaryButton title="Çıkış Yap" onPress={handleLogout} style={styles.logoutBtn} />
+      <FadeInView delay={100} style={styles.links}>
+        <SecondaryButton title="Belgelerim" onPress={() => router.push('/(driver)/(tabs)/documents')} />
+        <SecondaryButton title="Geçmiş Seferlerim" onPress={() => router.push('/(driver)/(tabs)/history')} />
+        <SecondaryButton title="Tekliflerim" onPress={() => router.push('/(driver)/(tabs)/bids')} />
+        <SecondaryButton title="Çıkış Yap" onPress={handleLogout} style={styles.logoutBtn} />
+      </FadeInView>
     </ScreenScroll>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[4] },
-  title: { ...typography.h1 },
-  sub: { ...typography.caption, textTransform: 'none' },
-  sectionTitle: {
-    fontFamily: fontFamily.semiBold,
-    fontSize: 15,
-    color: palette.gold,
-    marginBottom: spacing[3],
-  },
+  scroll: { padding: space.md, paddingBottom: spacing[10], gap: space.md },
+  sectionTitle: { ...typography.h3, color: palette.gold, marginBottom: spacing[3] },
   approvalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -233,5 +232,6 @@ const styles = StyleSheet.create({
   },
   fieldHint: { ...typography.caption, textTransform: 'none' },
   goldBtn: { backgroundColor: palette.gold },
-  logoutBtn: { alignSelf: 'flex-start', marginTop: spacing[2] },
+  links: { gap: space.sm },
+  logoutBtn: { alignSelf: 'flex-start', marginTop: space.sm },
 });

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { LiveMapPanel } from '../../../src/components/map/LiveMapPanel';
 import type { MapMarker } from '../../../src/components/map/LiveMap.types';
 import { isValidCoordinate } from '../../../src/components/map/mapUtils';
@@ -7,16 +7,16 @@ import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { FadeInView } from '../../../src/components/ui/FadeInView';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
-import { SectionHeader } from '../../../src/components/ui/SectionHeader';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
-import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { ScreenContainer, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getAdminActiveDrivers } from '../../../src/services/admin.service';
 import type { AdminActiveDriverRow } from '../../../src/types/admin';
 import { palette } from '../../../src/theme/colors';
-import { fontFamily, typography } from '../../../src/theme/typography';
-import { spacing } from '../../../src/theme/spacing';
+import { typography } from '../../../src/theme/typography';
+import { space, spacing } from '../../../src/theme/spacing';
 import { formatDateTimeTR } from '../../../src/utils/format';
 
 const POLL_MS = 20000;
@@ -74,7 +74,7 @@ export default function AdminTrackingScreen() {
   if (loading) {
     return (
       <ScreenContainer>
-        <LoadingState message="Aktif şoförler yükleniyor..." />
+        <LoadingState message="Aktif şoförler yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -117,28 +117,30 @@ export default function AdminTrackingScreen() {
             />
           ) : null
         }
-        renderItem={({ item }) => {
+        renderItem={({ item, index }) => {
           const hasLoc = item.lastKnownLat != null && item.lastKnownLng != null;
           return (
-            <Card variant="elevated" padding={4} style={styles.trackCard}>
-              <View style={styles.head}>
-                <Text style={styles.cardTitle}>{item.driverName}</Text>
-                <StatusPill label={hasLoc ? 'Konum var' : 'Konum yok'} tone={hasLoc ? 'success' : 'warning'} />
-              </View>
-              <Text style={styles.muted}>{item.route}</Text>
-              <Text style={styles.muted}>Plaka: {item.plate || '-'}</Text>
-              <Text style={styles.mono}>
-                Konum:{' '}
-                {hasLoc
-                  ? `${item.lastKnownLat!.toFixed(5)}, ${item.lastKnownLng!.toFixed(5)}`
-                  : '-'}
-              </Text>
-              <Text style={styles.muted}>
-                Guncelleme:{' '}
-                {item.lastLocationUpdate ? formatDateTimeTR(item.lastLocationUpdate) : '-'}
-              </Text>
-              <Text style={styles.mono}>İlan: {item.loadId.slice(0, 8)}...</Text>
-            </Card>
+            <FadeInView delay={Math.min(index * 40, 200)}>
+              <Card variant="elevated" padding={4} style={styles.trackCard}>
+                <View style={styles.head}>
+                  <Text style={styles.cardTitle}>{item.driverName}</Text>
+                  <StatusPill label={hasLoc ? 'Konum var' : 'Konum yok'} tone={hasLoc ? 'success' : 'warning'} />
+                </View>
+                <Text style={styles.muted}>{item.route}</Text>
+                <Text style={styles.muted}>Plaka: {item.plate || '-'}</Text>
+                <Text style={styles.mono}>
+                  Konum:{' '}
+                  {hasLoc
+                    ? `${item.lastKnownLat!.toFixed(5)}, ${item.lastKnownLng!.toFixed(5)}`
+                    : '-'}
+                </Text>
+                <Text style={styles.muted}>
+                  Güncelleme:{' '}
+                  {item.lastLocationUpdate ? formatDateTimeTR(item.lastLocationUpdate) : '-'}
+                </Text>
+                <Text style={styles.mono}>İlan: {item.loadId.slice(0, 8)}...</Text>
+              </Card>
+            </FadeInView>
           );
         }}
       />
@@ -147,16 +149,11 @@ export default function AdminTrackingScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[2] },
-  map: { marginBottom: spacing[2] },
-  back: { marginBottom: spacing[2] },
-  trackCard: { marginBottom: spacing[2], gap: spacing[1] },
-  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing[2] },
+  list: { padding: space.md, paddingBottom: spacing[10], gap: space.sm },
+  map: { marginBottom: space.sm },
+  trackCard: { marginBottom: space.sm, gap: space.xs },
+  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
   cardTitle: { ...typography.h3, flex: 1 },
   muted: { ...typography.caption, textTransform: 'none' },
-  mono: {
-    fontFamily: fontFamily.regular,
-    fontSize: 11,
-    color: palette.textMuted,
-  },
+  mono: { ...typography.caption, fontSize: 11, color: palette.textMuted, textTransform: 'none' },
 });

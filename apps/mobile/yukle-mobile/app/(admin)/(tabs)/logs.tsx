@@ -1,24 +1,22 @@
-import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text } from 'react-native';
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { FadeInView } from '../../../src/components/ui/FadeInView';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
-import { SectionHeader } from '../../../src/components/ui/SectionHeader';
-import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { ScreenContainer, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getAdminLogs } from '../../../src/services/admin.service';
 import type { AdminLogRow } from '../../../src/types/admin';
 import { palette } from '../../../src/theme/colors';
 import { typography } from '../../../src/theme/typography';
-import { spacing } from '../../../src/theme/spacing';
+import { space, spacing } from '../../../src/theme/spacing';
 import { formatDateTimeTR } from '../../../src/utils/format';
 
 export default function AdminLogsScreen() {
   const { contentInset } = useScreenInsets();
-  const router = useRouter();
   const [logs, setLogs] = useState<AdminLogRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -41,7 +39,7 @@ export default function AdminLogsScreen() {
   if (loading) {
     return (
       <ScreenContainer>
-        <LoadingState message="Loglar yükleniyor..." />
+        <LoadingState message="Loglar yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -73,16 +71,18 @@ export default function AdminLogsScreen() {
           </>
         }
         ListEmptyComponent={
-          !error ? <EmptyState icon="📋" title="Log kaydi yok" /> : null
+          !error ? <EmptyState icon="📋" title="Log kaydı yok" /> : null
         }
-        renderItem={({ item }) => (
-          <Card variant="elevated" padding={4} style={styles.logCard}>
-            <Text style={styles.cardTitle}>{item.action ?? 'Islem'}</Text>
-            <Text style={styles.muted}>{formatDateTimeTR(item.timestampUtc)}</Text>
-            <Text style={styles.muted}>Admin: #{item.adminId ?? '-'}</Text>
-            <Text style={styles.muted}>Hedef kullanici: {item.targetUserId ?? '-'}</Text>
-            {item.note ? <Text style={styles.muted}>Not: {item.note}</Text> : null}
-          </Card>
+        renderItem={({ item, index }) => (
+          <FadeInView delay={Math.min(index * 40, 200)}>
+            <Card variant="elevated" padding={4} style={styles.logCard}>
+              <Text style={styles.cardTitle}>{item.action ?? 'İşlem'}</Text>
+              <Text style={styles.muted}>{formatDateTimeTR(item.timestampUtc)}</Text>
+              <Text style={styles.muted}>Admin: #{item.adminId ?? '-'}</Text>
+              <Text style={styles.muted}>Hedef kullanıcı: {item.targetUserId ?? '-'}</Text>
+              {item.note ? <Text style={styles.muted}>Not: {item.note}</Text> : null}
+            </Card>
+          </FadeInView>
         )}
       />
     </ScreenContainer>
@@ -90,9 +90,8 @@ export default function AdminLogsScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[2] },
-  back: { marginBottom: spacing[2] },
-  logCard: { marginBottom: spacing[2] },
+  list: { padding: space.md, paddingBottom: spacing[10], gap: space.sm },
+  logCard: { marginBottom: space.sm },
   cardTitle: { ...typography.h3 },
   muted: { ...typography.caption, textTransform: 'none' },
 });

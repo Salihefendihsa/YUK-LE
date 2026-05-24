@@ -20,8 +20,8 @@ import { getUserProfile } from '../../services/user.service';
 import type { AdminUserListItem } from '../../types/admin';
 import type { UserProfile } from '../../types/user';
 import { palette } from '../../theme/colors';
-import { fontFamily, typography } from '../../theme/typography';
-import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
+import { space, spacing } from '../../theme/spacing';
 import { formatCurrencyTRY } from '../../utils/format';
 import { getApprovalStatusPill } from '../../utils/statusPills';
 import { Card } from '../ui/Card';
@@ -131,7 +131,7 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.root}>
         <View style={styles.header}>
-          <Text style={styles.title}>Kullanici Detayi</Text>
+          <Text style={styles.title}>Kullanıcı Detayı</Text>
           <Pressable onPress={onClose} disabled={actionBusy}>
             <Text style={styles.close}>Kapat</Text>
           </Pressable>
@@ -167,18 +167,18 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
           </Card>
 
           <Card variant="elevated" padding={4}>
-            <Text style={styles.sectionTitle}>Hesap islemleri</Text>
+            <Text style={styles.sectionTitle}>Hesap işlemleri</Text>
             {item.isActive ? (
               <>
                 <TextField
-                  placeholder="Askiya alma sebebi (zorunlu)"
+                  placeholder="Askıya alma sebebi (zorunlu)"
                   value={suspendReason}
                   onChangeText={setSuspendReason}
                   multiline
                   style={styles.field}
                 />
                 <PrimaryButton
-                  title="Askiya Al"
+                  title="Askıya Al"
                   onPress={submitSuspend}
                   loading={actionBusy}
                   style={styles.actionBtn}
@@ -186,7 +186,7 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
               </>
             ) : (
               <PrimaryButton
-                title="Hesabi Aktif Et"
+                title="Hesabı Aktif Et"
                 onPress={() =>
                   void runAction(() => activateUser(item.id), 'Kullanıcı aktif edildi.')
                 }
@@ -199,7 +199,7 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
           <Card variant="elevated" padding={4}>
             <Text style={styles.sectionTitle}>Admin notu</Text>
             <TextField
-              placeholder="Ic not (audit log)"
+              placeholder="İç not (audit log)"
               value={adminNote}
               onChangeText={setAdminNote}
               multiline
@@ -214,23 +214,23 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
           </Card>
 
           <Card variant="elevated" padding={4}>
-            <Text style={styles.sectionTitle}>Uyari gonder</Text>
+            <Text style={styles.sectionTitle}>Uyarı gönder</Text>
             <TextField
-              placeholder="Uyari metni (opsiyonel)"
+              placeholder="Uyarı metni (opsiyonel)"
               value={warnReason}
               onChangeText={setWarnReason}
               multiline
               style={styles.field}
             />
             <PrimaryButton
-              title="Uyari Kaydet"
+              title="Uyarı Kaydet"
               onPress={submitWarn}
               loading={actionBusy}
               style={styles.actionBtn}
             />
           </Card>
 
-          {loading ? <ActivityIndicator color={palette.brand} style={{ marginTop: spacing[4] }} /> : null}
+          {loading ? <ActivityIndicator color={palette.brand} style={{ marginTop: space.lg }} /> : null}
 
           {profile ? (
             <Card variant="elevated" padding={4}>
@@ -241,24 +241,24 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
               <DetailRow label="Rol" value={profile.role} />
               <DetailRow label="Onay durumu" value={profile.approvalStatus} />
               {profile.companyName ? (
-                <DetailRow label="Sirket" value={profile.companyName} />
+                <DetailRow label="Şirket" value={profile.companyName} />
               ) : null}
               {profile.companyAddress ? (
-                <DetailRow label="Sirket adresi" value={profile.companyAddress} />
+                <DetailRow label="Şirket adresi" value={profile.companyAddress} />
               ) : null}
               {profile.taxNumber ? <DetailRow label="Vergi no" value={profile.taxNumber} /> : null}
               {item.role === 'Driver' && profile.vehiclePlate ? (
                 <DetailRow label="Plaka" value={profile.vehiclePlate} />
               ) : null}
               {item.role === 'Driver' && profile.vehicleType ? (
-                <DetailRow label="Arac tipi" value={profile.vehicleType} />
+                <DetailRow label="Araç tipi" value={profile.vehicleType} />
               ) : null}
               {item.role === 'Driver' && profile.licenseClass ? (
                 <DetailRow label="Ehliyet" value={profile.licenseClass} />
               ) : null}
               {item.role === 'Driver' ? (
                 <DetailRow
-                  label="Degerlendirme"
+                  label="Değerlendirme"
                   value={`${profile.averageRating.toFixed(1)} (${profile.totalRatingCount})`}
                 />
               ) : null}
@@ -276,34 +276,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing[4],
+    paddingHorizontal: space.md,
     paddingTop: 48,
-    paddingBottom: spacing[3],
+    paddingBottom: space.md,
     borderBottomWidth: 1,
     borderBottomColor: palette.borderSubtle,
   },
   title: { ...typography.h2 },
   close: { ...typography.link },
-  scroll: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[3] },
-  name: { ...typography.h2, marginBottom: spacing[2] },
-  pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginBottom: spacing[2] },
-  sectionTitle: {
-    fontFamily: fontFamily.bold,
-    fontSize: 14,
-    color: palette.gold,
-    marginBottom: spacing[2],
-  },
+  scroll: { padding: space.md, paddingBottom: spacing[10], gap: space.md },
+  name: { ...typography.h2, marginBottom: space.sm },
+  pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginBottom: space.sm },
+  sectionTitle: { ...typography.h3, color: palette.gold, marginBottom: space.sm },
   muted: { ...typography.caption, textTransform: 'none' },
-  field: { minHeight: 72, marginBottom: spacing[2] },
-  actionBtn: { marginTop: spacing[1] },
-  success: {
-    fontFamily: fontFamily.regular,
-    fontSize: 13,
-    color: palette.success,
-  },
-  error: {
-    fontFamily: fontFamily.regular,
-    fontSize: 13,
-    color: palette.error,
-  },
+  field: { minHeight: 72, marginBottom: space.sm },
+  actionBtn: { marginTop: space.xs },
+  success: { ...typography.bodySmall, color: palette.success },
+  error: { ...typography.bodySmall, color: palette.error },
 });

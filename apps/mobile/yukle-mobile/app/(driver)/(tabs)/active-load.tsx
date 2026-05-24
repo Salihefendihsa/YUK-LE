@@ -6,6 +6,7 @@ import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { FadeInView } from '../../../src/components/ui/FadeInView';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
 import { SecondaryButton } from '../../../src/components/ui/SecondaryButton';
@@ -22,9 +23,9 @@ import {
 import { useAuthStore } from '../../../src/store/auth.store';
 import type { Load, LoadStatus } from '../../../src/types/load';
 import { palette } from '../../../src/theme/colors';
-import { fontFamily, typography } from '../../../src/theme/typography';
+import { typography } from '../../../src/theme/typography';
 import { radius } from '../../../src/theme/radius';
-import { spacing } from '../../../src/theme/spacing';
+import { space, spacing } from '../../../src/theme/spacing';
 import { formatCurrencyTRY, formatLoadTypeLabel, formatWeightKg } from '../../../src/utils/format';
 import { canDriverOpenChat } from '../../../src/utils/loadChat';
 import { LiveMapPanel } from '../../../src/components/map/LiveMapPanel';
@@ -61,7 +62,7 @@ export default function DriverActiveLoadScreen() {
 
   const fetchTrip = useCallback(async () => {
     if (!userId) {
-      setError('Oturum bulunamadi.');
+      setError('Oturum bulunamadı.');
       setTrip(null);
       return;
     }
@@ -177,7 +178,7 @@ export default function DriverActiveLoadScreen() {
   if (loading) {
     return (
       <ScreenContainer>
-        <LoadingState message="Aktif sefer yükleniyor..." />
+        <LoadingState message="Aktif sefer yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -214,6 +215,7 @@ export default function DriverActiveLoadScreen() {
     >
       <ScreenHeader title="Aktif Sefer" subtitle={`${trip.fromCity} → ${trip.toCity}`} />
 
+      <FadeInView>
       <Card variant="glass" padding={4}>
         <View style={styles.routeHeader}>
           <View style={{ flex: 1 }}>
@@ -227,6 +229,7 @@ export default function DriverActiveLoadScreen() {
           <StatusPill label={statusPill.label} tone={statusPill.tone} />
         </View>
       </Card>
+      </FadeInView>
 
       {canDriverOpenChat(trip) ? (
         <SecondaryButton
@@ -235,6 +238,7 @@ export default function DriverActiveLoadScreen() {
         />
       ) : null}
 
+      <FadeInView delay={40}>
       <View style={styles.progressRow}>
         {STEP_LABELS.map((label, i) => {
           const done = stepIdx > i || (trip.status === 'Delivered' && i < 4);
@@ -251,7 +255,9 @@ export default function DriverActiveLoadScreen() {
           );
         })}
       </View>
+      </FadeInView>
 
+      <FadeInView delay={60}>
       <Card variant="default" padding={4}>
         <DetailRow label="Durum" value={getLoadStatusPill(trip.status).label} />
         <DetailRow label="Liste fiyatı" value={formatCurrencyTRY(trip.price)} />
@@ -259,6 +265,7 @@ export default function DriverActiveLoadScreen() {
         <DetailRow label="Yük tipi" value={formatLoadTypeLabel(trip.loadType ?? trip.type)} />
         <DetailRow label="Ağırlık" value={formatWeightKg(trip.weight)} />
       </Card>
+      </FadeInView>
 
       {shouldShareLocation && routeMapMarkers.length > 0 ? (
         <LiveMapPanel markers={routeMapMarkers} height={180} />
@@ -294,7 +301,7 @@ export default function DriverActiveLoadScreen() {
                 </Text>
               </View>
               <TextField
-                placeholder="QR token yapistirin"
+                placeholder="QR token yapıştırın"
                 value={qrToken}
                 onChangeText={setQrToken}
                 editable={!busy}
@@ -331,19 +338,19 @@ export default function DriverActiveLoadScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { padding: spacing[4], paddingBottom: spacing[8], gap: spacing[4] },
+  scroll: { padding: space.md, paddingBottom: space.xl, gap: space.md },
   routeHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing[3] },
-  route: { fontFamily: fontFamily.bold, fontSize: 18, color: palette.gold },
-  districts: { ...typography.caption, textTransform: 'none', marginTop: 2 },
-  progressRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] },
+  route: { ...typography.h2, fontSize: 18, color: palette.gold },
+  districts: { ...typography.caption, textTransform: 'none', marginTop: space.xs },
+  progressRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   step: {
     flexGrow: 1,
     flexShrink: 1,
     flexBasis: '22%',
     minWidth: 0,
     maxWidth: '25%',
-    paddingVertical: spacing[2],
-    paddingHorizontal: spacing[2],
+    paddingVertical: space.sm,
+    paddingHorizontal: space.sm,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: palette.borderLight,
@@ -359,15 +366,15 @@ const styles = StyleSheet.create({
     backgroundColor: palette.brandMuted,
   },
   stepText: {
-    fontFamily: fontFamily.semiBold,
+    ...typography.caption,
     fontSize: 10,
     color: palette.textMuted,
     textAlign: 'center',
   },
   stepTextOn: { color: palette.text },
   actions: { gap: spacing[3] },
-  qrCard: { gap: spacing[2] },
-  qrTitle: { fontFamily: fontFamily.semiBold, fontSize: 15, color: palette.gold },
+  qrCard: { gap: space.sm },
+  qrTitle: { ...typography.h3, color: palette.gold },
   qrSub: { ...typography.caption, textTransform: 'none' },
   qrPreview: {
     backgroundColor: palette.input,
@@ -375,14 +382,10 @@ const styles = StyleSheet.create({
     padding: spacing[3],
     borderWidth: 1,
     borderColor: palette.borderLight,
-    gap: spacing[1],
+    gap: space.xs,
   },
   qrPreviewLabel: { ...typography.label, color: palette.textMuted },
-  qrPreviewValue: {
-    fontFamily: fontFamily.regular,
-    fontSize: 12,
-    color: palette.text,
-  },
+  qrPreviewValue: { ...typography.caption, textTransform: 'none', color: palette.text },
   deliverBtn: { backgroundColor: palette.gold },
   doneTitle: { ...typography.h3 },
 });

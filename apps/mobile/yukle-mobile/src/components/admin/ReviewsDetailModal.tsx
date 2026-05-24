@@ -3,7 +3,6 @@ import {
   Alert,
   Image,
   Modal,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,22 +15,23 @@ import {
 } from '../../services/admin.service';
 import type { PendingReview } from '../../types/admin';
 import { palette } from '../../theme/colors';
-import { fontFamily, typography } from '../../theme/typography';
-import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
+import { space, spacing } from '../../theme/spacing';
 import { radius } from '../../theme/radius';
 import { formatDateTR } from '../../utils/format';
 import { getAiConfidencePill } from '../../utils/statusPills';
 import { Card } from '../ui/Card';
+import { PressableScale } from '../ui/PressableScale';
 import { SecondaryButton } from '../ui/SecondaryButton';
 import { StatusPill } from '../ui/StatusPill';
 import { TextField } from '../ui/TextField';
 
 const REJECT_PRESETS = [
-  { id: '', label: 'Hazir sebep secin' },
+  { id: '', label: 'Hazır sebep seçin' },
   { id: 'Belge kalitesi yetersiz', label: 'Belge kalitesi yetersiz' },
-  { id: 'Belge suresi dolmus', label: 'Belge suresi dolmus' },
-  { id: 'Bilgi uyusmuyor', label: 'Bilgi uyusmuyor' },
-  { id: 'Sahte belge suphesi', label: 'Sahte belge suphesi' },
+  { id: 'Belge süresi dolmuş', label: 'Belge süresi dolmuş' },
+  { id: 'Bilgi uyuşmuyor', label: 'Bilgi uyuşmuyor' },
+  { id: 'Sahte belge şüphesi', label: 'Sahte belge şüphesi' },
 ] as const;
 
 type Props = {
@@ -104,11 +104,11 @@ export function ReviewsDetailModal({ review, visible, busy, onClose, onApprove, 
       'Belgeyi onayla',
       'Bu belgeyi onaylıyorsunuz. Şoför sisteme erişim kazanacak. Devam edilsin mi?',
       [
-        { text: 'Vazgec', style: 'cancel' },
+        { text: 'Vazgeç', style: 'cancel' },
         {
           text: 'Evet, Onayla',
           onPress: async () => {
-            const reason = adminNote.trim() || 'Belgeler manuel olarak onaylandi.';
+            const reason = adminNote.trim() || 'Belgeler manuel olarak onaylandı.';
             await onApprove(reason, docType);
             setRejectOpen(false);
           },
@@ -119,7 +119,7 @@ export function ReviewsDetailModal({ review, visible, busy, onClose, onApprove, 
 
   const submitReject = async () => {
     if (combinedReject.length < 20) {
-      Alert.alert('Red sebebi', 'Aciklama en az 20 karakter olmalıdır.');
+      Alert.alert('Red sebebi', 'Açıklama en az 20 karakter olmalıdır.');
       return;
     }
     await onReject(combinedReject, docType);
@@ -132,21 +132,21 @@ export function ReviewsDetailModal({ review, visible, busy, onClose, onApprove, 
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.root}>
         <View style={styles.header}>
-          <Text style={styles.title}>Belge Inceleme</Text>
-          <Pressable onPress={onClose} disabled={busy}>
+          <Text style={styles.title}>Belge İnceleme</Text>
+          <PressableScale onPress={onClose} disabled={busy}>
             <Text style={styles.closeText}>Kapat</Text>
-          </Pressable>
+          </PressableScale>
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.previewBox}>
             {previewLoading ? (
-              <Text style={styles.previewPlaceholder}>Belge onizlemesi yukleniyor...</Text>
+              <Text style={styles.previewPlaceholder}>Belge önizlemesi yükleniyor...</Text>
             ) : imageUri ? (
               <Image source={{ uri: imageUri }} style={styles.previewImg} resizeMode="contain" />
             ) : (
               <Text style={styles.previewPlaceholder}>
-                Belge gorseli henuz yuklenmemis veya depoda yok. Analiz bilgileri asagida.
+                Belge görseli henüz yüklenmemiş veya depoda yok. Belge bilgileri aşağıda.
               </Text>
             )}
           </View>
@@ -155,23 +155,23 @@ export function ReviewsDetailModal({ review, visible, busy, onClose, onApprove, 
             <Text style={styles.driverName}>{review.fullName}</Text>
             <Text style={styles.muted}>Telefon: {review.phone}</Text>
             <Text style={styles.muted}>E-posta: {review.email}</Text>
-            <Text style={styles.muted}>Kayit: {formatDateTR(review.createdAt)}</Text>
+            <Text style={styles.muted}>Kayıt: {formatDateTR(review.createdAt)}</Text>
           </Card>
 
           <Card variant="elevated" padding={4}>
             <View style={styles.sectionHead}>
-              <Text style={styles.sectionTitle}>Belge analiz sonucu</Text>
+              <Text style={styles.sectionTitle}>Belge inceleme sonucu</Text>
               <StatusPill {...aiPill} />
             </View>
-            <AiRow label="Belge tipi" value={ai.documentType ?? '-'} />
-            <AiRow label="Gecerlilik" value={ai.expiryDate ?? ai.validUntil ?? '-'} />
-            <AiRow
-              label="Gecerli mi"
-              value={ai.isValid == null ? '-' : ai.isValid ? 'Evet' : 'Hayir'}
+            <DocRow label="Belge tipi" value={ai.documentType ?? '-'} />
+            <DocRow label="Geçerlilik" value={ai.expiryDate ?? ai.validUntil ?? '-'} />
+            <DocRow
+              label="Geçerli mi"
+              value={ai.isValid == null ? '-' : ai.isValid ? 'Evet' : 'Hayır'}
             />
-            {ai.validationMessage ? <Text style={styles.aiMsg}>{ai.validationMessage}</Text> : null}
+            {ai.validationMessage ? <Text style={styles.docMsg}>{ai.validationMessage}</Text> : null}
             {ai.documentClasses && ai.documentClasses.length > 0 ? (
-              <Text style={styles.muted}>Siniflar: {ai.documentClasses.join(', ')}</Text>
+              <Text style={styles.muted}>Sınıflar: {ai.documentClasses.join(', ')}</Text>
             ) : null}
             {review.adminReviewNote ? (
               <Text style={styles.muted}>Sistem notu: {review.adminReviewNote}</Text>
@@ -181,7 +181,7 @@ export function ReviewsDetailModal({ review, visible, busy, onClose, onApprove, 
           <Card variant="elevated" padding={4}>
             <Text style={styles.fieldLabel}>Admin notu</Text>
             <TextField
-              placeholder="Inceleme notu (onayda istege bagli)"
+              placeholder="İnceleme notu (onayda isteğe bağlı)"
               value={adminNote}
               onChangeText={setAdminNote}
               multiline
@@ -193,49 +193,49 @@ export function ReviewsDetailModal({ review, visible, busy, onClose, onApprove, 
             <Card variant="elevated" padding={4} style={styles.rejectCard}>
               <Text style={styles.sectionTitle}>Red sebebi</Text>
               {REJECT_PRESETS.map((p) => (
-                <Pressable
+                <PressableScale
                   key={p.id || 'empty'}
                   style={[styles.presetBtn, rejectPreset === p.id && styles.presetBtnActive]}
                   onPress={() => setRejectPreset(p.id)}
                 >
                   <Text style={styles.presetText}>{p.label}</Text>
-                </Pressable>
+                </PressableScale>
               ))}
               <TextField
-                placeholder="Aciklama (zorunlu, en az 20 karakter)"
+                placeholder="Açıklama (zorunlu, en az 20 karakter)"
                 value={rejectText}
                 onChangeText={setRejectText}
                 multiline
               />
               <View style={styles.rowBtns}>
-                <SecondaryButton title="Vazgec" onPress={() => setRejectOpen(false)} style={{ flex: 1 }} />
-                <Pressable
+                <SecondaryButton title="Vazgeç" onPress={() => setRejectOpen(false)} style={{ flex: 1 }} />
+                <PressableScale
                   style={[styles.dangerBtn, (busy || combinedReject.length < 20) && styles.btnDisabled]}
                   onPress={submitReject}
                   disabled={busy || combinedReject.length < 20}
                 >
-                  <Text style={styles.dangerText}>Reddet ve Gonder</Text>
-                </Pressable>
+                  <Text style={styles.dangerText}>Reddet ve Gönder</Text>
+                </PressableScale>
               </View>
             </Card>
           ) : null}
 
-          <Pressable
+          <PressableScale
             style={[styles.approveBtn, busy && styles.btnDisabled]}
             onPress={confirmApprove}
             disabled={busy}
           >
             <Text style={styles.approveText}>Belgeyi Onayla</Text>
-          </Pressable>
+          </PressableScale>
 
           {!rejectOpen ? (
-            <Pressable
+            <PressableScale
               style={[styles.rejectBtn, busy && styles.btnDisabled]}
               onPress={() => setRejectOpen(true)}
               disabled={busy}
             >
               <Text style={styles.rejectBtnText}>Belgeyi Reddet</Text>
-            </Pressable>
+            </PressableScale>
           ) : null}
         </ScrollView>
       </View>
@@ -243,11 +243,11 @@ export function ReviewsDetailModal({ review, visible, busy, onClose, onApprove, 
   );
 }
 
-function AiRow({ label, value }: { label: string; value: string }) {
+function DocRow({ label, value }: { label: string; value: string }) {
   return (
-    <View style={styles.aiRow}>
-      <Text style={styles.aiLabel}>{label}</Text>
-      <Text style={styles.aiValue}>{value}</Text>
+    <View style={styles.docRow}>
+      <Text style={styles.docLabel}>{label}</Text>
+      <Text style={styles.docValue}>{value}</Text>
     </View>
   );
 }
@@ -258,15 +258,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing[4],
+    paddingHorizontal: space.md,
     paddingTop: 48,
-    paddingBottom: spacing[3],
+    paddingBottom: space.md,
     borderBottomWidth: 1,
     borderBottomColor: palette.borderSubtle,
   },
   title: { ...typography.h2 },
   closeText: { ...typography.link },
-  scroll: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[3] },
+  scroll: { padding: space.md, paddingBottom: spacing[10], gap: space.md },
   previewBox: {
     minHeight: 180,
     backgroundColor: palette.card,
@@ -290,78 +290,50 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing[2],
+    marginBottom: space.sm,
   },
-  sectionTitle: {
-    fontFamily: fontFamily.bold,
-    fontSize: 14,
-    color: palette.gold,
-  },
+  sectionTitle: { ...typography.bodyMedium, color: palette.gold },
   muted: { ...typography.caption, textTransform: 'none' },
-  aiRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing[2], paddingVertical: 4 },
-  aiLabel: { ...typography.caption, textTransform: 'none' },
-  aiValue: {
-    fontFamily: fontFamily.semiBold,
-    fontSize: 13,
-    color: palette.text,
-    flex: 1,
-    textAlign: 'right',
-  },
-  aiMsg: {
-    fontFamily: fontFamily.regular,
-    fontSize: 12,
-    color: palette.textSecondary,
-    marginTop: spacing[2],
-    lineHeight: 18,
-  },
-  fieldLabel: { ...typography.caption, marginBottom: spacing[2] },
+  docRow: { flexDirection: 'row', justifyContent: 'space-between', gap: space.sm, paddingVertical: space.xs },
+  docLabel: { ...typography.caption, textTransform: 'none' },
+  docValue: { ...typography.bodyMedium, fontSize: 13, color: palette.text, flex: 1, textAlign: 'right' },
+  docMsg: { ...typography.caption, color: palette.textSecondary, marginTop: space.sm, lineHeight: 18 },
+  fieldLabel: { ...typography.caption, marginBottom: space.sm },
   noteField: { minHeight: 80 },
   presetBtn: {
-    paddingVertical: spacing[2],
-    paddingHorizontal: spacing[3],
+    paddingVertical: space.sm,
+    paddingHorizontal: space.md,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: palette.borderLight,
-    marginBottom: spacing[2],
+    marginBottom: space.sm,
   },
   presetBtnActive: { borderColor: palette.brandBorder, backgroundColor: palette.brandMuted },
   presetText: { ...typography.caption, textTransform: 'none' },
-  rowBtns: { flexDirection: 'row', gap: spacing[2], marginTop: spacing[2] },
+  rowBtns: { flexDirection: 'row', gap: space.sm, marginTop: space.sm },
   dangerBtn: {
     flex: 1,
-    paddingVertical: spacing[3],
+    paddingVertical: space.md,
     alignItems: 'center',
     borderRadius: radius.md,
     backgroundColor: palette.error,
   },
-  dangerText: {
-    fontFamily: fontFamily.bold,
-    fontSize: 14,
-    color: palette.text,
-  },
+  dangerText: { ...typography.bodyMedium, color: palette.text },
   approveBtn: {
     backgroundColor: palette.success,
     borderRadius: radius.lg,
-    paddingVertical: spacing[4],
+    paddingVertical: space.lg,
     alignItems: 'center',
   },
-  approveText: {
-    fontFamily: fontFamily.bold,
-    fontSize: 16,
-    color: palette.text,
-  },
+  approveText: { ...typography.bodyMedium, fontSize: 16, color: palette.text },
   rejectBtn: {
     backgroundColor: palette.errorBg,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: palette.errorBorder,
-    paddingVertical: spacing[4],
+    paddingVertical: space.lg,
     alignItems: 'center',
   },
-  rejectBtnText: {
-    fontFamily: fontFamily.bold,
-    fontSize: 16,
-    color: palette.error,
-  },
+  rejectBtnText: { ...typography.bodyMedium, fontSize: 16, color: palette.error },
   btnDisabled: { opacity: 0.5 },
 });

@@ -1,25 +1,23 @@
-import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { FadeInView } from '../../../src/components/ui/FadeInView';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
-import { SectionHeader } from '../../../src/components/ui/SectionHeader';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
-import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { ScreenContainer, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getAdminBlockedMessages } from '../../../src/services/admin.service';
 import type { AdminBlockedMessageRow } from '../../../src/types/admin';
 import { palette } from '../../../src/theme/colors';
-import { fontFamily, typography } from '../../../src/theme/typography';
-import { spacing } from '../../../src/theme/spacing';
+import { typography } from '../../../src/theme/typography';
+import { space, spacing } from '../../../src/theme/spacing';
 import { formatDateTimeTR } from '../../../src/utils/format';
 
 export default function AdminBlockedMessagesScreen() {
   const { contentInset } = useScreenInsets();
-  const router = useRouter();
   const [rows, setRows] = useState<AdminBlockedMessageRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -42,7 +40,7 @@ export default function AdminBlockedMessagesScreen() {
   if (loading) {
     return (
       <ScreenContainer>
-        <LoadingState message="Mesajlar yükleniyor..." />
+        <LoadingState message="Mesajlar yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -76,16 +74,18 @@ export default function AdminBlockedMessagesScreen() {
         ListEmptyComponent={
           !error ? <EmptyState icon="🚫" title="Engellenen mesaj yok" /> : null
         }
-        renderItem={({ item }) => (
-          <Card variant="elevated" padding={4} style={styles.msgCard}>
-            <View style={styles.head}>
-              <Text style={styles.cardTitle}>{item.senderName || item.senderId}</Text>
-              <StatusPill label="Engellendi" tone="error" />
-            </View>
-            <Text style={styles.muted}>{formatDateTimeTR(item.timestampUtc)}</Text>
-            <Text style={styles.mono}>İlan: {item.loadId.slice(0, 8)}...</Text>
-            <Text style={styles.danger}>{item.message}</Text>
-          </Card>
+        renderItem={({ item, index }) => (
+          <FadeInView delay={Math.min(index * 40, 200)}>
+            <Card variant="elevated" padding={4} style={styles.msgCard}>
+              <View style={styles.head}>
+                <Text style={styles.cardTitle}>{item.senderName || item.senderId}</Text>
+                <StatusPill label="Engellendi" tone="error" />
+              </View>
+              <Text style={styles.muted}>{formatDateTimeTR(item.timestampUtc)}</Text>
+              <Text style={styles.mono}>İlan: {item.loadId.slice(0, 8)}...</Text>
+              <Text style={styles.danger}>{item.message}</Text>
+            </Card>
+          </FadeInView>
         )}
       />
     </ScreenContainer>
@@ -93,21 +93,11 @@ export default function AdminBlockedMessagesScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[2] },
-  back: { marginBottom: spacing[2] },
-  msgCard: { marginBottom: spacing[2], gap: spacing[1] },
-  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing[2] },
+  list: { padding: space.md, paddingBottom: spacing[10], gap: space.sm },
+  msgCard: { marginBottom: space.sm, gap: space.xs },
+  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
   cardTitle: { ...typography.h3, flex: 1 },
   muted: { ...typography.caption, textTransform: 'none' },
-  mono: {
-    fontFamily: fontFamily.regular,
-    fontSize: 11,
-    color: palette.textMuted,
-  },
-  danger: {
-    fontFamily: fontFamily.regular,
-    fontSize: 13,
-    color: palette.error,
-    marginTop: spacing[1],
-  },
+  mono: { ...typography.caption, fontSize: 11, color: palette.textMuted, textTransform: 'none' },
+  danger: { ...typography.bodySmall, color: palette.error, marginTop: space.xs },
 });

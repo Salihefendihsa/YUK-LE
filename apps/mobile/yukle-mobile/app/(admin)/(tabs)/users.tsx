@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
@@ -14,7 +13,9 @@ import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { FadeInView } from '../../../src/components/ui/FadeInView';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { PressableScale } from '../../../src/components/ui/PressableScale';
 import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
 import { SectionHeader } from '../../../src/components/ui/SectionHeader';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
@@ -30,8 +31,9 @@ import {
 } from '../../../src/services/admin.service';
 import type { AdminUserListItem } from '../../../src/types/admin';
 import { palette } from '../../../src/theme/colors';
-import { fontFamily, typography } from '../../../src/theme/typography';
-import { spacing } from '../../../src/theme/spacing';
+import { typography } from '../../../src/theme/typography';
+import { radius } from '../../../src/theme/radius';
+import { space, spacing } from '../../../src/theme/spacing';
 import { formatCurrencyTRY } from '../../../src/utils/format';
 import { getApprovalStatusPill } from '../../../src/utils/statusPills';
 
@@ -90,7 +92,7 @@ export default function AdminUsersTab() {
       setSelected(item);
       return;
     }
-    Alert.alert('Hesabi aktif et', `${item.fullName} yeniden aktif edilsin mi?`, [
+    Alert.alert('Hesabı aktif et', `${item.fullName} yeniden aktif edilsin mi?`, [
       { text: 'İptal', style: 'cancel' },
       {
         text: 'Aktif Et',
@@ -120,7 +122,7 @@ export default function AdminUsersTab() {
   if (loading) {
     return (
       <ScreenContainer>
-        <LoadingState message="Kullanıcılar yükleniyor..." />
+        <LoadingState message="Kullanıcılar yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -139,22 +141,22 @@ export default function AdminUsersTab() {
             <ScreenHeader title="Kullanıcılar" subtitle="Şoför ve müşteri yönetimi" />
 
             <View style={styles.tabRow}>
-              <Pressable
+              <PressableScale
                 style={[styles.tabBtn, tab === 'Driver' && styles.tabBtnActive]}
                 onPress={() => setTab('Driver')}
               >
                 <Text style={[styles.tabText, tab === 'Driver' && styles.tabTextActive]}>
                   Şoförler ({drivers.length})
                 </Text>
-              </Pressable>
-              <Pressable
+              </PressableScale>
+              <PressableScale
                 style={[styles.tabBtn, tab === 'Customer' && styles.tabBtnActive]}
                 onPress={() => setTab('Customer')}
               >
                 <Text style={[styles.tabText, tab === 'Customer' && styles.tabTextActive]}>
                   Müşteriler ({customers.length})
                 </Text>
-              </Pressable>
+              </PressableScale>
             </View>
 
             <TextField
@@ -183,7 +185,7 @@ export default function AdminUsersTab() {
             />
           ) : null
         }
-        renderItem={({ item }) => {
+        renderItem={({ item, index }) => {
           const ap = activePill(item.isActive);
           const approvalPill =
             item.role === 'Driver' && item.approvalStatus
@@ -191,8 +193,9 @@ export default function AdminUsersTab() {
               : null;
 
           return (
+            <FadeInView delay={Math.min(index * 40, 200)}>
             <Card variant="elevated" padding={4} style={styles.userCard}>
-              <Pressable onPress={() => setSelected(item)}>
+              <PressableScale onPress={() => setSelected(item)}>
                 <View style={styles.cardHead}>
                   <Text style={styles.cardName} numberOfLines={1}>
                     {item.fullName}
@@ -217,7 +220,7 @@ export default function AdminUsersTab() {
                   </Text>
                 ) : null}
                 <Text style={styles.detailLink}>Detay →</Text>
-              </Pressable>
+              </PressableScale>
 
               {togglingId === item.id ? (
                 <View style={styles.toggleLoading}>
@@ -225,12 +228,13 @@ export default function AdminUsersTab() {
                 </View>
               ) : (
                 <PrimaryButton
-                  title={item.isActive ? 'Askiya Al' : 'Aktif Et'}
+                  title={item.isActive ? 'Askıya Al' : 'Aktif Et'}
                   onPress={() => onAccountAction(item)}
                   style={styles.toggleBtn}
                 />
               )}
             </Card>
+            </FadeInView>
           );
         }}
       />
@@ -248,12 +252,12 @@ export default function AdminUsersTab() {
 }
 
 const styles = StyleSheet.create({
-  list: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[2] },
-  tabRow: { flexDirection: 'row', gap: spacing[2], marginBottom: spacing[3] },
+  list: { padding: space.md, paddingBottom: spacing[10], gap: space.sm },
+  tabRow: { flexDirection: 'row', gap: space.sm, marginBottom: space.md },
   tabBtn: {
     flex: 1,
-    paddingVertical: spacing[3],
-    borderRadius: 10,
+    paddingVertical: space.md,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: palette.borderLight,
     alignItems: 'center',
@@ -263,24 +267,15 @@ const styles = StyleSheet.create({
     borderColor: palette.brandBorder,
     backgroundColor: palette.brandMuted,
   },
-  tabText: {
-    fontFamily: fontFamily.semiBold,
-    fontSize: 13,
-    color: palette.textMuted,
-  },
+  tabText: { ...typography.bodyMedium, fontSize: 13, color: palette.textMuted },
   tabTextActive: { color: palette.brand },
-  searchBtn: { marginBottom: spacing[3] },
-  userCard: { marginBottom: spacing[2], gap: spacing[2] },
-  cardHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing[2] },
+  searchBtn: { marginBottom: space.md },
+  userCard: { marginBottom: space.sm, gap: space.sm },
+  cardHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
   cardName: { ...typography.h3, flex: 1 },
-  pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginTop: spacing[1] },
+  pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.xs },
   muted: { ...typography.caption, textTransform: 'none' },
-  detailLink: {
-    fontFamily: fontFamily.bold,
-    fontSize: 13,
-    color: palette.brand,
-    marginTop: spacing[2],
-  },
-  toggleBtn: { marginTop: spacing[1] },
-  toggleLoading: { paddingVertical: spacing[3], alignItems: 'center' },
+  detailLink: { ...typography.bodyMedium, fontSize: 13, color: palette.brand, marginTop: space.sm },
+  toggleBtn: { marginTop: space.xs },
+  toggleLoading: { paddingVertical: space.md, alignItems: 'center' },
 });

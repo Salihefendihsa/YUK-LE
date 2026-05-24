@@ -4,7 +4,6 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
@@ -15,7 +14,9 @@ import { AdminLoadDetailModal } from '../../../src/components/admin/AdminLoadDet
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { FadeInView } from '../../../src/components/ui/FadeInView';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { PressableScale } from '../../../src/components/ui/PressableScale';
 import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
 import { SectionHeader } from '../../../src/components/ui/SectionHeader';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
@@ -26,8 +27,9 @@ import { cancelAdminLoad, getAdminLoads } from '../../../src/services/admin.serv
 import { previewSettlement } from '../../../src/services/settlement.service';
 import type { AdminLoadRow } from '../../../src/types/admin';
 import { palette } from '../../../src/theme/colors';
-import { fontFamily, typography } from '../../../src/theme/typography';
-import { spacing } from '../../../src/theme/spacing';
+import { typography } from '../../../src/theme/typography';
+import { radius } from '../../../src/theme/radius';
+import { space, spacing } from '../../../src/theme/spacing';
 import { formatCurrencyTRY, formatDateTR } from '../../../src/utils/format';
 import { getLoadStatusPill } from '../../../src/utils/statusPills';
 
@@ -39,9 +41,9 @@ function canCancelLoad(status: string): boolean {
 
 function blockCancelMessage(status: string): string {
   if (status === 'OnWay' || status === 'Arrived')
-    return 'Sefer basladigi icin iptal edilemez; destek ile iletisime gecin.';
-  if (status === 'Delivered') return 'Teslim edilmis ilan iptal edilemez.';
-  if (status === 'Cancelled') return 'Ilan zaten iptal edilmis.';
+    return 'Sefer başladığı için iptal edilemez; destek ile iletişime geçin.';
+  if (status === 'Delivered') return 'Teslim edilmiş ilan iptal edilemez.';
+  if (status === 'Cancelled') return 'İlan zaten iptal edilmiş.';
   return 'Bu ilan iptal edilemez.';
 }
 
@@ -84,24 +86,24 @@ export default function AdminLoadsScreen() {
 
   const confirmCancel = async (row: AdminLoadRow) => {
     if (!canCancelLoad(row.status)) {
-      Alert.alert('Iptal edilemez', blockCancelMessage(row.status));
+      Alert.alert('İptal edilemez', blockCancelMessage(row.status));
       return;
     }
 
-    let message = `${row.fromCity} → ${row.toCity} ilani iptal edilecek. Bu islem geri alinamaz.`;
+    let message = `${row.fromCity} → ${row.toCity} ilanı iptal edilecek. Bu işlem geri alınamaz.`;
     if (row.status === 'Assigned' && row.price > 0) {
       try {
         const s = await previewSettlement(row.price);
-        message = `${message}\n\nMusteriye iade: ${formatCurrencyTRY(s.customerTotal)}`;
+        message = `${message}\n\nMüşteriye iade: ${formatCurrencyTRY(s.customerTotal)}`;
       } catch {
-        message = `${message}\n\nMusteriye tam iade yapilacak.`;
+        message = `${message}\n\nMüşteriye tam iade yapılacak.`;
       }
     }
 
-    Alert.alert('Ilani iptal et', message, [
-      { text: 'Vazgec', style: 'cancel' },
+    Alert.alert('İlanı iptal et', message, [
+      { text: 'Vazgeç', style: 'cancel' },
       {
-        text: 'Iptal Et',
+        text: 'İptal Et',
         style: 'destructive',
         onPress: () => void doCancel(row),
       },
@@ -114,8 +116,8 @@ export default function AdminLoadsScreen() {
     try {
       const res = await cancelAdminLoad(row.id);
       setStatusMsg(res.refundAmount != null && res.refundAmount > 0
-        ? `${res.message} Iade: ${formatCurrencyTRY(res.refundAmount)}`
-        : res.message || 'Ilan iptal edildi.');
+        ? `${res.message} İade: ${formatCurrencyTRY(res.refundAmount)}`
+        : res.message || 'İlan iptal edildi.');
       setSelected(null);
       await fetchData();
     } catch (e) {
@@ -128,7 +130,7 @@ export default function AdminLoadsScreen() {
   if (loading) {
     return (
       <ScreenContainer>
-        <LoadingState message="İlanlar yükleniyor..." />
+        <LoadingState message="İlanlar yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -155,7 +157,7 @@ export default function AdminLoadsScreen() {
             />
             <TextField
               icon="search-outline"
-              placeholder="Ara: sehir veya aciklama"
+              placeholder="Ara: şehir veya açıklama"
               value={search}
               onChangeText={setSearch}
             />
@@ -170,11 +172,12 @@ export default function AdminLoadsScreen() {
             <EmptyState icon="📦" title="İlan bulunamadı" description="Filtreyi değiştirin." />
           ) : null
         }
-        renderItem={({ item }) => {
+        renderItem={({ item, index }) => {
           const pill = getLoadStatusPill(item.status);
           return (
+            <FadeInView delay={Math.min(index * 40, 200)}>
             <Card variant="elevated" padding={4} style={styles.loadCard}>
-              <Pressable onPress={() => setSelected(item)}>
+              <PressableScale onPress={() => setSelected(item)}>
                 <View style={styles.loadHead}>
                   <Text style={styles.route}>
                     {item.fromCity} → {item.toCity}
@@ -186,19 +189,20 @@ export default function AdminLoadsScreen() {
                 <Text style={styles.muted}>Fiyat: {formatCurrencyTRY(item.price)}</Text>
                 <Text style={styles.muted}>Tarih: {formatDateTR(item.createdAt)}</Text>
                 <Text style={styles.detailLink}>Detay →</Text>
-              </Pressable>
+              </PressableScale>
               {canCancelLoad(item.status) ? (
                 busyId === item.id ? (
                   <View style={styles.cancelLoading}>
                     <ActivityIndicator color={palette.error} size="small" />
                   </View>
                 ) : (
-                  <Pressable style={styles.cancelBtn} onPress={() => confirmCancel(item)}>
+                  <PressableScale style={styles.cancelBtn} onPress={() => confirmCancel(item)}>
                     <Text style={styles.cancelBtnText}>İptal Et</Text>
-                  </Pressable>
+                  </PressableScale>
                 )
               ) : null}
             </Card>
+            </FadeInView>
           );
         }}
       />
@@ -215,34 +219,24 @@ export default function AdminLoadsScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[2] },
-  back: { marginBottom: spacing[2] },
-  filterBtn: { marginBottom: spacing[3] },
-  loadCard: { marginBottom: spacing[2], gap: spacing[2] },
+  list: { padding: space.md, paddingBottom: spacing[10], gap: space.sm },
+  filterBtn: { marginBottom: space.md },
+  loadCard: { marginBottom: space.sm, gap: space.sm },
   loadHead: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    gap: spacing[2],
+    gap: space.sm,
   },
   route: { ...typography.h3, flex: 1 },
   muted: { ...typography.caption, textTransform: 'none' },
-  detailLink: {
-    fontFamily: fontFamily.bold,
-    fontSize: 13,
-    color: palette.brand,
-    marginTop: spacing[1],
-  },
+  detailLink: { ...typography.bodyMedium, fontSize: 13, color: palette.brand, marginTop: space.xs },
   cancelBtn: {
     backgroundColor: palette.error,
-    borderRadius: 10,
-    paddingVertical: spacing[3],
+    borderRadius: radius.md,
+    paddingVertical: space.md,
     alignItems: 'center',
   },
-  cancelBtnText: {
-    fontFamily: fontFamily.bold,
-    fontSize: 14,
-    color: palette.text,
-  },
-  cancelLoading: { paddingVertical: spacing[3], alignItems: 'center' },
+  cancelBtnText: { ...typography.bodyMedium, color: palette.text },
+  cancelLoading: { paddingVertical: space.md, alignItems: 'center' },
 });

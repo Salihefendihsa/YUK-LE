@@ -1,9 +1,11 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { DetailRow } from '../../src/components/driver/DetailRow';
 import { AlertBanner } from '../../src/components/ui/AlertBanner';
 import { Card } from '../../src/components/ui/Card';
+import { FadeInView } from '../../src/components/ui/FadeInView';
+import { GhostButton } from '../../src/components/ui/GhostButton';
 import { LoadingState } from '../../src/components/ui/LoadingState';
 import { SecondaryButton } from '../../src/components/ui/SecondaryButton';
 import { StatusPill } from '../../src/components/ui/StatusPill';
@@ -16,8 +18,8 @@ import {
 } from '../../src/services/wallet.service';
 import type { Load } from '../../src/types/load';
 import { palette } from '../../src/theme/colors';
-import { fontFamily, typography } from '../../src/theme/typography';
-import { spacing } from '../../src/theme/spacing';
+import { typography } from '../../src/theme/typography';
+import { space, spacing } from '../../src/theme/spacing';
 import {
   formatCurrencyTRY,
   formatDateTR,
@@ -71,7 +73,7 @@ export default function DriverHistoryDetailScreen() {
   if (loading) {
     return (
       <ScreenContainer>
-        <LoadingState message="Sefer detayı yükleniyor..." />
+        <LoadingState message="Sefer detayı yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -90,10 +92,9 @@ export default function DriverHistoryDetailScreen() {
 
   return (
     <ScreenScroll contentContainerStyle={styles.scroll}>
-      <Pressable onPress={() => router.back()}>
-        <Text style={typography.link}>← Geçmiş</Text>
-      </Pressable>
+      <GhostButton title="← Geçmiş" onPress={() => router.back()} style={styles.backBtn} />
 
+      <FadeInView>
       <View style={styles.titleRow}>
         <View style={{ flex: 1 }}>
           <Text style={styles.pageTitle}>Sefer Detayı</Text>
@@ -103,7 +104,9 @@ export default function DriverHistoryDetailScreen() {
         </View>
         <StatusPill label={pill.label} tone={pill.tone} />
       </View>
+      </FadeInView>
 
+      <FadeInView delay={50}>
       <Card variant="glass" padding={4}>
         <DetailRow label="Net kazanç" value={kazanc != null ? formatCurrencyTRY(kazanc) : '—'} />
         <DetailRow label="Liste fiyatı" value={formatCurrencyTRY(load.price)} />
@@ -115,6 +118,7 @@ export default function DriverHistoryDetailScreen() {
         <DetailRow label="Yük tipi" value={formatLoadTypeLabel(load.loadType ?? load.type)} />
         <DetailRow label="Ağırlık" value={formatWeightKg(load.weight)} />
       </Card>
+      </FadeInView>
 
       {load.status === 'Delivered' && load.ownerId ? (
         <CustomerRatingForm
@@ -128,9 +132,10 @@ export default function DriverHistoryDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[4] },
-  centered: { flex: 1, justifyContent: 'center', padding: spacing[6], gap: spacing[4] },
+  scroll: { padding: space.md, paddingBottom: spacing[10], gap: space.md },
+  backBtn: { alignSelf: 'flex-start' },
+  centered: { flex: 1, justifyContent: 'center', padding: space.lg, gap: space.md },
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing[3] },
-  pageTitle: { ...typography.h1, marginBottom: spacing[1] },
-  route: { fontFamily: fontFamily.bold, fontSize: 18, color: palette.gold },
+  pageTitle: { ...typography.h1, marginBottom: space.xs },
+  route: { ...typography.h2, fontSize: 18, color: palette.gold },
 });

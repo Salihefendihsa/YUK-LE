@@ -12,18 +12,18 @@ import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { FadeInView } from '../../../src/components/ui/FadeInView';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
-import { SectionHeader } from '../../../src/components/ui/SectionHeader';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
 import { TextField } from '../../../src/components/ui/TextField';
-import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { ScreenContainer, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getAdminPayments, releaseAdminPayment } from '../../../src/services/admin.service';
 import type { AdminPaymentRow } from '../../../src/types/admin';
 import { palette } from '../../../src/theme/colors';
-import { fontFamily, typography } from '../../../src/theme/typography';
-import { spacing } from '../../../src/theme/spacing';
+import { typography } from '../../../src/theme/typography';
+import { space, spacing } from '../../../src/theme/spacing';
 import { formatCurrencyTRY, formatDateTR } from '../../../src/utils/format';
 import { getPaymentStatusPill } from '../../../src/utils/statusPills';
 
@@ -73,11 +73,11 @@ export default function AdminPaymentsTab() {
 
   const confirmRelease = (row: AdminPaymentRow) => {
     Alert.alert(
-      'Serbest birak',
-      `${formatCurrencyTRY(row.amount)} tutarli odeme serbest birakilsin mi?`,
+      'Serbest bırak',
+      `${formatCurrencyTRY(row.amount)} tutarlı ödeme serbest bırakılsın mı?`,
       [
-        { text: 'Vazgec', style: 'cancel' },
-        { text: 'Serbest Birak', onPress: () => void doRelease(row) },
+        { text: 'Vazgeç', style: 'cancel' },
+        { text: 'Serbest Bırak', onPress: () => void doRelease(row) },
       ]
     );
   };
@@ -87,7 +87,7 @@ export default function AdminPaymentsTab() {
     setStatusMsg('');
     try {
       await releaseAdminPayment(row.id);
-      setStatusMsg('Odeme serbest birakildi.');
+      setStatusMsg('Ödeme serbest bırakıldı.');
       await fetchData();
     } catch (e) {
       setError(getApiErrorMessage(e));
@@ -99,7 +99,7 @@ export default function AdminPaymentsTab() {
   if (loading) {
     return (
       <ScreenContainer>
-        <LoadingState message="Ödemeler yükleniyor..." />
+        <LoadingState message="Ödemeler yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -122,7 +122,7 @@ export default function AdminPaymentsTab() {
 
             <View style={styles.kpiRow}>
               <Card variant="elevated" padding={3} style={styles.kpi}>
-                <Text style={styles.kpiLabel}>Kayit</Text>
+                <Text style={styles.kpiLabel}>Kayıt</Text>
                 <Text style={styles.kpiValue}>{summary.count}</Text>
               </Card>
               <Card variant="elevated" padding={3} style={styles.kpi}>
@@ -161,31 +161,33 @@ export default function AdminPaymentsTab() {
             <EmptyState icon="💳" title="Ödeme kaydı yok" description="Filtreyi değiştirin." />
           ) : null
         }
-        renderItem={({ item }) => {
+        renderItem={({ item, index }) => {
           const pill = getPaymentStatusPill(item.status);
           return (
-            <Card variant="elevated" padding={4} style={styles.payCard}>
-              <View style={styles.payHead}>
-                <Text style={styles.amount}>{formatCurrencyTRY(item.amount)}</Text>
-                <StatusPill {...pill} />
-              </View>
-              <Text style={styles.muted}>İlan: {item.loadId.slice(0, 8)}...</Text>
-              <Text style={styles.muted}>Islem: {item.transactionId || '-'}</Text>
-              <Text style={styles.muted}>Tarih: {formatDateTR(item.createdAt)}</Text>
-              {canRelease(item.status) ? (
-                busyId === item.id ? (
-                  <View style={styles.releaseLoading}>
-                    <ActivityIndicator color={palette.brand} size="small" />
-                  </View>
-                ) : (
-                  <PrimaryButton
-                    title="Serbest Birak"
-                    onPress={() => confirmRelease(item)}
-                    style={styles.releaseBtn}
-                  />
-                )
-              ) : null}
-            </Card>
+            <FadeInView delay={Math.min(index * 40, 200)}>
+              <Card variant="elevated" padding={4} style={styles.payCard}>
+                <View style={styles.payHead}>
+                  <Text style={styles.amount}>{formatCurrencyTRY(item.amount)}</Text>
+                  <StatusPill {...pill} />
+                </View>
+                <Text style={styles.muted}>İlan: {item.loadId.slice(0, 8)}...</Text>
+                <Text style={styles.muted}>İşlem: {item.transactionId || '-'}</Text>
+                <Text style={styles.muted}>Tarih: {formatDateTR(item.createdAt)}</Text>
+                {canRelease(item.status) ? (
+                  busyId === item.id ? (
+                    <View style={styles.releaseLoading}>
+                      <ActivityIndicator color={palette.brand} size="small" />
+                    </View>
+                  ) : (
+                    <PrimaryButton
+                      title="Serbest Bırak"
+                      onPress={() => confirmRelease(item)}
+                      style={styles.releaseBtn}
+                    />
+                  )
+                ) : null}
+              </Card>
+            </FadeInView>
           );
         }}
       />
@@ -194,30 +196,22 @@ export default function AdminPaymentsTab() {
 }
 
 const styles = StyleSheet.create({
-  list: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[2] },
-  kpiRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginBottom: spacing[3] },
-  kpi: { flex: 1, minWidth: '45%', gap: spacing[1] },
+  list: { padding: space.md, paddingBottom: spacing[10], gap: space.sm },
+  kpiRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginBottom: space.md },
+  kpi: { flex: 1, minWidth: '45%', gap: space.xs },
   kpiLabel: { ...typography.caption, textTransform: 'none' },
-  kpiValue: {
-    fontFamily: fontFamily.bold,
-    fontSize: 20,
-    color: palette.gold,
-  },
-  kpiValueSmall: {
-    fontFamily: fontFamily.bold,
-    fontSize: 14,
-    color: palette.gold,
-  },
-  filterBtn: { marginBottom: spacing[3] },
-  payCard: { marginBottom: spacing[2], gap: spacing[1] },
+  kpiValue: { ...typography.h2, color: palette.gold },
+  kpiValueSmall: { ...typography.bodyMedium, color: palette.gold },
+  filterBtn: { marginBottom: space.md },
+  payCard: { marginBottom: space.sm, gap: space.xs },
   payHead: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: spacing[2],
+    gap: space.sm,
   },
   amount: { ...typography.h3, flex: 1 },
   muted: { ...typography.caption, textTransform: 'none' },
-  releaseBtn: { marginTop: spacing[2] },
-  releaseLoading: { paddingVertical: spacing[3], alignItems: 'center' },
+  releaseBtn: { marginTop: space.sm },
+  releaseLoading: { paddingVertical: space.md, alignItems: 'center' },
 });

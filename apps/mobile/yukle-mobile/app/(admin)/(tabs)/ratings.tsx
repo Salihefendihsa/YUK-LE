@@ -1,10 +1,8 @@
-import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
@@ -14,17 +12,19 @@ import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { FadeInView } from '../../../src/components/ui/FadeInView';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { PressableScale } from '../../../src/components/ui/PressableScale';
 import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
-import { SectionHeader } from '../../../src/components/ui/SectionHeader';
 import { TextField } from '../../../src/components/ui/TextField';
-import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { ScreenContainer, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { deleteRating, getAllRatings } from '../../../src/services/admin.service';
 import type { AdminRatingRow } from '../../../src/types/admin';
 import { palette } from '../../../src/theme/colors';
-import { fontFamily, typography } from '../../../src/theme/typography';
-import { spacing } from '../../../src/theme/spacing';
+import { typography } from '../../../src/theme/typography';
+import { radius } from '../../../src/theme/radius';
+import { space, spacing } from '../../../src/theme/spacing';
 import { formatDateTR } from '../../../src/utils/format';
 
 function starsText(n: number): string {
@@ -34,7 +34,6 @@ function starsText(n: number): string {
 
 export default function AdminRatingsScreen() {
   const { contentInset } = useScreenInsets();
-  const router = useRouter();
   const [rows, setRows] = useState<AdminRatingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -78,8 +77,8 @@ export default function AdminRatingsScreen() {
   }, [filtered]);
 
   const confirmDelete = (row: AdminRatingRow) => {
-    Alert.alert('Puani sil', 'Bu yorum kalici silinecek. Devam?', [
-      { text: 'Vazgec', style: 'cancel' },
+    Alert.alert('Puanı sil', 'Bu yorum kalıcı silinecek. Devam?', [
+      { text: 'Vazgeç', style: 'cancel' },
       { text: 'Sil', style: 'destructive', onPress: () => void doDelete(row) },
     ]);
   };
@@ -101,7 +100,7 @@ export default function AdminRatingsScreen() {
   if (loading) {
     return (
       <ScreenContainer>
-        <LoadingState message="Puanlar yükleniyor..." />
+        <LoadingState message="Puanlar yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -148,29 +147,31 @@ export default function AdminRatingsScreen() {
           </>
         }
         ListEmptyComponent={
-          !error ? <EmptyState icon="⭐" title="Puan kaydi yok" /> : null
+          !error ? <EmptyState icon="⭐" title="Puan kaydı yok" /> : null
         }
-        renderItem={({ item }) => (
-          <Card variant="elevated" padding={4} style={styles.rateCard}>
-            <Text style={styles.stars}>
-              {starsText(item.score)} ({item.score})
-            </Text>
-            <Text style={styles.muted}>
-              {item.givenByName} → {item.givenToName}
-            </Text>
-            <Text style={styles.muted}>{formatDateTR(item.createdAt)}</Text>
-            <Text style={styles.mono}>İlan: {item.loadId.slice(0, 8)}...</Text>
-            <Text style={styles.muted} numberOfLines={4}>
-              {item.comment || '(yorum yok)'}
-            </Text>
-            {busyId === item.id ? (
-              <ActivityIndicator color={palette.error} style={{ marginTop: spacing[2] }} />
-            ) : (
-              <Pressable style={styles.deleteBtn} onPress={() => confirmDelete(item)}>
-                <Text style={styles.deleteBtnText}>Sil</Text>
-              </Pressable>
-            )}
-          </Card>
+        renderItem={({ item, index }) => (
+          <FadeInView delay={Math.min(index * 40, 200)}>
+            <Card variant="elevated" padding={4} style={styles.rateCard}>
+              <Text style={styles.stars}>
+                {starsText(item.score)} ({item.score})
+              </Text>
+              <Text style={styles.muted}>
+                {item.givenByName} → {item.givenToName}
+              </Text>
+              <Text style={styles.muted}>{formatDateTR(item.createdAt)}</Text>
+              <Text style={styles.mono}>İlan: {item.loadId.slice(0, 8)}...</Text>
+              <Text style={styles.muted} numberOfLines={4}>
+                {item.comment || '(yorum yok)'}
+              </Text>
+              {busyId === item.id ? (
+                <ActivityIndicator color={palette.error} style={{ marginTop: space.sm }} />
+              ) : (
+                <PressableScale style={styles.deleteBtn} onPress={() => confirmDelete(item)}>
+                  <Text style={styles.deleteBtnText}>Sil</Text>
+                </PressableScale>
+              )}
+            </Card>
+          </FadeInView>
         )}
       />
     </ScreenContainer>
@@ -178,31 +179,18 @@ export default function AdminRatingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[2] },
-  back: { marginBottom: spacing[2] },
-  filterBtn: { marginBottom: spacing[3] },
-  rateCard: { marginBottom: spacing[2], gap: spacing[1] },
-  stars: {
-    fontFamily: fontFamily.bold,
-    fontSize: 16,
-    color: palette.gold,
-  },
+  list: { padding: space.md, paddingBottom: spacing[10], gap: space.sm },
+  filterBtn: { marginBottom: space.md },
+  rateCard: { marginBottom: space.sm, gap: space.xs },
+  stars: { ...typography.h3, color: palette.gold },
   muted: { ...typography.caption, textTransform: 'none' },
-  mono: {
-    fontFamily: fontFamily.regular,
-    fontSize: 11,
-    color: palette.textMuted,
-  },
+  mono: { ...typography.caption, fontSize: 11, color: palette.textMuted, textTransform: 'none' },
   deleteBtn: {
     backgroundColor: palette.error,
-    borderRadius: 10,
-    paddingVertical: spacing[3],
+    borderRadius: radius.md,
+    paddingVertical: space.md,
     alignItems: 'center',
-    marginTop: spacing[2],
+    marginTop: space.sm,
   },
-  deleteBtnText: {
-    fontFamily: fontFamily.bold,
-    fontSize: 14,
-    color: palette.text,
-  },
+  deleteBtnText: { ...typography.bodyMedium, color: palette.text },
 });

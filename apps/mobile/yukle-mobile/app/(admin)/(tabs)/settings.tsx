@@ -1,14 +1,15 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { Card } from '../../../src/components/ui/Card';
+import { PressableScale } from '../../../src/components/ui/PressableScale';
 import { TextField } from '../../../src/components/ui/TextField';
 import { adminScreenStyles as s } from '../../../src/constants/adminScreenStyles';
 import { ScreenScroll } from '../../../src/constants/layout';
 import { useAuthStore } from '../../../src/store/auth.store';
 import { palette } from '../../../src/theme/colors';
-import { fontFamily } from '../../../src/theme/typography';
-import { spacing } from '../../../src/theme/spacing';
 import { typography } from '../../../src/theme/typography';
+import { radius } from '../../../src/theme/radius';
+import { space, spacing } from '../../../src/theme/spacing';
 
 export default function AdminSettingsScreen() {
   const user = useAuthStore((st) => st.user);
@@ -46,29 +47,24 @@ export default function AdminSettingsScreen() {
         <Text style={s.muted}>• İki adımlı doğrulama: yakında</Text>
       </Card>
 
-      <Pressable style={styles.saveBtn} disabled>
-        <Text style={styles.saveBtnText}>Kaydet (devre disi)</Text>
-      </Pressable>
+      <PressableScale style={styles.saveBtn} disabled>
+        <Text style={styles.saveBtnText}>Kaydet (devre dışı)</Text>
+      </PressableScale>
     </ScreenScroll>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[3] },
-  back: { marginBottom: spacing[2] },
-  cardTitle: { ...typography.h3, marginBottom: spacing[3] },
+  scroll: { padding: space.md, paddingBottom: spacing[10], gap: space.md },
+  cardTitle: { ...typography.h3, marginBottom: space.md },
   saveBtn: {
     backgroundColor: palette.surface,
-    borderRadius: 10,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: palette.borderLight,
-    paddingVertical: spacing[3],
+    paddingVertical: space.md,
     alignItems: 'center',
     opacity: 0.6,
   },
-  saveBtnText: {
-    fontFamily: fontFamily.semiBold,
-    fontSize: 14,
-    color: palette.textMuted,
-  },
+  saveBtnText: { ...typography.bodyMedium, color: palette.textMuted },
 });

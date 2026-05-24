@@ -1,11 +1,13 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { FadeInView } from '../../../src/components/ui/FadeInView';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { PressableScale } from '../../../src/components/ui/PressableScale';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
 import { ScreenContainer, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
@@ -17,8 +19,8 @@ import {
 } from '../../../src/services/wallet.service';
 import type { DriverHistoryRow } from '../../../src/types/history';
 import { palette } from '../../../src/theme/colors';
-import { fontFamily, typography } from '../../../src/theme/typography';
-import { spacing } from '../../../src/theme/spacing';
+import { typography } from '../../../src/theme/typography';
+import { space, spacing } from '../../../src/theme/spacing';
 import { formatCurrencyTRY, formatDateTR } from '../../../src/utils/format';
 import { getLoadStatusPill } from '../../../src/utils/statusPills';
 
@@ -66,7 +68,7 @@ export default function DriverHistoryScreen() {
   if (loading) {
     return (
       <ScreenContainer>
-        <LoadingState message="Geçmiş seferler yükleniyor..." />
+        <LoadingState message="Geçmiş seferler yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -89,7 +91,7 @@ export default function DriverHistoryScreen() {
               <Text style={styles.summaryValue}>
                 {formatCurrencyTRY(totalEarn)} · {tripCount} sefer
               </Text>
-              <Text style={styles.summaryHint}>Cüzdan ödeme kayıtlarına göre (Release)</Text>
+              <Text style={styles.summaryHint}>Cüzdan ödeme kayıtlarına göre</Text>
             </Card>
           </>
         }
@@ -102,42 +104,44 @@ export default function DriverHistoryScreen() {
             />
           ) : null
         }
-        renderItem={({ item }) => {
+        renderItem={({ item, index }) => {
           const pill = getLoadStatusPill(item.status ?? 'Delivered');
           const earn = item.netEarn != null && item.netEarn > 0 ? item.netEarn : null;
           return (
-            <Pressable
-              onPress={() =>
-                router.push({
-                  pathname: '/(driver)/history-detail',
-                  params: {
-                    id: item.id,
-                    netEarn: earn != null ? String(earn) : '',
-                  },
-                })
-              }
-            >
-              <Card variant="default" padding={4} style={styles.card}>
-                <View style={styles.cardTop}>
-                  <Text style={styles.route}>
-                    {item.fromCity} → {item.toCity}
+            <FadeInView delay={Math.min(index * 40, 200)}>
+              <PressableScale
+                onPress={() =>
+                  router.push({
+                    pathname: '/(driver)/history-detail',
+                    params: {
+                      id: item.id,
+                      netEarn: earn != null ? String(earn) : '',
+                    },
+                  })
+                }
+              >
+                <Card variant="default" padding={4} style={styles.card}>
+                  <View style={styles.cardTop}>
+                    <Text style={styles.route}>
+                      {item.fromCity} → {item.toCity}
+                    </Text>
+                    <StatusPill label={pill.label} tone={pill.tone} />
+                  </View>
+                  <Text style={styles.meta}>Müşteri: {item.customerName ?? '-'}</Text>
+                  <Text style={styles.meta}>
+                    Tarih: {item.deliveryDate ? formatDateTR(item.deliveryDate) : '-'}
                   </Text>
-                  <StatusPill label={pill.label} tone={pill.tone} />
-                </View>
-                <Text style={styles.meta}>Müşteri: {item.customerName ?? '-'}</Text>
-                <Text style={styles.meta}>
-                  Tarih: {item.deliveryDate ? formatDateTR(item.deliveryDate) : '-'}
-                </Text>
-                <Text style={styles.price}>
-                  {earn != null ? formatCurrencyTRY(earn) : 'Kazanç bekleniyor'}
-                </Text>
-                {earn == null ? (
-                  <Text style={styles.listHint}>Liste: {formatCurrencyTRY(item.price)}</Text>
-                ) : (
-                  <Text style={styles.listHint}>Net ödeme (cüzdan)</Text>
-                )}
-              </Card>
-            </Pressable>
+                  <Text style={styles.price}>
+                    {earn != null ? formatCurrencyTRY(earn) : 'Kazanç bekleniyor'}
+                  </Text>
+                  {earn == null ? (
+                    <Text style={styles.listHint}>Liste: {formatCurrencyTRY(item.price)}</Text>
+                  ) : (
+                    <Text style={styles.listHint}>Net ödeme (cüzdan)</Text>
+                  )}
+                </Card>
+              </PressableScale>
+            </FadeInView>
           );
         }}
       />
@@ -146,31 +150,21 @@ export default function DriverHistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { padding: spacing[4], paddingBottom: spacing[8], gap: spacing[3] },
-  summaryCard: { marginBottom: spacing[4], borderColor: palette.goldBorder },
+  list: { padding: space.md, paddingBottom: space.xl, gap: spacing[3] },
+  summaryCard: { marginBottom: space.md, borderColor: palette.goldBorder },
   summaryLabel: { ...typography.label, color: palette.textMuted },
-  summaryValue: {
-    fontFamily: fontFamily.bold,
-    fontSize: 18,
-    color: palette.gold,
-    marginTop: spacing[1],
-  },
-  summaryHint: { ...typography.caption, textTransform: 'none', marginTop: spacing[1], color: palette.textMuted },
-  card: { marginBottom: spacing[2] },
+  summaryValue: { ...typography.h2, color: palette.gold, marginTop: space.xs },
+  summaryHint: { ...typography.caption, textTransform: 'none', marginTop: space.xs, color: palette.textMuted },
+  card: { marginBottom: space.sm },
   cardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    gap: spacing[2],
-    marginBottom: spacing[2],
+    gap: space.sm,
+    marginBottom: space.sm,
   },
-  route: { fontFamily: fontFamily.bold, fontSize: 16, color: palette.text, flex: 1 },
+  route: { ...typography.bodyMedium, fontSize: 16, flex: 1 },
   meta: { ...typography.caption, textTransform: 'none' },
-  price: {
-    fontFamily: fontFamily.bold,
-    fontSize: 15,
-    color: palette.brand,
-    marginTop: spacing[2],
-  },
-  listHint: { ...typography.caption, textTransform: 'none', color: palette.textMuted, marginTop: 2 },
+  price: { ...typography.bodyMedium, color: palette.brand, marginTop: space.sm },
+  listHint: { ...typography.caption, textTransform: 'none', color: palette.textMuted, marginTop: space.xs },
 });

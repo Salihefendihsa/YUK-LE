@@ -1,10 +1,8 @@
-import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   Modal,
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -15,21 +13,21 @@ import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { FadeInView } from '../../../src/components/ui/FadeInView';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
-import { SectionHeader } from '../../../src/components/ui/SectionHeader';
+import { PressableScale } from '../../../src/components/ui/PressableScale';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
-import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { ScreenContainer, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getAdminChatMessages, getAdminChats } from '../../../src/services/admin.service';
 import type { AdminChatMessageRow, AdminChatSummaryRow } from '../../../src/types/admin';
 import { palette } from '../../../src/theme/colors';
-import { fontFamily, typography } from '../../../src/theme/typography';
-import { spacing } from '../../../src/theme/spacing';
+import { typography } from '../../../src/theme/typography';
+import { space, spacing } from '../../../src/theme/spacing';
 import { formatDateTimeTR } from '../../../src/utils/format';
 
 export default function AdminChatsScreen() {
   const { contentInset } = useScreenInsets();
-  const router = useRouter();
   const [chats, setChats] = useState<AdminChatSummaryRow[]>([]);
   const [messages, setMessages] = useState<AdminChatMessageRow[]>([]);
   const [selected, setSelected] = useState<AdminChatSummaryRow | null>(null);
@@ -68,7 +66,7 @@ export default function AdminChatsScreen() {
   if (loading) {
     return (
       <ScreenContainer>
-        <LoadingState message="Sohbetler yükleniyor..." />
+        <LoadingState message="Sohbetler yükleniyor..." variant="skeleton" />
       </ScreenContainer>
     );
   }
@@ -97,23 +95,25 @@ export default function AdminChatsScreen() {
           </>
         }
         ListEmptyComponent={
-          !error ? <EmptyState icon="💬" title="Sohbet kaydi yok" /> : null
+          !error ? <EmptyState icon="💬" title="Sohbet kaydı yok" /> : null
         }
-        renderItem={({ item }) => (
-          <Pressable onPress={() => void openChat(item)}>
-            <Card variant="elevated" padding={4} style={styles.chatCard}>
-              <Text style={styles.cardTitle}>{item.route || `İlan ${item.loadId.slice(0, 8)}`}</Text>
-              <Text style={styles.muted}>
-                Müşteri: {item.customerName} | Şoför: {item.driverName}
-              </Text>
-              <Text style={styles.muted} numberOfLines={2}>
-                Son: {item.lastMessage}
-              </Text>
-              <Text style={styles.muted}>
-                {formatDateTimeTR(item.lastMessageAt)} · {item.messageCount} mesaj
-              </Text>
-            </Card>
-          </Pressable>
+        renderItem={({ item, index }) => (
+          <FadeInView delay={Math.min(index * 40, 200)}>
+            <PressableScale onPress={() => void openChat(item)}>
+              <Card variant="elevated" padding={4} style={styles.chatCard}>
+                <Text style={styles.cardTitle}>{item.route || `İlan ${item.loadId.slice(0, 8)}`}</Text>
+                <Text style={styles.muted}>
+                  Müşteri: {item.customerName} | Şoför: {item.driverName}
+                </Text>
+                <Text style={styles.muted} numberOfLines={2}>
+                  Son: {item.lastMessage}
+                </Text>
+                <Text style={styles.muted}>
+                  {formatDateTimeTR(item.lastMessageAt)} · {item.messageCount} mesaj
+                </Text>
+              </Card>
+            </PressableScale>
+          </FadeInView>
         )}
       />
 
@@ -121,9 +121,9 @@ export default function AdminChatsScreen() {
         <ScreenContainer style={styles.modal}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Mesaj Geçmişi</Text>
-            <Pressable onPress={() => setSelected(null)}>
+            <PressableScale onPress={() => setSelected(null)}>
               <Text style={typography.link}>Kapat</Text>
-            </Pressable>
+            </PressableScale>
           </View>
           {selected ? (
             <Text style={styles.muted}>
@@ -164,25 +164,20 @@ export default function AdminChatsScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[2] },
-  back: { marginBottom: spacing[2] },
-  chatCard: { marginBottom: spacing[2] },
+  list: { padding: space.md, paddingBottom: spacing[10], gap: space.sm },
+  chatCard: { marginBottom: space.sm },
   cardTitle: { ...typography.h3 },
   muted: { ...typography.caption, textTransform: 'none' },
-  modal: { padding: spacing[4], flex: 1 },
+  modal: { padding: space.md, flex: 1 },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing[3],
+    marginBottom: space.md,
   },
   modalTitle: { ...typography.h2 },
-  msgScroll: { gap: spacing[2], paddingBottom: spacing[8], paddingTop: spacing[2] },
-  msgHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing[2] },
+  msgScroll: { gap: space.sm, paddingBottom: spacing[8], paddingTop: space.sm },
+  msgHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
   blockedMsg: { borderColor: palette.errorBorder },
-  danger: {
-    fontFamily: fontFamily.regular,
-    fontSize: 13,
-    color: palette.error,
-  },
+  danger: { ...typography.bodySmall, color: palette.error },
 });
