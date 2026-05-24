@@ -24,11 +24,43 @@ import { fontFamily, typography } from '../../src/theme/typography';
 import { spacing } from '../../src/theme/spacing';
 import { formatCurrencyTRY, formatLoadTypeLabel, formatWeightKg } from '../../src/utils/format';
 import { canCustomerOpenChat } from '../../src/utils/loadChat';
+import { LoadStatusTimeline } from '../../src/components/load/LoadStatusTimeline';
+import { DriverRatingForm } from '../../src/components/customer/DriverRatingForm';
 import {
   getAiPriceComparePill,
   getBidStatusPill,
   getLoadStatusPill,
 } from '../../src/utils/statusPills';
+import { SettlementBreakdown } from '../../src/components/settlement/SettlementBreakdown';
+import { previewSettlement } from '../../src/services/settlement.service';
+import type { SettlementPreview } from '../../src/types/settlement';
+
+function AcceptedPaymentSummary({ amount }: { amount: number }) {
+  const [settlement, setSettlement] = useState<SettlementPreview | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void previewSettlement(amount)
+      .then((s) => {
+        if (!cancelled) setSettlement(s);
+      })
+      .catch(() => {
+        if (!cancelled) setSettlement(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [amount]);
+
+  if (!settlement) return null;
+
+  return (
+    <View style={{ marginTop: spacing[2] }}>
+      <Text style={styles.paymentTitle}>Ödeme özeti</Text>
+      <SettlementBreakdown settlement={settlement} mode="customer" />
+    </View>
+  );
+}
 
 function BidCard({
   bid,
@@ -44,6 +76,21 @@ function BidCard({
   const bidPill = getBidStatusPill(bid.status);
   const pricePill = getAiPriceComparePill(bid.amount, load.aiMinPrice, load.aiMaxPrice);
   const canAccept = load.status === 'Active' && bid.status === 'Pending';
+  const [settlement, setSettlement] = useState<SettlementPreview | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void previewSettlement(bid.amount)
+      .then((s) => {
+        if (!cancelled) setSettlement(s);
+      })
+      .catch(() => {
+        if (!cancelled) setSettlement(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [bid.amount]);
 
   return (
     <View style={[styles.bidItem, bid.status === 'Accepted' && styles.bidItemAccepted]}>
@@ -55,8 +102,8 @@ function BidCard({
         <StatusPill label={bidPill.label} tone={bidPill.tone} />
         {pricePill ? <StatusPill label={pricePill.label} tone={pricePill.tone} /> : null}
       </View>
-      {bid.driverPhone ? (
-        <Text style={styles.bidPhone}>{bid.driverPhone}</Text>
+      {settlement ? (
+        <SettlementBreakdown settlement={settlement} mode="customer" compact />
       ) : null}
       {canAccept ? (
         <PrimaryButton
@@ -80,8 +127,10 @@ export default function CustomerLoadDetailScreen() {
   const [bids, setBids] = useState<LoadBid[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState('');
+  const [actionError, setActionError] = useState('');
   const [actionMsg, setActionMsg] = useState('');
   const [acceptingId, setAcceptingId] = useState<number | null>(null);
+  const [showRating, setShowRating] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!loadId) {
@@ -144,27 +193,41 @@ export default function CustomerLoadDetailScreen() {
 
   const doAccept = async (bid: LoadBid) => {
     setActionMsg('');
+    setActionError('');
     setAcceptingId(bid.id);
     try {
       await acceptBid(bid.id);
       setActionMsg('Teklif kabul edildi. İlan durumu güncellendi.');
       await refresh();
     } catch (e) {
-      setFetchError(getApiErrorMessage(e));
+      setActionError(getApiErrorMessage(e));
     } finally {
       setAcceptingId(null);
     }
   };
 
   const onAcceptPress = (bid: LoadBid) => {
-    Alert.alert(
-      'Teklifi kabul et',
-      `${bid.driverFullName} - ${formatCurrencyTRY(bid.amount)} teklifini kabul etmek istiyor musunuz? Bu işlem geri alınamaz.`,
-      [
-        { text: 'İptal', style: 'cancel' },
-        { text: 'Kabul Et', style: 'destructive', onPress: () => doAccept(bid) },
-      ]
-    );
+    void previewSettlement(bid.amount)
+      .then((s) => {
+        Alert.alert(
+          'Teklifi kabul et',
+          `${bid.driverFullName}\n\nTeklif: ${formatCurrencyTRY(s.bidAmount)}\nKomisyon: +${formatCurrencyTRY(s.customerCommission)}\nÖdenecek (hold): ${formatCurrencyTRY(s.customerTotal)}\n\nBu işlem geri alınamaz.`,
+          [
+            { text: 'İptal', style: 'cancel' },
+            { text: 'Kabul Et', style: 'destructive', onPress: () => doAccept(bid) },
+          ]
+        );
+      })
+      .catch(() => {
+        Alert.alert(
+          'Teklifi kabul et',
+          `${bid.driverFullName} - ${formatCurrencyTRY(bid.amount)} teklifini kabul etmek istiyor musunuz?`,
+          [
+            { text: 'İptal', style: 'cancel' },
+            { text: 'Kabul Et', style: 'destructive', onPress: () => doAccept(bid) },
+          ]
+        );
+      });
   };
 
   if (loading) {
@@ -197,6 +260,7 @@ export default function CustomerLoadDetailScreen() {
   const yukTipi = formatLoadTypeLabel(load.loadType ?? load.type);
   const showQr = load.status === 'Assigned' || load.status === 'OnWay';
   const statusPill = getLoadStatusPill(load.status);
+  const acceptedBid = bids.find((b) => b.status === 'Accepted');
 
   return (
     <ScreenScroll contentContainerStyle={styles.scroll}>
@@ -214,7 +278,7 @@ export default function CustomerLoadDetailScreen() {
         <StatusPill label={statusPill.label} tone={statusPill.tone} />
       </View>
 
-      {fetchError ? <AlertBanner message={fetchError} tone="error" /> : null}
+      {actionError ? <AlertBanner message={actionError} tone="error" /> : null}
       {actionMsg ? <AlertBanner message={actionMsg} tone="success" /> : null}
 
       <Card variant="default" padding={4}>
@@ -222,7 +286,14 @@ export default function CustomerLoadDetailScreen() {
         <DetailRow label="Yük tipi" value={String(yukTipi)} />
         <DetailRow label="Agirlik" value={formatWeightKg(load.weight)} />
         <DetailRow label="İlan fiyatı" value={formatCurrencyTRY(load.price)} />
+        {acceptedBid ? (
+          <>
+            <DetailRow label="Kabul edilen teklif" value={formatCurrencyTRY(acceptedBid.amount)} />
+            <AcceptedPaymentSummary amount={acceptedBid.amount} />
+          </>
+        ) : null}
         {load.description ? <Text style={styles.desc}>{load.description}</Text> : null}
+        <LoadStatusTimeline status={load.status} />
       </Card>
 
       {driverTracking.shouldShow ? (
@@ -288,6 +359,19 @@ export default function CustomerLoadDetailScreen() {
         />
       ) : null}
 
+      {load.status === 'Delivered' && load.driverId ? (
+        showRating ? (
+          <DriverRatingForm
+            loadId={load.id}
+            driverUserId={load.driverId}
+            driverName={bids.find((b) => b.status === 'Accepted')?.driverFullName}
+            onRated={() => setShowRating(false)}
+          />
+        ) : (
+          <PrimaryButton title="Şoförü Puanla" onPress={() => setShowRating(true)} />
+        )
+      ) : null}
+
       <Card variant="glass" padding={4}>
         <Text style={styles.cardTitle}>Gelen teklifler ({bids.length})</Text>
         {bids.length === 0 ? (
@@ -326,6 +410,12 @@ const styles = StyleSheet.create({
   pageTitle: { ...typography.h1 },
   route: { fontFamily: fontFamily.bold, fontSize: 18, color: palette.gold, marginTop: spacing[1] },
   cardTitle: { ...typography.h3, marginBottom: spacing[3] },
+  paymentTitle: {
+    fontFamily: fontFamily.semiBold,
+    fontSize: 13,
+    color: palette.textSecondary,
+    marginBottom: spacing[1],
+  },
   driverName: {
     fontFamily: fontFamily.semiBold,
     fontSize: 15,
@@ -356,6 +446,5 @@ const styles = StyleSheet.create({
   bidDriver: { fontFamily: fontFamily.bold, fontSize: 15, color: palette.text, flex: 1 },
   bidAmount: { fontFamily: fontFamily.bold, fontSize: 16, color: palette.gold },
   bidMetaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] },
-  bidPhone: { ...typography.caption, textTransform: 'none' },
   emptyBid: { ...typography.caption, textTransform: 'none' },
 });

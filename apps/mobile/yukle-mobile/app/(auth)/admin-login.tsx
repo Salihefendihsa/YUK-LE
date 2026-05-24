@@ -33,7 +33,7 @@ export default function AdminLoginRoute() {
     try {
       const response = await authService.login({ phone: loginId, password });
       if (response.role !== 'Admin') {
-        setError('Erişim reddedildi. Yetkisiz giriş denemesi kayıt altındadır.');
+        setError('Erişim reddedildi. Yalnızca yönetici hesapları giriş yapabilir.');
         return;
       }
       setAuth(response);
@@ -55,7 +55,7 @@ export default function AdminLoginRoute() {
       footer={
         <View style={styles.footer}>
           <Text style={styles.secureNote}>
-            Bu sayfa korumalıdır. Tüm giriş denemeleri kayıt altındadır.
+            Yalnızca yetkili yönetici hesapları bu sayfadan giriş yapabilir.
           </Text>
           <View style={s.testBox}>
             <Text style={s.testTitle}>TEST ADMIN</Text>
@@ -75,6 +75,7 @@ export default function AdminLoginRoute() {
         <Text style={typography.link}>← Giris ekrani</Text>
       </Pressable>
 
+      <Text style={styles.fieldLabel}>E-posta</Text>
       <TextField
         icon="mail-outline"
         placeholder="admin@yuk-le.com"
@@ -83,6 +84,7 @@ export default function AdminLoginRoute() {
         keyboardType="email-address"
         autoCapitalize="none"
         autoCorrect={false}
+        textContentType="username"
       />
 
       <TextField
@@ -129,5 +131,11 @@ const styles = StyleSheet.create({
     textTransform: 'none',
     textAlign: 'center',
     color: palette.textMuted,
+  },
+  fieldLabel: {
+    ...typography.caption,
+    textTransform: 'none',
+    marginBottom: spacing[1],
+    color: palette.textSecondary,
   },
 });

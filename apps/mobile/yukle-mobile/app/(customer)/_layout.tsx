@@ -30,6 +30,7 @@ export default function CustomerLayout() {
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.bgDark } }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="load-detail" />
+      <Stack.Screen name="settings" />
     </Stack>
   );
 }

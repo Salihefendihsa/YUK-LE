@@ -10,19 +10,33 @@ function normalizeSummary(raw: unknown): WalletSummary {
   };
 }
 
-function txDescription(loadId: unknown, status: string): string {
+const AUDIT_LABELS: Record<string, string> = {
+  Hold: 'Escrow (net tutar)',
+  Release: 'Yük ödemesi (net)',
+  Commission: 'Şoför komisyonu',
+  CustomerCommission: 'Müşteri komisyonu (platform)',
+  Tax: 'Stopaj',
+  Refund: 'İade',
+};
+
+function txDescription(
+  loadId: unknown,
+  status: string,
+  reason?: string | null
+): string {
   const id = loadId ? String(loadId).slice(0, 8) : '';
-  if (status === 'Released') return id ? `Yük ödemesi (${id}...)` : 'Yük ödemesi';
-  if (status === 'Blocked') return id ? `Bloke tutar (${id}...)` : 'Bloke tutar';
-  if (status === 'Pending') return 'Bekleyen islem';
-  if (status === 'Refunded') return 'Iade';
-  if (status === 'Failed') return 'Basarisiz islem';
-  return 'Cüzdan hareketi';
+  const base = AUDIT_LABELS[status] ?? status;
+  const suffix = id ? ` (${id}…)` : '';
+  if (reason?.trim()) return `${base}${suffix}: ${reason.trim()}`;
+  return `${base}${suffix}`;
 }
 
+/** WalletAuditLogType / PaymentStatus → hareket yönü */
 function txDirection(status: string): WalletTransaction['direction'] {
-  if (status === 'Released') return 'in';
-  if (status === 'Refunded' || status === 'Failed') return 'out';
+  const s = status.toLowerCase();
+  if (s === 'release' || s === 'released' || s === 'refund' || s === 'refunded') return 'in';
+  if (s === 'commission' || s === 'customercommission' || s === 'tax' || s === 'failed') return 'out';
+  if (s === 'hold' || s === 'blocked' || s === 'pending') return 'pending';
   return 'pending';
 }
 
@@ -30,17 +44,64 @@ function normalizeTransactions(raw: unknown): WalletTransaction[] {
   const list = Array.isArray(raw) ? raw : [];
   return list.map((item) => {
     const r = item as Record<string, unknown>;
-    const status = String(r.status ?? '-');
+    const status = String(r.status ?? r.Status ?? '-');
+    const reason = r.reason != null ? String(r.reason) : r.Reason != null ? String(r.Reason) : null;
     return {
       id: Number(r.id ?? 0),
       loadId: r.loadId != null ? String(r.loadId) : null,
       amount: Number(r.amount ?? 0),
       status,
       createdAt: String(r.createdAt ?? ''),
-      description: txDescription(r.loadId, status),
+      description: txDescription(r.loadId, status, reason),
       direction: txDirection(status),
     };
   });
+}
+
+/** loadId → net Release tutarı (şoför kazancı) */
+export function mapReleaseEarningsByLoadId(transactions: WalletTransaction[]): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const tx of transactions) {
+    if (tx.loadId && tx.status === 'Release') {
+      map.set(tx.loadId, tx.amount);
+    }
+  }
+  return map;
+}
+
+export function sumReleaseEarnings(transactions: WalletTransaction[]): number {
+  return transactions
+    .filter((tx) => tx.status === 'Release')
+    .reduce((sum, tx) => sum + tx.amount, 0);
+}
+
+/** Müşteri: loadId → ödenen tutar (Released öncelikli, yoksa Blocked) */
+export function mapCustomerPaymentByLoadId(
+  transactions: WalletTransaction[]
+): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const tx of transactions) {
+    if (!tx.loadId) continue;
+    const s = tx.status.toLowerCase();
+    if (s === 'blocked' && !map.has(tx.loadId)) {
+      map.set(tx.loadId, tx.amount);
+    }
+  }
+  for (const tx of transactions) {
+    if (!tx.loadId) continue;
+    if (tx.status.toLowerCase() === 'released') {
+      map.set(tx.loadId, tx.amount);
+    }
+  }
+  return map;
+}
+
+export function sumCustomerPayments(transactions: WalletTransaction[]): number {
+  let total = 0;
+  mapCustomerPaymentByLoadId(transactions).forEach((amount) => {
+    total += amount;
+  });
+  return total;
 }
 
 export async function getWalletSummary(): Promise<WalletSummary> {

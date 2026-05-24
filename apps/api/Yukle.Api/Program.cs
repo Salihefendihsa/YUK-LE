@@ -6,10 +6,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
 using Yukle.Api.Data;
+using Yukle.Api.Authorization;
 using Yukle.Api.Infrastructure;
 using Yukle.Api.Services;
 using Yukle.Api.Services.Sms;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
@@ -115,6 +117,7 @@ builder.Services.AddSingleton<Yukle.Api.Services.IEncryptionService,
 
 builder.Services.AddScoped<Yukle.Api.Services.ITokenService,        Yukle.Api.Services.TokenService>();
 builder.Services.AddScoped<Yukle.Api.Services.ILoadService,         Yukle.Api.Services.LoadService>();
+builder.Services.AddSingleton<Yukle.Api.Services.IDriverReviewDocumentStore, Yukle.Api.Services.DriverReviewDocumentStore>();
 builder.Services.AddScoped<Yukle.Api.Services.IAuthService,         Yukle.Api.Services.AuthService>();
 builder.Services.AddYukleSms(builder.Configuration);
 builder.Services.AddScoped<Yukle.Api.Services.IBidService,          Yukle.Api.Services.BidService>();
@@ -125,7 +128,7 @@ builder.Services.AddScoped<Yukle.Api.Services.PricingService>();
 builder.Services.AddScoped<Yukle.Api.Services.IWalletSettlementCalculator, Yukle.Api.Services.WalletSettlementCalculator>();
 builder.Services.AddScoped<Yukle.Api.Services.IWalletLedgerService,        Yukle.Api.Services.WalletLedgerService>();
 builder.Services.AddScoped<Yukle.Api.Services.IPaymentService,             Yukle.Api.Services.MockPaymentService>();
-builder.Services.AddSingleton<Yukle.Api.Services.IChatModerationService, Yukle.Api.Services.ChatModerationService>();
+builder.Services.AddScoped<Yukle.Api.Services.IChatModerationService, Yukle.Api.Services.ChatModerationService>();
 
 // ── Rota Servisi (OSRM) ────────────────────────────────────────────────────
 // Named HttpClient: zaman aşımı kısa tutulur (OSRM yavaş cevap verirse Haversine'e düşsün).
@@ -303,26 +306,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             }
         };
     });
-// ── v2.5.3 · Policy-Based Authorization (RequireActiveDriver) ─────────────
+// ── v2.5.3 / D-1 · Policy-Based Authorization (RequireActiveDriver) ─────────
 //
-// JWT imzası geçerli olsa bile, Gemini AI belgeleri onaylamadığı sürece şoförün
-// operasyonel uç noktalara erişmesini 403 Forbidden ile engelleriz. 401 değil 403
-// dönmesi iş mantığı açısından kritik: "kimliği tanıyoruz ama yetkin yok" semantiği.
-//
-// ASP.NET Core davranışı:
-//   • Token yoksa / imza bozuksa → JwtBearer middleware 401 Unauthorized üretir.
-//   • Token geçerli ama policy şartlarını sağlamıyorsa → 403 Forbidden üretir.
-//
-// Şartlar:
-//   1) Rol = "Driver"
-//   2) "IsActive" custom claim değeri kesinlikle "True" olmalı.
-//      (bool.ToString() "True"/"False" üretir; RequireClaim ordinal karşılaştırır.)
+// JWT claim yerine DB lookup — admin onayı anında etki eder (stale token sorunu giderildi).
+builder.Services.AddScoped<IAuthorizationHandler, ActiveDriverAuthorizationHandler>();
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("RequireActiveDriver", policy =>
         policy.RequireAuthenticatedUser()
               .RequireRole("Driver")
-              .RequireClaim("IsActive", "True"));
+              .AddRequirements(new ActiveDriverRequirement()));
 });
 
 // =============== 3b. RATE LIMITING (Phase 2.2) ===============

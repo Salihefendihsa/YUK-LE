@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
@@ -8,7 +8,9 @@ import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
 import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
+import { SettlementBreakdown } from '../../../src/components/settlement/SettlementBreakdown';
 import { getWalletSummary, getWalletTransactions } from '../../../src/services/wallet.service';
+import { buildDriverSettlementsFromTransactions } from '../../../src/utils/walletSettlement';
 import type { WalletSummary, WalletTransaction } from '../../../src/types/wallet';
 import { palette } from '../../../src/theme/colors';
 import { fontFamily, typography } from '../../../src/theme/typography';
@@ -46,6 +48,8 @@ export default function DriverWalletScreen() {
     await fetchData();
     setRefreshing(false);
   };
+
+  const loadSettlements = useMemo(() => buildDriverSettlementsFromTransactions(tx), [tx]);
 
   if (loading) {
     return (
@@ -99,6 +103,21 @@ export default function DriverWalletScreen() {
               </Card>
             </View>
 
+            {loadSettlements.length > 0 ? (
+              <>
+                <Text style={styles.sectionTitle}>Yük bazlı ödeme dökümü</Text>
+                {loadSettlements.slice(0, 5).map((item) => (
+                  <Card key={item.loadId} variant="default" padding={4} style={styles.settleCard}>
+                    <Text style={styles.settleLoad}>
+                      Yük {item.loadId.slice(0, 8)}…
+                      {item.hasRelease ? ' · Ödendi' : ' · Beklemede'}
+                    </Text>
+                    <SettlementBreakdown settlement={item.settlement} mode="driver" compact />
+                  </Card>
+                ))}
+              </>
+            ) : null}
+
             <Text style={styles.sectionTitle}>İşlem geçmişi</Text>
           </>
         }
@@ -128,7 +147,13 @@ export default function DriverWalletScreen() {
                       item.direction === 'out' && styles.txOut,
                     ]}
                   >
-                    {item.direction === 'out' ? '-' : item.direction === 'in' ? '+' : ''}
+                    {item.direction === 'out'
+                      ? '−'
+                      : item.direction === 'in'
+                        ? '+'
+                        : item.status === 'Hold'
+                          ? '⏳ '
+                          : ''}
                     {formatCurrencyTRY(item.amount)}
                   </Text>
                   <StatusPill label={pill.label} tone={pill.tone} />
@@ -166,6 +191,13 @@ const styles = StyleSheet.create({
     marginTop: spacing[1],
   },
   sectionTitle: { ...typography.h3, marginBottom: spacing[3] },
+  settleCard: { marginBottom: spacing[2] },
+  settleLoad: {
+    fontFamily: fontFamily.semiBold,
+    fontSize: 12,
+    color: palette.textMuted,
+    marginBottom: spacing[1],
+  },
   txCard: { marginBottom: spacing[2] },
   txRow: { flexDirection: 'row', gap: spacing[3] },
   txDesc: { fontFamily: fontFamily.semiBold, fontSize: 14, color: palette.text },

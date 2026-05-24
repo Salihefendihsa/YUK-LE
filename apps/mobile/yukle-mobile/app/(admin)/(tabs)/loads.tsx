@@ -122,10 +122,7 @@ export default function AdminLoadsScreen() {
         }
         ListHeaderComponent={
           <>
-            <ScreenHeader
-              title="İlanlar"
-              subtitle="Tüm ilanlar — API listesinde müşteri/şoför yok"
-            />
+            <ScreenHeader title="İlanlar" subtitle="Tüm ilanlar — müşteri ve şoför adları" />
 
             <TextField
               icon="filter-outline"
@@ -162,6 +159,8 @@ export default function AdminLoadsScreen() {
                   </Text>
                   <StatusPill {...pill} />
                 </View>
+                <Text style={styles.muted}>Müşteri: {item.customerName ?? '—'}</Text>
+                <Text style={styles.muted}>Şoför: {item.driverName ?? 'Atanmadı'}</Text>
                 <Text style={styles.muted}>Fiyat: {formatCurrencyTRY(item.price)}</Text>
                 <Text style={styles.muted}>Tarih: {formatDateTR(item.createdAt)}</Text>
                 <Text style={styles.detailLink}>Detay →</Text>

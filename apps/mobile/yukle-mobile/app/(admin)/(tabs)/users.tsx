@@ -22,11 +22,11 @@ import { TextField } from '../../../src/components/ui/TextField';
 import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import {
+  activateUser,
   customerToListItem,
   driverToListItem,
   getAdminCustomers,
   getAdminDrivers,
-  toggleUserActive,
 } from '../../../src/services/admin.service';
 import type { AdminUserListItem } from '../../../src/types/admin';
 import { palette } from '../../../src/theme/colors';
@@ -85,35 +85,30 @@ export default function AdminUsersTab() {
     setRefreshing(false);
   };
 
-  const confirmToggle = (item: AdminUserListItem) => {
-    const nextActive = !item.isActive;
-    const action = nextActive ? 'aktif etmek' : 'pasif / askiya almak';
-    Alert.alert(
-      'Hesap durumu',
-      `${item.fullName} kullanicisini ${action} istiyor musunuz?`,
-      [
-        { text: 'İptal', style: 'cancel' },
-        {
-          text: 'Onayla',
-          style: nextActive ? 'default' : 'destructive',
-          onPress: () => void doToggle(item),
-        },
-      ]
-    );
+  const onAccountAction = (item: AdminUserListItem) => {
+    if (item.isActive) {
+      setSelected(item);
+      return;
+    }
+    Alert.alert('Hesabi aktif et', `${item.fullName} yeniden aktif edilsin mi?`, [
+      { text: 'İptal', style: 'cancel' },
+      {
+        text: 'Aktif Et',
+        onPress: () => void doActivate(item),
+      },
+    ]);
   };
 
-  const doToggle = async (item: AdminUserListItem) => {
+  const doActivate = async (item: AdminUserListItem) => {
     setTogglingId(item.id);
     setStatusMsg('');
     setError('');
     try {
-      const result = await toggleUserActive(item.id);
-      setStatusMsg(
-        `${item.fullName} — ${result.isActive ? 'Aktif' : 'Pasif'} olarak guncellendi.`
-      );
+      await activateUser(item.id);
+      setStatusMsg(`${item.fullName} aktif edildi.`);
       await fetchData();
       if (selected?.id === item.id) {
-        setSelected({ ...item, isActive: result.isActive });
+        setSelected({ ...item, isActive: true });
       }
     } catch (e) {
       setError(getApiErrorMessage(e));
@@ -230,8 +225,8 @@ export default function AdminUsersTab() {
                 </View>
               ) : (
                 <PrimaryButton
-                  title={item.isActive ? 'Pasif Yap' : 'Aktif Et'}
-                  onPress={() => confirmToggle(item)}
+                  title={item.isActive ? 'Askiya Al' : 'Aktif Et'}
+                  onPress={() => onAccountAction(item)}
                   style={styles.toggleBtn}
                 />
               )}
@@ -245,6 +240,7 @@ export default function AdminUsersTab() {
           item={selected}
           visible={!!selected}
           onClose={() => setSelected(null)}
+          onUpdated={() => void fetchData()}
         />
       ) : null}
     </ScreenContainer>

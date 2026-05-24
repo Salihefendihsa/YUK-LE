@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Yukle.Api.Data;
 using Yukle.Api.DTOs;
 using Yukle.Api.Models;
+using Yukle.Api.Infrastructure;
 using Yukle.Api.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
@@ -27,17 +28,61 @@ public class AdminController : ControllerBase
     private readonly ILogger<AdminController> _logger;
     private readonly IDistributedCache _cache;
     private readonly IChatModerationService _chatModerationService;
+    private readonly IPaymentService _paymentService;
+    private readonly IDriverReviewDocumentStore _reviewDocumentStore;
+
+    private static readonly ApprovalStatus[] DocumentQueueStatuses =
+    [
+        ApprovalStatus.PendingReview,
+        ApprovalStatus.Pending,
+        ApprovalStatus.ManualApprovalRequired
+    ];
 
     public AdminController(
         YukleDbContext context,
         ILogger<AdminController> logger,
         IDistributedCache cache,
-        IChatModerationService chatModerationService)
+        IChatModerationService chatModerationService,
+        IPaymentService paymentService,
+        IDriverReviewDocumentStore reviewDocumentStore)
     {
         _context = context;
         _logger = logger;
         _cache = cache;
         _chatModerationService = chatModerationService;
+        _paymentService = paymentService;
+        _reviewDocumentStore = reviewDocumentStore;
+    }
+
+    private static bool IsDocumentQueueStatus(ApprovalStatus status) =>
+        DocumentQueueStatuses.Contains(status);
+
+    private int RequireAdminId()
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var adminId))
+            throw new ApplicationException("Geçerli bir admin oturumu bulunamadı.");
+        return adminId;
+    }
+
+    private async Task WriteAdminActionLogAsync(
+        int    adminId,
+        int    targetUserId,
+        string action,
+        string? note = null,
+        Guid?  loadId = null,
+        Guid?  paymentId = null)
+    {
+        await _context.AdminActionLogs.AddAsync(new AdminActionLog
+        {
+            AdminId        = adminId,
+            TargetUserId   = targetUserId,
+            Action         = action,
+            Note           = note,
+            LoadId         = loadId,
+            PaymentId      = paymentId,
+            TimestampUtc   = DateTime.UtcNow
+        });
+        await _context.SaveChangesAsync();
     }
 
     [HttpGet("dashboard")]
@@ -45,7 +90,8 @@ public class AdminController : ControllerBase
     {
         var totalUsers = await _context.Users.CountAsync(u => u.Role == UserRole.Customer || u.Role == UserRole.Driver);
         var activeLoads = await _context.Loads.CountAsync(l => l.Status == LoadStatus.Active);
-        var pendingReviews = await _context.Users.CountAsync(u => u.Role == UserRole.Driver && u.ApprovalStatus == ApprovalStatus.PendingReview);
+        var pendingReviews = await _context.Users.CountAsync(u =>
+            u.Role == UserRole.Driver && DocumentQueueStatuses.Contains(u.ApprovalStatus));
         var totalVolume = await _context.PaymentTransactions.SumAsync(p => (decimal?)p.Amount) ?? 0m;
 
         var recentActions = await _context.AdminActionLogs
@@ -100,22 +146,31 @@ public class AdminController : ControllerBase
     /// Düşük skorlu, incelemeye daha çok muhtaç profiller (confidenceScore ASC) en üstte döner.
     /// </summary>
     [HttpGet("pending-reviews")]
-    public async Task<IActionResult> GetPendingReviews()
+    public async Task<IActionResult> GetPendingReviews([FromQuery] string? status = null)
     {
-        var pendingUsers = await _context.Users
+        var query = _context.Users
             .AsNoTracking()
-            .Where(u => u.ApprovalStatus == ApprovalStatus.PendingReview && u.Role == UserRole.Driver)
+            .Where(u => u.Role == UserRole.Driver && DocumentQueueStatuses.Contains(u.ApprovalStatus));
+
+        if (!string.IsNullOrWhiteSpace(status)
+            && Enum.TryParse<ApprovalStatus>(status.Trim(), true, out var parsed)
+            && DocumentQueueStatuses.Contains(parsed))
+        {
+            query = query.Where(u => u.ApprovalStatus == parsed);
+        }
+
+        var pendingUsers = await query
             .Select(u => new
             {
                 u.Id,
-                // KVKK gereği şifreli olan alanlar plain olarak döner çünkü _context bunu saydam çözer
                 u.FullName,
                 u.Phone,
                 u.TaxNumberOrTCKN,
                 u.Email,
                 u.CreatedAt,
                 u.AdminReviewNote,
-                u.AiInferenceDetails
+                u.AiInferenceDetails,
+                ApprovalStatus = u.ApprovalStatus.ToString()
             })
             .ToListAsync();
 
@@ -154,10 +209,34 @@ public class AdminController : ControllerBase
                 };
             })
             .OrderBy(x => x.Confidence) // En şüpheli profili ilk ver
-            .Select(x => x.User)
+            .Select(x => new
+            {
+                x.User.Id,
+                x.User.FullName,
+                Phone = PiiMasking.MaskPhone(x.User.Phone),
+                TaxNumberOrTCKN = PiiMasking.MaskTc(x.User.TaxNumberOrTCKN),
+                x.User.Email,
+                x.User.CreatedAt,
+                x.User.AdminReviewNote,
+                x.User.AiInferenceDetails,
+                x.User.ApprovalStatus
+            })
             .ToList();
 
         return Ok(sortedResult);
+    }
+
+    [HttpGet("review-documents/{userId:int}")]
+    public async Task<IActionResult> GetReviewDocument(int userId, [FromQuery] string docType)
+    {
+        if (!DriverDocumentApprovalHelper.TryParseDocumentType(docType, out var documentType))
+            return BadRequest(new { message = "Gecersiz belge tipi." });
+
+        var file = await _reviewDocumentStore.TryGetAsync(userId, documentType);
+        if (file is null)
+            return NotFound();
+
+        return File(file.Value.Data, file.Value.ContentType);
     }
 
     [HttpGet("drivers")]
@@ -209,7 +288,17 @@ public class AdminController : ControllerBase
             })
             .ToListAsync();
 
-        return Ok(data);
+        return Ok(data.Select(u => new
+        {
+            u.Id,
+            u.FullName,
+            Phone = PiiMasking.MaskPhone(u.Phone),
+            u.Email,
+            u.IsActive,
+            u.ApprovalStatus,
+            u.Vehicle,
+            u.Rating
+        }));
     }
 
     [HttpGet("customers")]
@@ -250,18 +339,35 @@ public class AdminController : ControllerBase
             })
             .ToListAsync();
 
-        return Ok(data);
+        return Ok(data.Select(u => new
+        {
+            u.Id,
+            u.FullName,
+            Phone = PiiMasking.MaskPhone(u.Phone),
+            u.Email,
+            u.IsActive,
+            u.totalLoadCount,
+            u.totalSpent
+        }));
     }
 
     [HttpPost("users/{userId}/toggle-active")]
     public async Task<IActionResult> ToggleUserActive(int userId)
     {
+        var adminId = RequireAdminId();
         var user = await _context.Users.SingleOrDefaultAsync(x => x.Id == userId);
         if (user is null)
             throw new ApplicationException("Kullanıcı bulunamadı.");
 
         user.IsActive = !user.IsActive;
         await _context.SaveChangesAsync();
+
+        await WriteAdminActionLogAsync(
+            adminId,
+            userId,
+            "ToggleActive",
+            note: $"IsActive={user.IsActive}");
+
         return Ok(new { user.Id, user.IsActive });
     }
 
@@ -343,12 +449,22 @@ public class AdminController : ControllerBase
     [HttpPost("loads/{loadId:guid}/cancel")]
     public async Task<IActionResult> CancelLoad(Guid loadId)
     {
+        var adminId = RequireAdminId();
         var load = await _context.Loads.SingleOrDefaultAsync(x => x.Id == loadId);
         if (load is null)
             throw new ApplicationException("İlan bulunamadı.");
 
         load.Status = LoadStatus.Cancelled;
         await _context.SaveChangesAsync();
+
+        var targetUserId = load.DriverId ?? load.UserId;
+        await WriteAdminActionLogAsync(
+            adminId,
+            targetUserId,
+            "CancelLoad",
+            note: $"Load {loadId} cancelled",
+            loadId: loadId);
+
         return Ok(new { load.Id, Status = load.Status.ToString() });
     }
 
@@ -389,14 +505,72 @@ public class AdminController : ControllerBase
     [HttpPost("payments/{paymentId:guid}/release")]
     public async Task<IActionResult> ReleasePayment(Guid paymentId)
     {
+        var adminId = RequireAdminId();
+
         var payment = await _context.PaymentTransactions.SingleOrDefaultAsync(x => x.Id == paymentId);
         if (payment is null)
             throw new ApplicationException("Ödeme kaydı bulunamadı.");
 
-        payment.Status = PaymentStatus.Released;
-        payment.UpdatedAt = DateTime.UtcNow;
-        await _context.SaveChangesAsync();
-        return Ok(new { payment.Id, Status = payment.Status.ToString() });
+        if (payment.Status == PaymentStatus.Released)
+        {
+            return Ok(new
+            {
+                payment.Id,
+                Status = payment.Status.ToString(),
+                Message = "Ödeme zaten serbest bırakılmış."
+            });
+        }
+
+        if (payment.Status != PaymentStatus.Blocked)
+        {
+            return BadRequest(new
+            {
+                Message = "Yalnızca Blocked durumundaki ödemeler serbest bırakılabilir.",
+                Status = payment.Status.ToString()
+            });
+        }
+
+        var driverId = await _context.Loads.AsNoTracking()
+            .Where(l => l.Id == payment.LoadId)
+            .Select(l => l.DriverId)
+            .FirstOrDefaultAsync();
+
+        if (driverId is not int resolvedDriverId)
+            return BadRequest(new { Message = "Yüke atanmış şoför bulunamadı." });
+
+        var released = await _paymentService.ReleasePaymentAsync(payment.LoadId, resolvedDriverId);
+        if (!released)
+        {
+            var currentStatus = await _context.PaymentTransactions.AsNoTracking()
+                .Where(p => p.Id == paymentId)
+                .Select(p => p.Status)
+                .FirstOrDefaultAsync();
+
+            if (currentStatus == PaymentStatus.Released)
+            {
+                return Ok(new
+                {
+                    payment.Id,
+                    Status = PaymentStatus.Released.ToString(),
+                    Message = "Ödeme zaten serbest bırakılmış."
+                });
+            }
+
+            return BadRequest(new
+            {
+                Message = "Ödeme serbest bırakılamadı. Kayıt Blocked değil veya defter uyumsuz."
+            });
+        }
+
+        await WriteAdminActionLogAsync(
+            adminId,
+            resolvedDriverId,
+            "PaymentRelease",
+            note: $"Payment {paymentId} released for load {payment.LoadId}",
+            loadId: payment.LoadId,
+            paymentId: payment.Id);
+
+        return Ok(new { payment.Id, Status = PaymentStatus.Released.ToString() });
     }
 
     [HttpGet("logs")]
@@ -413,7 +587,9 @@ public class AdminController : ControllerBase
                 l.TargetUserId,
                 l.Action,
                 l.Note,
-                l.TimestampUtc
+                l.TimestampUtc,
+                l.LoadId,
+                l.PaymentId
             })
             .ToListAsync();
         return Ok(data);
@@ -436,9 +612,9 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("blocked-messages")]
-    public IActionResult GetBlockedMessages()
+    public async Task<IActionResult> GetBlockedMessages()
     {
-        var data = _chatModerationService.GetBlockedMessages(200);
+        var data = await _chatModerationService.GetBlockedMessagesAsync(200);
         return Ok(data);
     }
 
@@ -457,8 +633,9 @@ public class AdminController : ControllerBase
             TotalVolume = totalVolume,
             MonthlyCommission = (decimal?)null,
             MonthlyCommissionStatus = "not_calculated",
-            PendingReviews = await _context.Users.CountAsync(u => u.ApprovalStatus == ApprovalStatus.PendingReview),
-            ReportedChats = _chatModerationService.GetBlockedMessages(500).Count
+            PendingReviews = await _context.Users.CountAsync(u =>
+                u.Role == UserRole.Driver && DocumentQueueStatuses.Contains(u.ApprovalStatus)),
+            ReportedChats = await _context.ChatMessages.CountAsync(m => m.IsBlocked)
         });
     }
 
@@ -481,27 +658,44 @@ public class AdminController : ControllerBase
         {
             u.Id, u.FullName, u.Email, u.Phone, Role = u.Role.ToString(), u.IsActive, u.CreatedAt
         }).ToListAsync();
-        return Ok(new { Total = total, Items = items });
+        return Ok(new
+        {
+            Total = total,
+            Items = items.Select(u => new
+            {
+                u.Id,
+                u.FullName,
+                u.Email,
+                Phone = PiiMasking.MaskPhone(u.Phone),
+                u.Role,
+                u.IsActive,
+                u.CreatedAt
+            })
+        });
     }
 
     [HttpPut("users/{userId:int}/suspend")]
     public async Task<IActionResult> SuspendUser(int userId, [FromBody] SuspendRequest request)
     {
+        var adminId = RequireAdminId();
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
         if (user is null) return NotFound();
         if (string.IsNullOrWhiteSpace(request.Reason)) return BadRequest(new { Message = "Askıya alma sebebi zorunludur." });
         user.IsActive = false;
         await _context.SaveChangesAsync();
+        await WriteAdminActionLogAsync(adminId, userId, "Suspend", request.Reason.Trim());
         return Ok(new { Message = "Kullanıcı askıya alındı." });
     }
 
     [HttpPut("users/{userId:int}/activate")]
     public async Task<IActionResult> ActivateUser(int userId)
     {
+        var adminId = RequireAdminId();
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
         if (user is null) return NotFound();
         user.IsActive = true;
         await _context.SaveChangesAsync();
+        await WriteAdminActionLogAsync(adminId, userId, "Activate", "Hesap yeniden aktif edildi");
         return Ok(new { Message = "Kullanıcı aktif edildi." });
     }
 
@@ -706,32 +900,43 @@ public class AdminController : ControllerBase
         if (targetUser == null)
             throw new ApplicationException("Kullanıcı bulunamadı.");
 
-        if (targetUser.ApprovalStatus != ApprovalStatus.PendingReview)
-            throw new ApplicationException($"Geçersiz işlem: Bu kullanıcı PendingReview statüsünde değil (Mevcut: {targetUser.ApprovalStatus}).");
+        if (!IsDocumentQueueStatus(targetUser.ApprovalStatus))
+            throw new ApplicationException(
+                $"Geçersiz işlem: Kullanıcı belge kuyruğunda değil (Mevcut: {targetUser.ApprovalStatus}).");
+
+        if (!TryResolveReviewDocumentType(decision.DocumentType, targetUser.AiInferenceDetails, out var documentType))
+            throw new ApplicationException("Onaylanacak belge tipi belirlenemedi. AI çıktısı veya DocumentType alanını kontrol edin.");
+
+        TryParseAiReviewExtras(targetUser.AiInferenceDetails, out var expiryDate, out var documentClasses);
 
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            // 1. Durumu güncelle
             if (decision.IsApproved)
             {
-                targetUser.ApprovalStatus = ApprovalStatus.Active;
-                targetUser.IsActive = true;
-                targetUser.LastValidationMessage = "Belgeleriniz admin tarafından manuel incelenmiş ve onaylanmıştır.";
-                
-                // AiInferenceDetails'dan ilgili belge tiplerine göre checkmark koymak gerekir.
-                // Basitlik için ve Phase 1 tasarımı gereği, AdminReviewPending manuel onaylandığında "genel bir aktiflik" veriyoruz 
-                // ya da zorunlu belgelerin flag'lerini (IsDriverLicenseApproved vb.) true yaparız.
-                targetUser.IsDriverLicenseApproved = true;
-                targetUser.IsSrcApproved = true;
-                targetUser.IsPsychotechnicalApproved = true;
+                DriverDocumentApprovalHelper.ApplyApproval(targetUser, documentType, expiryDate, documentClasses);
+
+                if (DriverDocumentApprovalHelper.AreAllMandatoryDocumentsApproved(targetUser))
+                {
+                    targetUser.ApprovalStatus = ApprovalStatus.Active;
+                    targetUser.IsActive = true;
+                    targetUser.LastValidationMessage =
+                        "Tüm zorunlu belgeler admin tarafından onaylandı.";
+                }
+                else
+                {
+                    targetUser.ApprovalStatus = ApprovalStatus.Pending;
+                    targetUser.IsActive = false;
+                    targetUser.LastValidationMessage =
+                        $"{documentType} onaylandı; eksik belgeler için yüklemeye devam edin.";
+                }
             }
             else
             {
+                DriverDocumentApprovalHelper.ApplyRejection(targetUser, documentType);
                 targetUser.ApprovalStatus = ApprovalStatus.Rejected;
                 targetUser.IsActive = false;
                 targetUser.LastValidationMessage = decision.Reason;
-                // İsteğe bağlı olarak geçmiş onaylı flagleri false'a da çekebilirsiniz.
             }
 
             targetUser.AdminReviewNote = decision.Reason;
@@ -763,6 +968,62 @@ public class AdminController : ControllerBase
             await transaction.RollbackAsync();
             _logger.LogError(ex, "Admin kararını (userId: {UserId}) kaydederken hata oluştu.", userId);
             throw new ApplicationException("Kayıt işlemi sırasında bir hata oluştu, geri alındı.");
+        }
+    }
+
+    private static bool TryResolveReviewDocumentType(
+        string? decisionDocumentType,
+        string? aiInferenceDetails,
+        out DocumentType documentType)
+    {
+        if (DriverDocumentApprovalHelper.TryParseDocumentType(decisionDocumentType, out documentType))
+            return true;
+
+        if (string.IsNullOrWhiteSpace(aiInferenceDetails))
+            return false;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(aiInferenceDetails);
+            if (doc.RootElement.TryGetProperty("DocumentType", out var prop)
+                && DriverDocumentApprovalHelper.TryParseDocumentType(prop.GetString(), out documentType))
+                return true;
+        }
+        catch
+        {
+            // ignore malformed JSON
+        }
+
+        documentType = DocumentType.DriverLicense;
+        return false;
+    }
+
+    private static void TryParseAiReviewExtras(
+        string? aiInferenceDetails,
+        out DateTime? expiryDate,
+        out string[]? documentClasses)
+    {
+        expiryDate = null;
+        documentClasses = null;
+        if (string.IsNullOrWhiteSpace(aiInferenceDetails)) return;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(aiInferenceDetails);
+            var root = doc.RootElement;
+            if (root.TryGetProperty("ExpiryDate", out var exp) && exp.ValueKind == JsonValueKind.String
+                && DateTime.TryParse(exp.GetString(), out var parsed))
+                expiryDate = parsed;
+
+            if (root.TryGetProperty("DocumentClasses", out var classes) && classes.ValueKind == JsonValueKind.Array)
+                documentClasses = classes.EnumerateArray()
+                    .Select(e => e.GetString() ?? string.Empty)
+                    .Where(s => !string.IsNullOrWhiteSpace(s))
+                    .ToArray();
+        }
+        catch
+        {
+            // ignore
         }
     }
 }

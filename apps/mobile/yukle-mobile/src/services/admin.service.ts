@@ -63,17 +63,54 @@ function normalizePendingReview(raw: unknown): PendingReview {
     phone: String(r.phone ?? ''),
     email: String(r.email ?? ''),
     createdAt: String(r.createdAt ?? ''),
+    approvalStatus:
+      r.approvalStatus != null
+        ? String(r.approvalStatus)
+        : r.ApprovalStatus != null
+          ? String(r.ApprovalStatus)
+          : undefined,
     adminReviewNote: r.adminReviewNote != null ? String(r.adminReviewNote) : null,
     aiInferenceDetails: r.aiInferenceDetails != null ? String(r.aiInferenceDetails) : null,
   };
 }
 
 /** GET /Admin/pending-reviews */
-export async function getPendingReviews(): Promise<PendingReview[]> {
-  const res = await apiClient.get('/Admin/pending-reviews');
+export async function getPendingReviews(params?: { status?: string }): Promise<PendingReview[]> {
+  const res = await apiClient.get('/Admin/pending-reviews', { params });
   const data = res.data;
   if (!Array.isArray(data)) return [];
   return data.map(normalizePendingReview);
+}
+
+function arrayBufferToDataUri(buffer: ArrayBuffer, contentType: string): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  const base64 =
+    typeof btoa !== 'undefined'
+      ? btoa(binary)
+      : (globalThis as { Buffer?: { from: (b: Uint8Array) => { toString: (enc: string) => string } } })
+          .Buffer?.from(bytes)
+          .toString('base64') ?? '';
+  return `data:${contentType};base64,${base64}`;
+}
+
+/** GET /Admin/review-documents/{userId} — JWT ile belge onizleme */
+export async function fetchReviewDocumentDataUri(
+  userId: number,
+  docType: string
+): Promise<string | null> {
+  try {
+    const res = await apiClient.get(`/Admin/review-documents/${userId}`, {
+      params: { docType },
+      responseType: 'arraybuffer',
+    });
+    const contentType =
+      (res.headers['content-type'] as string | undefined)?.split(';')[0]?.trim() ?? 'image/jpeg';
+    return arrayBufferToDataUri(res.data as ArrayBuffer, contentType);
+  } catch {
+    return null;
+  }
 }
 
 /** POST /Admin/reviews/{userId}/decide */
@@ -81,6 +118,7 @@ export async function decideReview(userId: number, body: AdminReviewDecision): P
   await apiClient.post(`/Admin/reviews/${userId}/decide`, {
     isApproved: body.isApproved,
     reason: body.reason,
+    documentType: body.documentType,
   });
 }
 
@@ -206,6 +244,26 @@ export async function toggleUserActive(userId: number): Promise<{ id: number; is
   };
 }
 
+/** PUT /Admin/users/{userId}/suspend */
+export async function suspendUser(userId: number, reason: string): Promise<void> {
+  await apiClient.put(`/Admin/users/${userId}/suspend`, { reason });
+}
+
+/** PUT /Admin/users/{userId}/activate */
+export async function activateUser(userId: number): Promise<void> {
+  await apiClient.put(`/Admin/users/${userId}/activate`);
+}
+
+/** POST /Admin/users/{id}/note */
+export async function addUserNote(userId: number, text: string): Promise<void> {
+  await apiClient.post(`/Admin/users/${userId}/note`, { text });
+}
+
+/** POST /Admin/users/{id}/warn */
+export async function warnUser(userId: number, reason?: string): Promise<void> {
+  await apiClient.post(`/Admin/users/${userId}/warn`, { reason: reason?.trim() || 'Uyarı' });
+}
+
 function normalizeAdminLoad(raw: unknown): AdminLoadRow {
   const r = raw as Record<string, unknown>;
   return {
@@ -215,6 +273,18 @@ function normalizeAdminLoad(raw: unknown): AdminLoadRow {
     status: String(r.status ?? r.Status ?? ''),
     price: Number(r.price ?? r.Price ?? 0),
     createdAt: String(r.createdAt ?? r.CreatedAt ?? ''),
+    customerName:
+      r.customerName != null
+        ? String(r.customerName)
+        : r.CustomerName != null
+          ? String(r.CustomerName)
+          : null,
+    driverName:
+      r.driverName != null
+        ? String(r.driverName)
+        : r.DriverName != null
+          ? String(r.DriverName)
+          : null,
   };
 }
 

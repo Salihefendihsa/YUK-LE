@@ -29,16 +29,17 @@ export default function AdminLogsPage() {
       </div>
       <div className="admin-table-wrap">
         <table className="admin-table">
-          <thead><tr><th>Zaman</th><th>Admin</th><th>İşlem</th><th>Hedef</th><th>Detay</th><th>IP</th></tr></thead>
+          <thead><tr><th>Zaman</th><th>Admin</th><th>İşlem</th><th>Hedef</th><th>İlan</th><th>Ödeme</th><th>Detay</th></tr></thead>
           <tbody>
             {logs.map((log) => (
               <tr key={String(log.id)}>
                 <td>{new Date(String(log.timestampUtc)).toLocaleString('tr-TR')}</td>
                 <td>#{String(log.adminId)}</td>
                 <td>{String(log.action)}</td>
-                <td>{String(log.targetUserId)}</td>
+                <td>#{String(log.targetUserId)}</td>
+                <td className="mono">{log.loadId ? String(log.loadId).slice(0, 8) + '…' : '—'}</td>
+                <td className="mono">{log.paymentId ? String(log.paymentId).slice(0, 8) + '…' : '—'}</td>
                 <td>{String(log.note ?? '')}</td>
-                <td className="mono">127.0.0.1</td>
               </tr>
             ))}
           </tbody>

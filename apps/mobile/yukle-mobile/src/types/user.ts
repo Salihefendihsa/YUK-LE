@@ -16,6 +16,10 @@ export interface UserProfile {
   totalRatingCount: number;
   role: string;
   approvalStatus: string;
+  isDriverLicenseApproved?: boolean;
+  isSrcApproved?: boolean;
+  isPsychotechnicalApproved?: boolean;
+  lastValidationMessage?: string | null;
 }
 
 export interface UpdateUserProfileRequest {

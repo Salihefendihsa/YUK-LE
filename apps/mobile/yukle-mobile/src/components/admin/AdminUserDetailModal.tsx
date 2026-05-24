@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -9,6 +10,12 @@ import {
   View,
 } from 'react-native';
 import { getApiErrorMessage } from '../../services/api.client';
+import {
+  activateUser,
+  addUserNote,
+  suspendUser,
+  warnUser,
+} from '../../services/admin.service';
 import { getUserProfile } from '../../services/user.service';
 import type { AdminUserListItem } from '../../types/admin';
 import type { UserProfile } from '../../types/user';
@@ -18,26 +25,38 @@ import { spacing } from '../../theme/spacing';
 import { formatCurrencyTRY } from '../../utils/format';
 import { getApprovalStatusPill } from '../../utils/statusPills';
 import { Card } from '../ui/Card';
+import { PrimaryButton } from '../ui/PrimaryButton';
 import { StatusPill } from '../ui/StatusPill';
+import { TextField } from '../ui/TextField';
 import { DetailRow } from '../driver/DetailRow';
 
 type Props = {
   item: AdminUserListItem;
   visible: boolean;
   onClose: () => void;
+  onUpdated?: () => void;
 };
 
-export function AdminUserDetailModal({ item, visible, onClose }: Props) {
+export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Props) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
+  const [actionBusy, setActionBusy] = useState(false);
   const [error, setError] = useState('');
+  const [statusMsg, setStatusMsg] = useState('');
+  const [suspendReason, setSuspendReason] = useState('');
+  const [adminNote, setAdminNote] = useState('');
+  const [warnReason, setWarnReason] = useState('');
 
   useEffect(() => {
     if (!visible || !item.id) return;
     let cancelled = false;
     setLoading(true);
     setError('');
+    setStatusMsg('');
     setProfile(null);
+    setSuspendReason('');
+    setAdminNote('');
+    setWarnReason('');
     void getUserProfile(item.id)
       .then((p) => {
         if (!cancelled) setProfile(p);
@@ -61,17 +80,67 @@ export function AdminUserDetailModal({ item, visible, onClose }: Props) {
       ? getApprovalStatusPill(item.approvalStatus)
       : null;
 
+  const runAction = async (fn: () => Promise<void>, success: string) => {
+    setActionBusy(true);
+    setError('');
+    setStatusMsg('');
+    try {
+      await fn();
+      setStatusMsg(success);
+      onUpdated?.();
+    } catch (e) {
+      setError(getApiErrorMessage(e));
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const submitSuspend = () => {
+    const reason = suspendReason.trim();
+    if (reason.length < 5) {
+      Alert.alert('Askıya alma', 'Lütfen en az 5 karakterlik bir sebep girin.');
+      return;
+    }
+    Alert.alert('Askıya al', `${item.fullName} askıya alınacak. Onaylıyor musunuz?`, [
+      { text: 'Vazgeç', style: 'cancel' },
+      {
+        text: 'Askıya Al',
+        style: 'destructive',
+        onPress: () => void runAction(() => suspendUser(item.id, reason), 'Kullanıcı askıya alındı.'),
+      },
+    ]);
+  };
+
+  const submitNote = () => {
+    const text = adminNote.trim();
+    if (!text) {
+      Alert.alert('Admin notu', 'Not metni boş olamaz.');
+      return;
+    }
+    void runAction(() => addUserNote(item.id, text), 'Admin notu kaydedildi.');
+  };
+
+  const submitWarn = () => {
+    void runAction(
+      () => warnUser(item.id, warnReason.trim() || 'Uyarı'),
+      'Uyarı kaydı oluşturuldu.'
+    );
+  };
+
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.root}>
         <View style={styles.header}>
           <Text style={styles.title}>Kullanici Detayi</Text>
-          <Pressable onPress={onClose}>
+          <Pressable onPress={onClose} disabled={actionBusy}>
             <Text style={styles.close}>Kapat</Text>
           </Pressable>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          {statusMsg ? <Text style={styles.success}>{statusMsg}</Text> : null}
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+
           <Card variant="elevated" padding={4}>
             <Text style={styles.name}>{item.fullName}</Text>
             <View style={styles.pillRow}>
@@ -97,14 +166,71 @@ export function AdminUserDetailModal({ item, visible, onClose }: Props) {
             ) : null}
           </Card>
 
-          <View style={styles.mockNote}>
-            <Text style={styles.mockNoteText}>
-              Geçmiş seferler, finans ve admin notları bu ekranda gösterilmez.
-            </Text>
-          </View>
+          <Card variant="elevated" padding={4}>
+            <Text style={styles.sectionTitle}>Hesap islemleri</Text>
+            {item.isActive ? (
+              <>
+                <TextField
+                  placeholder="Askiya alma sebebi (zorunlu)"
+                  value={suspendReason}
+                  onChangeText={setSuspendReason}
+                  multiline
+                  style={styles.field}
+                />
+                <PrimaryButton
+                  title="Askiya Al"
+                  onPress={submitSuspend}
+                  loading={actionBusy}
+                  style={styles.actionBtn}
+                />
+              </>
+            ) : (
+              <PrimaryButton
+                title="Hesabi Aktif Et"
+                onPress={() =>
+                  void runAction(() => activateUser(item.id), 'Kullanıcı aktif edildi.')
+                }
+                loading={actionBusy}
+                style={styles.actionBtn}
+              />
+            )}
+          </Card>
+
+          <Card variant="elevated" padding={4}>
+            <Text style={styles.sectionTitle}>Admin notu</Text>
+            <TextField
+              placeholder="Ic not (audit log)"
+              value={adminNote}
+              onChangeText={setAdminNote}
+              multiline
+              style={styles.field}
+            />
+            <PrimaryButton
+              title="Not Kaydet"
+              onPress={submitNote}
+              loading={actionBusy}
+              style={styles.actionBtn}
+            />
+          </Card>
+
+          <Card variant="elevated" padding={4}>
+            <Text style={styles.sectionTitle}>Uyari gonder</Text>
+            <TextField
+              placeholder="Uyari metni (opsiyonel)"
+              value={warnReason}
+              onChangeText={setWarnReason}
+              multiline
+              style={styles.field}
+            />
+            <PrimaryButton
+              title="Uyari Kaydet"
+              onPress={submitWarn}
+              loading={actionBusy}
+              style={styles.actionBtn}
+            />
+          </Card>
 
           {loading ? <ActivityIndicator color={palette.brand} style={{ marginTop: spacing[4] }} /> : null}
-          {error ? <Text style={styles.error}>{error}</Text> : null}
 
           {profile ? (
             <Card variant="elevated" padding={4}>
@@ -168,18 +294,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing[2],
   },
   muted: { ...typography.caption, textTransform: 'none' },
-  mockNote: {
-    backgroundColor: palette.goldMuted,
-    borderWidth: 1,
-    borderColor: palette.goldBorder,
-    borderRadius: 10,
-    padding: spacing[3],
-  },
-  mockNoteText: {
+  field: { minHeight: 72, marginBottom: spacing[2] },
+  actionBtn: { marginTop: spacing[1] },
+  success: {
     fontFamily: fontFamily.regular,
-    fontSize: 12,
-    color: palette.gold,
-    lineHeight: 18,
+    fontSize: 13,
+    color: palette.success,
   },
   error: {
     fontFamily: fontFamily.regular,

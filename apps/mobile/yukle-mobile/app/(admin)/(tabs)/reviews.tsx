@@ -22,6 +22,15 @@ import { spacing } from '../../../src/theme/spacing';
 import { formatDateTR } from '../../../src/utils/format';
 import { getAiConfidencePill, getApprovalStatusPill } from '../../../src/utils/statusPills';
 
+type QueueFilter = 'all' | 'PendingReview' | 'Pending' | 'ManualApprovalRequired';
+
+const QUEUE_FILTERS: { id: QueueFilter; label: string }[] = [
+  { id: 'all', label: 'Tumu' },
+  { id: 'PendingReview', label: 'Inceleme' },
+  { id: 'Pending', label: 'Bekleyen' },
+  { id: 'ManualApprovalRequired', label: 'Manuel' },
+];
+
 function confidenceOf(review: PendingReview): number {
   const ai = parseAiInferenceDetails(review.aiInferenceDetails);
   return ai.confidenceScore ?? 100;
@@ -30,6 +39,7 @@ function confidenceOf(review: PendingReview): number {
 export default function AdminReviewsTab() {
   const { contentInset } = useScreenInsets();
   const [reviews, setReviews] = useState<PendingReview[]>([]);
+  const [queueFilter, setQueueFilter] = useState<QueueFilter>('all');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -40,13 +50,15 @@ export default function AdminReviewsTab() {
   const fetchQueue = useCallback(async () => {
     try {
       setError('');
-      const data = await getPendingReviews();
+      const data = await getPendingReviews(
+        queueFilter === 'all' ? undefined : { status: queueFilter }
+      );
       setReviews(data);
     } catch (e) {
       setError(getApiErrorMessage(e));
       setReviews([]);
     }
-  }, []);
+  }, [queueFilter]);
 
   useEffect(() => {
     fetchQueue().finally(() => setLoading(false));
@@ -63,12 +75,17 @@ export default function AdminReviewsTab() {
     setRefreshing(false);
   };
 
-  const handleDecide = async (userId: number, isApproved: boolean, reason: string) => {
+  const handleDecide = async (
+    userId: number,
+    isApproved: boolean,
+    reason: string,
+    documentType?: string
+  ) => {
     setBusy(true);
     setStatusMsg('');
     setError('');
     try {
-      await decideReview(userId, { isApproved, reason });
+      await decideReview(userId, { isApproved, reason, documentType });
       setStatusMsg(isApproved ? 'Belge onaylandı.' : 'Belge reddedildi.');
       setSelected(null);
       await fetchQueue();
@@ -106,6 +123,22 @@ export default function AdminReviewsTab() {
             {error ? <AlertBanner message={error} tone="error" /> : null}
             {statusMsg ? <AlertBanner message={statusMsg} tone="success" /> : null}
 
+            <View style={styles.filterRow}>
+              {QUEUE_FILTERS.map((f) => (
+                <Pressable
+                  key={f.id}
+                  style={[styles.filterBtn, queueFilter === f.id && styles.filterBtnActive]}
+                  onPress={() => setQueueFilter(f.id)}
+                >
+                  <Text
+                    style={[styles.filterText, queueFilter === f.id && styles.filterTextActive]}
+                  >
+                    {f.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
             <Card variant="glass" padding={4} style={styles.kpiCard}>
               <Text style={styles.kpiLabel}>Bekleyen</Text>
               <Text style={styles.kpiValue}>{reviews.length}</Text>
@@ -125,7 +158,8 @@ export default function AdminReviewsTab() {
           const ai = parseAiInferenceDetails(item.aiInferenceDetails);
           const docType = ai.documentType ?? 'Surucu belgesi';
           const score = ai.confidenceScore;
-          const pendingPill = getApprovalStatusPill('PendingReview');
+          const statusKey = item.approvalStatus ?? 'PendingReview';
+          const pendingPill = getApprovalStatusPill(statusKey);
           const aiPill = getAiConfidencePill(score);
 
           return (
@@ -157,8 +191,12 @@ export default function AdminReviewsTab() {
           visible={!!selected}
           busy={busy}
           onClose={() => !busy && setSelected(null)}
-          onApprove={(reason) => handleDecide(selected.id, true, reason)}
-          onReject={(reason) => handleDecide(selected.id, false, reason)}
+          onApprove={(reason, documentType) =>
+            handleDecide(selected.id, true, reason, documentType)
+          }
+          onReject={(reason, documentType) =>
+            handleDecide(selected.id, false, reason, documentType)
+          }
         />
       ) : null}
     </ScreenContainer>
@@ -167,6 +205,17 @@ export default function AdminReviewsTab() {
 
 const styles = StyleSheet.create({
   list: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[2] },
+  filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginBottom: spacing[2] },
+  filterBtn: {
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[3],
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: palette.borderLight,
+  },
+  filterBtnActive: { borderColor: palette.brandBorder, backgroundColor: palette.brandMuted },
+  filterText: { fontFamily: fontFamily.semiBold, fontSize: 12, color: palette.textMuted },
+  filterTextActive: { color: palette.brand },
   kpiCard: { marginBottom: spacing[2], gap: spacing[1] },
   kpiLabel: { ...typography.caption, textTransform: 'none' },
   kpiValue: {

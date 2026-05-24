@@ -50,7 +50,8 @@
         {
           "locationWhenInUsePermission": "Aktif sefer sırasında konumunuz müşteriye ve operasyona gösterilir; yaklaşım ve varış bildirimleri için kullanılır."
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ]
   }
 }

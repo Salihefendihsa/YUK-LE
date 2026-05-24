@@ -110,7 +110,9 @@ export function normalizeLoadList(data: unknown): Load[] {
   if (data && typeof data === 'object') {
     const obj = data as Record<string, unknown>;
     if (Array.isArray(obj.items)) return obj.items.map((item) => normalizeLoad(item));
+    if (Array.isArray(obj.Items)) return obj.Items.map((item) => normalizeLoad(item));
     if (Array.isArray(obj.data)) return obj.data.map((item) => normalizeLoad(item));
+    if (Array.isArray(obj.Data)) return obj.Data.map((item) => normalizeLoad(item));
     if (Array.isArray(obj.result)) return obj.result.map((item) => normalizeLoad(item));
   }
   return [];

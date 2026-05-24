@@ -41,4 +41,10 @@ public class AdminActionLog
     /// İşlemin gerçekleştiği zaman (UTC)
     /// </summary>
     public DateTime TimestampUtc { get; set; } = DateTime.UtcNow;
+
+    /// <summary>İlan iptali gibi yük bazlı admin aksiyonları için.</summary>
+    public Guid? LoadId { get; set; }
+
+    /// <summary>Manuel ödeme serbest bırakma gibi ödeme bazlı admin aksiyonları için.</summary>
+    public Guid? PaymentId { get; set; }
 }

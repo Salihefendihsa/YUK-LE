@@ -21,6 +21,13 @@ function normalizeProfile(raw: unknown): UserProfile {
     totalRatingCount: Number(r.totalRatingCount ?? 0),
     role: String(r.role ?? ''),
     approvalStatus: String(r.approvalStatus ?? ''),
+    isDriverLicenseApproved:
+      r.isDriverLicenseApproved != null ? Boolean(r.isDriverLicenseApproved) : undefined,
+    isSrcApproved: r.isSrcApproved != null ? Boolean(r.isSrcApproved) : undefined,
+    isPsychotechnicalApproved:
+      r.isPsychotechnicalApproved != null ? Boolean(r.isPsychotechnicalApproved) : undefined,
+    lastValidationMessage:
+      r.lastValidationMessage != null ? String(r.lastValidationMessage) : null,
   };
 }
 

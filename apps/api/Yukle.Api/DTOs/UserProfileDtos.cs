@@ -43,6 +43,10 @@ public sealed class UserProfileResponseDto
     public int TotalRatingCount { get; set; }
     public string Role { get; set; } = string.Empty;
     public string ApprovalStatus { get; set; } = string.Empty;
+    public bool? IsDriverLicenseApproved { get; set; }
+    public bool? IsSrcApproved { get; set; }
+    public bool? IsPsychotechnicalApproved { get; set; }
+    public string? LastValidationMessage { get; set; }
 }
 
 public sealed record UpdateFcmTokenRequest(string Token);

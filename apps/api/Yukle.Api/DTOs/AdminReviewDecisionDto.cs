@@ -16,4 +16,7 @@ public class AdminReviewDecisionDto
     /// </summary>
     [Required(AllowEmptyStrings = false, ErrorMessage = "Aksiyon için mantıklı bir açıklama (neden) girmelisiniz.")]
     public string Reason { get; set; } = string.Empty;
+
+    /// <summary>Opsiyonel; bos ise AiInferenceDetails icindeki DocumentType kullanilir.</summary>
+    public string? DocumentType { get; set; }
 }

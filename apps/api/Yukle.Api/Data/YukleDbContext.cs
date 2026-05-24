@@ -261,6 +261,7 @@ public class YukleDbContext : DbContext
 
             entity.Property(a => a.Action).HasMaxLength(50).IsRequired();
             entity.Property(a => a.Note).HasMaxLength(1000);
+            entity.HasIndex(a => a.TimestampUtc);
         });
 
         // ── FuelPrice ─────────────────────────────────────────────────────────

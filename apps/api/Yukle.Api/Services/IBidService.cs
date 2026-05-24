@@ -35,4 +35,7 @@ public interface IBidService
     /// Sahiplik doğrulaması yapılır: yalnızca yük sahibi kabul edebilir.
     /// </summary>
     Task AcceptBidAsync(int bidId, int customerId);
+
+    /// <summary>Beklemedeki teklifi sofor geri ceker (Cancelled).</summary>
+    Task CancelBidAsync(int bidId, int driverId);
 }

@@ -15,6 +15,7 @@ import { getCustomerLoads } from '../../../src/services/loads.service';
 import type { CustomerDashboard } from '../../../src/types/dashboard';
 import type { Load } from '../../../src/types/load';
 import { useAuthStore } from '../../../src/store/auth.store';
+import { useNotificationsStore } from '../../../src/store/notifications.store';
 import { palette } from '../../../src/theme/colors';
 import { fontFamily, typography } from '../../../src/theme/typography';
 import { spacing } from '../../../src/theme/spacing';
@@ -24,6 +25,7 @@ import { getLoadStatusPill } from '../../../src/utils/statusPills';
 export default function CustomerDashboardScreen() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const hubError = useNotificationsStore((s) => s.hubError);
   const firstName = user?.fullName?.trim().split(/\s+/)[0] ?? 'Müşteri';
 
   const [stats, setStats] = useState<CustomerDashboard | null>(null);
@@ -81,6 +83,7 @@ export default function CustomerDashboardScreen() {
         }
       />
 
+      {hubError ? <AlertBanner message={hubError} tone="info" /> : null}
       {error ? <AlertBanner message={error} tone="error" /> : null}
 
       <Card variant="glass" padding={5} style={styles.hero}>
@@ -110,7 +113,8 @@ export default function CustomerDashboardScreen() {
         />
       </View>
 
-      <Text style={styles.sectionTitle}>Son ilanlar</Text>
+      <Text style={styles.sectionTitle}>Son 5 ilan</Text>
+      <Text style={styles.sectionSub}>Tüm ilanlar için İlanlarım sekmesine gidin</Text>
       {recentLoads.length === 0 ? (
         <EmptyState
           icon="📋"
@@ -218,6 +222,7 @@ const styles = StyleSheet.create({
   },
   statLabel: { ...typography.caption, textTransform: 'none', color: palette.textMuted },
   sectionTitle: { ...typography.h3, marginTop: spacing[2] },
+  sectionSub: { ...typography.caption, textTransform: 'none', color: palette.textMuted, marginBottom: spacing[2] },
   loadCard: { marginBottom: spacing[2] },
   loadRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing[2], marginBottom: spacing[1] },
   route: { fontFamily: fontFamily.bold, fontSize: 15, color: palette.text, flex: 1 },

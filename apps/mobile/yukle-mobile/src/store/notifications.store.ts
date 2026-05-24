@@ -10,6 +10,8 @@ import type { NotificationRow } from '../types/notification';
 type NotificationsState = {
   unreadCount: number;
   hubConnected: boolean;
+  /** SignalR bağlantı hatası (kullanıcıya nazik uyarı) */
+  hubError: string | null;
   /** Her canli push'ta artar; bildirim ekrani dinler. */
   liveTick: number;
   liveItem: NotificationRow | null;
@@ -19,6 +21,7 @@ type NotificationsState = {
   disconnectHub: () => void;
   applyMarkRead: () => void;
   applyReadAll: () => void;
+  clearHubError: () => void;
 };
 
 let connection: signalR.HubConnection | null = null;
@@ -26,6 +29,7 @@ let connection: signalR.HubConnection | null = null;
 export const useNotificationsStore = create<NotificationsState>((set, get) => ({
   unreadCount: 0,
   hubConnected: false,
+  hubError: null,
   liveTick: 0,
   liveItem: null,
 
@@ -34,9 +38,11 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
       const count = await getUnreadCount();
       set({ unreadCount: count });
     } catch {
-      /* ignore */
+      /* okunmamis sayisi kritik degil */
     }
   },
+
+  clearHubError: () => set({ hubError: null }),
 
   setUnread: (n) => set({ unreadCount: Math.max(0, n) }),
 
@@ -59,15 +65,19 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
       }));
     });
 
-    conn.onreconnected(() => set({ hubConnected: true }));
+    conn.onreconnected(() => set({ hubConnected: true, hubError: null }));
     conn.onclose(() => set({ hubConnected: false }));
 
     void (async () => {
       try {
         await conn.start();
-        set({ hubConnected: true });
+        set({ hubConnected: true, hubError: null });
       } catch {
-        set({ hubConnected: false });
+        set({
+          hubConnected: false,
+          hubError:
+            'Canlı bildirimler şu an bağlanamıyor. Uygulama çalışmaya devam eder; bildirim listesini yenileyebilirsiniz.',
+        });
       }
     })();
   },
@@ -77,7 +87,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
       void connection.stop();
       connection = null;
     }
-    set({ hubConnected: false });
+    set({ hubConnected: false, hubError: null });
   },
 
   applyMarkRead: () => {

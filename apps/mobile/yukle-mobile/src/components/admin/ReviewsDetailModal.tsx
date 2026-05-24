@@ -10,7 +10,10 @@ import {
   View,
 } from 'react-native';
 import { API_BASE_URL } from '../../constants/api';
-import { parseAiInferenceDetails } from '../../services/admin.service';
+import {
+  fetchReviewDocumentDataUri,
+  parseAiInferenceDetails,
+} from '../../services/admin.service';
 import type { PendingReview } from '../../types/admin';
 import { palette } from '../../theme/colors';
 import { fontFamily, typography } from '../../theme/typography';
@@ -36,8 +39,8 @@ type Props = {
   visible: boolean;
   busy: boolean;
   onClose: () => void;
-  onApprove: (reason: string) => Promise<void>;
-  onReject: (reason: string) => Promise<void>;
+  onApprove: (reason: string, documentType?: string) => Promise<void>;
+  onReject: (reason: string, documentType?: string) => Promise<void>;
 };
 
 function resolveImageUri(url?: string): string | null {
@@ -49,7 +52,10 @@ function resolveImageUri(url?: string): string | null {
 
 export function ReviewsDetailModal({ review, visible, busy, onClose, onApprove, onReject }: Props) {
   const ai = useMemo(() => parseAiInferenceDetails(review.aiInferenceDetails), [review.aiInferenceDetails]);
-  const imageUri = resolveImageUri(ai.documentUrl);
+  const docType = ai.documentType;
+  const [previewUri, setPreviewUri] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const imageUri = previewUri ?? resolveImageUri(ai.documentUrl);
   const confidence = ai.confidenceScore ?? null;
   const aiPill = getAiConfidencePill(confidence);
 
@@ -64,7 +70,32 @@ export function ReviewsDetailModal({ review, visible, busy, onClose, onApprove, 
     setRejectOpen(false);
     setRejectText('');
     setRejectPreset('');
+    setPreviewUri(null);
   }, [review.id, visible, review.adminReviewNote]);
+
+  useEffect(() => {
+    if (!visible || !review.id) return;
+    let cancelled = false;
+    const direct = resolveImageUri(ai.documentUrl);
+    if (direct?.startsWith('data:')) {
+      setPreviewUri(direct);
+      return;
+    }
+    if (!docType) return;
+
+    setPreviewLoading(true);
+    void fetchReviewDocumentDataUri(review.id, docType)
+      .then((uri) => {
+        if (!cancelled) setPreviewUri(uri ?? direct);
+      })
+      .finally(() => {
+        if (!cancelled) setPreviewLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [visible, review.id, docType, ai.documentUrl]);
 
   const combinedReject = `${rejectPreset ? `${rejectPreset}. ` : ''}${rejectText}`.trim();
 
@@ -78,7 +109,7 @@ export function ReviewsDetailModal({ review, visible, busy, onClose, onApprove, 
           text: 'Evet, Onayla',
           onPress: async () => {
             const reason = adminNote.trim() || 'Belgeler manuel olarak onaylandi.';
-            await onApprove(reason);
+            await onApprove(reason, docType);
             setRejectOpen(false);
           },
         },
@@ -91,7 +122,7 @@ export function ReviewsDetailModal({ review, visible, busy, onClose, onApprove, 
       Alert.alert('Red sebebi', 'Aciklama en az 20 karakter olmalıdır.');
       return;
     }
-    await onReject(combinedReject);
+    await onReject(combinedReject, docType);
     setRejectOpen(false);
     setRejectText('');
     setRejectPreset('');
@@ -109,11 +140,13 @@ export function ReviewsDetailModal({ review, visible, busy, onClose, onApprove, 
 
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.previewBox}>
-            {imageUri ? (
+            {previewLoading ? (
+              <Text style={styles.previewPlaceholder}>Belge onizlemesi yukleniyor...</Text>
+            ) : imageUri ? (
               <Image source={{ uri: imageUri }} style={styles.previewImg} resizeMode="contain" />
             ) : (
               <Text style={styles.previewPlaceholder}>
-                Belge gorseli API yanitinda yok. Belge analiz bilgileri aşağıda.
+                Belge gorseli henuz yuklenmemis veya depoda yok. Analiz bilgileri asagida.
               </Text>
             )}
           </View>

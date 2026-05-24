@@ -96,6 +96,7 @@ export interface PendingReview {
   phone: string;
   email: string;
   createdAt: string;
+  approvalStatus?: string;
   adminReviewNote?: string | null;
   aiInferenceDetails?: string | null;
 }
@@ -122,6 +123,7 @@ export interface AiInferenceParsed {
 export interface AdminReviewDecision {
   isApproved: boolean;
   reason: string;
+  documentType?: string;
 }
 
 export interface AdminDriverRow {
@@ -153,6 +155,8 @@ export interface AdminLoadRow {
   status: string;
   price: number;
   createdAt: string;
+  customerName?: string | null;
+  driverName?: string | null;
 }
 
 export interface AdminPaymentRow {

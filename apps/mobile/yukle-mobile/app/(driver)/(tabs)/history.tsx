@@ -1,14 +1,20 @@
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
-import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { ScreenContainer, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getDriverLoadHistory } from '../../../src/services/history.service';
+import {
+  getWalletTransactions,
+  mapReleaseEarningsByLoadId,
+  sumReleaseEarnings,
+} from '../../../src/services/wallet.service';
 import type { DriverHistoryRow } from '../../../src/types/history';
 import { palette } from '../../../src/theme/colors';
 import { fontFamily, typography } from '../../../src/theme/typography';
@@ -18,6 +24,7 @@ import { getLoadStatusPill } from '../../../src/utils/statusPills';
 
 export default function DriverHistoryScreen() {
   const { contentInset } = useScreenInsets();
+  const router = useRouter();
   const [items, setItems] = useState<DriverHistoryRow[]>([]);
   const [totalEarn, setTotalEarn] = useState(0);
   const [tripCount, setTripCount] = useState(0);
@@ -28,10 +35,18 @@ export default function DriverHistoryScreen() {
   const fetchData = useCallback(async () => {
     try {
       setError('');
-      const data = await getDriverLoadHistory(1, 50);
-      setItems(data.items);
-      setTotalEarn(data.totalEarn);
+      const [data, txs] = await Promise.all([
+        getDriverLoadHistory(1, 50),
+        getWalletTransactions(),
+      ]);
+      const earnMap = mapReleaseEarningsByLoadId(txs);
+      const enriched = data.items.map((row) => ({
+        ...row,
+        netEarn: earnMap.get(row.id) ?? null,
+      }));
+      setItems(enriched);
       setTripCount(data.tripCount);
+      setTotalEarn(sumReleaseEarnings(txs) || data.totalEarn);
     } catch (e) {
       setError(getApiErrorMessage(e));
       setItems([]);
@@ -68,14 +83,13 @@ export default function DriverHistoryScreen() {
         ListHeaderComponent={
           <>
             <ScreenHeader title="Geçmiş" subtitle="Tamamlanan işler ve kazanç özeti" />
-
             {error ? <AlertBanner message={error} tone="error" /> : null}
-
             <Card variant="glass" padding={4} style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>Toplam kazanc · Sefer</Text>
+              <Text style={styles.summaryLabel}>Toplam net kazanç · Sefer</Text>
               <Text style={styles.summaryValue}>
                 {formatCurrencyTRY(totalEarn)} · {tripCount} sefer
               </Text>
+              <Text style={styles.summaryHint}>Cüzdan ödeme kayıtlarına göre (Release)</Text>
             </Card>
           </>
         }
@@ -90,20 +104,40 @@ export default function DriverHistoryScreen() {
         }
         renderItem={({ item }) => {
           const pill = getLoadStatusPill(item.status ?? 'Delivered');
+          const earn = item.netEarn != null && item.netEarn > 0 ? item.netEarn : null;
           return (
-            <Card variant="default" padding={4} style={styles.card}>
-              <View style={styles.cardTop}>
-                <Text style={styles.route}>
-                  {item.fromCity} → {item.toCity}
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: '/(driver)/history-detail',
+                  params: {
+                    id: item.id,
+                    netEarn: earn != null ? String(earn) : '',
+                  },
+                })
+              }
+            >
+              <Card variant="default" padding={4} style={styles.card}>
+                <View style={styles.cardTop}>
+                  <Text style={styles.route}>
+                    {item.fromCity} → {item.toCity}
+                  </Text>
+                  <StatusPill label={pill.label} tone={pill.tone} />
+                </View>
+                <Text style={styles.meta}>Müşteri: {item.customerName ?? '-'}</Text>
+                <Text style={styles.meta}>
+                  Tarih: {item.deliveryDate ? formatDateTR(item.deliveryDate) : '-'}
                 </Text>
-                <StatusPill label={pill.label} tone={pill.tone} />
-              </View>
-              <Text style={styles.meta}>Müşteri: {item.customerName ?? '-'}</Text>
-              <Text style={styles.meta}>
-                Tarih: {item.deliveryDate ? formatDateTR(item.deliveryDate) : '-'}
-              </Text>
-              <Text style={styles.price}>{formatCurrencyTRY(item.price)}</Text>
-            </Card>
+                <Text style={styles.price}>
+                  {earn != null ? formatCurrencyTRY(earn) : 'Kazanç bekleniyor'}
+                </Text>
+                {earn == null ? (
+                  <Text style={styles.listHint}>Liste: {formatCurrencyTRY(item.price)}</Text>
+                ) : (
+                  <Text style={styles.listHint}>Net ödeme (cüzdan)</Text>
+                )}
+              </Card>
+            </Pressable>
           );
         }}
       />
@@ -113,8 +147,6 @@ export default function DriverHistoryScreen() {
 
 const styles = StyleSheet.create({
   list: { padding: spacing[4], paddingBottom: spacing[8], gap: spacing[3] },
-  title: { ...typography.h1, marginTop: spacing[3] },
-  sub: { ...typography.caption, textTransform: 'none', marginBottom: spacing[4] },
   summaryCard: { marginBottom: spacing[4], borderColor: palette.goldBorder },
   summaryLabel: { ...typography.label, color: palette.textMuted },
   summaryValue: {
@@ -123,6 +155,7 @@ const styles = StyleSheet.create({
     color: palette.gold,
     marginTop: spacing[1],
   },
+  summaryHint: { ...typography.caption, textTransform: 'none', marginTop: spacing[1], color: palette.textMuted },
   card: { marginBottom: spacing[2] },
   cardTop: {
     flexDirection: 'row',
@@ -139,4 +172,5 @@ const styles = StyleSheet.create({
     color: palette.brand,
     marginTop: spacing[2],
   },
+  listHint: { ...typography.caption, textTransform: 'none', color: palette.textMuted, marginTop: 2 },
 });

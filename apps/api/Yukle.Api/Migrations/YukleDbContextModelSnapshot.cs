@@ -40,9 +40,15 @@ namespace Yukle.Api.Migrations
                     b.Property<int>("AdminId")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("LoadId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Note")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid?>("PaymentId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("TargetUserId")
                         .HasColumnType("integer");
@@ -55,6 +61,8 @@ namespace Yukle.Api.Migrations
                     b.HasIndex("AdminId");
 
                     b.HasIndex("TargetUserId");
+
+                    b.HasIndex("TimestampUtc");
 
                     b.ToTable("AdminActionLogs");
                 });

@@ -1,14 +1,16 @@
-import { useState } from 'react';
-import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
+import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
 import { SecondaryButton } from '../../../src/components/ui/SecondaryButton';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
-import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { ScreenContainer, ScreenScroll } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { uploadDocumentOcr, uploadDriverDocument } from '../../../src/services/documents.service';
+import { getUserProfile } from '../../../src/services/user.service';
 import { useAuthStore } from '../../../src/store/auth.store';
 import type { DocUiStatus, DriverDocType, PickedDocumentFile } from '../../../src/types/document';
 import { palette } from '../../../src/theme/colors';
@@ -24,12 +26,25 @@ type DocCardConfig = {
   title: string;
   docType: DriverDocType;
   icon: string;
+  approvedFlag: 'isDriverLicenseApproved' | 'isSrcApproved' | 'isPsychotechnicalApproved';
 };
 
 const DOC_CARDS: DocCardConfig[] = [
-  { key: 'license', title: 'Surucu Belgesi (Ehliyet)', docType: 'DriverLicense', icon: '📋' },
-  { key: 'src', title: 'SRC Belgesi', docType: 'SrcCertificate', icon: '🏆' },
-  { key: 'psychotechnic', title: 'Psikoteknik Belgesi', docType: 'Psychotechnical', icon: '🧠' },
+  {
+    key: 'license',
+    title: 'Sürücü Belgesi (Ehliyet)',
+    docType: 'DriverLicense',
+    icon: '📋',
+    approvedFlag: 'isDriverLicenseApproved',
+  },
+  { key: 'src', title: 'SRC Belgesi', docType: 'SrcCertificate', icon: '🏆', approvedFlag: 'isSrcApproved' },
+  {
+    key: 'psychotechnic',
+    title: 'Psikoteknik Belgesi',
+    docType: 'Psychotechnical',
+    icon: '🧠',
+    approvedFlag: 'isPsychotechnicalApproved',
+  },
 ];
 
 type DocState = {
@@ -44,30 +59,88 @@ type DocState = {
 const INITIAL_DOC_STATE: DocState = {
   status: 'Bekleniyor',
   file: null,
-  fileLabel: 'Dosya secilmedi',
+  fileLabel: 'Dosya seçilmedi',
   resultText: '',
   approvalStatus: '',
   loading: false,
 };
 
-function mapApprovalToUi(status: string): DocUiStatus {
-  const s = status.toLowerCase();
+function mapApprovalToUi(approved: boolean | undefined, accountStatus: string): DocUiStatus {
+  if (approved === true) return 'Onayli';
+  const s = accountStatus.toLowerCase();
   if (s.includes('reject')) return 'Reddedildi';
-  if (s === 'active' || s.includes('approv')) return 'Onayli';
-  if (s.includes('pending') || s.includes('manual') || s.includes('review')) return 'Inceleniyor';
-  return 'Inceleniyor';
+  if (approved === false && (s.includes('pending') || s.includes('review') || s.includes('manual'))) {
+    return 'Inceleniyor';
+  }
+  if (approved === false) return 'Bekleniyor';
+  return 'Bekleniyor';
 }
 
 export default function DriverDocumentsScreen() {
   const user = useAuthStore((s) => s.user);
   const [error, setError] = useState('');
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [accountStatus, setAccountStatus] = useState(user?.approvalStatus ?? '');
   const [docs, setDocs] = useState<Record<DocKey, DocState>>({
     license: { ...INITIAL_DOC_STATE },
     src: { ...INITIAL_DOC_STATE },
     psychotechnic: { ...INITIAL_DOC_STATE },
   });
+  const [flags, setFlags] = useState({
+    isDriverLicenseApproved: false,
+    isSrcApproved: false,
+    isPsychotechnicalApproved: false,
+  });
 
-  const accountPill = getApprovalStatusPill(user?.approvalStatus);
+  const syncFromProfile = useCallback(
+    (profile: Awaited<ReturnType<typeof getUserProfile>>) => {
+      setAccountStatus(profile.approvalStatus);
+      setFlags({
+        isDriverLicenseApproved: profile.isDriverLicenseApproved ?? false,
+        isSrcApproved: profile.isSrcApproved ?? false,
+        isPsychotechnicalApproved: profile.isPsychotechnicalApproved ?? false,
+      });
+      setDocs((prev) => {
+        const next = { ...prev };
+        for (const card of DOC_CARDS) {
+          const approved = profile[card.approvedFlag];
+          next[card.key] = {
+            ...prev[card.key],
+            status: mapApprovalToUi(approved, profile.approvalStatus),
+            resultText:
+              approved === false && profile.lastValidationMessage
+                ? profile.lastValidationMessage
+                : prev[card.key].resultText,
+          };
+        }
+        return next;
+      });
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!user?.userId) {
+      setProfileLoading(false);
+      return;
+    }
+    let cancelled = false;
+    void getUserProfile(user.userId)
+      .then((profile) => {
+        if (!cancelled) syncFromProfile(profile);
+      })
+      .catch((e) => {
+        if (!cancelled) setError(getApiErrorMessage(e));
+      })
+      .finally(() => {
+        if (!cancelled) setProfileLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.userId, syncFromProfile]);
+
+  const accountPill = getApprovalStatusPill(accountStatus);
 
   const pickFile = async (key: DocKey) => {
     setError('');
@@ -116,7 +189,10 @@ export default function DriverDocumentsScreen() {
 
       const upload = await uploadDriverDocument(state.file, card.docType);
       const approval = upload.approvalStatus ?? '';
-      const uiStatus = mapApprovalToUi(approval);
+      const uiStatus = mapApprovalToUi(
+        upload.isDocumentValid === true,
+        approval || accountStatus
+      );
 
       setDocs((prev) => ({
         ...prev,
@@ -131,6 +207,11 @@ export default function DriverDocumentsScreen() {
             (ocr.fullName ? `Belge okundu: ${ocr.fullName}` : 'Belge işlendi.'),
         },
       }));
+
+      if (user?.userId) {
+        const profile = await getUserProfile(user.userId);
+        syncFromProfile(profile);
+      }
     } catch (e) {
       setDocs((prev) => ({
         ...prev,
@@ -140,11 +221,19 @@ export default function DriverDocumentsScreen() {
     }
   };
 
+  if (profileLoading) {
+    return (
+      <ScreenContainer>
+        <LoadingState message="Belge durumu yükleniyor..." />
+      </ScreenContainer>
+    );
+  }
+
   return (
     <ScreenScroll contentContainerStyle={styles.scroll}>
       <ScreenHeader
         title="Belgeler"
-        subtitle={`Ehliyet, SRC ve psikoteknik belgelerinizi yükleyin. ${Platform.OS === 'web' ? 'Dosya seçici' : 'Galeriden seçim'} kullanılır.`}
+        subtitle={`Ehliyet, SRC ve psikoteknik belgelerinizi yükleyin. ${Platform.OS === 'web' ? 'Dosya seçici' : 'Galeriden seçim veya kamera'} kullanılır.`}
       />
 
       <Card variant="glass" padding={4}>
@@ -160,6 +249,8 @@ export default function DriverDocumentsScreen() {
       {DOC_CARDS.map((card) => {
         const state = docs[card.key];
         const pill = getDocUiStatusPill(state.status);
+        const serverApproved = flags[card.approvedFlag];
+        const canReupload = state.status === 'Reddedildi' || (!serverApproved && state.status !== 'Onayli');
 
         return (
           <Card key={card.key} variant="default" padding={4} style={styles.docCard}>
@@ -170,15 +261,20 @@ export default function DriverDocumentsScreen() {
               <StatusPill label={pill.label} tone={pill.tone} />
             </View>
 
-            <SecondaryButton title="Dosya Seç" onPress={() => pickFile(card.key)} disabled={state.loading} />
-            <Text style={styles.fileLabel}>{state.fileLabel}</Text>
-
-            <PrimaryButton
-              title="Analiz Et ve Kaydet"
-              onPress={() => handleAnalyzeAndUpload(card)}
-              loading={state.loading}
-              disabled={!state.file || state.loading}
-            />
+            {canReupload ? (
+              <>
+                <SecondaryButton title="Dosya Seç" onPress={() => pickFile(card.key)} disabled={state.loading} />
+                <Text style={styles.fileLabel}>{state.fileLabel}</Text>
+                <PrimaryButton
+                  title={state.status === 'Reddedildi' ? 'Yeniden yükle' : 'Analiz Et ve Kaydet'}
+                  onPress={() => handleAnalyzeAndUpload(card)}
+                  loading={state.loading}
+                  disabled={!state.file || state.loading}
+                />
+              </>
+            ) : (
+              <Text style={styles.approvedHint}>Bu belge onaylı. Güncellemek için destek ile iletişime geçin.</Text>
+            )}
 
             {state.resultText ? <Text style={styles.result}>{state.resultText}</Text> : null}
           </Card>
@@ -190,15 +286,13 @@ export default function DriverDocumentsScreen() {
 
 const styles = StyleSheet.create({
   scroll: { padding: spacing[4], paddingBottom: spacing[10], gap: spacing[4] },
-  title: { ...typography.h1 },
-  sub: { ...typography.caption, textTransform: 'none', marginBottom: spacing[1] },
   accountLabel: { ...typography.label, marginBottom: spacing[2] },
   accountRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing[2] },
   accountHint: { ...typography.caption, textTransform: 'none', color: palette.textMuted },
   docCard: { gap: spacing[3] },
   docHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: spacing[2] },
   docTitle: { fontFamily: fontFamily.semiBold, fontSize: 15, color: palette.text, flex: 1 },
-  approvalRaw: { ...typography.caption, textTransform: 'none', color: palette.textMuted },
   fileLabel: { ...typography.caption, textTransform: 'none', textAlign: 'center' },
   result: { ...typography.caption, textTransform: 'none', lineHeight: 18 },
+  approvedHint: { ...typography.caption, textTransform: 'none', color: palette.textMuted },
 });

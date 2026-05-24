@@ -24,8 +24,9 @@ import {
   useScreenInsets,
 } from '../../src/constants/layout';
 import { getApiErrorMessage } from '../../src/services/api.client';
-import { submitBid } from '../../src/services/bids.service';
+import { cancelBid, getDriverBids, submitBid } from '../../src/services/bids.service';
 import { getLoadById } from '../../src/services/loads.service';
+import { getUserProfile } from '../../src/services/user.service';
 import type { Load } from '../../src/types/load';
 import { palette } from '../../src/theme/colors';
 import { fontFamily, typography } from '../../src/theme/typography';
@@ -33,6 +34,7 @@ import { spacing } from '../../src/theme/spacing';
 import { formatCurrencyTRY, formatLoadTypeLabel, formatWeightKg } from '../../src/utils/format';
 import { canDriverOpenChat } from '../../src/utils/loadChat';
 import { getLoadStatusPill } from '../../src/utils/statusPills';
+import { useAuthStore } from '../../src/store/auth.store';
 
 export default function DriverLoadDetailScreen() {
   const router = useRouter();
@@ -43,10 +45,34 @@ export default function DriverLoadDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState('');
   const [amount, setAmount] = useState('');
+  const [note, setNote] = useState('');
   const [bidError, setBidError] = useState('');
   const [bidSuccess, setBidSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [bidSent, setBidSent] = useState(false);
+  const [pendingBidId, setPendingBidId] = useState<number | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const user = useAuthStore((s) => s.user);
+  const [driverApproved, setDriverApproved] = useState<boolean | null>(null);
+  const canSubmitBid = driverApproved === true;
+
+  useEffect(() => {
+    if (user?.role !== 'Driver' || !user.userId) {
+      setDriverApproved(false);
+      return;
+    }
+    let cancelled = false;
+    void getUserProfile(user.userId)
+      .then((profile) => {
+        if (!cancelled) setDriverApproved(profile.approvalStatus === 'Active');
+      })
+      .catch(() => {
+        if (!cancelled) setDriverApproved(user.isActive);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const fetchLoad = useCallback(async () => {
     if (!loadId) {
@@ -70,8 +96,43 @@ export default function DriverLoadDetailScreen() {
     fetchLoad();
   }, [fetchLoad]);
 
+  useEffect(() => {
+    if (!loadId) return;
+    void getDriverBids()
+      .then((bids) => {
+        const mine = bids.find(
+          (b) => b.loadId === loadId && b.status.toLowerCase() === 'pending'
+        );
+        if (mine) {
+          setPendingBidId(mine.id);
+          setBidSent(true);
+          if (mine.note) setNote(mine.note);
+        }
+      })
+      .catch(() => {
+        /* teklif listesi opsiyonel */
+      });
+  }, [loadId]);
+
+  const onCancelBid = async () => {
+    if (!pendingBidId) return;
+    setCancelling(true);
+    setBidError('');
+    setBidSuccess('');
+    try {
+      await cancelBid(pendingBidId);
+      setPendingBidId(null);
+      setBidSent(false);
+      setBidSuccess('Teklifiniz iptal edildi.');
+    } catch (e) {
+      setBidError(getApiErrorMessage(e));
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   const onSubmitBid = async () => {
-    if (!loadId || bidSent) return;
+    if (!loadId || bidSent || !canSubmitBid) return;
     setBidError('');
     setBidSuccess('');
     const numericAmount = Number(amount.replace(',', '.'));
@@ -81,7 +142,13 @@ export default function DriverLoadDetailScreen() {
     }
     setSubmitting(true);
     try {
-      await submitBid({ loadId, amount: numericAmount });
+      const res = (await submitBid({
+        loadId,
+        amount: numericAmount,
+        note: note.trim() || undefined,
+      })) as Record<string, unknown> | undefined;
+      const bidId = Number(res?.bidId ?? res?.BidId ?? 0);
+      if (bidId > 0) setPendingBidId(bidId);
       setBidSuccess('Teklifiniz iletildi; müşteri onayı bekleniyor.');
       setBidSent(true);
       setAmount('');
@@ -189,7 +256,11 @@ export default function DriverLoadDetailScreen() {
 
         <Card variant="elevated" padding={5} style={styles.bidCard}>
           <Text style={styles.bidTitle}>Teklif Ver</Text>
-          <Text style={styles.bidSub}>Navlun tutarınızı TL olarak girin.</Text>
+          {!canSubmitBid && driverApproved !== null ? (
+            <AlertBanner message="Hesabiniz onay bekliyor. Belgeleriniz onaylandiktan sonra teklif verebilirsiniz." tone="info" />
+          ) : (
+            <Text style={styles.bidSub}>Navlun tutarınızı TL olarak girin.</Text>
+          )}
 
           {bidSuccess ? <AlertBanner message={bidSuccess} tone="success" /> : null}
           {bidError ? <AlertBanner message={bidError} tone="error" /> : null}
@@ -201,15 +272,32 @@ export default function DriverLoadDetailScreen() {
             keyboardType="numeric"
             value={amount}
             onChangeText={setAmount}
-            editable={!bidSent && !submitting}
+            editable={canSubmitBid && !bidSent && !submitting}
+          />
+
+          <TextField
+            label="Not (isteğe bağlı)"
+            placeholder="Müşteriye iletilecek kısa not"
+            value={note}
+            onChangeText={setNote}
+            editable={canSubmitBid && !bidSent && !submitting}
+            multiline
           />
 
           <PrimaryButton
             title={bidSent ? 'Teklif Gönderildi' : 'Teklif Gönder'}
             onPress={onSubmitBid}
             loading={submitting}
-            disabled={bidSent}
+            disabled={driverApproved === false || driverApproved === null || bidSent}
           />
+
+          {pendingBidId && bidSent ? (
+            <SecondaryButton
+              title={cancelling ? 'İptal ediliyor…' : 'Teklifi İptal Et'}
+              onPress={onCancelBid}
+              disabled={cancelling}
+            />
+          ) : null}
         </Card>
       </ScreenScroll>
     </KeyboardAvoidingView>

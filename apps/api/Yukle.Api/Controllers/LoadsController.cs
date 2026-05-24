@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -19,10 +20,12 @@ namespace Yukle.Api.Controllers;
 [Authorize]
 [EnableRateLimiting("global-policy")]   // Phase 2.2: TokenBucket, 10 istek/sn
 public sealed class LoadsController(
-    ILoadService        loadService,
-    YukleDbContext      db,
-    PricingService      pricingService,
-    ILogger<LoadsController> logger) : ControllerBase
+    ILoadService             loadService,
+    YukleDbContext           db,
+    PricingService           pricingService,
+    ILogger<LoadsController> logger,
+    IConfiguration           configuration,
+    IWebHostEnvironment      environment) : ControllerBase
 {
     // ── POST api/loads ─────────────────────────────────────────────────────────
 
@@ -47,6 +50,12 @@ public sealed class LoadsController(
         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!int.TryParse(userIdClaim, out var userId))
             return Unauthorized(new { Message = "Geçerli bir kullanıcı kimliği bulunamadı." });
+
+        var customer = await db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId && u.Role == UserRole.Customer);
+        if (customer is null || !customer.IsActive)
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { Message = "Hesabınız henüz aktif değil. İlan oluşturmak için telefon doğrulamasını tamamlayın." });
 
         // ── 1. Yükü DB'ye kaydet ─────────────────────────────────────────────
         var newId = await loadService.CreateLoadAsync(dto, userId);
@@ -232,6 +241,12 @@ public sealed class LoadsController(
         if (load is null)
             return NotFound(new { Message = $"'{id}' ID'sine sahip yük ilanı bulunamadı." });
 
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return Unauthorized(new { Message = "Geçerli bir kullanıcı kimliği bulunamadı." });
+
+        if (!CanViewLoad(load, userId))
+            return NotFound(new { Message = $"'{id}' ID'sine sahip yük ilanı bulunamadı." });
+
         return Ok(load);
     }
 
@@ -279,7 +294,8 @@ public sealed class LoadsController(
     /// <summary>
     /// Faz 4.2 — Şoförün yükü teslim ettiğini bildirir; durumu <c>Delivered</c> yapar.
     /// Şoför fiziki lokasyonunu ve QR'dan okuduğu token'ı gönderir.
-    /// Token 15 dk içerisinde üretilmiş olmalı ve fiziksel mesafe hedefe 500m'den yakın olmalıdır.
+    /// Token 15 dk içerisinde üretilmiş olmalıdır. Production'da şoför cihaz GPS'i
+    /// teslim noktasına 500 m içinde olmalıdır; Development/demo'da GPS atlanır (QR zorunlu kalır).
     /// </summary>
     [HttpPost("{id:guid}/deliver")]
     [Authorize(Policy = "RequireActiveDriver")]
@@ -289,23 +305,64 @@ public sealed class LoadsController(
         if (!int.TryParse(driverIdClaim, out var driverId))
             return Unauthorized(new { Message = "Geçerli bir sürücü kimliği bulunamadı." });
 
-        // 1. Token Doğrulama (HMAC İmza & Timestamp & Doğru Yük)
-        if (!tokenService.ValidateDeliveryQrToken(dto.QrToken, out var tokenLoadId))
+        var qrToken = dto.QrToken?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(qrToken)
+            || string.Equals(qrToken, "manual-delivery", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new { Message = "Geçerli müşteri QR kodu zorunludur." });
+        }
+
+        // 1. Birincil kanıt: QR token (HMAC imza, süre, yük eşleşmesi)
+        if (!tokenService.ValidateDeliveryQrToken(qrToken, out var tokenLoadId))
             return BadRequest(new { Message = "Geçersiz veya süresi dolmuş QR kod." });
 
         if (tokenLoadId != id)
             return BadRequest(new { Message = "Okutulan QR kod bu yüke ait değil." });
 
-        // 2. Fiziksel Mesafe Doğrulama (GeoFencing - Max 500 metre = 0.5 km)
         var load = await loadService.GetLoadByIdAsync(id);
         if (load == null) return NotFound(new { Message = "Yük bulunamadı." });
 
-        var distanceKm = Haversine(dto.TargetLat, dto.TargetLng, load.DestinationLat, load.DestinationLng);
-        if (distanceKm > 0.5)
+        // 2. İkincil kanıt: şoförün DB'deki gerçek cihaz GPS'i (istemci-supplied hedef değil)
+        var enforceGpsDistance = configuration.GetValue<bool?>("Delivery:EnforceGpsDistanceCheck")
+            ?? !environment.IsDevelopment();
+
+        if (enforceGpsDistance)
         {
-             logger.LogWarning("Teslimat lokasyonu uyuşmazlığı: Gerekli={Lat},{Lng} | Gelen={DtoLat},{DtoLng} | Fark={Km} km", 
-                 load.DestinationLat, load.DestinationLng, dto.TargetLat, dto.TargetLng, distanceKm);
-             return BadRequest(new { Message = $"Teslimat noktasına çok uzaksınız. Kalan mesafe: {distanceKm:F2} km. Sistemin izin verdiği sapma max: 500 metredir." });
+            var driverGps = await db.Users.AsNoTracking()
+                .Where(u => u.Id == driverId)
+                .Select(u => new { u.LastKnownLatitude, u.LastKnownLongitude })
+                .FirstOrDefaultAsync();
+
+            if (driverGps?.LastKnownLatitude is not double driverLat
+                || driverGps.LastKnownLongitude is not double driverLng)
+            {
+                return BadRequest(new
+                {
+                    Message = "Şoför konumu bulunamadı. Teslimattan önce konum paylaşımını açın."
+                });
+            }
+
+            var maxDistanceKm = configuration.GetValue("Delivery:MaxDistanceKm", 0.5);
+            var distanceKm = Haversine(driverLat, driverLng, load.DestinationLat, load.DestinationLng);
+            if (distanceKm > maxDistanceKm)
+            {
+                logger.LogWarning(
+                    "Teslimat GPS uyuşmazlığı: LoadId={LoadId} DriverId={DriverId} " +
+                    "Hedef=({DestLat},{DestLng}) Cihaz=({DriverLat},{DriverLng}) Fark={Km:F3} km",
+                    id, driverId, load.DestinationLat, load.DestinationLng, driverLat, driverLng, distanceKm);
+
+                return BadRequest(new
+                {
+                    Message = $"Teslimat noktasına çok uzaksınız (cihaz GPS). Kalan mesafe: {distanceKm:F2} km. " +
+                              $"İzin verilen sapma: {maxDistanceKm * 1000:F0} m."
+                });
+            }
+        }
+        else
+        {
+            logger.LogInformation(
+                "Teslimat GPS mesafe kontrolü atlandı (demo/dev). LoadId={LoadId} — QR doğrulandı.",
+                id);
         }
 
         // 3. İşlem Kaydı (DB Transaction, U-ETDS, Escrow Release)
@@ -387,6 +444,26 @@ public sealed class LoadsController(
     }
 
     // ── Yardımcı ─────────────────────────────────────────────────────────────
+
+    private bool CanViewLoad(LoadListDto load, int userId)
+    {
+        if (User.IsInRole("Admin"))
+            return true;
+
+        if (User.IsInRole("Customer"))
+            return load.OwnerId == userId;
+
+        if (User.IsInRole("Driver"))
+        {
+            if (load.Status == LoadStatus.Active)
+                return true;
+            if (load.DriverId == userId)
+                return true;
+            return false;
+        }
+
+        return false;
+    }
 
     private static double Haversine(double lat1, double lon1, double lat2, double lon2)
     {

@@ -33,6 +33,7 @@ export default function NotificationsScreen() {
   const setUnread = useNotificationsStore((s) => s.setUnread);
   const applyMarkRead = useNotificationsStore((s) => s.applyMarkRead);
   const applyReadAll = useNotificationsStore((s) => s.applyReadAll);
+  const hubError = useNotificationsStore((s) => s.hubError);
 
   const [items, setItems] = useState<NotificationRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -124,6 +125,12 @@ export default function NotificationsScreen() {
 
       <Text style={styles.title}>Bildirimler</Text>
 
+      {hubError ? (
+        <View style={styles.hubBox}>
+          <Text style={styles.hubText}>{hubError}</Text>
+        </View>
+      ) : null}
+
       {error ? (
         <View style={styles.errorBox}>
           <Text style={styles.errorText}>{error}</Text>
@@ -208,6 +215,16 @@ const styles = StyleSheet.create({
   },
   cardMsg: { color: Colors.textSecondary, fontSize: 14, lineHeight: 20 },
   cardTime: { color: Colors.textMuted, fontSize: 12 },
+  hubBox: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: 'rgba(59,130,246,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(59,130,246,0.35)',
+  },
+  hubText: { color: Colors.textSecondary, fontSize: 13, lineHeight: 18 },
   errorBox: {
     marginHorizontal: 16,
     marginBottom: 8,

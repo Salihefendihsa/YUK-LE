@@ -32,6 +32,8 @@ import type { MapMarker } from '../../../src/components/map/LiveMap.types';
 import { isValidCoordinate } from '../../../src/components/map/mapUtils';
 import { useDriverLocationTracking } from '../../../src/hooks/useDriverLocationTracking';
 import { getLoadStatusPill } from '../../../src/utils/statusPills';
+import { QrDeliveryScanner } from '../../../src/components/driver/QrDeliveryScanner';
+import { CustomerRatingForm } from '../../../src/components/driver/CustomerRatingForm';
 
 const STEP_LABELS = ['Atandı', 'Yükle', 'Yolda', 'Teslim'] as const;
 
@@ -282,8 +284,9 @@ export default function DriverActiveLoadScreen() {
             <Card variant="default" padding={4} style={styles.qrCard}>
               <Text style={styles.qrTitle}>Teslimat QR</Text>
               <Text style={styles.qrSub}>
-                Müşteri ekranındaki QR kodu okutun. Token aşağıya girilir (15 dk geçerli).
+                Müşteri ekranındaki QR kodu okutun veya token yapıştırın (15 dk geçerli).
               </Text>
+              <QrDeliveryScanner onScan={setQrToken} disabled={busy} />
               <View style={styles.qrPreview}>
                 <Text style={styles.qrPreviewLabel}>QR token</Text>
                 <Text style={styles.qrPreviewValue} numberOfLines={3}>
@@ -309,10 +312,19 @@ export default function DriverActiveLoadScreen() {
           />
         </View>
       ) : (
-        <Card variant="glass" padding={5}>
-          <Text style={styles.doneTitle}>Sefer tamamlandi</Text>
-          <Text style={styles.qrSub}>Yeni işler için Yük Panosu’na gidebilirsiniz.</Text>
-        </Card>
+        <>
+          <Card variant="glass" padding={5}>
+            <Text style={styles.doneTitle}>Sefer tamamlandı</Text>
+            <Text style={styles.qrSub}>Yeni işler için Yük Panosu’na gidebilirsiniz.</Text>
+          </Card>
+          {trip.ownerId ? (
+            <CustomerRatingForm
+              loadId={trip.id}
+              customerUserId={trip.ownerId}
+              customerName={trip.ownerFullName}
+            />
+          ) : null}
+        </>
       )}
     </ScreenScroll>
   );

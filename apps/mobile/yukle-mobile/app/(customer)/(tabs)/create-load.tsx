@@ -1,14 +1,15 @@
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { DateTimePickerField } from '../../../src/components/datetime/DateTimePickerField';
+import { TrLocationFields } from '../../../src/components/location/TrLocationFields';
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
@@ -16,28 +17,17 @@ import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
 import { SecondaryButton } from '../../../src/components/ui/SecondaryButton';
 import { TextField } from '../../../src/components/ui/TextField';
 import { ScreenScroll } from '../../../src/constants/layout';
+import { resolveCoordinates } from '../../../src/data/tr-location';
 import { getApiErrorMessage } from '../../../src/services/api.client';
+import { getMyAddresses } from '../../../src/services/addresses.service';
 import { createLoad, getLoadPriceSuggestion } from '../../../src/services/loads.service';
+import type { DeliveryAddress } from '../../../src/types/address';
 import type { AiMarketAnalysis, CreateLoadPayload, LoadTypeValue, VehicleTypeValue } from '../../../src/types/create-load';
 import { palette } from '../../../src/theme/colors';
 import { fontFamily, typography } from '../../../src/theme/typography';
 import { radius } from '../../../src/theme/radius';
 import { spacing } from '../../../src/theme/spacing';
 import { formatCurrencyTRY } from '../../../src/utils/format';
-
-const DEFAULT_FROM = {
-  fromCity: 'Elazig',
-  fromDistrict: 'OSB',
-  fromLatitude: 38.636,
-  fromLongitude: 39.0844,
-};
-
-const DEFAULT_TO = {
-  toCity: 'Malatya',
-  toDistrict: 'Merkez',
-  toLatitude: 38.3552,
-  toLongitude: 38.3095,
-};
 
 const VEHICLE_OPTIONS: { value: VehicleTypeValue; label: string }[] = [
   { value: 0, label: 'TIR' },
@@ -54,23 +44,16 @@ const LOAD_TYPE_OPTIONS: { value: LoadTypeValue; label: string }[] = [
   { value: 4, label: 'Parsiyel' },
 ];
 
-function defaultPickupIso(): string {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  d.setHours(8, 0, 0, 0);
-  return d.toISOString();
-}
-
-function defaultDeliveryIso(): string {
-  const d = new Date();
-  d.setDate(d.getDate() + 2);
-  d.setHours(18, 0, 0, 0);
-  return d.toISOString();
-}
-
 function parseNum(v: string): number | null {
   const n = Number(v.replace(',', '.'));
   return Number.isFinite(n) ? n : null;
+}
+
+function coordsFromAddress(addr: DeliveryAddress) {
+  if (addr.latitude != null && addr.longitude != null) {
+    return { latitude: addr.latitude, longitude: addr.longitude };
+  }
+  return resolveCoordinates(addr.city, addr.district);
 }
 
 export default function CustomerCreateLoadScreen() {
@@ -80,48 +63,60 @@ export default function CustomerCreateLoadScreen() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [aiResult, setAiResult] = useState<AiMarketAnalysis | null>(null);
+  const [addresses, setAddresses] = useState<DeliveryAddress[]>([]);
+  const [addressPickerOpen, setAddressPickerOpen] = useState(false);
+  const createAbortRef = useRef<AbortController | null>(null);
 
-  const [fromCity, setFromCity] = useState(DEFAULT_FROM.fromCity);
-  const [fromDistrict, setFromDistrict] = useState(DEFAULT_FROM.fromDistrict);
-  const [fromLat, setFromLat] = useState(String(DEFAULT_FROM.fromLatitude));
-  const [fromLng, setFromLng] = useState(String(DEFAULT_FROM.fromLongitude));
-  const [toCity, setToCity] = useState(DEFAULT_TO.toCity);
-  const [toDistrict, setToDistrict] = useState(DEFAULT_TO.toDistrict);
-  const [toLat, setToLat] = useState(String(DEFAULT_TO.toLatitude));
-  const [toLng, setToLng] = useState(String(DEFAULT_TO.toLongitude));
-  const [pickupDate, setPickupDate] = useState(defaultPickupIso());
-  const [deliveryDate, setDeliveryDate] = useState(defaultDeliveryIso());
+  const [fromCoordsOverride, setFromCoordsOverride] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [toCoordsOverride, setToCoordsOverride] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+
+  const [fromCity, setFromCity] = useState('');
+  const [fromDistrict, setFromDistrict] = useState('');
+  const [toCity, setToCity] = useState('');
+  const [toDistrict, setToDistrict] = useState('');
+  const [pickupDate, setPickupDate] = useState('');
+  const [deliveryDate, setDeliveryDate] = useState('');
   const [vehicleType, setVehicleType] = useState<VehicleTypeValue>(1);
   const [loadType, setLoadType] = useState<LoadTypeValue>(0);
-  const [weight, setWeight] = useState('12000');
-  const [volume, setVolume] = useState('24');
-  const [price, setPrice] = useState('18500');
+  const [weight, setWeight] = useState('');
+  const [volume, setVolume] = useState('');
+  const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
 
+  useEffect(() => {
+    void getMyAddresses().then(setAddresses).catch(() => setAddresses([]));
+  }, []);
+
+  const fromCoords = useMemo(() => {
+    if (fromCoordsOverride) return fromCoordsOverride;
+    if (!fromCity.trim() || !fromDistrict.trim()) return null;
+    return resolveCoordinates(fromCity, fromDistrict);
+  }, [fromCity, fromDistrict, fromCoordsOverride]);
+
+  const toCoords = useMemo(() => {
+    if (toCoordsOverride) return toCoordsOverride;
+    if (!toCity.trim() || !toDistrict.trim()) return null;
+    return resolveCoordinates(toCity, toDistrict);
+  }, [toCity, toDistrict, toCoordsOverride]);
+
   const step1Valid = useMemo(() => {
-    const fl = parseNum(fromLat);
-    const fg = parseNum(fromLng);
-    const tl = parseNum(toLat);
-    const tg = parseNum(toLng);
     return (
       fromCity.trim().length > 0 &&
       fromDistrict.trim().length > 0 &&
       toCity.trim().length > 0 &&
       toDistrict.trim().length > 0 &&
-      fl != null &&
-      fg != null &&
-      tl != null &&
-      tg != null &&
-      fl >= -90 &&
-      fl <= 90 &&
-      fg >= -180 &&
-      fg <= 180 &&
-      tl >= -90 &&
-      tl <= 90 &&
-      tg >= -180 &&
-      tg <= 180
+      fromCoords != null &&
+      toCoords != null &&
+      pickupDate.length > 0 &&
+      deliveryDate.length > 0
     );
-  }, [fromCity, fromDistrict, toCity, toDistrict, fromLat, fromLng, toLat, toLng]);
+  }, [fromCity, fromDistrict, toCity, toDistrict, fromCoords, toCoords, pickupDate, deliveryDate]);
 
   const step2Valid = useMemo(() => {
     const w = parseNum(weight);
@@ -133,6 +128,7 @@ export default function CustomerCreateLoadScreen() {
     if (p == null || p < 100 || p > 9999999) return false;
     const pickup = new Date(pickupDate);
     const delivery = new Date(deliveryDate);
+    if (Number.isNaN(pickup.getTime()) || Number.isNaN(delivery.getTime())) return false;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (pickup < today) return false;
@@ -143,6 +139,19 @@ export default function CustomerCreateLoadScreen() {
   const canGoNext = step === 1 ? step1Valid : step === 2 ? step2Valid : step3Valid;
   const canSubmit = step1Valid && step2Valid && step3Valid && !loading;
 
+  const applyAddress = (addr: DeliveryAddress, target: 'from' | 'to') => {
+    const coords = coordsFromAddress(addr);
+    if (target === 'from') {
+      setFromCity(addr.city);
+      setFromDistrict(addr.district);
+      setFromCoordsOverride(coords);
+    } else {
+      setToCity(addr.city);
+      setToDistrict(addr.district);
+      setToCoordsOverride(coords);
+    }
+  };
+
   const buildPayload = (): CreateLoadPayload => {
     const vol = parseNum(volume);
     return {
@@ -150,10 +159,10 @@ export default function CustomerCreateLoadScreen() {
       fromDistrict: fromDistrict.trim(),
       toCity: toCity.trim(),
       toDistrict: toDistrict.trim(),
-      fromLatitude: parseNum(fromLat)!,
-      fromLongitude: parseNum(fromLng)!,
-      toLatitude: parseNum(toLat)!,
-      toLongitude: parseNum(toLng)!,
+      fromLatitude: fromCoords!.latitude,
+      fromLongitude: fromCoords!.longitude,
+      toLatitude: toCoords!.latitude,
+      toLongitude: toCoords!.longitude,
       pickupDate,
       deliveryDate,
       weight: parseNum(weight)!,
@@ -166,16 +175,26 @@ export default function CustomerCreateLoadScreen() {
     };
   };
 
+  const cancelCreate = () => {
+    createAbortRef.current?.abort();
+    createAbortRef.current = null;
+    setLoading(false);
+    setError('İlan oluşturma iptal edildi. Form verileriniz korundu.');
+  };
+
   const handleCreate = async () => {
     if (!canSubmit) return;
+    createAbortRef.current?.abort();
+    const ac = new AbortController();
+    createAbortRef.current = ac;
     setLoading(true);
     setError('');
     try {
-      const created = await createLoad(buildPayload());
+      const created = await createLoad(buildPayload(), { signal: ac.signal });
       let ai = created.aiMarketAnalysis ?? null;
       if (created.load?.id) {
         try {
-          const extra = await getLoadPriceSuggestion(created.load.id);
+          const extra = await getLoadPriceSuggestion(created.load.id, { signal: ac.signal });
           if (extra) {
             ai = {
               ...extra,
@@ -184,15 +203,21 @@ export default function CustomerCreateLoadScreen() {
             };
           }
         } catch {
-          /* POST yanitindaki aiMarketAnalysis yeterli */
+          /* POST yanıtındaki aiMarketAnalysis yeterli */
         }
       }
       setAiResult(ai);
       setSuccess(true);
     } catch (e) {
-      setError(getApiErrorMessage(e));
+      const err = e as { code?: string; name?: string };
+      if (ac.signal.aborted || err.code === 'ERR_CANCELED' || err.name === 'CanceledError') {
+        setError('İlan oluşturma iptal edildi veya zaman aşımına uğradı. Tekrar deneyebilirsiniz.');
+      } else {
+        setError(getApiErrorMessage(e));
+      }
     } finally {
       setLoading(false);
+      createAbortRef.current = null;
     }
   };
 
@@ -201,12 +226,21 @@ export default function CustomerCreateLoadScreen() {
     router.replace('/(customer)/(tabs)/loads');
   };
 
+  const pickupMin = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  const deliveryMin = useMemo(() => {
+    if (!pickupDate) return pickupMin;
+    const d = new Date(pickupDate);
+    return Number.isNaN(d.getTime()) ? pickupMin : d;
+  }, [pickupDate, pickupMin]);
+
   return (
     <>
-      <ScreenScroll
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-      >
+      <ScreenScroll contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <ScreenHeader title="İlan Oluştur" subtitle="3 adımlı ilan oluşturma" />
 
         <Text style={styles.stepBadge}>Adım {step} / 3</Text>
@@ -228,26 +262,63 @@ export default function CustomerCreateLoadScreen() {
         {step === 1 ? (
           <Card variant="default" padding={4}>
             <Text style={styles.sectionTitle}>Güzergah ve zaman</Text>
-            <TextField label="Çıkış şehir" value={fromCity} onChangeText={setFromCity} />
-            <TextField label="Çıkış ilçe" value={fromDistrict} onChangeText={setFromDistrict} />
-            <TextField label="Çıkış enlem (lat)" value={fromLat} onChangeText={setFromLat} keyboardType="numeric" />
-            <TextField label="Çıkış boylam (lng)" value={fromLng} onChangeText={setFromLng} keyboardType="numeric" />
-            <TextField label="Varış şehir" value={toCity} onChangeText={setToCity} />
-            <TextField label="Varış ilçe" value={toDistrict} onChangeText={setToDistrict} />
-            <TextField label="Varış enlem (lat)" value={toLat} onChangeText={setToLat} keyboardType="numeric" />
-            <TextField label="Varış boylam (lng)" value={toLng} onChangeText={setToLng} keyboardType="numeric" />
-            <TextField label="Yükleme tarihi (ISO)" value={pickupDate} onChangeText={setPickupDate} />
-            <TextField label="Teslim tarihi (ISO)" value={deliveryDate} onChangeText={setDeliveryDate} />
-            <View style={styles.mapPlaceholder}>
-              <Text style={styles.mapHint}>Harita önizlemesi yakında</Text>
-            </View>
+
+            {addresses.length > 0 ? (
+              <View style={styles.addressBlock}>
+                <Text style={styles.addressLabel}>Kayıtlı adreslerimden seç</Text>
+                <SecondaryButton
+                  title="Adres defterini aç"
+                  onPress={() => setAddressPickerOpen(true)}
+                />
+              </View>
+            ) : null}
+
+            <TrLocationFields
+              labelPrefix="Çıkış"
+              city={fromCity}
+              district={fromDistrict}
+              onChange={({ city, district }) => {
+                setFromCity(city);
+                setFromDistrict(district);
+                setFromCoordsOverride(null);
+              }}
+            />
+            <TrLocationFields
+              labelPrefix="Varış"
+              city={toCity}
+              district={toDistrict}
+              onChange={({ city, district }) => {
+                setToCity(city);
+                setToDistrict(district);
+                setToCoordsOverride(null);
+              }}
+            />
+
+            <DateTimePickerField
+              label="Yükleme tarihi"
+              value={pickupDate}
+              onChange={setPickupDate}
+              minimumDate={pickupMin}
+            />
+            <DateTimePickerField
+              label="Teslim tarihi"
+              value={deliveryDate}
+              onChange={setDeliveryDate}
+              minimumDate={deliveryMin}
+            />
+
+            {fromCoords && toCoords ? (
+              <Text style={styles.coordHint}>
+                Konum otomatik belirlendi ({fromCity}/{fromDistrict} → {toCity}/{toDistrict})
+              </Text>
+            ) : null}
           </Card>
         ) : null}
 
         {step === 2 ? (
           <Card variant="default" padding={4}>
             <Text style={styles.sectionTitle}>Yük detayı</Text>
-            <Text style={styles.chipGroupLabel}>Arac tipi</Text>
+            <Text style={styles.chipGroupLabel}>Araç tipi</Text>
             <View style={styles.chipRow}>
               {VEHICLE_OPTIONS.map((o) => (
                 <Pressable
@@ -297,9 +368,9 @@ export default function CustomerCreateLoadScreen() {
               </Text>
             </Card>
             <TextField label="Liste fiyatı (TL)" value={price} onChangeText={setPrice} keyboardType="numeric" icon="cash-outline" />
-            <Text style={styles.preview}>
-              Önizleme: {formatCurrencyTRY(parseNum(price) ?? 0)}
-            </Text>
+            {parseNum(price) != null ? (
+              <Text style={styles.preview}>Önizleme: {formatCurrencyTRY(parseNum(price)!)}</Text>
+            ) : null}
           </Card>
         ) : null}
 
@@ -329,10 +400,51 @@ export default function CustomerCreateLoadScreen() {
         </View>
       </ScreenScroll>
 
+      <Modal visible={addressPickerOpen} animationType="slide" onRequestClose={() => setAddressPickerOpen(false)}>
+        <View style={styles.addressModal}>
+          <View style={styles.addressModalHead}>
+            <Text style={styles.addressModalTitle}>Kayıtlı adresler</Text>
+            <Pressable onPress={() => setAddressPickerOpen(false)}>
+              <Text style={styles.addressModalClose}>Kapat</Text>
+            </Pressable>
+          </View>
+          {addresses.map((addr) => (
+            <View key={addr.id} style={styles.addressRow}>
+              <Text style={styles.addressTitle}>{addr.title}</Text>
+              <Text style={styles.addressMeta}>
+                {addr.city}/{addr.district}
+              </Text>
+              <View style={styles.addressActions}>
+                <Pressable
+                  style={styles.addressBtn}
+                  onPress={() => {
+                    applyAddress(addr, 'from');
+                    setAddressPickerOpen(false);
+                  }}
+                >
+                  <Text style={styles.addressBtnText}>Çıkış olarak</Text>
+                </Pressable>
+                <Pressable
+                  style={[styles.addressBtn, styles.addressBtnAlt]}
+                  onPress={() => {
+                    applyAddress(addr, 'to');
+                    setAddressPickerOpen(false);
+                  }}
+                >
+                  <Text style={styles.addressBtnText}>Varış olarak</Text>
+                </Pressable>
+              </View>
+            </View>
+          ))}
+        </View>
+      </Modal>
+
       <Modal visible={loading} transparent animationType="fade">
         <View style={styles.overlay}>
           <ActivityIndicator color={palette.brand} size="large" />
-          <Text style={styles.overlayText}>İlan oluşturuluyor, fiyat hesaplanıyor...</Text>
+          <Text style={styles.overlayText}>İlan oluşturuluyor, rota ve fiyat hesaplanıyor…</Text>
+          <Text style={styles.overlaySub}>Bu işlem bir dakikaya kadar sürebilir.</Text>
+          <SecondaryButton title="İptal" onPress={cancelCreate} style={styles.cancelBtn} />
         </View>
       </Modal>
 
@@ -369,8 +481,6 @@ export default function CustomerCreateLoadScreen() {
 
 const styles = StyleSheet.create({
   scroll: { padding: spacing[4], paddingBottom: spacing[10] },
-  title: { ...typography.h1 },
-  sub: { ...typography.caption, textTransform: 'none', marginBottom: spacing[3] },
   stepBadge: { ...typography.label, color: palette.gold, marginBottom: spacing[2] },
   stepRow: { flexDirection: 'row', gap: spacing[2], marginBottom: spacing[4] },
   stepChip: {
@@ -393,6 +503,14 @@ const styles = StyleSheet.create({
     color: palette.gold,
     marginBottom: spacing[3],
   },
+  addressBlock: { marginBottom: spacing[4], gap: spacing[2] },
+  addressLabel: { ...typography.label },
+  coordHint: {
+    ...typography.caption,
+    textTransform: 'none',
+    color: palette.textMuted,
+    marginTop: spacing[2],
+  },
   chipGroupLabel: { ...typography.label, marginBottom: spacing[2] },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginBottom: spacing[4] },
   chip: {
@@ -413,22 +531,41 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   chipTextOn: { color: palette.brand },
-  mapPlaceholder: {
-    borderWidth: 1,
-    borderColor: palette.borderLight,
-    borderStyle: 'dashed',
-    borderRadius: radius.md,
-    padding: spacing[5],
-    alignItems: 'center',
-    marginTop: spacing[2],
-  },
-  mapHint: { ...typography.caption, textTransform: 'none' },
   aiInfoCard: { borderColor: palette.goldBorder, backgroundColor: palette.goldMuted, marginBottom: spacing[3] },
   aiInfoTitle: { fontFamily: fontFamily.semiBold, fontSize: 14, color: palette.gold },
   aiInfoBody: { ...typography.caption, textTransform: 'none', marginTop: spacing[1] },
   preview: { ...typography.caption, textTransform: 'none', color: palette.gold },
   navRow: { flexDirection: 'row', gap: spacing[3], marginTop: spacing[4] },
   navHalf: { flex: 1 },
+  addressModal: { flex: 1, backgroundColor: palette.bg, paddingTop: spacing[8], paddingHorizontal: spacing[4] },
+  addressModalHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing[4],
+  },
+  addressModalTitle: { ...typography.h2, fontSize: 18 },
+  addressModalClose: { ...typography.link },
+  addressRow: {
+    borderWidth: 1,
+    borderColor: palette.borderLight,
+    borderRadius: radius.md,
+    padding: spacing[4],
+    marginBottom: spacing[3],
+    gap: spacing[2],
+  },
+  addressTitle: { fontFamily: fontFamily.semiBold, fontSize: 15, color: palette.text },
+  addressMeta: { ...typography.caption, textTransform: 'none' },
+  addressActions: { flexDirection: 'row', gap: spacing[2], marginTop: spacing[2] },
+  addressBtn: {
+    flex: 1,
+    paddingVertical: spacing[2],
+    borderRadius: radius.md,
+    backgroundColor: palette.brandMuted,
+    alignItems: 'center',
+  },
+  addressBtnAlt: { backgroundColor: palette.goldMuted },
+  addressBtnText: { fontFamily: fontFamily.semiBold, fontSize: 12, color: palette.text },
   overlay: {
     flex: 1,
     backgroundColor: palette.overlay,
@@ -436,11 +573,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: spacing[6],
   },
-  overlayText: {
-    ...typography.body,
-    marginTop: spacing[4],
+  overlayText: { ...typography.body, marginTop: spacing[4], textAlign: 'center' },
+  overlaySub: {
+    ...typography.caption,
+    textTransform: 'none',
+    color: palette.textMuted,
     textAlign: 'center',
+    marginTop: spacing[2],
+    marginBottom: spacing[4],
   },
+  cancelBtn: { minWidth: 140 },
   successCard: { width: '100%', maxWidth: 360, gap: spacing[4] },
   successTitle: { ...typography.h2, textAlign: 'center' },
   aiResultCard: { borderColor: palette.goldBorder, backgroundColor: palette.goldMuted },

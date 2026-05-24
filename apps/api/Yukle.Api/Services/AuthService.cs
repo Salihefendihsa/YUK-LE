@@ -93,6 +93,7 @@ public class AuthService : IAuthService
     private readonly IGeminiService     _geminiService;   // v2.5.1 — Evrak Denetim AI
     private readonly ILogger<AuthService> _logger;
     private readonly IConfiguration     _configuration;
+    private readonly IDriverReviewDocumentStore _documentStore;
 
     public AuthService(
         YukleDbContext       context,
@@ -101,7 +102,8 @@ public class AuthService : IAuthService
         IDistributedCache    cache,
         IGeminiService       geminiService,
         ILogger<AuthService> logger,
-        IConfiguration       configuration)
+        IConfiguration       configuration,
+        IDriverReviewDocumentStore documentStore)
     {
         _context       = context;
         _tokenService  = tokenService;
@@ -110,6 +112,7 @@ public class AuthService : IAuthService
         _geminiService = geminiService;
         _logger        = logger;
         _configuration = configuration;
+        _documentStore = documentStore;
     }
 
     // ── Yardımcı: Redis'ten int sayaç oku ─────────────────────────────────────
@@ -248,6 +251,14 @@ public class AuthService : IAuthService
         user.IsPhoneVerified        = true;
         user.VerificationCode       = string.Empty;  // kodu tek kullanımlık kıl
         user.VerificationCodeExpiry = null;
+
+        // Müşteri: OTP sonrası hesap aktif — ilan oluşturma bariyeri için gerekli.
+        // Şoför: belge onayı / admin onayı olmadan IsActive değişmez.
+        if (user.Role == UserRole.Customer)
+        {
+            user.IsActive        = true;
+            user.ApprovalStatus  = ApprovalStatus.Active;
+        }
 
         await _context.SaveChangesAsync();
     }
@@ -598,8 +609,12 @@ public class AuthService : IAuthService
                 "Gemini evrak denetimi beklenmedik şekilde throw etti. UserId={UserId}, DocType={DocType}.",
                 userId, documentType);
 
-            await MarkManualApprovalRequiredAsync(user,
-                reason: "Belge doğrulama hizmeti geçici olarak yanıt vermedi; hesabınız manuel onay için işaretlendi.");
+            await MarkManualApprovalRequiredAsync(
+                user,
+                documentType,
+                "Belge doğrulama hizmeti geçici olarak yanıt vermedi; hesabınız manuel onay için işaretlendi.",
+                imageBytes,
+                mimeType);
 
             return BuildResponse(user, documentType, ocr: null);
         }
@@ -611,9 +626,13 @@ public class AuthService : IAuthService
                 "AI zaman aşımı/teknik hata: UserId={UserId}, DocType={DocType}, Msg={Msg}",
                 userId, documentType, ocr.ValidationMessage);
 
-            await MarkManualApprovalRequiredAsync(user,
-                reason: ocr.ValidationMessage
-                        ?? "Belge analizi tamamlanamadı; hesabınız manuel onay için işaretlendi.");
+            await MarkManualApprovalRequiredAsync(
+                user,
+                documentType,
+                ocr.ValidationMessage
+                ?? "Belge analizi tamamlanamadı; hesabınız manuel onay için işaretlendi.",
+                imageBytes,
+                mimeType);
 
             return BuildResponse(user, documentType, ocr);
         }
@@ -626,7 +645,7 @@ public class AuthService : IAuthService
         // PendingReview'a alınır ve admin kuyruğuna düşer.
         if (IsGreyArea(ocr))
         {
-            await MarkPendingReviewAsync(user, documentType, ocr);
+            await MarkPendingReviewAsync(user, documentType, ocr, imageBytes, mimeType);
 
             // Şoföre UX mesajı dönülür — controller 202 Accepted ile cevaplar.
             // ApplicationException fırlatmıyoruz çünkü bu bir "hata" değil, ara durum.
@@ -714,10 +733,24 @@ public class AuthService : IAuthService
         }
         else
         {
-            // Ara durum: belge kaydedildi fakat hesap henüz aktifleşmedi → manuel inceleme kuyruğu
             user.ApprovalStatus = ApprovalStatus.PendingReview;
             user.IsActive       = false;
             user.LastValidationMessage = "Belgeniz incelemeye alındı.";
+
+            var documentUrl = await _documentStore.SaveAsync(user.Id, documentType, imageBytes, mimeType);
+            user.AiInferenceDetails = JsonSerializer.Serialize(new
+            {
+                DocumentType      = documentType.ToString(),
+                IsValid           = ocr.IsValid,
+                IsSealDetected    = ocr.IsSealDetected,
+                ConfidenceScore   = ocr.ConfidenceScore,
+                ValidationMessage = ocr.ValidationMessage,
+                ExpiryDate        = ocr.ExpiryDate,
+                DocumentClasses   = ocr.DocumentClasses,
+                DocumentUrl       = documentUrl,
+                PreviewUrl        = documentUrl,
+                TimestampUtc      = DateTime.UtcNow
+            }, new JsonSerializerOptions { WriteIndented = false });
         }
 
         await _context.SaveChangesAsync();
@@ -730,11 +763,29 @@ public class AuthService : IAuthService
     }
 
     // ── Yardımcı: Manuel onay işaretleme (teknik hata) ────────────────────────
-    private async Task MarkManualApprovalRequiredAsync(User user, string reason)
+    private async Task MarkManualApprovalRequiredAsync(
+        User         user,
+        DocumentType documentType,
+        string       reason,
+        byte[]?      imageBytes = null,
+        string?      mimeType = null)
     {
         user.ApprovalStatus        = ApprovalStatus.ManualApprovalRequired;
-        user.IsActive              = false;  // Asla true yapılmaz
+        user.IsActive              = false;
         user.LastValidationMessage = reason;
+
+        string? documentUrl = null;
+        if (imageBytes is { Length: > 0 } && !string.IsNullOrWhiteSpace(mimeType))
+            documentUrl = await _documentStore.SaveAsync(user.Id, documentType, imageBytes, mimeType);
+
+        user.AiInferenceDetails = JsonSerializer.Serialize(new
+        {
+            DocumentType      = documentType.ToString(),
+            ValidationMessage = reason,
+            DocumentUrl       = documentUrl,
+            PreviewUrl        = documentUrl,
+            TimestampUtc      = DateTime.UtcNow
+        }, new JsonSerializerOptions { WriteIndented = false });
 
         await _context.SaveChangesAsync();
     }
@@ -780,14 +831,14 @@ public class AuthService : IAuthService
     private async Task MarkPendingReviewAsync(
         User                 user,
         DocumentType         documentType,
-        DocumentOcrResultDto ocr)
+        DocumentOcrResultDto ocr,
+        byte[]               imageBytes,
+        string               mimeType)
     {
         user.ApprovalStatus        = ApprovalStatus.PendingReview;
         user.IsActive              = false;
         user.LastValidationMessage = MsgPendingReview;
 
-        // Admin için kısa açıklama: confidence + AI mesajının ilk 200 karakteri.
-        // UI'da uzun alanları kesmek gerekirse bu not güvenli bir preview sağlar.
         string aiMsgPreview = string.IsNullOrWhiteSpace(ocr.ValidationMessage)
             ? "AI mesaj yok"
             : ocr.ValidationMessage.Length > 200
@@ -799,8 +850,8 @@ public class AuthService : IAuthService
             $"IsValid={ocr.IsValid} | Seal={ocr.IsSealDetected} | " +
             $"AI: {aiMsgPreview}";
 
-        // Yapılandırılmış, KVKK-uyumlu delil JSON'ı (Ad-Soyad/TCKN YOKTUR — zaten DTO'nun
-        // kimlik alanları burada serialize edilmez).
+        var documentUrl = await _documentStore.SaveAsync(user.Id, documentType, imageBytes, mimeType);
+
         user.AiInferenceDetails = JsonSerializer.Serialize(new
         {
             DocumentType      = documentType.ToString(),
@@ -810,6 +861,8 @@ public class AuthService : IAuthService
             ValidationMessage = ocr.ValidationMessage,
             ExpiryDate        = ocr.ExpiryDate,
             DocumentClasses   = ocr.DocumentClasses,
+            DocumentUrl       = documentUrl,
+            PreviewUrl        = documentUrl,
             TimestampUtc      = DateTime.UtcNow
         }, new JsonSerializerOptions { WriteIndented = false });
 

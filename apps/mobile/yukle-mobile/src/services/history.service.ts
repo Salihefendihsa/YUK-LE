@@ -54,11 +54,12 @@ export async function getDriverLoadHistory(
 ): Promise<DriverHistoryResponse> {
   const res = await apiClient.get('/Loads/driver-history', { params: { page, pageSize } });
   const data = res.data as Record<string, unknown>;
-  const items = Array.isArray(data.items) ? data.items.map(normalizeRow) : [];
+  const rawItems = data.items ?? data.Items;
+  const items = Array.isArray(rawItems) ? rawItems.map(normalizeRow) : [];
   return {
     items,
-    totalEarn: Number(data.totalEarn ?? 0),
-    tripCount: Number(data.tripCount ?? data.total ?? items.length),
-    total: Number(data.total ?? items.length),
+    totalEarn: Number(data.totalEarn ?? data.TotalEarn ?? 0),
+    tripCount: Number(data.tripCount ?? data.TripCount ?? data.total ?? data.Total ?? items.length),
+    total: Number(data.total ?? data.Total ?? items.length),
   };
 }

@@ -23,6 +23,8 @@ export default function DriverActiveLoadPage() {
   const [sharing, setSharing] = useState(false)
   const [activeLoad, setActiveLoad] = useState<Load | null>(null)
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null)
+  const [qrToken, setQrToken] = useState('')
+  const [deliverMsg, setDeliverMsg] = useState('')
   const watchTimerRef = useRef<number | null>(null)
 
   useEffect(() => {
@@ -134,6 +136,20 @@ export default function DriverActiveLoadPage() {
               </button>
             </div>
 
+            <div style={{ marginTop: 12 }}>
+              <label className="muted" style={{ display: 'block', marginBottom: 6, fontSize: 12 }}>
+                Müşterinin teslimat QR kodunu girin (mobil uygulamadan)
+              </label>
+              <input
+                className="form-input"
+                type="text"
+                placeholder="QR token"
+                value={qrToken}
+                onChange={(e) => setQrToken(e.target.value)}
+                autoComplete="off"
+              />
+            </div>
+
             <div className="item-row" style={{ marginTop: 12, flexWrap: 'wrap', gap: 10 }}>
               <button type="button" className="btn btn-pickup-load" onClick={async () => activeLoad && (await pickupLoad(activeLoad.id))}>
                 Yükü Aldım
@@ -143,16 +159,33 @@ export default function DriverActiveLoadPage() {
                 className="btn btn-deliver-load"
                 onClick={async () => {
                   if (!activeLoad) return
-                  await deliverLoad(activeLoad.id, {
-                    qrToken: 'manual-delivery',
-                    targetLat: activeLoad.destinationLat,
-                    targetLng: activeLoad.destinationLng,
-                  })
+                  const token = qrToken.trim()
+                  if (!token) {
+                    setDeliverMsg('Geçerli müşteri QR kodu zorunludur.')
+                    return
+                  }
+                  try {
+                    setDeliverMsg('')
+                    await deliverLoad(activeLoad.id, {
+                      qrToken: token,
+                      targetLat: activeLoad.destinationLat,
+                      targetLng: activeLoad.destinationLng,
+                    })
+                    setDeliverMsg('Yük teslim edildi.')
+                    setQrToken('')
+                  } catch {
+                    setDeliverMsg('Teslim başarısız. QR kodunu ve sefer durumunu kontrol edin.')
+                  }
                 }}
               >
                 Teslim Ettim
               </button>
             </div>
+            {deliverMsg ? (
+              <p className="muted" style={{ marginTop: 8 }}>
+                {deliverMsg}
+              </p>
+            ) : null}
             <p className="muted" style={{ marginTop: 10 }}>
               {message}
             </p>

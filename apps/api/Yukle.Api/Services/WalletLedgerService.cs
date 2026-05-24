@@ -24,26 +24,26 @@ public sealed class WalletLedgerService(
 
         await AddLogAsync(driverUserId, loadId, settlement.DriverNet, WalletAuditLogType.Hold,
             pendingBefore, pendingAfter,
-            $"Escrow hold net={settlement.DriverNet:N2} gross={settlement.GrossAmount:N2}", ct);
+            $"Escrow hold net={settlement.DriverNet:N2} bid={settlement.BidAmount:N2}", ct);
 
-        if (settlement.Commission > 0)
-        {
-            await AddLogAsync(driverUserId, loadId, settlement.Commission, WalletAuditLogType.Commission,
-                pendingAfter, pendingAfter,
-                $"Platform commission {settlement.Commission:N2} on gross {settlement.GrossAmount:N2}", ct);
-        }
+        await AddLogAsync(driverUserId, loadId, settlement.DriverCommission, WalletAuditLogType.Commission,
+            pendingAfter, pendingAfter,
+            $"Şoför komisyonu ({Pct(settlement.DriverCommissionRate)}) bid={settlement.BidAmount:N2}", ct);
 
-        if (settlement.Withholding > 0)
-        {
-            await AddLogAsync(driverUserId, loadId, settlement.Withholding, WalletAuditLogType.Tax,
-                pendingAfter, pendingAfter,
-                $"Withholding tax {settlement.Withholding:N2} on gross {settlement.GrossAmount:N2}", ct);
-        }
+        await AddLogAsync(driverUserId, loadId, settlement.CustomerCommission, WalletAuditLogType.CustomerCommission,
+            pendingAfter, pendingAfter,
+            $"Müşteri komisyonu ({Pct(settlement.CustomerCommissionRate)}) bid={settlement.BidAmount:N2}", ct);
+
+        await AddLogAsync(driverUserId, loadId, settlement.Withholding, WalletAuditLogType.Tax,
+            pendingAfter, pendingAfter,
+            $"Stopaj ({Pct(settlement.StopajRate)}) bid={settlement.BidAmount:N2}", ct);
 
         logger.LogInformation(
-            "Wallet hold Load={LoadId} Driver={DriverId} T={Gross:N2} H={Net:N2} K={Commission:N2} S={Tax:N2} Corporate={Corp}",
-            loadId, driverUserId, settlement.GrossAmount, settlement.DriverNet,
-            settlement.Commission, settlement.Withholding, driver.IsCorporate);
+            "Wallet hold Load={LoadId} Driver={DriverId} Bid={Bid:N2} CustomerTotal={Cust:N2} DriverNet={Net:N2} " +
+            "DriverComm={DComm:N2} CustComm={CComm:N2} Stopaj={Tax:N2} Platform={Plat:N2} Corporate={Corp}",
+            loadId, driverUserId, settlement.BidAmount, settlement.CustomerTotal, settlement.DriverNet,
+            settlement.DriverCommission, settlement.CustomerCommission, settlement.Withholding,
+            settlement.PlatformRevenue, driver.IsCorporate);
     }
 
     public async Task ApplyReleaseAsync(Guid loadId, int driverUserId, CancellationToken ct = default)
@@ -85,6 +85,8 @@ public sealed class WalletLedgerService(
             "Wallet release Load={LoadId} Driver={DriverId} H={Net:N2} Wallet={Wallet:N2} Pending={Pending:N2}",
             loadId, driverUserId, h, driver.WalletBalance, driver.PendingBalance);
     }
+
+    private static string Pct(decimal rate) => $"{rate * 100m:0.##}%";
 
     private async Task AddLogAsync(
         int userId, Guid loadId, decimal amount, WalletAuditLogType type,

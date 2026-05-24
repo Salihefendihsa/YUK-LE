@@ -22,11 +22,14 @@ import { formatCurrencyTRY } from '../../../src/utils/format';
 export default function CustomerAnalyticsScreen() {
   return (
     <ScreenScroll contentContainerStyle={styles.scroll}>
-      <ScreenHeader title="Analitik" subtitle="Harcama, güzergah ve sürdürülebilirlik özeti" />
+      <ScreenHeader title="Analitik (Demo)" subtitle="Örnek veriler — gerçek rapor API'si bağlı değil" />
 
       <Card variant="elevated" padding={3} style={styles.demoBanner}>
-        <StatusPill label="ÖRNEK VERİ" tone="warning" />
-        <Text style={styles.demoBannerText}>Bu ekran örnek verilerle gösterilir</Text>
+        <StatusPill label="DEMO / ÖRNEK VERİ" tone="warning" />
+        <Text style={styles.demoBannerText}>
+          Bu ekrandaki grafik ve rakamlar yalnızca arayüz demosudur. Gerçek harcama ve güzergah verisi
+          gösterilmez.
+        </Text>
       </Card>
 
       <Card variant="glass" padding={4}>

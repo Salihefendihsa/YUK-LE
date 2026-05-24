@@ -91,12 +91,32 @@ export function getAiConfidencePill(score: number | null | undefined): StatusPil
   return { label, tone: 'error' };
 }
 
+const WALLET_TYPE_LABELS: Record<string, string> = {
+  Hold: 'Bloke',
+  Release: 'Ödeme',
+  Commission: 'Şoför kom.',
+  CustomerCommission: 'Müşteri kom.',
+  Tax: 'Stopaj',
+  Refund: 'İade',
+  Blocked: 'Bloke',
+  Released: 'Ödeme',
+  Pending: 'Beklemede',
+};
+
 export function getWalletTxStatusPill(status: string): StatusPillConfig {
+  const label = WALLET_TYPE_LABELS[status] ?? status;
   const s = status.toLowerCase();
-  if (s.includes('complete') || s.includes('success') || s === 'paid') {
-    return { label: status, tone: 'success' };
+  if (s === 'release' || s === 'released' || s === 'refund') {
+    return { label, tone: 'success' };
   }
-  if (s.includes('fail') || s.includes('cancel')) return { label: status, tone: 'error' };
-  if (s.includes('pending') || s.includes('hold')) return { label: status, tone: 'warning' };
-  return { label: status, tone: 'neutral' };
+  if (s === 'commission' || s === 'customercommission' || s === 'tax' || s.includes('fail') || s.includes('cancel')) {
+    return { label, tone: 'error' };
+  }
+  if (s === 'hold' || s === 'blocked' || s.includes('pending')) {
+    return { label, tone: 'warning' };
+  }
+  if (s.includes('complete') || s.includes('success') || s === 'paid') {
+    return { label, tone: 'success' };
+  }
+  return { label, tone: 'neutral' };
 }

@@ -1,10 +1,19 @@
 namespace Yukle.Api.Services;
 
-/// <summary>Roadmap 4.2.4 — gross T split into platform commission, withholding, driver net.</summary>
+/// <summary>Bid amount X split: driver/customer commission, stopaj, nets.</summary>
 public sealed class WalletSettlement
 {
-    public decimal GrossAmount { get; init; }
-    public decimal Commission { get; init; }
+    /// <summary>Accepted bid amount (X).</summary>
+    public decimal BidAmount { get; init; }
+
+    public decimal DriverCommission { get; init; }
+    public decimal CustomerCommission { get; init; }
     public decimal Withholding { get; init; }
     public decimal DriverNet { get; init; }
+    public decimal CustomerTotal { get; init; }
+    public decimal PlatformRevenue { get; init; }
+
+    public decimal DriverCommissionRate { get; init; }
+    public decimal CustomerCommissionRate { get; init; }
+    public decimal StopajRate { get; init; }
 }

@@ -191,6 +191,7 @@ export default function CustomerProfileTabScreen() {
         />
       </Card>
 
+      <SecondaryButton title="Ayarlar ve bildirimler" onPress={() => router.push('/(customer)/settings')} />
       <SecondaryButton title="Adreslerim" onPress={() => router.push('/(customer)/(tabs)/addresses')} />
       <SecondaryButton title="Geçmiş Seferlerim" onPress={() => router.push('/(customer)/(tabs)/history')} />
       <SecondaryButton title="Analitik" onPress={() => router.push('/(customer)/(tabs)/analytics')} />

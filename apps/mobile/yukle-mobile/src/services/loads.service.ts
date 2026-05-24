@@ -22,8 +22,14 @@ function normalizeAiAnalysis(raw: unknown): AiMarketAnalysis | undefined {
   };
 }
 
-export async function createLoad(payload: CreateLoadPayload): Promise<CreateLoadResponse> {
-  const res = await apiClient.post('/Loads', payload, { timeout: 120000 });
+export async function createLoad(
+  payload: CreateLoadPayload,
+  options?: { signal?: AbortSignal }
+): Promise<CreateLoadResponse> {
+  const res = await apiClient.post('/Loads', payload, {
+    timeout: 60000,
+    signal: options?.signal,
+  });
   const data = res.data as Record<string, unknown>;
   const loadRaw = data.load ?? data.Load;
   const aiRaw = data.aiMarketAnalysis ?? data.AiMarketAnalysis;
@@ -34,8 +40,14 @@ export async function createLoad(payload: CreateLoadPayload): Promise<CreateLoad
 }
 
 /** Web: GET /Ai/load/{id}/price-suggestion (ilan olusturma SONRASI). */
-export async function getLoadPriceSuggestion(loadId: string): Promise<AiMarketAnalysis | null> {
-  const res = await apiClient.get(`/Ai/load/${loadId}/price-suggestion`, { timeout: 120000 });
+export async function getLoadPriceSuggestion(
+  loadId: string,
+  options?: { signal?: AbortSignal }
+): Promise<AiMarketAnalysis | null> {
+  const res = await apiClient.get(`/Ai/load/${loadId}/price-suggestion`, {
+    timeout: 45000,
+    signal: options?.signal,
+  });
   const data = res.data as Record<string, unknown>;
   const suggestion = (data.suggestion ?? data.Suggestion) as Record<string, unknown> | undefined;
   if (!suggestion) return null;
@@ -48,9 +60,54 @@ export async function getLoadPriceSuggestion(loadId: string): Promise<AiMarketAn
   };
 }
 
+export interface ActiveLoadsQuery {
+  fromCity?: string;
+  toCity?: string;
+  vehicleType?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  dateFrom?: string;
+  dateTo?: string;
+  sortBy?: 'date' | 'price';
+  page?: number;
+  pageSize?: number;
+}
+
+export interface ActiveLoadsPage {
+  items: Load[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export async function getActiveLoadsPaged(query: ActiveLoadsQuery = {}): Promise<ActiveLoadsPage> {
+  const res = await apiClient.get('/Loads/active', {
+    params: {
+      fromCity: query.fromCity || undefined,
+      toCity: query.toCity || undefined,
+      vehicleType: query.vehicleType || undefined,
+      minPrice: query.minPrice,
+      maxPrice: query.maxPrice,
+      dateFrom: query.dateFrom,
+      dateTo: query.dateTo,
+      sortBy: query.sortBy,
+      page: query.page ?? 1,
+      pageSize: query.pageSize ?? 20,
+    },
+  });
+  const data = res.data as Record<string, unknown>;
+  const items = normalizeLoadList(data);
+  return {
+    items,
+    total: Number(data.total ?? data.Total ?? items.length),
+    page: Number(data.page ?? data.Page ?? query.page ?? 1),
+    pageSize: Number(data.pageSize ?? data.PageSize ?? query.pageSize ?? 20),
+  };
+}
+
 export async function getActiveLoads(): Promise<Load[]> {
-  const res = await apiClient.get('/Loads/active');
-  return normalizeLoadList(res.data);
+  const page = await getActiveLoadsPaged({ page: 1, pageSize: 20 });
+  return page.items;
 }
 
 /** Musteri: GET /Loads/active (API musteri icin kendi ilanlarini dondurur). */

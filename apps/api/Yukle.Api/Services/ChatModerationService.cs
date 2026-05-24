@@ -1,4 +1,5 @@
-using System.Collections.Concurrent;
+using Microsoft.EntityFrameworkCore;
+using Yukle.Api.Data;
 
 namespace Yukle.Api.Services;
 
@@ -12,14 +13,13 @@ public sealed record BlockedMessageRecord(
 public interface IChatModerationService
 {
     bool ContainsBlockedContent(string message);
-    void AddBlockedMessage(BlockedMessageRecord record);
-    IReadOnlyList<BlockedMessageRecord> GetBlockedMessages(int take = 200);
+    Task<IReadOnlyList<BlockedMessageRecord>> GetBlockedMessagesAsync(
+        int take = 200,
+        CancellationToken cancellationToken = default);
 }
 
-public sealed class ChatModerationService : IChatModerationService
+public sealed class ChatModerationService(YukleDbContext context) : IChatModerationService
 {
-    private readonly ConcurrentQueue<BlockedMessageRecord> _blockedMessages = new();
-
     private static readonly string[] BlockedTerms =
     [
         "salak", "aptal", "gerizekalı", "geri zekalı", "it", "eşek", "pislik",
@@ -35,13 +35,23 @@ public sealed class ChatModerationService : IChatModerationService
         return BlockedTerms.Any(term => normalized.Contains(term, StringComparison.OrdinalIgnoreCase));
     }
 
-    public void AddBlockedMessage(BlockedMessageRecord record)
+    public async Task<IReadOnlyList<BlockedMessageRecord>> GetBlockedMessagesAsync(
+        int take = 200,
+        CancellationToken cancellationToken = default)
     {
-        _blockedMessages.Enqueue(record);
-        while (_blockedMessages.Count > 500)
-            _blockedMessages.TryDequeue(out _);
-    }
+        var rows = await context.ChatMessages
+            .AsNoTracking()
+            .Where(m => m.IsBlocked)
+            .OrderByDescending(m => m.BlockedAt ?? m.CreatedAt)
+            .Take(take)
+            .Select(m => new BlockedMessageRecord(
+                m.SenderUserId.ToString(),
+                m.SenderName,
+                m.LoadId.ToString(),
+                m.Message,
+                m.BlockedAt ?? m.CreatedAt))
+            .ToListAsync(cancellationToken);
 
-    public IReadOnlyList<BlockedMessageRecord> GetBlockedMessages(int take = 200)
-        => _blockedMessages.Reverse().Take(take).ToList();
+        return rows;
+    }
 }

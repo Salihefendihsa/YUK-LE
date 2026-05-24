@@ -12,26 +12,28 @@ namespace Yukle.Api.Services;
 /// </summary>
 public class MockPaymentService : IPaymentService
 {
-    private readonly YukleDbContext      _context;
-    private readonly IWalletLedgerService _ledger;
-    private readonly ILogger<MockPaymentService> _logger;
+    private readonly YukleDbContext               _context;
+    private readonly IWalletLedgerService         _ledger;
+    private readonly IWalletSettlementCalculator  _calculator;
+    private readonly ILogger<MockPaymentService>  _logger;
 
     public MockPaymentService(
         YukleDbContext context,
         IWalletLedgerService ledger,
+        IWalletSettlementCalculator calculator,
         ILogger<MockPaymentService> logger)
     {
-        _context = context;
-        _ledger  = ledger;
-        _logger  = logger;
+        _context    = context;
+        _ledger     = ledger;
+        _calculator = calculator;
+        _logger     = logger;
     }
 
     public async Task<bool> HoldPaymentAsync(Guid loadId, decimal amount, string creditCardToken)
     {
         _ = creditCardToken;
-        _logger.LogInformation("Escrow (Mock): {Amount} TL blocked for Load={LoadId}", amount, loadId);
+        _logger.LogInformation("Escrow (Mock): bid={BidAmount} TL for Load={LoadId}", amount, loadId);
 
-        // Prefer tracked entity (AcceptBid sets DriverId before SaveChanges).
         var tracked = await _context.Loads.FindAsync(loadId);
         int? driverId = tracked?.DriverId;
 
@@ -57,13 +59,22 @@ public class MockPaymentService : IPaymentService
             return false;
         }
 
+        var driver = await _context.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == resolvedDriverId);
+        if (driver is null)
+        {
+            _logger.LogWarning("Hold (Mock): Driver={DriverId} not found.", resolvedDriverId);
+            return false;
+        }
+
+        var settlement = _calculator.Calculate(amount, driver.IsCorporate);
         var mockTxId = $"mock_iyzico_auth_{Guid.NewGuid().ToString("N")[..10]}";
 
         _context.PaymentTransactions.Add(new PaymentTransaction
         {
             LoadId        = loadId,
             TransactionId = mockTxId,
-            Amount        = amount,
+            Amount        = settlement.CustomerTotal,
             Status        = PaymentStatus.Blocked,
             CreatedAt     = DateTime.UtcNow
         });
@@ -71,7 +82,9 @@ public class MockPaymentService : IPaymentService
         await _ledger.ApplyHoldAsync(loadId, resolvedDriverId, amount);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Escrow (Mock): hold OK TxId={TxId}", mockTxId);
+        _logger.LogInformation(
+            "Escrow (Mock): hold OK TxId={TxId} bid={Bid:N2} customerTotal={Total:N2}",
+            mockTxId, settlement.BidAmount, settlement.CustomerTotal);
         return true;
     }
 

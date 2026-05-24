@@ -102,6 +102,21 @@ public sealed class BidsController(
         return Ok(bids);
     }
 
+    // ── POST api/bids/{id}/cancel ─────────────────────────────────────────────
+
+    /// <summary>Beklemedeki teklifi sofor geri ceker.</summary>
+    [HttpPost("{id:int}/cancel")]
+    [Authorize(Roles = "Driver")]
+    public async Task<IActionResult> CancelBid(int id)
+    {
+        var driverIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(driverIdClaim, out var driverId))
+            return Unauthorized(new { Message = "Gecerli bir kullanici kimligi bulunamadi." });
+
+        await _bidService.CancelBidAsync(id, driverId);
+        return Ok(new { Message = "Teklifiniz iptal edildi." });
+    }
+
     // ── POST api/bids/{id}/accept ─────────────────────────────────────────────
 
     /// <summary>

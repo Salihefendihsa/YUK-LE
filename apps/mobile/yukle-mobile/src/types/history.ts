@@ -6,6 +6,8 @@ export interface DriverHistoryRow {
   price: number;
   customerName?: string | null;
   status?: string;
+  /** Wallet Release satırından; yoksa liste fiyatı gösterilmez */
+  netEarn?: number | null;
 }
 
 export interface DriverHistoryResponse {
@@ -24,6 +26,8 @@ export interface CustomerHistoryRow {
   price: number;
   driverName?: string | null;
   status?: string;
+  /** Ödeme kaydı / kabul edilen teklif tutarı */
+  actualSpend?: number | null;
 }
 
 export interface CustomerHistoryResponse {

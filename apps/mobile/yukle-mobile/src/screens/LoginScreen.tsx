@@ -69,13 +69,15 @@ export function LoginScreen() {
       title="Giriş Yap"
       subtitle="Hesabınıza devam edin"
       footer={
-        <View style={styles.footer}>
-          <View style={s.testBox}>
-            <Text style={s.testTitle}>TEST KULLANICILARI</Text>
-            <Text style={s.testItem}>Müşteri: 5000000001 / Test123!</Text>
-            <Text style={s.testItem}>Şoför: 5000000002 / Test123!</Text>
+        __DEV__ ? (
+          <View style={styles.footer}>
+            <View style={s.testBox}>
+              <Text style={s.testTitle}>TEST KULLANICILARI</Text>
+              <Text style={s.testItem}>Müşteri: 5000000001 / Test123!</Text>
+              <Text style={s.testItem}>Şoför: 5000000002 / Test123!</Text>
+            </View>
           </View>
-        </View>
+        ) : null
       }
     >
       <TextField

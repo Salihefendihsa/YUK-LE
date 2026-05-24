@@ -59,3 +59,8 @@ export async function getDriverBids(): Promise<DriverBid[]> {
   if (!Array.isArray(data)) return [];
   return data.map(normalizeBid);
 }
+
+/** POST /Bids/{bidId}/cancel — beklemedeki teklifi geri çek */
+export async function cancelBid(bidId: number): Promise<void> {
+  await apiClient.post(`/Bids/${bidId}/cancel`);
+}

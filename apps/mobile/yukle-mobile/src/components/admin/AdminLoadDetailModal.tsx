@@ -71,6 +71,8 @@ export function AdminLoadDetailModal({ row, visible, onClose }: Props) {
               </Text>
               <StatusPill {...statusPill} />
             </View>
+            <Text style={styles.muted}>Müşteri: {row.customerName ?? '—'}</Text>
+            <Text style={styles.muted}>Şoför: {row.driverName ?? 'Atanmadı'}</Text>
             <Text style={styles.muted}>Fiyat: {formatCurrencyTRY(row.price)}</Text>
             <Text style={styles.muted}>Oluşturma: {formatDateTR(row.createdAt)}</Text>
             <Text style={styles.mono}>ID: {row.id}</Text>

@@ -1,16 +1,26 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { SecondaryButton } from '../../../src/components/ui/SecondaryButton';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
-import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { TextField } from '../../../src/components/ui/TextField';
+import { ScreenContainer, useScreenInsets } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
-import { getActiveLoads } from '../../../src/services/loads.service';
+import { getActiveLoadsPaged } from '../../../src/services/loads.service';
 import type { Load } from '../../../src/types/load';
 import { palette } from '../../../src/theme/colors';
 import { fontFamily, typography } from '../../../src/theme/typography';
@@ -18,36 +28,90 @@ import { spacing } from '../../../src/theme/spacing';
 import { formatCurrencyTRY, formatWeightKg } from '../../../src/utils/format';
 import { getLoadStatusPill } from '../../../src/utils/statusPills';
 
+const PAGE_SIZE = 20;
+
 export default function DriverLoadsScreen() {
   const { contentInset } = useScreenInsets();
   const router = useRouter();
   const [loads, setLoads] = useState<Load[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
 
-  const fetchLoads = async () => {
+  const [cityQ, setCityQ] = useState('');
+  const [vehicleQ, setVehicleQ] = useState('');
+  const [appliedCity, setAppliedCity] = useState('');
+  const [appliedVehicle, setAppliedVehicle] = useState('');
+
+  const fetchPage = useCallback(
+    async (pageNum: number, replace: boolean) => {
+      const result = await getActiveLoadsPaged({
+        page: pageNum,
+        pageSize: PAGE_SIZE,
+        fromCity: appliedCity || undefined,
+        toCity: appliedCity || undefined,
+        vehicleType: appliedVehicle || undefined,
+        sortBy: 'date',
+      });
+      setTotal(result.total);
+      setPage(result.page);
+      setLoads((prev) => (replace ? result.items : [...prev, ...result.items]));
+    },
+    [appliedCity, appliedVehicle]
+  );
+
+  const loadInitial = useCallback(async () => {
     try {
       setError('');
-      const data = await getActiveLoads();
-      setLoads(data);
+      await fetchPage(1, true);
     } catch (e) {
       setError(getApiErrorMessage(e));
       setLoads([]);
+      setTotal(0);
     }
-  };
+  }, [fetchPage]);
 
   useEffect(() => {
-    fetchLoads().finally(() => setLoading(false));
-  }, []);
+    setLoading(true);
+    loadInitial().finally(() => setLoading(false));
+  }, [loadInitial]);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchLoads();
+    await loadInitial();
     setRefreshing(false);
   };
 
-  if (loading) {
+  const applyFilters = () => {
+    setAppliedCity(cityQ.trim());
+    setAppliedVehicle(vehicleQ.trim());
+  };
+
+  const clearFilters = () => {
+    setCityQ('');
+    setVehicleQ('');
+    setAppliedCity('');
+    setAppliedVehicle('');
+  };
+
+  const loadMore = async () => {
+    if (loadingMore || loads.length >= total) return;
+    setLoadingMore(true);
+    try {
+      await fetchPage(page + 1, false);
+    } catch (e) {
+      setError(getApiErrorMessage(e));
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const hasMore = loads.length < total;
+
+  if (loading && loads.length === 0) {
     return (
       <ScreenContainer>
         <LoadingState message="Yük panosu yükleniyor..." />
@@ -57,11 +121,6 @@ export default function DriverLoadsScreen() {
 
   return (
     <ScreenContainer>
-      <View style={styles.headerPad}>
-        <ScreenHeader title="Yük Panosu" subtitle="Aktif yük ilanları" />
-        {error ? <AlertBanner message={error} tone="error" /> : null}
-      </View>
-
       <FlatList
         data={loads}
         keyExtractor={(item) => item.id}
@@ -69,15 +128,65 @@ export default function DriverLoadsScreen() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
         }
+        ListHeaderComponent={
+          <View style={styles.headerBlock}>
+            <ScreenHeader title="Yük Panosu" subtitle="Aktif yük ilanları" />
+            {error ? <AlertBanner message={error} tone="error" /> : null}
+
+            <Card variant="default" padding={4} style={styles.filterCard}>
+              <TextField
+                label="Şehir (çıkış / varış)"
+                placeholder="Örn: İstanbul"
+                value={cityQ}
+                onChangeText={setCityQ}
+              />
+              <TextField
+                label="Araç tipi"
+                placeholder="Örn: Kamyon"
+                value={vehicleQ}
+                onChangeText={setVehicleQ}
+              />
+              <View style={styles.filterActions}>
+                <SecondaryButton title="Filtrele" onPress={applyFilters} />
+                <SecondaryButton title="Temizle" onPress={clearFilters} />
+              </View>
+              {total > 0 ? (
+                <Text style={styles.resultCount}>
+                  {loads.length} / {total} ilan
+                </Text>
+              ) : null}
+            </Card>
+          </View>
+        }
         ListEmptyComponent={
           !error ? (
             <EmptyState
               icon="📦"
-              title="Şu an aktif yük ilani yok"
-              description="Yeni ilanlar burada listelenecek."
+              title="Şu an aktif yük ilanı yok"
+              description="Filtreleri değiştirerek tekrar deneyin."
             />
           ) : null
         }
+        ListFooterComponent={
+          hasMore ? (
+            <View style={styles.footer}>
+              <SecondaryButton
+                title={loadingMore ? 'Yükleniyor…' : 'Daha fazla yükle'}
+                onPress={loadMore}
+                disabled={loadingMore}
+              />
+              {loadingMore ? (
+                <ActivityIndicator color={palette.brand} style={{ marginTop: spacing[2] }} />
+              ) : null}
+            </View>
+          ) : (
+            <View style={styles.footerPad} />
+          )
+        }
+        onEndReached={() => {
+          if (hasMore && !loadingMore) void loadMore();
+        }}
+        onEndReachedThreshold={0.3}
         renderItem={({ item }) => {
           const pill = getLoadStatusPill(item.status);
           return (
@@ -110,7 +219,7 @@ export default function DriverLoadsScreen() {
                 </View>
 
                 <Text style={styles.metaLine}>
-                  Arac: {item.requiredVehicleType ?? '-'} · Teklif: {item.bidCount}
+                  Araç: {item.requiredVehicleType ?? '-'} · Teklif: {item.bidCount}
                 </Text>
                 <Text style={styles.musteri}>Müşteri: {item.ownerFullName}</Text>
 
@@ -128,7 +237,10 @@ export default function DriverLoadsScreen() {
 }
 
 const styles = StyleSheet.create({
-  headerPad: { paddingHorizontal: spacing[4], paddingTop: spacing[4] },
+  headerBlock: { gap: spacing[3], marginBottom: spacing[2] },
+  filterCard: { gap: spacing[3] },
+  filterActions: { flexDirection: 'row', gap: spacing[2] },
+  resultCount: { ...typography.caption, textTransform: 'none', color: palette.textMuted },
   list: { paddingHorizontal: spacing[4], paddingBottom: spacing[8], gap: spacing[3] },
   loadCard: { marginBottom: spacing[3] },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing[3], marginBottom: spacing[2] },
@@ -162,4 +274,6 @@ const styles = StyleSheet.create({
     borderTopColor: palette.borderSubtle,
   },
   detailLink: { fontFamily: fontFamily.semiBold, fontSize: 12, color: palette.brand },
+  footer: { paddingVertical: spacing[4], gap: spacing[2] },
+  footerPad: { height: spacing[4] },
 });

@@ -5,6 +5,7 @@ public enum WalletAuditLogType
     Hold,
     Release,
     Commission,
+    CustomerCommission,
     Tax,
     Refund
 }

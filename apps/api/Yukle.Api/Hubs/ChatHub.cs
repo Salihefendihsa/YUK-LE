@@ -152,15 +152,6 @@ public sealed class ChatHub(
             _db.ChatMessages.Add(entity);
             await _db.SaveChangesAsync();
 
-            var blockedSenderId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier)
-                                  ?? Context.ConnectionId;
-            _moderationService.AddBlockedMessage(new BlockedMessageRecord(
-                SenderId: blockedSenderId,
-                SenderName: senderName,
-                LoadId: loadId,
-                Message: trimmed,
-                TimestampUtc: DateTime.UtcNow));
-
             throw new HubException("Uygunsuz içerik tespit edildi. Lütfen saygılı bir dil kullanınız.");
         }
 

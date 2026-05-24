@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Yukle.Api.Data;
 using Yukle.Api.DTOs;
+using Yukle.Api.Infrastructure;
 using Yukle.Api.Models;
 
 namespace Yukle.Api.Controllers;
@@ -164,12 +165,12 @@ public sealed class UsersController : ControllerBase
             Id                 = user.Id,
             FullName           = user.FullName,
             Email              = user.Email,
-            Phone              = MaskPhone(user.Phone),
+            Phone              = PiiMasking.MaskPhone(user.Phone),
             CompanyName        = addr?.CompanyName,
-            TaxNumber          = user.Role == UserRole.Customer ? MaskTax(user.TaxNumberOrTCKN) : null,
+            TaxNumber          = user.Role == UserRole.Customer ? PiiMasking.MaskTax(user.TaxNumberOrTCKN) : null,
             CompanyAddress     = addr?.Address,
-            TcIdentityNumber   = user.Role == UserRole.Driver ? MaskTc(user.TaxNumberOrTCKN) : null,
-            Iban               = user.BankIban,
+            TcIdentityNumber   = user.Role == UserRole.Driver ? PiiMasking.MaskTc(user.TaxNumberOrTCKN) : null,
+            Iban               = PiiMasking.MaskIban(user.BankIban),
             LicenseClass       = user.LicenseClasses,
             HomeAddress        = user.HomeAddress,
             VehiclePlate       = vehicle?.Plate,
@@ -177,28 +178,11 @@ public sealed class UsersController : ControllerBase
             AverageRating      = user.AverageRating,
             TotalRatingCount   = user.TotalRatingCount,
             Role               = user.Role.ToString(),
-            ApprovalStatus     = user.ApprovalStatus.ToString()
+            ApprovalStatus     = user.ApprovalStatus.ToString(),
+            IsDriverLicenseApproved = user.Role == UserRole.Driver ? user.IsDriverLicenseApproved : null,
+            IsSrcApproved           = user.Role == UserRole.Driver ? user.IsSrcApproved : null,
+            IsPsychotechnicalApproved = user.Role == UserRole.Driver ? user.IsPsychotechnicalApproved : null,
+            LastValidationMessage   = user.Role == UserRole.Driver ? user.LastValidationMessage : null
         };
-    }
-
-    private static string MaskPhone(string phone)
-    {
-        if (string.IsNullOrWhiteSpace(phone) || phone.Length < 4)
-            return "****";
-        return $"{phone[..2]}******{phone[^2..]}";
-    }
-
-    private static string MaskTax(string? tax)
-    {
-        if (string.IsNullOrWhiteSpace(tax) || tax.Length < 4)
-            return "******";
-        return $"XXXXXX{tax[^4..]}";
-    }
-
-    private static string MaskTc(string? tc)
-    {
-        if (string.IsNullOrWhiteSpace(tc) || tc.Length != 11)
-            return "***********";
-        return $"{tc[0]}{new string('X', 9)}{tc[^1]}";
     }
 }

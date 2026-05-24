@@ -87,7 +87,7 @@ public class BidService : IBidService
                 OfferDate      = b.CreatedAt,
                 Status         = b.Status.ToString(),
                 DriverFullName = b.Driver.FullName,
-                DriverPhone    = b.Driver.Phone
+                DriverPhone    = string.Empty
             })
             .ToListAsync();
     }
@@ -228,5 +228,23 @@ public class BidService : IBidService
             throw;
         }
         });
+    }
+
+    // ── CancelBidAsync ────────────────────────────────────────────────────────
+
+    public async Task CancelBidAsync(int bidId, int driverId)
+    {
+        var bid = await _context.Bids.FirstOrDefaultAsync(b => b.Id == bidId)
+            ?? throw new InvalidOperationException("Teklif bulunamadı.");
+
+        if (bid.DriverId != driverId)
+            throw new UnauthorizedAccessException("Bu teklifi iptal etme yetkiniz yok.");
+
+        if (bid.Status != BidStatus.Pending)
+            throw new InvalidOperationException(
+                $"Yalnızca beklemedeki teklifler iptal edilebilir. Mevcut durum: {bid.Status}.");
+
+        bid.Status = BidStatus.Cancelled;
+        await _context.SaveChangesAsync();
     }
 }
