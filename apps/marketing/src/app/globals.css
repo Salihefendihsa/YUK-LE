@@ -1,26 +1,112 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #090b0e;
+  --foreground: #d1d5db;
+
+  --color-brand-600: #cc5500;
+  --color-brand-500: #ff6b00;
+  --color-brand-400: #ff8c38;
+  --color-brand-300: #ffad70;
+
+  --color-neutral-950: #090b0e;
+  --color-neutral-900: #111318;
+  --color-neutral-800: #1c2029;
+  --color-neutral-700: #272d3a;
+  --color-neutral-600: #3a4252;
+  --color-neutral-400: #6b7280;
+  --color-neutral-300: #9ca3af;
+  --color-neutral-200: #d1d5db;
+  --color-neutral-100: #f3f4f6;
+
+  --color-success-500: #22c55e;
+  --color-ai-500: #8b5cf6;
+  --color-ai-300: #c4b5fd;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  --color-brand-600: var(--color-brand-600);
+  --color-brand-500: var(--color-brand-500);
+  --color-brand-400: var(--color-brand-400);
+  --color-brand-300: var(--color-brand-300);
+
+  --color-neutral-950: var(--color-neutral-950);
+  --color-neutral-900: var(--color-neutral-900);
+  --color-neutral-800: var(--color-neutral-800);
+  --color-neutral-700: var(--color-neutral-700);
+  --color-neutral-600: var(--color-neutral-600);
+  --color-neutral-400: var(--color-neutral-400);
+  --color-neutral-300: var(--color-neutral-300);
+  --color-neutral-200: var(--color-neutral-200);
+  --color-neutral-100: var(--color-neutral-100);
+
+  --color-success-500: var(--color-success-500);
+  --color-ai-500: var(--color-ai-500);
+  --color-ai-300: var(--color-ai-300);
+
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+@keyframes scroll-dot {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(28px);
+    opacity: 0;
+  }
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-brand-500) 35%, transparent);
+  color: white;
 }
