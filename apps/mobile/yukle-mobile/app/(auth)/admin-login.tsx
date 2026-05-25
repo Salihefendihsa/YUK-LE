@@ -41,7 +41,7 @@ export default function AdminLoginRoute() {
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'E-posta veya sifre hatalı.';
+        'E-posta veya şifre hatalı.';
       setError(message);
     } finally {
       setLoading(false);
@@ -50,7 +50,7 @@ export default function AdminLoginRoute() {
 
   return (
     <AuthScreen
-      title="Yonetici Girisi"
+      title="Yönetici Girişi"
       subtitle="Yetkili personel — komuta merkezi"
       footer={
         <View style={styles.footer}>
@@ -72,7 +72,7 @@ export default function AdminLoginRoute() {
       </View>
 
       <Pressable onPress={() => router.back()} style={styles.back}>
-        <Text style={typography.link}>← Giris ekrani</Text>
+        <Text style={typography.link}>← Giriş ekranı</Text>
       </Pressable>
 
       <Text style={styles.fieldLabel}>E-posta</Text>
@@ -106,7 +106,7 @@ export default function AdminLoginRoute() {
 
       {error ? <AlertBanner message={error} tone="error" /> : null}
 
-      <PrimaryButton title="Giris Yap" onPress={handleLogin} loading={loading} />
+      <PrimaryButton title="Giriş Yap" onPress={handleLogin} loading={loading} />
     </AuthScreen>
   );
 }

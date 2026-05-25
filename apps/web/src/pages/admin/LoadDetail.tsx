@@ -33,6 +33,9 @@ export default function AdminLoadDetailPage() {
         <span className="mono-id">#{id}</span>
       </nav>
 
+      <p className="muted" style={{ fontSize: 12, marginBottom: 8 }}>
+        Örnek veri — canlı API bağlantısı sonraki sürümde
+      </p>
       <div className="item-row" style={{ flexWrap: 'wrap', gap: 16, alignItems: 'center', marginBottom: 16 }}>
         <h1 className="admin-title mono-id" style={{ margin: 0, fontSize: 28 }}>
           Yük #{id}
@@ -111,7 +114,7 @@ export default function AdminLoadDetailPage() {
               ₺8.900
             </p>
             <p className="muted" style={{ marginBottom: 4 }}>
-              AI önerilen fiyat
+              Önerilen fiyat
             </p>
             <p className="kpi-value" style={{ margin: 0, fontSize: 22, color: '#94a3b8' }}>
               ₺8.400

@@ -17,21 +17,26 @@ import { palette } from '../../../src/theme/colors';
 import { typography } from '../../../src/theme/typography';
 import { radius } from '../../../src/theme/radius';
 import { space, spacing } from '../../../src/theme/spacing';
+import {
+  formatExternalEnvironmentLabel,
+  formatExternalFrameworkLabel,
+  formatExternalStatusMessage,
+} from '../../../src/utils/apiErrors';
 import { formatDateTimeTR } from '../../../src/utils/format';
-import { getSystemServicePill } from '../../../src/utils/statusPills';
+import { formatSystemServiceLabel, getSystemServicePill } from '../../../src/utils/statusPills';
 
 const MENU: { title: string; sub: string; href: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { title: 'İlan Yönetimi', sub: 'Tüm ilanlar ve iptal işlemleri', href: '/(admin)/(tabs)/loads', icon: 'cube-outline' },
   { title: 'Sistem Logları', sub: 'Admin işlem kayıtları', href: '/(admin)/(tabs)/logs', icon: 'list-outline' },
   {
     title: 'Engellenen Mesajlar',
-    sub: 'Moderasyon kayıtları (bellek)',
+    sub: 'Moderasyon kayıtları',
     href: '/(admin)/(tabs)/blocked-messages',
     icon: 'ban-outline',
   },
   { title: 'Sohbetler', sub: 'Konu özeti + mesaj geçmişi', href: '/(admin)/(tabs)/chats', icon: 'chatbubbles-outline' },
   { title: 'Puanlar', sub: 'Yorum listesi, silme', href: '/(admin)/(tabs)/ratings', icon: 'star-outline' },
-  { title: 'Canlı Takip', sub: 'Aktif şoför konumları (REST)', href: '/(admin)/(tabs)/tracking', icon: 'navigate-outline' },
+  { title: 'Canlı Takip', sub: 'Aktif şoför konumları', href: '/(admin)/(tabs)/tracking', icon: 'navigate-outline' },
   { title: 'Ayarlar', sub: 'Hesap ve bildirim tercihleri (yakında)', href: '/(admin)/(tabs)/settings', icon: 'options-outline' },
 ];
 
@@ -88,17 +93,23 @@ export default function AdminSystemTab() {
       {error ? <AlertBanner message={error} tone="error" /> : null}
 
       <Card variant="elevated" padding={4}>
-        <Text style={styles.cardTitle}>API / Veritabanı</Text>
+        <Text style={styles.cardTitle}>Servis / Veritabanı</Text>
         <View style={styles.pillRow}>
           {system?.api ? (
-            <StatusPill {...getSystemServicePill(system.api)} label={`Servis: ${system.api}`} />
+            <StatusPill
+              {...getSystemServicePill(system.api)}
+              label={`Servis: ${formatSystemServiceLabel(system.api)}`}
+            />
           ) : null}
           {system?.db ? (
-            <StatusPill {...getSystemServicePill(system.db)} label={`DB: ${system.db}`} />
+            <StatusPill
+              {...getSystemServicePill(system.db)}
+              label={`Veritabanı: ${formatSystemServiceLabel(system.db)}`}
+            />
           ) : null}
         </View>
         <Text style={styles.muted}>
-          U-ETDS kuyruk (bekleyen): {system?.workers?.uetdsPending ?? 0}
+          U-ETDS kuyruk bekleyen: {system?.workers?.uetdsPending ?? 0}
         </Text>
         <Text style={styles.note}>
           Ek sistem metrikleri bu sürümde gösterilmez.
@@ -107,9 +118,13 @@ export default function AdminSystemTab() {
 
       <Card variant="elevated" padding={4}>
         <Text style={styles.cardTitle}>Sunucu durumu</Text>
-        <Text style={styles.muted}>{external?.message ?? '-'}</Text>
-        <Text style={styles.muted}>Ortam: {external?.environment ?? '-'}</Text>
-        <Text style={styles.muted}>Framework: {external?.framework ?? '-'}</Text>
+        <Text style={styles.muted}>{formatExternalStatusMessage(external?.message)}</Text>
+        <Text style={styles.muted}>
+          Ortam: {formatExternalEnvironmentLabel(external?.environment)}
+        </Text>
+        <Text style={styles.muted}>
+          Sunucu: {formatExternalFrameworkLabel(external?.framework)}
+        </Text>
         <Text style={styles.muted}>
           Sunucu saati: {external?.serverTime ? formatDateTimeTR(external.serverTime) : '-'}
         </Text>

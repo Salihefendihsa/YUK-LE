@@ -14,17 +14,7 @@ export const TR_CITIES = [
   'Şanlıurfa', 'Şırnak', 'Tekirdağ', 'Tokat', 'Trabzon', 'Tunceli', 'Uşak', 'Van', 'Yalova', 'Yozgat', 'Zonguldak',
 ] as const;
 
-const DISTRICT_MAP: Record<string, string[]> = {
-  İstanbul: ['Kadıköy', 'Üsküdar', 'Beşiktaş', 'Şişli', 'Bakırköy'],
-  Ankara: ['Çankaya', 'Keçiören', 'Yenimahalle', 'Etimesgut', 'Sincan'],
-  İzmir: ['Konak', 'Bornova', 'Karşıyaka', 'Buca', 'Bayraklı'],
-  Bursa: ['Osmangazi', 'Nilüfer', 'Yıldırım', 'Gemlik'],
-  Antalya: ['Muratpaşa', 'Kepez', 'Konyaaltı', 'Alanya'],
-  Elazığ: ['Merkez', 'OSB', 'Kovancılar'],
-  Malatya: ['Merkez', 'Yeşilyurt', 'Battalgazi'],
-  Kocaeli: ['İzmit', 'Gebze', 'Körfez'],
-  Gaziantep: ['Şahinbey', 'Şehitkamil', 'Oğuzeli'],
-};
+import { DISTRICT_MAP } from './tr-location-districts';
 
 const NEIGHBORHOOD_MAP: Record<string, string[]> = {
   Kadıköy: ['Koşuyolu', 'Fenerbahçe', 'Caddebostan', 'Erenköy'],

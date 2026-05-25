@@ -63,12 +63,12 @@ export default function AdminRatingsScreen() {
   const filtered = useMemo(() => {
     const qq = q.trim().toLowerCase();
     if (!qq) return rows;
-    return rows.filter(
-      (r) =>
-        r.comment.toLowerCase().includes(qq) ||
-        r.givenByName.toLowerCase().includes(qq) ||
-        r.givenToName.toLowerCase().includes(qq)
-    );
+    return rows.filter((r) => {
+      const comment = (r.comment ?? '').toLowerCase();
+      const by = (r.givenByName ?? '').toLowerCase();
+      const to = (r.givenToName ?? '').toLowerCase();
+      return comment.includes(qq) || by.includes(qq) || to.includes(qq);
+    });
   }, [rows, q]);
 
   const avg = useMemo(() => {
@@ -130,7 +130,7 @@ export default function AdminRatingsScreen() {
             />
             <TextField
               icon="filter-outline"
-              placeholder="API filter: low | high"
+              placeholder="Puana göre: düşük veya yüksek"
               value={filter}
               onChangeText={setFilter}
               autoCapitalize="none"

@@ -67,6 +67,9 @@ export default function AdminDriverDetailPage() {
 
   return (
     <div className="admin-page">
+      <p className="muted" style={{ fontSize: 12, marginBottom: 8 }}>
+        Örnek veri — canlı API bağlantısı sonraki sürümde
+      </p>
       <div className="ad-hero">
         <div className="ad-hero-avatar" aria-hidden>
           {MOCK_DRIVER.fullName[0]}
@@ -308,7 +311,7 @@ export default function AdminDriverDetailPage() {
                     Son güncelleme: 2026-05-01
                   </span>
                   <span className="muted" style={{ fontSize: 12 }}>
-                    AI güven: %{d.sc}
+                    Belge güven skoru: %{d.sc}
                   </span>
                   <div className="ad-doc-thumb">📄</div>
                   <div className="item-row" style={{ marginTop: 4 }}>

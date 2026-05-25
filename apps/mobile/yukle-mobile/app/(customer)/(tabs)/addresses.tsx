@@ -19,6 +19,7 @@ import { PressableScale } from '../../../src/components/ui/PressableScale';
 import { PrimaryButton } from '../../../src/components/ui/PrimaryButton';
 import { SecondaryButton } from '../../../src/components/ui/SecondaryButton';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
+import { TrLocationFields } from '../../../src/components/location/TrLocationFields';
 import { TextField } from '../../../src/components/ui/TextField';
 import {
   ScreenContainer,
@@ -104,7 +105,7 @@ export default function CustomerAddressesScreen() {
 
   const onSave = async () => {
     if (!form.title.trim() || !form.address.trim() || !form.city.trim()) {
-      setError('Baslik, sehir ve tam adres zorunludur.');
+      setError('Başlık, şehir ve tam adres zorunludur.');
       return;
     }
     setSaving(true);
@@ -127,7 +128,7 @@ export default function CustomerAddressesScreen() {
   const confirmDelete = (addr: DeliveryAddress) => {
     Alert.alert(
       'Adresi sil',
-      `"${addr.title}" adresini silmek istediginize emin misiniz?`,
+      `"${addr.title}" adresini silmek istediğinize emin misiniz?`,
       [
         { text: 'İptal', style: 'cancel' },
         {
@@ -150,8 +151,8 @@ export default function CustomerAddressesScreen() {
   const confirmSetDefault = (addr: DeliveryAddress) => {
     if (addr.isDefault) return;
     Alert.alert(
-      'Varsayilan adres',
-      `"${addr.title}" varsayilan teslimat adresi yapilsin mi?`,
+      'Varsayılan adres',
+      `"${addr.title}" varsayılan teslimat adresi yapılsın mı?`,
       [
         { text: 'İptal', style: 'cancel' },
         {
@@ -201,8 +202,12 @@ export default function CustomerAddressesScreen() {
           <TextField label="Şirket adı" value={form.companyName} onChangeText={(v) => setForm((s) => ({ ...s, companyName: v }))} />
           <TextField label="Yetkili kişi" value={form.contactPerson} onChangeText={(v) => setForm((s) => ({ ...s, contactPerson: v }))} />
           <TextField label="Telefon" value={form.contactPhone} onChangeText={(v) => setForm((s) => ({ ...s, contactPhone: v }))} keyboardType="phone-pad" />
-          <TextField label="Şehir" value={form.city} onChangeText={(v) => setForm((s) => ({ ...s, city: v }))} />
-          <TextField label="İlçe" value={form.district} onChangeText={(v) => setForm((s) => ({ ...s, district: v }))} />
+          <TrLocationFields
+            labelPrefix="Adres"
+            city={form.city}
+            district={form.district}
+            onChange={({ city, district }) => setForm((s) => ({ ...s, city, district }))}
+          />
           <TextField label="Tam adres" value={form.address} onChangeText={(v) => setForm((s) => ({ ...s, address: v }))} multiline numberOfLines={3} />
           <View style={styles.formActions}>
             {editingId ? (

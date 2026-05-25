@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { API_URL } from '../constants/api';
+import { translateUserFacingError } from '../utils/apiErrors';
 import type {
   ForgotPasswordRequest,
   LoginResponse,
@@ -23,11 +24,17 @@ function extractError(error: unknown): string {
   const payload = err.response?.data;
   if (payload?.errors) {
     const lines = Object.values(payload.errors).flat().filter(Boolean);
-    if (lines.length > 0) return lines.join('\n');
+    if (lines.length > 0) {
+      return lines.map((line) => translateUserFacingError(String(line))).join('\n');
+    }
   }
-  if (payload?.message) return payload.message;
-  if (!err.response) return 'Sunucuya baglanilamadi.';
-  return 'Islem basarisiz.';
+  if (payload?.message) return translateUserFacingError(payload.message);
+  if (!err.response) {
+    return translateUserFacingError(
+      'Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edin.'
+    );
+  }
+  return 'Bir hata oluştu. Lütfen tekrar deneyin.';
 }
 
 const anon = { timeout: 15000, headers: { 'Content-Type': 'application/json' } };

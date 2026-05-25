@@ -73,7 +73,7 @@ export default function CustomerLoadDetailPage() {
       const refreshed = await getBidsForLoad(id)
       setBids(refreshed)
     } catch (e: unknown) {
-      setError((e as { uiMessage?: string }).uiMessage ?? 'Teklif kabul islemi basarisiz.')
+      setError((e as { uiMessage?: string }).uiMessage ?? 'Teklif kabul işlemi başarısız.')
     }
   }
 

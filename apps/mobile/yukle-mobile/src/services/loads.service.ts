@@ -3,6 +3,7 @@ import type {
   AiPriceSuggestionResponse,
   CreateLoadPayload,
   CreateLoadResponse,
+  VehicleTypeValue,
 } from '../types/create-load';
 import type { Load } from '../types/load';
 import { normalizeLoad, normalizeLoadList } from '../utils/format';
@@ -37,6 +38,55 @@ export async function createLoad(
     load: normalizeLoad(loadRaw),
     aiMarketAnalysis: normalizeAiAnalysis(aiRaw),
   };
+}
+
+const VEHICLE_API_NAMES = ['TIR', 'Kamyon', 'Kamyonet', 'Panelvan'] as const;
+
+function normalizePriceSuggestion(raw: unknown): AiMarketAnalysis | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  const recommended = Number(r.recommendedPrice ?? r.RecommendedPrice ?? 0);
+  if (!Number.isFinite(recommended) || recommended <= 0) return null;
+  return {
+    recommendedPrice: recommended,
+    minPrice: Number(r.minPrice ?? r.MinPrice ?? 0),
+    maxPrice: Number(r.maxPrice ?? r.MaxPrice ?? 0),
+    reasoning: '',
+    distanceKm: Number(r.distanceKm ?? r.DistanceKm ?? 0),
+  };
+}
+
+/** POST /Ai/price-suggestion — ilan kaydetmeden fiyat onizleme. */
+export async function previewLoadPriceSuggestion(
+  params: {
+    originLat: number;
+    originLng: number;
+    destLat: number;
+    destLng: number;
+    fromCity: string;
+    toCity: string;
+    vehicleType: VehicleTypeValue;
+    weight: number;
+    volume?: number;
+  },
+  options?: { signal?: AbortSignal }
+): Promise<AiMarketAnalysis | null> {
+  const res = await apiClient.post(
+    '/Ai/price-suggestion',
+    {
+      originLat: params.originLat,
+      originLng: params.originLng,
+      destLat: params.destLat,
+      destLng: params.destLng,
+      fromCity: params.fromCity,
+      toCity: params.toCity,
+      vehicleType: VEHICLE_API_NAMES[params.vehicleType] ?? 'Kamyon',
+      weight: params.weight,
+      volume: params.volume,
+    },
+    { timeout: 45000, signal: options?.signal }
+  );
+  return normalizePriceSuggestion(res.data);
 }
 
 /** Web: GET /Ai/load/{id}/price-suggestion (ilan olusturma SONRASI). */

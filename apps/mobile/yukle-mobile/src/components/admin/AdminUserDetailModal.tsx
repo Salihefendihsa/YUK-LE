@@ -199,7 +199,7 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
           <Card variant="elevated" padding={4}>
             <Text style={styles.sectionTitle}>Admin notu</Text>
             <TextField
-              placeholder="İç not (audit log)"
+              placeholder="İç not (işlem kaydı)"
               value={adminNote}
               onChangeText={setAdminNote}
               multiline

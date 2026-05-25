@@ -13,7 +13,7 @@ import { digitsOnly, formatPhone, validatePhone } from '../../src/utils/validato
 type Step = 1 | 2 | 3;
 
 const stepSub: Record<Step, string> = {
-  1: 'Telefon numaranizi girin, OTP gonderelim.',
+  1: 'Telefon numaranızı girin, OTP gönderelim.',
   2: 'Telefonunuza gelen 6 haneli kodu girin.',
   3: 'Yeni şifrenizi belirleyin.',
 };
@@ -32,7 +32,7 @@ export default function ForgotPasswordScreen() {
 
   const submitPhone = async () => {
     if (!validatePhone(phoneDigits)) {
-      setError('Telefon 5 ile baslayan 10 hane olmali');
+      setError('Telefon 5 ile başlayan 10 hane olmalı');
       return;
     }
     setLoading(true);
@@ -70,7 +70,7 @@ export default function ForgotPasswordScreen() {
 
   const submitReset = async () => {
     if (newPassword.length < 8 || newPassword !== newPassword2) {
-      setError('Yeni şifre en az 8 karakter ve tekrar eslesmeli');
+      setError('Yeni şifre en az 8 karakter ve tekrar eşleşmeli');
       return;
     }
     setLoading(true);
@@ -122,7 +122,7 @@ export default function ForgotPasswordScreen() {
             keyboardType="number-pad"
             maxLength={6}
           />
-          <PrimaryButton title="OTP Dogrula" onPress={submitOtp} loading={loading} />
+          <PrimaryButton title="OTP Doğrula" onPress={submitOtp} loading={loading} />
         </>
       ) : null}
 
@@ -149,7 +149,7 @@ export default function ForgotPasswordScreen() {
       ) : null}
 
       <Pressable onPress={() => router.push('/(auth)/login')} style={styles.back}>
-        <Text style={typography.link}>Girise don</Text>
+        <Text style={typography.link}>Girişe dön</Text>
       </Pressable>
     </AuthScreen>
   );

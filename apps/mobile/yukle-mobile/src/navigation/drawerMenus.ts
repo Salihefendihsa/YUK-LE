@@ -26,6 +26,12 @@ export const CUSTOMER_DRAWER_ITEMS: DrawerMenuItem[] = [
     activeMatch: 'create-load',
   },
   {
+    href: '/(customer)/(tabs)/messages',
+    label: 'Mesajlar',
+    icon: 'chatbubbles-outline',
+    activeMatch: 'messages',
+  },
+  {
     href: '/(customer)/(tabs)/addresses',
     label: 'Adreslerim',
     icon: 'location-outline',
@@ -55,6 +61,12 @@ export const DRIVER_DRAWER_ITEMS: DrawerMenuItem[] = [
     label: 'Aktif Sefer',
     icon: 'navigate-outline',
     activeMatch: 'active-load',
+  },
+  {
+    href: '/(driver)/(tabs)/messages',
+    label: 'Mesajlar',
+    icon: 'chatbubbles-outline',
+    activeMatch: 'messages',
   },
   { href: '/(driver)/(tabs)/wallet', label: 'Cüzdan', icon: 'wallet-outline', activeMatch: 'wallet' },
   {

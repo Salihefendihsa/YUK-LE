@@ -36,7 +36,7 @@ export function SettlementBreakdown({ settlement, mode, compact }: Props) {
           label={`Komisyon (${customerPct})`}
           value={`+ ${formatCurrencyTRY(settlement.customerCommission)}`}
         />
-        <Row label="Ödenecek (hold)" value={formatCurrencyTRY(settlement.customerTotal)} emphasis />
+        <Row label="Ödenecek tutar" value={formatCurrencyTRY(settlement.customerTotal)} emphasis />
       </View>
     );
   }

@@ -65,7 +65,7 @@ export default function CustomerAnalyticsPage() {
         </section>
 
         <section className="card">
-          <h2>Şoför memnuniyeti</h2>
+          <h2>Memnuniyet puanınız</h2>
           <p style={{ fontSize: 42, fontWeight: 800, margin: '8px 0', color: 'var(--color-brand)' }}>4.8</p>
           <p className="muted" style={{ fontSize: 13 }}>
             Son 90 gün ortalaması (demo)

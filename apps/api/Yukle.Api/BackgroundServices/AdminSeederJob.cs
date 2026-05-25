@@ -75,7 +75,7 @@ public sealed class AdminSeederJob(
         {
             testCustomer = new User
             {
-                FullName = "Test Müşteri",
+                FullName = "Test Müşteri A.Ş.",
                 Email = "test@yukle.com",
                 Phone = "5000000001",
                 Role = UserRole.Customer,
@@ -84,6 +84,7 @@ public sealed class AdminSeederJob(
             await db.Users.AddAsync(testCustomer, cancellationToken);
         }
 
+        testCustomer.FullName = "Test Müşteri A.Ş.";
         testCustomer.PasswordHash = testPasswordHash;
         testCustomer.PasswordSalt = Array.Empty<byte>();
         testCustomer.IsActive = true;
@@ -104,6 +105,7 @@ public sealed class AdminSeederJob(
             await db.Users.AddAsync(testDriver, cancellationToken);
         }
 
+        testDriver.FullName = "Test Şoför";
         testDriver.PasswordHash = testPasswordHash;
         testDriver.PasswordSalt = Array.Empty<byte>();
         testDriver.IsActive = true;

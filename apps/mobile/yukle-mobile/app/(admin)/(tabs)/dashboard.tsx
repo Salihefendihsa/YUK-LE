@@ -17,7 +17,7 @@ import { typography } from '../../../src/theme/typography';
 import { space, spacing } from '../../../src/theme/spacing';
 import { radius } from '../../../src/theme/radius';
 import { formatCurrencyTRY } from '../../../src/utils/format';
-import { getSystemServicePill } from '../../../src/utils/statusPills';
+import { formatSystemServiceLabel, getSystemServicePill } from '../../../src/utils/statusPills';
 
 function KpiCard({
   label,
@@ -92,7 +92,7 @@ export default function AdminDashboardScreen() {
     >
       <ScreenHeader
         title="Komuta Merkezi"
-        subtitle={`Canlı operasyon — ${user?.fullName ?? 'Admin'}`}
+        subtitle={`Canlı operasyon — ${user?.fullName ?? 'Yönetici'}`}
       />
 
       {error ? <AlertBanner message={error} tone="error" /> : null}
@@ -115,13 +115,16 @@ export default function AdminDashboardScreen() {
 
           <View style={styles.statusRow}>
             {sys?.api ? (
-              <StatusPill {...getSystemServicePill(sys.api)} label={`Servis: ${sys.api}`} />
+              <StatusPill {...getSystemServicePill(sys.api)} label={`Servis: ${formatSystemServiceLabel(sys.api)}`} />
             ) : null}
             {sys?.db ? (
-              <StatusPill {...getSystemServicePill(sys.db)} label={`DB: ${sys.db}`} />
+              <StatusPill {...getSystemServicePill(sys.db)} label={`Veritabanı: ${formatSystemServiceLabel(sys.db)}`} />
             ) : null}
             {sys?.redis ? (
-              <StatusPill {...getSystemServicePill(sys.redis)} label={`Redis: ${sys.redis}`} />
+              <StatusPill
+                {...getSystemServicePill(sys.redis)}
+                label={`Önbellek: ${formatSystemServiceLabel(sys.redis)}`}
+              />
             ) : null}
           </View>
 
@@ -129,7 +132,7 @@ export default function AdminDashboardScreen() {
             <KpiCard label="Toplam kullanıcı" value={String(stats.totalUsers)} />
             <KpiCard label="Aktif ilan" value={String(stats.activeLoadCount)} badge="Yayında" />
             <KpiCard
-              label="Bekleyen belge onayi"
+              label="Bekleyen belge onayı"
               value={String(stats.pendingReviewCount)}
               danger={stats.pendingReviewCount > 0}
               badge="Kritik"

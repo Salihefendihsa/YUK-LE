@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { LoginResponse } from '../types/auth';
+import { normalizeStatusKey } from '../utils/statusPills';
 import { getPersistStorage } from '../utils/storage';
 
 export interface AuthUser {
@@ -41,7 +42,7 @@ export const useAuthStore = create<AuthState>()(
             role: data.role,
             isPhoneVerified: data.isPhoneVerified,
             isActive: data.isActive,
-            approvalStatus: data.approvalStatus,
+            approvalStatus: normalizeStatusKey(data.approvalStatus),
           },
         }),
 

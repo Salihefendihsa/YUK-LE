@@ -65,6 +65,7 @@ public sealed class AiController(
         // Koordinatlar tam geldi → PricingService (OSRM + DB yakıt)
         if (request.HasCoordinates)
         {
+            var distanceKm = await ResolveDistanceAsync(request);
             var result = await pricingService.GetSmartPriceAsync(
                 originLat:         request.OriginLat!.Value,
                 originLng:         request.OriginLng!.Value,
@@ -79,7 +80,7 @@ public sealed class AiController(
                 fuelPriceOverride: request.FuelPrice,
                 volumeM3:          request.Volume);
 
-            return Ok(result);
+            return Ok(result with { DistanceKm = distanceKm });
         }
 
         // Manuel mod — Distance zorunlu

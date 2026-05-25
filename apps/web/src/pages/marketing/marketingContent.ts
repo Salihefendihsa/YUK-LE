@@ -28,7 +28,7 @@ export const MARKETING_DOCS: Record<MarketingDocId, MarketingDoc> = {
       {
         heading: 'Yapay Zeka Destekli Eşleştirme',
         body: [
-          'Gemini tabanlı öneriler ile yük ve şoför profilleri analiz edilir; adil fiyat ve uyum skoru saniyeler içinde hesaplanır.',
+          'Yapay zeka destekli öneriler ile yük ve şoför profilleri analiz edilir; adil fiyat ve uyum skoru saniyeler içinde hesaplanır.',
           'Belge tanıma ile ehliyet ve kurumsal evraklar otomatik okunur, manuel kontrol süresi kısalır.',
         ],
       },
@@ -57,7 +57,7 @@ export const MARKETING_DOCS: Record<MarketingDocId, MarketingDoc> = {
       },
       {
         heading: 'Profesyonel',
-        body: ['Sınırsız ilan, AI önceliği ve 7/24 destek ile büyüyen fabrikalar için tam güç paketi.'],
+        body: ['Sınırsız ilan, öncelikli eşleştirme ve 7/24 destek ile büyüyen fabrikalar için tam güç paketi.'],
       },
       {
         heading: 'Kurumsal',

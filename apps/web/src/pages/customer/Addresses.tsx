@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createAddress, deleteAddress, getMyAddresses, setDefaultAddress, type DeliveryAddress } from '../../api/addresses'
 import { PageEmpty, PageError, PageSkeleton } from '../../components/common/PageStates'
+import { TR_CITIES, getDistrictsByCity } from '../../data/tr-location'
 import '../shared/Page.css'
 
 const emptyAddress = { title: '', companyName: '', contactPerson: '', contactPhone: '', address: '', city: '', district: '', isDefault: false }
@@ -35,8 +36,31 @@ export default function CustomerAddressesPage() {
         <input className="form-input" placeholder="Şirket Adı" value={form.companyName} onChange={(e) => setForm((s) => ({ ...s, companyName: e.target.value }))} />
         <input className="form-input" placeholder="Yetkili Kişi" value={form.contactPerson} onChange={(e) => setForm((s) => ({ ...s, contactPerson: e.target.value }))} />
         <input className="form-input" placeholder="Telefon" value={form.contactPhone} onChange={(e) => setForm((s) => ({ ...s, contactPhone: e.target.value }))} />
-        <input className="form-input" placeholder="Şehir" value={form.city} onChange={(e) => setForm((s) => ({ ...s, city: e.target.value }))} />
-        <input className="form-input" placeholder="İlçe" value={form.district} onChange={(e) => setForm((s) => ({ ...s, district: e.target.value }))} />
+        <select
+          className="form-input"
+          value={form.city}
+          onChange={(e) => setForm((s) => ({ ...s, city: e.target.value, district: '' }))}
+        >
+          <option value="">İl seçin</option>
+          {TR_CITIES.map((city) => (
+            <option key={city} value={city}>
+              {city}
+            </option>
+          ))}
+        </select>
+        <select
+          className="form-input"
+          value={form.district}
+          onChange={(e) => setForm((s) => ({ ...s, district: e.target.value }))}
+          disabled={!form.city}
+        >
+          <option value="">İlçe seçin</option>
+          {getDistrictsByCity(form.city).map((district) => (
+            <option key={district} value={district}>
+              {district}
+            </option>
+          ))}
+        </select>
         <input className="form-input" style={{ gridColumn: '1 / -1' }} placeholder="Tam Adres" value={form.address} onChange={(e) => setForm((s) => ({ ...s, address: e.target.value }))} />
         <button className="btn btn-primary" onClick={async () => { await createAddress(form); setForm(emptyAddress); await load() }}>Adres Ekle</button>
       </div>

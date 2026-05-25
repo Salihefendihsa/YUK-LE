@@ -42,7 +42,7 @@ async function main() {
 
   console.log('Musteri telefon:', custPhone);
   await post('/Auth/register', {
-    fullName: 'Test Musteri AS',
+    fullName: 'Test Müşteri A.Ş.',
     phone: custPhone,
     email: `musteri${s}@test.com`,
     password,
@@ -63,7 +63,7 @@ async function main() {
 
   console.log('Sofor telefon:', drvPhone);
   await post('/Auth/register', {
-    fullName: 'Test Sofor',
+    fullName: 'Test Şoför',
     phone: drvPhone,
     email: `sofor${s}@test.com`,
     password,

@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios'
+import { translateUserFacingError } from '../utils/apiErrors'
 
 const BASE_URL = 'http://localhost:5151/api'
 
@@ -31,12 +32,11 @@ function getTurkishErrorMessage(error: AxiosError<ApiErrorPayload>) {
 
   const validationErrors = collectValidationErrors(payload)
   if (validationErrors.length > 0) {
-    return validationErrors.join('\n')
+    return validationErrors.map((line) => translateUserFacingError(line)).join('\n')
   }
 
-  if (payload?.message) return payload.message
-  if (payload?.detail) return payload.detail
-  if (payload?.title) return payload.title
+  const serverMessage = payload?.message ?? payload?.detail ?? payload?.title
+  if (serverMessage) return translateUserFacingError(serverMessage)
 
   if (error.response.status === 401) return 'Kullanıcı adı veya şifre hatalı.'
   if (error.response.status === 403) return 'Bu işlem için yetkiniz yok.'

@@ -54,6 +54,9 @@ export default function AdminCustomerDetailPage() {
 
   return (
     <div className="admin-page">
+      <p className="muted" style={{ fontSize: 12, marginBottom: 8 }}>
+        Örnek veri — canlı API bağlantısı sonraki sürümde
+      </p>
       <div className="ad-hero">
         <div className="ad-hero-avatar" aria-hidden>
           {MOCK.company[0]}

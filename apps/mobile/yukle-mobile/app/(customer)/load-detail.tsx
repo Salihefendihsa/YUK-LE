@@ -217,7 +217,7 @@ export default function CustomerLoadDetailScreen() {
       .then((s) => {
         Alert.alert(
           'Teklifi kabul et',
-          `${bid.driverFullName}\n\nTeklif: ${formatCurrencyTRY(s.bidAmount)}\nKomisyon: +${formatCurrencyTRY(s.customerCommission)}\nÖdenecek (hold): ${formatCurrencyTRY(s.customerTotal)}\n\nBu işlem geri alınamaz.`,
+          `${bid.driverFullName}\n\nTeklif: ${formatCurrencyTRY(s.bidAmount)}\nKomisyon: +${formatCurrencyTRY(s.customerCommission)}\nÖdenecek tutar: ${formatCurrencyTRY(s.customerTotal)}\n\nBu işlem geri alınamaz.`,
           [
             { text: 'İptal', style: 'cancel' },
             { text: 'Kabul Et', style: 'destructive', onPress: () => doAccept(bid) },
@@ -246,7 +246,7 @@ export default function CustomerLoadDetailScreen() {
       'İlanı iptal et',
       'İlan iptal edilecek ve açık teklifler kapatılacak. Devam?',
       [
-        { text: 'Vazgec', style: 'cancel' },
+        { text: 'Vazgeç', style: 'cancel' },
         {
           text: 'Iptal Et',
           style: 'destructive',

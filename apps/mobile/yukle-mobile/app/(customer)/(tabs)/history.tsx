@@ -129,7 +129,7 @@ export default function CustomerHistoryScreen() {
             <Card variant="glass" padding={4} style={styles.summaryCard}>
               <Text style={styles.summaryLabel}>Toplam harcama (ödeme kayıtları)</Text>
               <Text style={styles.summaryValue}>{formatCurrencyTRY(totalSpend)}</Text>
-              <Text style={styles.summaryHint}>Kabul edilen teklif / escrow tutarı</Text>
+              <Text style={styles.summaryHint}>Kabul edilen teklif / ödenen tutar</Text>
             </Card>
           </>
         }

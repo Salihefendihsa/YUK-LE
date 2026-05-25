@@ -18,7 +18,11 @@ import { palette } from '../../../src/theme/colors';
 import { typography } from '../../../src/theme/typography';
 import { space, spacing } from '../../../src/theme/spacing';
 import { pickDocumentImage } from '../../../src/utils/pickDocument';
-import { getApprovalStatusPill, getDocUiStatusPill } from '../../../src/utils/statusPills';
+import {
+  getApprovalStatusPill,
+  getDocUiStatusPill,
+  normalizeStatusKey,
+} from '../../../src/utils/statusPills';
 
 type DocKey = 'license' | 'src' | 'psychotechnic';
 
@@ -66,9 +70,9 @@ const INITIAL_DOC_STATE: DocState = {
   loading: false,
 };
 
-function mapApprovalToUi(approved: boolean | undefined, accountStatus: string): DocUiStatus {
+function mapApprovalToUi(approved: boolean | undefined, accountStatus: unknown): DocUiStatus {
   if (approved === true) return 'Onayli';
-  const s = accountStatus.toLowerCase();
+  const s = normalizeStatusKey(accountStatus).toLowerCase();
   if (s.includes('reject')) return 'Reddedildi';
   if (approved === false && (s.includes('pending') || s.includes('review') || s.includes('manual'))) {
     return 'Inceleniyor';
@@ -81,7 +85,9 @@ export default function DriverDocumentsScreen() {
   const user = useAuthStore((s) => s.user);
   const [error, setError] = useState('');
   const [profileLoading, setProfileLoading] = useState(true);
-  const [accountStatus, setAccountStatus] = useState(user?.approvalStatus ?? '');
+  const [accountStatus, setAccountStatus] = useState(
+    normalizeStatusKey(user?.approvalStatus)
+  );
   const [docs, setDocs] = useState<Record<DocKey, DocState>>({
     license: { ...INITIAL_DOC_STATE },
     src: { ...INITIAL_DOC_STATE },
@@ -95,7 +101,7 @@ export default function DriverDocumentsScreen() {
 
   const syncFromProfile = useCallback(
     (profile: Awaited<ReturnType<typeof getUserProfile>>) => {
-      setAccountStatus(profile.approvalStatus);
+      setAccountStatus(normalizeStatusKey(profile.approvalStatus));
       setFlags({
         isDriverLicenseApproved: profile.isDriverLicenseApproved ?? false,
         isSrcApproved: profile.isSrcApproved ?? false,

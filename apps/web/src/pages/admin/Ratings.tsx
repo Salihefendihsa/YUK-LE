@@ -82,8 +82,13 @@ export default function AdminRatingsPage() {
       if (role === 'from' && r.stars < 4) return false
       if (role === 'to' && r.stars > 3) return false
       if (q.trim()) {
-        const qq = q.toLowerCase()
-        if (!r.comment.toLowerCase().includes(qq) && !r.fromName.toLowerCase().includes(qq) && !r.toName.toLowerCase().includes(qq)) return false
+        const qq = q.trim().toLowerCase()
+        const comment = String(r.comment ?? '')
+        const fromName = String(r.fromName ?? '')
+        const toName = String(r.toName ?? '')
+        if (!comment.toLowerCase().includes(qq) && !fromName.toLowerCase().includes(qq) && !toName.toLowerCase().includes(qq)) {
+          return false
+        }
       }
       return true
     })
@@ -182,7 +187,8 @@ export default function AdminRatingsPage() {
           </thead>
           <tbody>
             {filtered.map((r) => {
-              const short = r.comment.length > 48 ? `${r.comment.slice(0, 48)}…` : r.comment
+              const commentText = String(r.comment ?? '')
+              const short = commentText.length > 48 ? `${commentText.slice(0, 48)}…` : commentText
               return (
                 <tr key={r.id}>
                   <td>{r.at}</td>

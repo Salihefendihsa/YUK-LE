@@ -1,8 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { getPayments, releasePayment } from '../../api/admin'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
+import {
+  estimatePlatformCommissionFromCustomerTotal,
+  formatPaymentStatusLabel,
+  formatPaymentTransactionId,
+} from '../../utils/displayLabels'
 import './AdminPanel.css'
-import { formatCurrencyTRY, normalizeArray } from '../../utils/format'
+import { formatCurrencyTRY, formatDateTR, normalizeArray } from '../../utils/format'
 
 export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState<Array<Record<string, string | number>>>([])
@@ -25,23 +30,60 @@ export default function AdminPaymentsPage() {
     await fetchPayments()
   }
 
-  if (loading) return <PageSkeleton rows={8} />
   const paymentList = Array.isArray(payments) ? payments : []
-  const totalVolume = paymentList.reduce((a, b) => a + Number(b.amount ?? 0), 0)
-  const failedCount = paymentList.filter((p) => String(p.status).toLowerCase().includes('fail')).length
+
+  const summary = useMemo(() => {
+    const totalVolume = paymentList.reduce((a, b) => a + Number(b.amount ?? 0), 0)
+    const blockedAmount = paymentList
+      .filter((p) => String(p.status) === 'Blocked')
+      .reduce((a, p) => a + Number(p.amount ?? 0), 0)
+    const platformCommission = paymentList
+      .filter((p) => String(p.status) === 'Released')
+      .reduce((a, p) => a + estimatePlatformCommissionFromCustomerTotal(Number(p.amount ?? 0)), 0)
+    const failedCount = paymentList.filter((p) => String(p.status).toLowerCase().includes('fail')).length
+    const blockedCount = paymentList.filter((p) => String(p.status) === 'Blocked').length
+    return { totalVolume, blockedAmount, platformCommission, failedCount, blockedCount, count: paymentList.length }
+  }, [paymentList])
+
+  if (loading) return <PageSkeleton rows={8} />
 
   return (
     <div className="admin-page">
       <h1 className="admin-title">Ödeme & Finans</h1>
       {error ? <PageError message={error} /> : null}
       <div className="kpi-grid">
-        <div className="admin-card"><div className="kpi-label">Toplam İşlem Hacmi</div><div className="kpi-value">{formatCurrencyTRY(totalVolume)}</div></div>
-        <div className="admin-card"><div className="kpi-label">Escrow Bekleyen</div><div className="kpi-value">{formatCurrencyTRY(totalVolume * 0.3)}</div></div>
-        <div className="admin-card"><div className="kpi-label">Bu Ay Komisyon</div><div className="kpi-value">{formatCurrencyTRY(totalVolume * 0.1)}</div></div>
-        <div className="admin-card"><div className="kpi-label">Başarısız İşlem</div><div className="kpi-value danger">{failedCount}</div></div>
+        <div className="admin-card">
+          <div className="kpi-label">Toplam İşlem Hacmi</div>
+          <div className="kpi-value">{formatCurrencyTRY(summary.totalVolume)}</div>
+        </div>
+        <div className="admin-card">
+          <div className="kpi-label">Blokede / Bekleyen</div>
+          <div className="kpi-value">{formatCurrencyTRY(summary.blockedAmount)}</div>
+          <p className="muted" style={{ fontSize: 11, marginTop: 4 }}>
+            {summary.blockedCount} kayıt
+          </p>
+        </div>
+        <div className="admin-card">
+          <div className="kpi-label">Platform payı (%2+%2)</div>
+          <div className="kpi-value">{formatCurrencyTRY(summary.platformCommission)}</div>
+          <p className="muted" style={{ fontSize: 11, marginTop: 4 }}>
+            Serbest bırakılan işlemlerden
+          </p>
+        </div>
+        <div className="admin-card">
+          <div className="kpi-label">Başarısız İşlem</div>
+          <div className="kpi-value danger">{summary.failedCount}</div>
+        </div>
       </div>
       <div className="admin-filters">
-        <select className="form-input"><option>Tümü</option><option>Escrow</option><option>Tamamlandı</option><option>İade</option><option>Başarısız</option></select>
+        <select className="form-input">
+          <option>Tümü</option>
+          <option>Bloke</option>
+          <option>Serbest bırakıldı</option>
+          <option>İade edildi</option>
+          <option>Bekleyen</option>
+          <option>Başarısız</option>
+        </select>
         <input className="form-input" type="date" />
         <input className="form-input" type="date" />
         <input className="form-input" placeholder="Müşteri/Şoför adı" />
@@ -49,20 +91,37 @@ export default function AdminPaymentsPage() {
       </div>
       <div className="admin-table-wrap">
         <table className="admin-table">
-          <thead><tr><th>İşlem ID</th><th>Yük ID</th><th>Tutar</th><th>Komisyon</th><th>Net</th><th>Durum</th><th>İşlem</th></tr></thead>
+          <thead>
+            <tr>
+              <th>İşlem No</th>
+              <th>Yük ID</th>
+              <th>Tutar</th>
+              <th>Durum</th>
+              <th>Tarih</th>
+              <th>İşlem</th>
+            </tr>
+          </thead>
           <tbody>
             {paymentList.map((payment) => (
               <tr key={String(payment.id)}>
-                <td className="mono">{String(payment.transactionId)}</td>
-                <td className="mono">{String(payment.loadId)}</td>
+                <td>{formatPaymentTransactionId(String(payment.transactionId ?? ''))}</td>
+                <td className="mono">{String(payment.loadId).slice(0, 8)}…</td>
                 <td>{formatCurrencyTRY(payment.amount)}</td>
-                <td>{formatCurrencyTRY(Number(payment.amount) * 0.1)} (%10)</td>
-                <td>{formatCurrencyTRY(Number(payment.amount) * 0.9)}</td>
-                <td>{String(payment.status)}</td>
+                <td>{formatPaymentStatusLabel(payment.status)}</td>
+                <td>{formatDateTR(String(payment.createdAt ?? ''))}</td>
                 <td>
-                  <button className="btn btn-primary btn-sm" onClick={() => {
-                    if (window.confirm('Manuel serbest bırakma onaylanıyor mu?')) void release(String(payment.id))
-                  }}>Serbest Bırak</button>
+                  {String(payment.status) === 'Blocked' ? (
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => {
+                        if (window.confirm('Manuel serbest bırakma onaylanıyor mu?')) void release(String(payment.id))
+                      }}
+                    >
+                      Serbest Bırak
+                    </button>
+                  ) : (
+                    '—'
+                  )}
                 </td>
               </tr>
             ))}

@@ -20,7 +20,13 @@ function normalizeProfile(raw: unknown): UserProfile {
     averageRating: Number(r.averageRating ?? 0),
     totalRatingCount: Number(r.totalRatingCount ?? 0),
     role: String(r.role ?? ''),
-    approvalStatus: String(r.approvalStatus ?? ''),
+    approvalStatus: String(
+      typeof r.approvalStatus === 'number'
+        ? ['Pending', 'Approved', 'Rejected', 'Active', 'ManualApprovalRequired'][
+            r.approvalStatus as number
+          ] ?? r.approvalStatus
+        : (r.approvalStatus ?? r.ApprovalStatus ?? '')
+    ),
     isDriverLicenseApproved:
       r.isDriverLicenseApproved != null ? Boolean(r.isDriverLicenseApproved) : undefined,
     isSrcApproved: r.isSrcApproved != null ? Boolean(r.isSrcApproved) : undefined,

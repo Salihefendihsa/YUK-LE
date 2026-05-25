@@ -48,8 +48,8 @@ export default function KullanimKosullariPage() {
 
         <p><strong>5. Ödeme ve Komisyon</strong></p>
         <ul>
-          <li>Tüm ödemeler YÜK-LE güvenli havuzu (escrow) üzerinden</li>
-          <li>Platform komisyonu: %10</li>
+          <li>Tüm ödemeler YÜK-LE güvenli ödeme havuzu üzerinden</li>
+          <li>Platform komisyonu: teklif tutarı üzerinden %2 (müşteri ve şoför tarafı)</li>
           <li>Bireysel şoförler için stopaj kesintisi uygulanabilir</li>
           <li>Ödemeler teslimat onayından sonra serbest bırakılır</li>
         </ul>

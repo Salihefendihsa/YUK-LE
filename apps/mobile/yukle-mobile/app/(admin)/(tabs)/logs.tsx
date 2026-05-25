@@ -13,7 +13,7 @@ import type { AdminLogRow } from '../../../src/types/admin';
 import { palette } from '../../../src/theme/colors';
 import { typography } from '../../../src/theme/typography';
 import { space, spacing } from '../../../src/theme/spacing';
-import { formatDateTimeTR } from '../../../src/utils/format';
+import { formatAdminLogAction, formatDateTimeTR } from '../../../src/utils/format';
 
 export default function AdminLogsScreen() {
   const { contentInset } = useScreenInsets();
@@ -65,7 +65,7 @@ export default function AdminLogsScreen() {
           <>
             <ScreenHeader
               title="Loglar"
-              subtitle="İşlem kayıtları, action, target, note, zaman. IP webde sahte."
+              subtitle="Yönetici işlem kayıtları ve zaman damgası"
             />
             {error ? <AlertBanner message={error} tone="error" /> : null}
           </>
@@ -76,7 +76,7 @@ export default function AdminLogsScreen() {
         renderItem={({ item, index }) => (
           <FadeInView delay={Math.min(index * 40, 200)}>
             <Card variant="elevated" padding={4} style={styles.logCard}>
-              <Text style={styles.cardTitle}>{item.action ?? 'İşlem'}</Text>
+              <Text style={styles.cardTitle}>{formatAdminLogAction(item.action)}</Text>
               <Text style={styles.muted}>{formatDateTimeTR(item.timestampUtc)}</Text>
               <Text style={styles.muted}>Admin: #{item.adminId ?? '-'}</Text>
               <Text style={styles.muted}>Hedef kullanıcı: {item.targetUserId ?? '-'}</Text>

@@ -45,4 +45,8 @@ public sealed record AiPriceSuggestionDto(
     /// Hesap: RecommendedPrice - FuelCost - TollCost - AmortizationCost.
     /// </summary>
     decimal EstimatedNetProfit = 0m
-);
+)
+{
+    /// <summary>Karayolu mesafesi (km) — koordinatli isteklerde OSRM/Haversine.</summary>
+    public double DistanceKm { get; init; }
+}

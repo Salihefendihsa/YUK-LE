@@ -124,7 +124,7 @@ export default function RegisterScreen() {
       return;
     }
     if (role === 'Driver' && !acceptedLocationTracking) {
-      setError('Konum takibi onayi zorunlu');
+      setError('Konum takibi onayı zorunludur');
       return;
     }
 

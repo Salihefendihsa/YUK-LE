@@ -32,7 +32,7 @@ export default function VerifyPhoneScreen() {
 
   const submitCode = async (code: string) => {
     if (!phone) {
-      setError('Telefon numarasi eksik. Kayit ekranina donun.');
+      setError('Telefon numarası eksik. Kayıt ekranına dönün.');
       return;
     }
     setLoading(true);
@@ -78,8 +78,8 @@ export default function VerifyPhoneScreen() {
 
   return (
     <AuthScreen
-      title="Telefon Dogrulama"
-      subtitle={`${phone || '?'} numarasina gonderilen 6 haneli kodu girin`}
+      title="Telefon Doğrulama"
+      subtitle={`${phone || '?'} numarasına gönderilen 6 haneli kodu girin`}
     >
       <Text style={styles.hint}>Test ortamında doğrulama kodu: 123456</Text>
 
@@ -107,14 +107,14 @@ export default function VerifyPhoneScreen() {
       ) : null}
 
       <PrimaryButton
-        title="Dogrula"
+        title="Doğrula"
         onPress={() => void submitCode(digits.join(''))}
         loading={loading}
       />
 
       {secondsLeft > 0 ? (
         <Text style={[styles.resendWait, { textAlign: 'center' }]}>
-          Kodu tekrar gonder: {secondsLeft}s
+          Kodu tekrar gönder: {secondsLeft}s
         </Text>
       ) : (
         <Pressable onPress={() => void handleResend()} disabled={resendBusy} style={styles.resendBtn}>
@@ -125,7 +125,7 @@ export default function VerifyPhoneScreen() {
       )}
 
       <Pressable onPress={() => router.push('/(auth)/login')} style={styles.back}>
-        <Text style={typography.link}>Giris ekranina don</Text>
+        <Text style={typography.link}>Giriş ekranına dön</Text>
       </Pressable>
     </AuthScreen>
   );

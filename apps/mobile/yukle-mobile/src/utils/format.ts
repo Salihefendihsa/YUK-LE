@@ -39,6 +39,38 @@ function normalizeEnumLabel(raw: unknown): string {
   return formatLoadTypeLabel(raw === '' ? null : raw);
 }
 
+/** Ödeme kaydı işlem kimliği — mock/iyzico/auth gibi iç önekler gizlenir */
+export function formatPaymentTransactionId(raw: string | null | undefined): string {
+  if (!raw?.trim()) return '—';
+  const cleaned = raw
+    .trim()
+    .replace(/^mock_iyzico_auth_/i, '')
+    .replace(/^mock_iyzico_/i, '')
+    .replace(/^mock_/i, '')
+    .replace(/^iyzico_/i, '')
+    .replace(/^auth_/i, '');
+  const suffix = (cleaned.length >= 6 ? cleaned.slice(-6) : cleaned) || raw.slice(-6);
+  return `İşlem No: …${suffix}`;
+}
+
+/** Yönetim logu işlem türü */
+export function formatAdminLogAction(action?: string | null): string {
+  if (!action?.trim()) return 'İşlem';
+  const known: Record<string, string> = {
+    SuspendUser: 'Kullanıcı askıya alındı',
+    ActivateUser: 'Kullanıcı etkinleştirildi',
+    WarnUser: 'Kullanıcı uyarıldı',
+    ApproveDriver: 'Şoför onaylandı',
+    RejectDriver: 'Şoför reddedildi',
+    ReleasePayment: 'Ödeme serbest bırakıldı',
+    UpdateUser: 'Kullanıcı güncellendi',
+    DeleteRating: 'Puan silindi',
+  };
+  const trimmed = action.trim();
+  if (known[trimmed]) return known[trimmed];
+  return trimmed.replace(/([a-z])([A-Z])/g, '$1 $2');
+}
+
 export function formatCurrencyTRY(value: number): string {
   return new Intl.NumberFormat('tr-TR', {
     style: 'currency',

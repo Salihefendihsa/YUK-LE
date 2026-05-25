@@ -120,7 +120,7 @@ export function LoginScreen() {
       </Pressable>
 
       <Pressable style={styles.adminLink} onPress={() => router.push('/(auth)/admin-login')}>
-        <Text style={styles.adminText}>Admin Girisi</Text>
+        <Text style={styles.adminText}>Admin Girişi</Text>
       </Pressable>
     </AuthScreen>
   );

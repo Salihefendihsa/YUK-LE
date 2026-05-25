@@ -5,6 +5,8 @@ export const sizes = {
     primary: 52,
     secondary: 48,
     compact: 40,
+    paddingHorizontal: space.lg,
+    labelMinScale: 0.82,
   },
   input: {
     minHeight: 52,

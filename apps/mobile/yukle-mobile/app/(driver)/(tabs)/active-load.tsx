@@ -301,7 +301,7 @@ export default function DriverActiveLoadScreen() {
                 </Text>
               </View>
               <TextField
-                placeholder="QR token yapıştırın"
+                placeholder="Teslim QR kodunu yapıştırın"
                 value={qrToken}
                 onChangeText={setQrToken}
                 editable={!busy}

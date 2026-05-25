@@ -7,7 +7,7 @@ import {
   DEMO_ANALYTICS_MONTHS,
   DEMO_CARBON_REDUCTION_PCT,
   DEMO_CARBON_TONNES,
-  DEMO_DRIVER_SATISFACTION,
+  DEMO_CUSTOMER_SATISFACTION,
   DEMO_MONTHLY_SAVINGS_TRY,
   DEMO_MONTHLY_SPEND,
   DEMO_SPEND_CHART_MAX,
@@ -23,7 +23,7 @@ import { formatCurrencyTRY } from '../../../src/utils/format';
 export default function CustomerAnalyticsScreen() {
   return (
     <ScreenScroll contentContainerStyle={styles.scroll}>
-      <ScreenHeader title="Analitik (Demo)" subtitle="Örnek veriler — gerçek rapor API'si bağlı değil" />
+      <ScreenHeader title="Analitik (Demo)" subtitle="Örnek veriler — canlı rapor bağlı değil" />
 
       <FadeInView>
       <Card variant="elevated" padding={3} style={styles.demoBanner}>
@@ -69,9 +69,9 @@ export default function CustomerAnalyticsScreen() {
 
       <FadeInView delay={120}>
       <Card variant="default" padding={4}>
-        <Text style={styles.cardTitle}>Şoför memnuniyeti</Text>
-        <Text style={styles.bigStat}>{DEMO_DRIVER_SATISFACTION.toFixed(1)}</Text>
-        <Text style={styles.cardSub}>Son 90 gün ortalaması (örnek)</Text>
+        <Text style={styles.cardTitle}>Memnuniyet puanınız</Text>
+        <Text style={styles.bigStat}>{DEMO_CUSTOMER_SATISFACTION.toFixed(1)}</Text>
+        <Text style={styles.cardSub}>Şoförlerin size verdiği ortalama (son 90 gün, örnek)</Text>
       </Card>
       </FadeInView>
 

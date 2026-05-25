@@ -23,7 +23,13 @@ import { ScreenScroll } from '../../../src/constants/layout';
 import { resolveCoordinates } from '../../../src/data/tr-location';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getMyAddresses } from '../../../src/services/addresses.service';
-import { createLoad, getLoadById, getLoadPriceSuggestion, updateLoad } from '../../../src/services/loads.service';
+import {
+  createLoad,
+  getLoadById,
+  getLoadPriceSuggestion,
+  previewLoadPriceSuggestion,
+  updateLoad,
+} from '../../../src/services/loads.service';
 import { getBidsForLoad } from '../../../src/services/bids.service';
 import type { DeliveryAddress } from '../../../src/types/address';
 import type { AiMarketAnalysis, CreateLoadPayload, LoadTypeValue, VehicleTypeValue } from '../../../src/types/create-load';
@@ -72,6 +78,9 @@ export default function CustomerCreateLoadScreen() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [aiResult, setAiResult] = useState<AiMarketAnalysis | null>(null);
+  const [pricePreview, setPricePreview] = useState<AiMarketAnalysis | null>(null);
+  const [pricePreviewLoading, setPricePreviewLoading] = useState(false);
+  const [pricePreviewError, setPricePreviewError] = useState('');
   const [addresses, setAddresses] = useState<DeliveryAddress[]>([]);
   const [addressPickerOpen, setAddressPickerOpen] = useState(false);
   const createAbortRef = useRef<AbortController | null>(null);
@@ -179,6 +188,66 @@ export default function CustomerCreateLoadScreen() {
 
   const canGoNext = step === 1 ? step1Valid : step === 2 ? step2Valid : step3Valid;
   const canSubmit = step1Valid && step2Valid && step3Valid && !loading;
+
+  const previewInputsReady = step1Valid && step2Valid && fromCoords != null && toCoords != null;
+
+  useEffect(() => {
+    if (step !== 3 || !previewInputsReady || isEdit) {
+      setPricePreview(null);
+      setPricePreviewError('');
+      setPricePreviewLoading(false);
+      return;
+    }
+    const w = parseNum(weight);
+    if (w == null) return;
+    const vol = parseNum(volume);
+    const ac = new AbortController();
+    const timer = setTimeout(() => {
+      setPricePreviewLoading(true);
+      setPricePreviewError('');
+      void previewLoadPriceSuggestion(
+        {
+          originLat: fromCoords!.latitude,
+          originLng: fromCoords!.longitude,
+          destLat: toCoords!.latitude,
+          destLng: toCoords!.longitude,
+          fromCity: fromCity.trim(),
+          toCity: toCity.trim(),
+          vehicleType,
+          weight: w,
+          volume: vol != null && vol > 0 ? vol : undefined,
+        },
+        { signal: ac.signal }
+      )
+        .then((result) => {
+          if (!ac.signal.aborted) setPricePreview(result);
+        })
+        .catch((e) => {
+          if (!ac.signal.aborted) {
+            setPricePreview(null);
+            setPricePreviewError(getApiErrorMessage(e));
+          }
+        })
+        .finally(() => {
+          if (!ac.signal.aborted) setPricePreviewLoading(false);
+        });
+    }, 600);
+    return () => {
+      clearTimeout(timer);
+      ac.abort();
+    };
+  }, [
+    step,
+    previewInputsReady,
+    isEdit,
+    fromCoords,
+    toCoords,
+    fromCity,
+    toCity,
+    vehicleType,
+    weight,
+    volume,
+  ]);
 
   const applyAddress = (addr: DeliveryAddress, target: 'from' | 'to') => {
     const coords = coordsFromAddress(addr);
@@ -330,7 +399,7 @@ export default function CustomerCreateLoadScreen() {
               style={[styles.stepChip, step === n && styles.stepChipOn, step > n && styles.stepChipDone]}
             >
               <Text style={[styles.stepChipText, (step === n || step > n) && styles.stepChipTextOn]}>
-                {step > n ? 'OK' : n}
+                {step > n ? '✓' : n}
               </Text>
             </View>
           ))}
@@ -436,9 +505,34 @@ export default function CustomerCreateLoadScreen() {
             <Text style={styles.sectionTitle}>Fiyatlandırma</Text>
             <Card variant="elevated" padding={4} style={styles.aiInfoCard}>
               <Text style={styles.aiInfoTitle}>Önerilen fiyat</Text>
-              <Text style={styles.aiInfoBody}>
-                İlan kaydedildikten sonra önerilen fiyat hesaplanır ve sonuç ekranda gösterilir.
-              </Text>
+              {pricePreviewLoading ? (
+                <View style={styles.previewRow}>
+                  <ActivityIndicator color={palette.brand} size="small" />
+                  <Text style={styles.aiInfoBody}>Fiyat hesaplanıyor…</Text>
+                </View>
+              ) : pricePreview && pricePreview.recommendedPrice > 0 ? (
+                <>
+                  <Text style={styles.aiPreviewPrice}>
+                    {formatCurrencyTRY(pricePreview.recommendedPrice)}
+                  </Text>
+                  <Text style={styles.aiInfoBody}>
+                    Aralık: {formatCurrencyTRY(pricePreview.minPrice)} –{' '}
+                    {formatCurrencyTRY(pricePreview.maxPrice)}
+                  </Text>
+                  {pricePreview.distanceKm > 0 ? (
+                    <Text style={styles.aiInfoBody}>
+                      Mesafe: {pricePreview.distanceKm.toFixed(1)} km
+                    </Text>
+                  ) : null}
+                </>
+              ) : (
+                <Text style={styles.aiInfoBody}>
+                  {pricePreviewError ||
+                    (previewInputsReady
+                      ? 'Önerilen fiyat şu an hesaplanamadı. Liste fiyatınızı girebilir veya kayıt sonrası tekrar deneyebilirsiniz.'
+                      : 'Güzergah ve yük bilgilerini tamamladığınızda önerilen fiyat burada görünür.')}
+                </Text>
+              )}
             </Card>
             <TextField label="Liste fiyatı (TL)" value={price} onChangeText={setPrice} keyboardType="numeric" icon="cash-outline" />
             {parseNum(price) != null ? (
@@ -589,6 +683,8 @@ const styles = StyleSheet.create({
   aiInfoCard: { borderColor: palette.goldBorder, backgroundColor: palette.goldMuted, marginBottom: spacing[3] },
   aiInfoTitle: { ...typography.bodySmall, color: palette.gold },
   aiInfoBody: { ...typography.caption, textTransform: 'none', marginTop: space.xs },
+  aiPreviewPrice: { ...typography.h2, color: palette.gold, marginTop: space.sm },
+  previewRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm },
   preview: { ...typography.caption, textTransform: 'none', color: palette.gold },
   navRow: { flexDirection: 'row', gap: spacing[3], marginTop: space.md },
   navHalf: { flex: 1 },

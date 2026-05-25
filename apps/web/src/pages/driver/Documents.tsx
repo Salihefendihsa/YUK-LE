@@ -35,7 +35,7 @@ export default function DriverDocumentsPage() {
             ...prev[type],
             loading: false,
             status: 'Reddedildi',
-            resultText: result?.validationMessage ?? result?.ValidationMessage ?? 'Belge AI analizinden geçemedi.',
+            resultText: result?.validationMessage ?? result?.ValidationMessage ?? 'Belge incelemesinden geçemedi.',
           },
         }))
         return
@@ -101,7 +101,7 @@ export default function DriverDocumentsPage() {
                 </span>
               </div>
               <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
-                AI güven skoru (tahmini)
+                Belge güven skoru (tahmini)
               </p>
               <div className="panel-ai-meter">
                 <span style={{ width: `${meter}%` }} />
@@ -134,7 +134,7 @@ export default function DriverDocumentsPage() {
                 onClick={() => void handleAnalyzeAndUpload(card.key)}
                 disabled={!state.file || state.loading}
               >
-                {state.loading ? 'AI analiz ediliyor...' : 'AI Analiz Et ve Kaydet'}
+                {state.loading ? 'Belge inceleniyor…' : 'İncele ve Kaydet'}
               </button>
               {state.resultText ? (
                 <p className="muted" style={{ marginTop: 12 }}>

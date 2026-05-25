@@ -11,12 +11,16 @@ function normalizeSummary(raw: unknown): WalletSummary {
 }
 
 const AUDIT_LABELS: Record<string, string> = {
-  Hold: 'Escrow (net tutar)',
-  Release: 'Yük ödemesi (net)',
+  Hold: 'Ödeme blokede',
+  Release: 'Ödeme serbest bırakıldı',
   Commission: 'Şoför komisyonu',
-  CustomerCommission: 'Müşteri komisyonu (platform)',
+  CustomerCommission: 'Müşteri komisyonu',
   Tax: 'Stopaj',
   Refund: 'İade',
+  Blocked: 'Ödeme blokede',
+  Released: 'Ödeme serbest bırakıldı',
+  Pending: 'Beklemede',
+  Failed: 'Başarısız',
 };
 
 function txDescription(
@@ -25,7 +29,7 @@ function txDescription(
   reason?: string | null
 ): string {
   const id = loadId ? String(loadId).slice(0, 8) : '';
-  const base = AUDIT_LABELS[status] ?? status;
+  const base = AUDIT_LABELS[status] ?? 'Cüzdan hareketi';
   const suffix = id ? ` (${id}…)` : '';
   if (reason?.trim()) return `${base}${suffix}: ${reason.trim()}`;
   return `${base}${suffix}`;

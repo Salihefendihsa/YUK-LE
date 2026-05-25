@@ -158,6 +158,7 @@ builder.Services.AddHostedService<Yukle.Api.BackgroundServices.FuelPriceUpdateWo
 // ── Phase 2.5.7 · Admin Kurulum Servisi ──────────────────────────────────
 // Her başlatmada admin rolü olup olmadığını kontrol eder. Yoksa ilk setup'ı atılım yapar.
 builder.Services.AddHostedService<Yukle.Api.BackgroundServices.AdminSeederJob>();
+builder.Services.AddHostedService<Yukle.Api.BackgroundServices.DemoProvaSeederJob>();
 
 // ── Phase 4.3 · U-ETDS Background Worker ─────────────────────────────────
 // Outbox tablosundaki gönderilmeyi bekleyen bakanlık loglarını asenkron temizler.

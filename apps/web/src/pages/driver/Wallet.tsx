@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getWalletSummary, getWalletTransactions } from '../../api/wallet'
 import { PageEmpty, PageSkeleton } from '../../components/common/PageStates'
+import { formatWalletStatusLabel } from '../../utils/displayLabels'
 import { formatCurrencyTRY, formatDateTR, normalizeArray } from '../../utils/format'
 import '../shared/Page.css'
 import '../admin/AdminPanel.css'
@@ -80,7 +81,7 @@ export default function DriverWalletPage() {
                   <td>{formatDateTR(String(i.createdAt ?? i.date ?? ''))}</td>
                   <td>{String(i.description ?? '-')}</td>
                   <td>{formatCurrencyTRY(i.amount as number | string | undefined)}</td>
-                  <td>{String(i.status ?? '-')}</td>
+                  <td>{formatWalletStatusLabel(i.status)}</td>
                 </tr>
               ))}
             </tbody>

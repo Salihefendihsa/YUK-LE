@@ -24,7 +24,7 @@ import type { AdminPaymentRow } from '../../../src/types/admin';
 import { palette } from '../../../src/theme/colors';
 import { typography } from '../../../src/theme/typography';
 import { space, spacing } from '../../../src/theme/spacing';
-import { formatCurrencyTRY, formatDateTR } from '../../../src/utils/format';
+import { formatCurrencyTRY, formatDateTR, formatPaymentTransactionId } from '../../../src/utils/format';
 import { getPaymentStatusPill } from '../../../src/utils/statusPills';
 
 function canRelease(status: string): boolean {
@@ -117,7 +117,7 @@ export default function AdminPaymentsTab() {
           <>
             <ScreenHeader
               title="Ödemeler"
-              subtitle="Ödeme kayıtları — sahte komisyon KPI yok"
+              subtitle="Ödeme kayıtları ve serbest bırakma işlemleri"
             />
 
             <View style={styles.kpiRow}>
@@ -141,7 +141,7 @@ export default function AdminPaymentsTab() {
 
             <TextField
               icon="filter-outline"
-              placeholder="Durum filtrele"
+              placeholder="Durum: Bloke veya Serbest"
               value={statusFilter}
               onChangeText={setStatusFilter}
               autoCapitalize="none"
@@ -171,7 +171,7 @@ export default function AdminPaymentsTab() {
                   <StatusPill {...pill} />
                 </View>
                 <Text style={styles.muted}>İlan: {item.loadId.slice(0, 8)}...</Text>
-                <Text style={styles.muted}>İşlem: {item.transactionId || '-'}</Text>
+                <Text style={styles.muted}>{formatPaymentTransactionId(item.transactionId)}</Text>
                 <Text style={styles.muted}>Tarih: {formatDateTR(item.createdAt)}</Text>
                 {canRelease(item.status) ? (
                   busyId === item.id ? (

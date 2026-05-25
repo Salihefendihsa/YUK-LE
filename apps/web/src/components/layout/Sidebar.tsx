@@ -64,7 +64,7 @@ export default function Sidebar({ collapsed, mobileOpen }: SidebarProps) {
     user?.role === 'Driver' ? DRIVER_NAV : user?.role === 'Admin' ? ADMIN_NAV : CUSTOMER_NAV
 
   const roleLabel =
-    user?.role === 'Customer' ? 'Müşteri' : user?.role === 'Driver' ? 'Şoför' : 'Admin'
+    user?.role === 'Customer' ? 'Müşteri' : user?.role === 'Driver' ? 'Şoför' : 'Yönetici'
 
   const bottomNav: NavItem[] = [{ label: 'Ayarlar', path: settingsPath(user?.role), icon: '⚙️' }]
 

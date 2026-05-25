@@ -101,7 +101,7 @@ export default function DriverLoadDetailScreen() {
     void getDriverBids()
       .then((bids) => {
         const mine = bids.find(
-          (b) => b.loadId === loadId && b.status.toLowerCase() === 'pending'
+          (b) => b.loadId === loadId && String(b.status).toLowerCase() === 'pending'
         );
         if (mine) {
           setPendingBidId(mine.id);

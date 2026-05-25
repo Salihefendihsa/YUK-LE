@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getAdminLogs } from '../../api/admin'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
+import { formatAdminLogAction } from '../../utils/displayLabels'
 import './AdminPanel.css'
 
 export default function AdminLogsPage() {
@@ -35,7 +36,7 @@ export default function AdminLogsPage() {
               <tr key={String(log.id)}>
                 <td>{new Date(String(log.timestampUtc)).toLocaleString('tr-TR')}</td>
                 <td>#{String(log.adminId)}</td>
-                <td>{String(log.action)}</td>
+                <td>{formatAdminLogAction(String(log.action))}</td>
                 <td>#{String(log.targetUserId)}</td>
                 <td className="mono">{log.loadId ? String(log.loadId).slice(0, 8) + '…' : '—'}</td>
                 <td className="mono">{log.paymentId ? String(log.paymentId).slice(0, 8) + '…' : '—'}</td>

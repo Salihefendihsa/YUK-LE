@@ -10,3 +10,13 @@ export interface ChatMessage {
 }
 
 export type ChatConnectionState = 'connecting' | 'connected' | 'reconnecting' | 'disconnected';
+
+/** Mesajlar merkezi — yüke bağlı sohbet özeti */
+export interface ChatThreadSummary {
+  loadId: string;
+  route: string;
+  counterpartName: string;
+  lastMessage: string;
+  lastMessageAt: string | null;
+  hasMessages: boolean;
+}
