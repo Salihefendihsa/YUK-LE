@@ -1,6 +1,9 @@
 import { lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import './landing.css'
+import '../../styles/landing-marketing.css'
 import { useLenisScroll } from './hooks/useLenisScroll'
+import { HowItWorks } from '../../components/landing/HowItWorks'
+import { Features } from '../../components/landing/Features'
 import { MinimalLoader } from './components/MinimalLoader'
 import { LazySection } from './components/LazySection'
 import { LandingNavbar } from './components/Navbar'
@@ -117,6 +120,16 @@ export default function Landing() {
           </LazySection>
           <LazySection id="pricing" rootMargin="400px" minHeight="600px">
             <PricingSection />
+          </LazySection>
+          <LazySection id="yolculuk" rootMargin="400px" minHeight="700px">
+            <div className="landing-marketing">
+              <HowItWorks />
+            </div>
+          </LazySection>
+          <LazySection id="ozellikler-marketing" rootMargin="400px" minHeight="700px">
+            <div className="landing-marketing">
+              <Features />
+            </div>
           </LazySection>
           <LazySection id="cta" rootMargin="300px" minHeight="400px">
             <CTASection />

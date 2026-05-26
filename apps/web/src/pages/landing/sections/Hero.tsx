@@ -1,16 +1,9 @@
 import type { ReactNode } from 'react'
-import { lazy, Suspense, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { AuroraBackground } from '../components/AuroraBackground'
+import { HeroVideoBackground } from '../components/HeroVideoBackground'
 import { ShimmerText } from '../components/ShimmerText'
-
-const FloatingParticles = lazy(() =>
-  import('../components/FloatingParticles').then((m) => ({ default: m.FloatingParticles })),
-)
-const SpotlightCursor = lazy(() =>
-  import('../components/SpotlightCursor').then((m) => ({ default: m.SpotlightCursor })),
-)
 
 function ArrowRightIcon() {
   return (
@@ -40,12 +33,15 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: (reduceMotion: boolean) =>
-    reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 },
+    reduceMotion
+      ? { opacity: 1, y: 0, filter: 'blur(0px)' }
+      : { opacity: 0, y: 20, filter: 'blur(10px)' },
   visible: (reduceMotion: boolean) => ({
     opacity: 1,
     y: 0,
+    filter: 'blur(0px)',
     transition: {
-      duration: reduceMotion ? 0 : 0.8,
+      duration: reduceMotion ? 0 : 0.7,
       ease,
     },
   }),
@@ -106,11 +102,7 @@ export function HeroSection({ reduceMotion }: { reduceMotion: boolean }) {
 
   return (
     <section className="hero-cinematic" id="top">
-      <AuroraBackground />
-      <Suspense fallback={null}>
-        <FloatingParticles />
-        <SpotlightCursor disabled={r} />
-      </Suspense>
+      <HeroVideoBackground />
       <div className="hero-grid-pattern" aria-hidden />
       <div className="hero-vignette" aria-hidden />
 
@@ -124,7 +116,7 @@ export function HeroSection({ reduceMotion }: { reduceMotion: boolean }) {
         >
           <motion.div className="hero-badge" variants={itemVariants} custom={r}>
             <span className="hero-badge-dot" aria-hidden />
-            <span>TR&apos;NİN İLK AI LOJİSTİĞİ</span>
+            <span>TR&apos;NİN İLK YAPAY ZEKÂ LOJİSTİĞİ</span>
           </motion.div>
 
           <motion.h1 className="hero-headline" variants={itemVariants} custom={r}>

@@ -1,18 +1,24 @@
 import { Hero } from "@/components/sections/Hero";
+import { HowItWorks } from "@/components/sections/HowItWorks";
+import { Features } from "@/components/sections/Features";
+import { RoleBenefits } from "@/components/sections/RoleBenefits";
+import { Trust } from "@/components/sections/Trust";
+import { CTA } from "@/components/sections/CTA";
+import { Footer } from "@/components/layout/Footer";
 
 export default function HomePage() {
   return (
     <main>
       <Hero />
-      <section
-        id="features"
-        className="mx-auto max-w-7xl px-5 py-24 lg:px-8"
-        aria-label="Özellikler bölümü yakında"
-      >
-        <p className="text-center text-sm tracking-[0.2em] text-neutral-500 uppercase">
-          Sırada: Features · AI · Stats · Pricing
-        </p>
-      </section>
+      <HowItWorks />
+      <Features />
+      <RoleBenefits />
+      <Trust />
+      <CTA />
+      <Footer />
+      <div id="demo" className="sr-only" aria-hidden />
+      <div id="ai" className="sr-only" aria-hidden />
+      <div id="fiyat" className="sr-only" aria-hidden />
     </main>
   );
 }

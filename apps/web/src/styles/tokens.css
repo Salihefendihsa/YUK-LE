@@ -7,19 +7,27 @@
   --color-brand-muted:  rgba(255, 107, 0, 0.12);
 
   /* Background layers */
-  --color-bg:           #090B0E;
-  --color-surface:      #111318;
-  --color-card:         #1C2029;
-  --color-card-hover:   #272D3A;
+  --color-bg:           #0A0D12;
+  --color-surface:      #12161D;
+  --color-card:         #1A2030;
+  --color-card-hover:   #1F2738;
+  --color-sidebar-bg:   #0D1018;
 
   /* Borders */
-  --color-border:       #3A4252;
-  --color-border-light: #272D3A;
+  --color-border:       rgba(255, 255, 255, 0.10);
+  --color-border-light: rgba(255, 255, 255, 0.10);
 
   /* Text */
   --color-text:         #F3F4F6;
   --color-text-muted:   #9CA3AF;
   --color-text-faint:   #6B7280;
+
+  /* Semantic aliases (readability) */
+  --text-primary:       var(--color-text);
+  --text-secondary:     var(--color-text-muted);
+  --text-muted:         var(--color-text-faint);
+  --surface-1:          var(--color-card);
+  --surface-2:          var(--color-card-hover);
 
   /* Status */
   --color-success:      #22C55E;
@@ -62,9 +70,10 @@
   --radius-full: 9999px;
 
   /* Shadows */
-  --shadow-sm:    0 1px 3px rgba(0,0,0,0.4);
-  --shadow-md:    0 4px 16px rgba(0,0,0,0.5);
-  --shadow-lg:    0 8px 32px rgba(0,0,0,0.6);
+  --shadow-sm:    0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md:    0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-lg:    0 8px 32px rgba(0, 0, 0, 0.45);
+  --shadow-card:  0 2px 12px rgba(0, 0, 0, 0.28);
   --shadow-brand: 0 4px 24px rgba(255,107,0,0.25);
   --shadow-ai:    0 4px 20px rgba(139,92,246,0.2);
 

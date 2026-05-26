@@ -139,37 +139,111 @@
 /* ── Timeline ──────────────────────────────────────────────────────── */
 .panel-timeline {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0;
   margin-top: 16px;
 }
 
 .panel-timeline-step {
-  flex: 1;
-  min-width: 120px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(15, 18, 24, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.panel-timeline-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: rgba(148, 163, 184, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: rgba(148, 163, 184, 0.75);
+}
+
+.panel-timeline-label {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
+  line-height: 1.1;
+  color: rgba(148, 163, 184, 0.8);
   text-align: center;
-  color: rgba(148, 163, 184, 0.95);
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  max-width: 140px;
+  word-break: break-word;
 }
 
-.panel-timeline-step.done {
-  border-color: rgba(34, 197, 94, 0.45);
-  color: #86efac;
-  box-shadow: 0 0 16px rgba(34, 197, 94, 0.12);
+.panel-timeline-step.done .panel-timeline-icon {
+  background: linear-gradient(135deg, #ff9a48, #ff6b00);
+  border: none;
+  color: #ffffff;
+  box-shadow: 0 0 18px rgba(255, 107, 0, 0.25);
 }
 
-.panel-timeline-step.current {
-  border-color: rgba(255, 107, 0, 0.55);
+.panel-timeline-step.current .panel-timeline-icon {
+  background: rgba(255, 107, 0, 0.06);
+  border: 2px solid rgba(255, 107, 0, 0.85);
   color: #fdba74;
   box-shadow: 0 0 20px rgba(255, 107, 0, 0.15);
+}
+
+.panel-timeline-step.current .panel-timeline-icon::after {
+  content: '';
+  position: absolute;
+  inset: -7px;
+  border-radius: inherit;
+  border: 2px solid rgba(255, 107, 0, 0.28);
+  animation: panel-timeline-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes panel-timeline-pulse {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.75;
+  }
+  60% {
+    transform: scale(1.12);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.12);
+    opacity: 0;
+  }
+}
+
+.panel-timeline-step.done .panel-timeline-label,
+.panel-timeline-step.current .panel-timeline-label {
+  color: #fdba74;
+  font-weight: 900;
+}
+
+.panel-timeline-connector {
+  flex: 1;
+  height: 2px;
+  background: rgba(148, 163, 184, 0.35);
+  align-self: center;
+}
+
+.panel-timeline-connector.done {
+  background: linear-gradient(90deg, #ff9a48, #ff6b00);
+  box-shadow: 0 0 20px rgba(255, 107, 0, 0.18);
+}
+
+@media (max-width: 640px) {
+  .panel-timeline {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .panel-timeline-connector {
+    width: 2px;
+    height: 34px;
+    flex: 0 0 auto;
+    margin: 6px 0;
+  }
 }
 
 /* ── Mini grafik (CSS bar) ─────────────────────────────────────────── */

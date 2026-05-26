@@ -24,19 +24,19 @@ public sealed class WalletLedgerService(
 
         await AddLogAsync(driverUserId, loadId, settlement.DriverNet, WalletAuditLogType.Hold,
             pendingBefore, pendingAfter,
-            $"Escrow hold net={settlement.DriverNet:N2} bid={settlement.BidAmount:N2}", ct);
+            "Ödeme beklemeye alındı", ct);
 
         await AddLogAsync(driverUserId, loadId, settlement.DriverCommission, WalletAuditLogType.Commission,
             pendingAfter, pendingAfter,
-            $"Şoför komisyonu ({Pct(settlement.DriverCommissionRate)}) bid={settlement.BidAmount:N2}", ct);
+            $"Şoför komisyonu ({Pct(settlement.DriverCommissionRate)})", ct);
 
         await AddLogAsync(driverUserId, loadId, settlement.CustomerCommission, WalletAuditLogType.CustomerCommission,
             pendingAfter, pendingAfter,
-            $"Müşteri komisyonu ({Pct(settlement.CustomerCommissionRate)}) bid={settlement.BidAmount:N2}", ct);
+            $"Müşteri payı komisyonu ({Pct(settlement.CustomerCommissionRate)})", ct);
 
         await AddLogAsync(driverUserId, loadId, settlement.Withholding, WalletAuditLogType.Tax,
             pendingAfter, pendingAfter,
-            $"Stopaj ({Pct(settlement.StopajRate)}) bid={settlement.BidAmount:N2}", ct);
+            $"Stopaj ({Pct(settlement.StopajRate)})", ct);
 
         logger.LogInformation(
             "Wallet hold Load={LoadId} Driver={DriverId} Bid={Bid:N2} CustomerTotal={Cust:N2} DriverNet={Net:N2} " +
@@ -79,7 +79,7 @@ public sealed class WalletLedgerService(
 
         await AddLogAsync(driverUserId, loadId, h, WalletAuditLogType.Release,
             walletBefore, driver.WalletBalance,
-            $"Escrow release net={h:N2} pending {pendingBefore:N2}->{driver.PendingBalance:N2}", ct);
+            "Ödeme serbest bırakıldı", ct);
 
         logger.LogInformation(
             "Wallet release Load={LoadId} Driver={DriverId} H={Net:N2} Wallet={Wallet:N2} Pending={Pending:N2}",
@@ -126,7 +126,7 @@ public sealed class WalletLedgerService(
 
             await AddLogAsync(driverUserId, loadId, holdLog.Amount, WalletAuditLogType.Refund,
                 pendingBefore, driver.PendingBalance,
-                $"{WalletRefundAudit.HoldReversalReasonPrefix} net={holdLog.Amount:N2}", ct);
+                WalletRefundAudit.HoldReversalReasonPrefix, ct);
         }
 
         if (bidAmount > 0)
@@ -135,15 +135,15 @@ public sealed class WalletLedgerService(
             var bal = driver.PendingBalance;
 
             await AddLogAsync(driverUserId, loadId, settlement.DriverCommission, WalletAuditLogType.Refund,
-                bal, bal, $"Iptal/Iade driver {WalletRefundAudit.CommissionReversalSuffix}", ct);
+                bal, bal, $"İptal veya iade — şoför {WalletRefundAudit.CommissionReversalSuffix}", ct);
 
             await AddLogAsync(driverUserId, loadId, settlement.CustomerCommission, WalletAuditLogType.Refund,
-                bal, bal, $"Iptal/Iade customer {WalletRefundAudit.CommissionReversalSuffix}", ct);
+                bal, bal, $"İptal veya iade — müşteri payı {WalletRefundAudit.CommissionReversalSuffix}", ct);
 
             if (settlement.Withholding > 0)
             {
                 await AddLogAsync(driverUserId, loadId, settlement.Withholding, WalletAuditLogType.Refund,
-                    bal, bal, $"Iptal/Iade stopaj {WalletRefundAudit.CommissionReversalSuffix}", ct);
+                    bal, bal, $"İptal veya iade — stopaj {WalletRefundAudit.CommissionReversalSuffix}", ct);
             }
         }
 

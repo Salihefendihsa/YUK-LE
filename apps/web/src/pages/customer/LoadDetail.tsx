@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { getLoad } from '../../api/loads'
+import { cancelLoad, getLoad } from '../../api/loads'
 import { acceptBid, getBidsForLoad } from '../../api/bids'
-import { getDriverLocation } from '../../api/location'
+import { getDriverLocation, type DriverLocationInfo } from '../../api/location'
 import { submitRating } from '../../api/ratings'
 import type { Bid, Load, LoadStatus } from '../../api/types'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
@@ -11,14 +11,15 @@ import DeliveryQrSection from '../../components/delivery/DeliveryQrSection'
 import { formatCurrencyTRY, normalizeArray } from '../../utils/format'
 import '../shared/Page.css'
 
-const FLOW: LoadStatus[] = ['Active', 'Assigned', 'OnWay', 'Delivered']
+const FLOW: LoadStatus[] = ['Active', 'Assigned', 'OnWay', 'Arrived', 'Delivered']
 
 const STATUS_LABEL: Record<string, string> = {
   Active: 'Yayında',
-  Assigned: 'Şoför atandı',
+  Assigned: 'Şoför Atandı',
   OnWay: 'Yolda',
-  Delivered: 'Teslim',
-  Cancelled: 'İptal',
+  Arrived: 'Varıldı',
+  Delivered: 'Teslim Edildi',
+  Cancelled: 'İptal edildi',
 }
 
 export default function CustomerLoadDetailPage() {
@@ -28,21 +29,24 @@ export default function CustomerLoadDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [actionMsg, setActionMsg] = useState('')
-  const [loc, setLoc] = useState<{ latitude?: number; longitude?: number } | null>(null)
+  const [loc, setLoc] = useState<DriverLocationInfo | null>(null)
   const [showRating, setShowRating] = useState(false)
   const [showChat, setShowChat] = useState(false)
   const [score, setScore] = useState(5)
   const [comment, setComment] = useState('')
+  const [cancelling, setCancelling] = useState(false)
+
+  const refreshDetail = useCallback(async () => {
+    const [loadData, bidData] = await Promise.all([getLoad(id), getBidsForLoad(id)])
+    setLoad(loadData)
+    setBids(normalizeArray<Bid>(bidData))
+  }, [id])
 
   useEffect(() => {
-    Promise.all([getLoad(id), getBidsForLoad(id)])
-      .then(([loadData, bidData]) => {
-        setLoad(loadData)
-        setBids(normalizeArray<Bid>(bidData))
-      })
+    refreshDetail()
       .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'İlan detayı yüklenemedi.'))
       .finally(() => setLoading(false))
-  }, [id])
+  }, [refreshDetail])
 
   useEffect(() => {
     if (!load || (load.status !== 'OnWay' && load.status !== 'Assigned')) return
@@ -65,15 +69,37 @@ export default function CustomerLoadDetailPage() {
     }))
   }, [load])
 
+  const canCancel = useMemo(
+    () => load?.status === 'Active' && !bids.some((b) => b.status === 'Accepted'),
+    [load, bids]
+  )
+
   async function onAccept(bidId: number) {
     setActionMsg('')
+    setError('')
     try {
       await acceptBid(bidId)
       setActionMsg('Teklif kabul edildi, yük durumu güncellendi.')
-      const refreshed = await getBidsForLoad(id)
-      setBids(refreshed)
+      await refreshDetail()
     } catch (e: unknown) {
       setError((e as { uiMessage?: string }).uiMessage ?? 'Teklif kabul işlemi başarısız.')
+    }
+  }
+
+  async function onCancelLoad() {
+    if (!load || !canCancel) return
+    if (!window.confirm('İlanı iptal etmek istediğinize emin misiniz?')) return
+    setCancelling(true)
+    setError('')
+    setActionMsg('')
+    try {
+      const res = await cancelLoad(load.id)
+      setActionMsg(res.message || 'İlan iptal edildi.')
+      await refreshDetail()
+    } catch (e: unknown) {
+      setError((e as { uiMessage?: string }).uiMessage ?? 'İlan iptal edilemedi.')
+    } finally {
+      setCancelling(false)
     }
   }
 
@@ -115,19 +141,38 @@ export default function CustomerLoadDetailPage() {
             <p className="muted" style={{ marginTop: 8 }}>
               {load.description}
             </p>
-            {loc ? (
+            {loc?.lastKnownLatitude != null && loc.lastKnownLongitude != null ? (
               <p className="muted" style={{ marginTop: 8 }}>
-                Canlı konum: {loc.latitude?.toFixed(5)}, {loc.longitude?.toFixed(5)}
+                Şoför konumu paylaşıldı
+                {loc.lastLocationUpdate ? ` · son güncelleme ${new Date(loc.lastLocationUpdate).toLocaleString('tr-TR')}` : ''}
               </p>
             ) : null}
-            <div className="panel-timeline" style={{ marginTop: 16 }}>
-              {timeline.map((t) => (
-                <div
-                  key={t.key}
-                  className={`panel-timeline-step ${t.state === 'done' ? 'done' : ''} ${t.state === 'current' ? 'current' : ''}`}
-                >
-                  {t.label}
-                </div>
+            <div className="panel-timeline" style={{ marginTop: 16 }} aria-label="Kargo takip adımları">
+              {timeline.map((t, i) => (
+                <Fragment key={t.key}>
+                  <div className={`panel-timeline-step ${t.state}`}>
+                    <div className="panel-timeline-icon" aria-hidden="true">
+                      {t.state === 'done' ? (
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path
+                            d="M16.5 5.5L8.5 13.5L3.5 8.5"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      ) : null}
+                    </div>
+                    <div className="panel-timeline-label">{t.label}</div>
+                  </div>
+                  {i < timeline.length - 1 ? (
+                    <div
+                      className={`panel-timeline-connector ${t.state === 'done' ? 'done' : ''}`}
+                      aria-hidden="true"
+                    />
+                  ) : null}
+                </Fragment>
               ))}
             </div>
             {load.status === 'Assigned' || load.status === 'OnWay' ? (
@@ -137,6 +182,16 @@ export default function CustomerLoadDetailPage() {
               </div>
             ) : null}
             <div style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {canCancel ? (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  disabled={cancelling}
+                  onClick={() => void onCancelLoad()}
+                >
+                  {cancelling ? 'İptal ediliyor…' : 'İlanı İptal Et'}
+                </button>
+              ) : null}
               {load.driverId ? (
                 <button type="button" className="btn btn-sm btn-chat-glow" onClick={() => setShowChat((v) => !v)}>
                   {showChat ? 'Sohbeti Gizle' : 'Şoförle Sohbet'}
@@ -161,9 +216,15 @@ export default function CustomerLoadDetailPage() {
                   </div>
                   <div className="item-row" style={{ marginTop: 8 }}>
                     <span className="muted">Puan: —</span>
-                    <button type="button" className="btn btn-primary btn-sm" onClick={() => onAccept(bid.id)}>
-                      Teklifi Kabul Et
-                    </button>
+                    {load.status === 'Active' && bid.status === 'Pending' ? (
+                      <button type="button" className="btn btn-primary btn-sm" onClick={() => void onAccept(bid.id)}>
+                        Teklifi Kabul Et
+                      </button>
+                    ) : (
+                      <span className="muted" style={{ fontSize: 12 }}>
+                        {bid.status === 'Accepted' ? 'Kabul edildi' : '—'}
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}

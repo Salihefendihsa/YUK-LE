@@ -66,7 +66,7 @@ export interface DriverDashboard {
 }
 
 // ── Loads ─────────────────────────────────────────────────────────────
-export type LoadStatus = 'Active' | 'Assigned' | 'OnWay' | 'Delivered' | 'Cancelled'
+export type LoadStatus = 'Active' | 'Assigned' | 'OnWay' | 'Arrived' | 'Delivered' | 'Cancelled'
 export type VehicleType = 'Tir' | 'Kamyon' | 'Frigorifik' | 'Lowboy' | 'Tanker'
 export type LoadType = 'General' | 'Paletli' | 'Dokme' | 'SogukZincir' | 'TehlikeliMadde' | 'Parsiyel'
 

@@ -1,46 +1,58 @@
 import Link from "next/link";
 
 const navLinks = [
-  { href: "#features", label: "Özellikler" },
-  { href: "#ai", label: "AI Motoru" },
-  { href: "#pricing", label: "Fiyatlandırma" },
+  { href: "#yolculuk", label: "Yolculuk" },
+  { href: "#ai", label: "AI Destek" },
+  { href: "#guven", label: "Güvenlik" },
+  { href: "#fiyat", label: "Fiyat" },
 ];
 
 export function Navbar() {
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-white/5 bg-neutral-950/70 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 lg:px-8">
+    <header className="liquid-glass-dark fixed inset-x-0 top-0 z-50">
+      <div className="mx-auto flex h-[4.25rem] max-w-7xl items-center justify-between gap-4 px-5 lg:px-8">
         <Link
           href="/"
-          className="font-display text-lg font-extrabold tracking-[-0.04em] text-white"
+          data-hero-animate
+          data-hero-delay="0.1"
+          className="font-display text-[1.375rem] leading-none font-bold tracking-[-0.03em] text-brand-500"
         >
-          YÜK<span className="text-brand-500">-LE</span>
+          YÜK
+          <span className="text-white underline decoration-brand-500 decoration-2 underline-offset-4">
+            -LE
+          </span>
         </Link>
 
-        <nav className="hidden items-center gap-8 md:flex">
+        <nav className="hidden items-center gap-7 md:flex" aria-label="Ana menü">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-neutral-400 transition-colors hover:text-white"
+              data-hero-animate
+              data-hero-delay="0.2"
+              className="nav-link-glow text-sm font-medium text-neutral-300"
             >
               {link.label}
             </Link>
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Link
             href="/login"
-            className="hidden text-sm font-medium text-neutral-300 transition-colors hover:text-white sm:inline-flex"
+            data-hero-animate
+            data-hero-delay="0.2"
+            className="liquid-glass liquid-glass-hover hidden h-10 items-center rounded-full px-5 text-sm font-semibold text-neutral-100 active:scale-[0.98] sm:inline-flex"
           >
             Giriş Yap
           </Link>
           <Link
             href="/register"
-            className="inline-flex h-9 items-center rounded-full bg-brand-500 px-4 text-sm font-semibold text-white transition-[transform,opacity,background-color] hover:bg-brand-400 active:scale-[0.98]"
+            data-hero-animate
+            data-hero-delay="0.2"
+            className="inline-flex h-10 items-center rounded-full bg-brand-500 px-5 text-sm font-semibold text-white transition-[transform,opacity,background-color] hover:bg-brand-400 active:scale-[0.98]"
           >
-            Başla
+            Kayıt Ol
           </Link>
         </div>
       </div>

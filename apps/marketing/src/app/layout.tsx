@@ -46,7 +46,7 @@ export default function RootLayout({
       lang="tr"
       className={`${plusJakarta.variable} ${inter.variable} ${jetbrainsMono.variable} h-full scroll-smooth`}
     >
-      <body className="min-h-full bg-neutral-950 font-body text-neutral-200 antialiased">
+      <body className="min-h-full bg-[var(--bg-page)] font-body text-[var(--text-secondary)] antialiased">
         <SmoothScrollProvider>
           <Navbar />
           {children}

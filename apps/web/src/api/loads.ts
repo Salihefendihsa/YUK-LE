@@ -59,3 +59,26 @@ export async function getDriverLoadHistory(page = 1, pageSize = 20) {
   const res = await apiClient.get<{ items: HistoryRow[]; totalEarn: number; tripCount: number; total: number }>('/Loads/driver-history', { params: { page, pageSize } })
   return res.data
 }
+
+export type CancelLoadResult = {
+  loadId: string
+  status: string
+  message: string
+  alreadyCancelled?: boolean
+  refundAmount?: number | null
+}
+
+export async function cancelLoad(loadId: string, reason?: string): Promise<CancelLoadResult> {
+  const res = await apiClient.post(`/Loads/${loadId}/cancel`, { reason: reason ?? null })
+  const d = res.data as Record<string, unknown>
+  return {
+    loadId: String(d.loadId ?? loadId),
+    status: String(d.status ?? d.Status ?? ''),
+    message: String(d.message ?? d.Message ?? 'İlan iptal edildi.'),
+    alreadyCancelled: Boolean(d.alreadyCancelled ?? d.AlreadyCancelled),
+    refundAmount:
+      d.refundAmount != null || d.RefundAmount != null
+        ? Number(d.refundAmount ?? d.RefundAmount)
+        : null,
+  }
+}

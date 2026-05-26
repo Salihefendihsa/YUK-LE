@@ -5,23 +5,8 @@ import { getActiveLoads } from '../../api/loads'
 import type { CustomerDashboard as Stats, Load } from '../../api/types'
 import { PageEmpty, PageError, PageSkeleton } from '../../components/common/PageStates'
 import { formatCurrencyTRY, formatDateTR, normalizeArray } from '../../utils/format'
+import { formatLoadStatusLabel, getLoadStatusBadgeClass } from '../../utils/displayLabels'
 import './Dashboard.css'
-
-const STATUS_LABEL: Record<string, string> = {
-  Active: 'Aktif',
-  Assigned: 'Atandı',
-  OnWay: 'Yolda',
-  Delivered: 'Teslim',
-  Cancelled: 'İptal',
-}
-
-const STATUS_CLASS: Record<string, string> = {
-  Active: 'badge-success',
-  Assigned: 'badge-info',
-  OnWay: 'badge-warning',
-  Delivered: 'badge-muted',
-  Cancelled: 'badge-error',
-}
 
 export default function CustomerDashboard() {
   const [stats, setStats] = useState<Stats | null>(null)
@@ -140,8 +125,8 @@ export default function CustomerDashboard() {
                       <span className="city">{load.toCity}</span>
                     </td>
                     <td>
-                      <span className={`badge ${STATUS_CLASS[load.status] ?? 'badge-muted'}`}>
-                        {STATUS_LABEL[load.status] ?? load.status}
+                      <span className={getLoadStatusBadgeClass(load.status)}>
+                        {formatLoadStatusLabel(load.status)}
                       </span>
                     </td>
                     <td className="price-cell">{formatCurrencyTRY(load.price)}</td>
@@ -240,7 +225,7 @@ function StatCard({
   trend: string
 }) {
   return (
-    <div className="stat-card card">
+    <div className="stat-card kpi-card card">
       <div className="stat-icon panel-stat-icon-glow" style={{ background: `${color}18`, color }}>
         {icon}
       </div>

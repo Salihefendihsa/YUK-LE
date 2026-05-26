@@ -5,8 +5,131 @@ const DRIVER_COMMISSION_RATE = 0.02
 
 function normalizeKey(raw: unknown): string {
   if (raw == null) return ''
-  if (typeof raw === 'number') return String(raw)
+  if (typeof raw === 'number') {
+    const approvalByIndex: Record<number, string> = {
+      0: 'Pending',
+      1: 'Approved',
+      2: 'Rejected',
+      3: 'Active',
+      4: 'ManualApprovalRequired',
+    }
+    return approvalByIndex[raw] ?? String(raw)
+  }
   return String(raw).trim()
+}
+
+/** Yukle.Api.Models.LoadStatus — 0 Active … 5 Cancelled */
+const LOAD_STATUS_BY_INDEX: Record<number, string> = {
+  0: 'Active',
+  1: 'Assigned',
+  2: 'OnWay',
+  3: 'Arrived',
+  4: 'Delivered',
+  5: 'Cancelled',
+}
+
+const LOAD_STATUS_LABELS: Record<string, string> = {
+  Active: 'Yayında',
+  Assigned: 'Atandı',
+  OnWay: 'Yolda',
+  Arrived: 'Varıldı',
+  Delivered: 'Teslim edildi',
+  Cancelled: 'İptal edildi',
+}
+
+/** Ham API status (sayı veya enum adı) → karşılaştırma anahtarı */
+export function normalizeLoadStatusKey(raw: unknown): string {
+  if (raw == null) return ''
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return LOAD_STATUS_BY_INDEX[raw] ?? String(raw)
+  }
+  const s = String(raw).trim()
+  if (/^\d+$/.test(s)) {
+    const n = Number(s)
+    return LOAD_STATUS_BY_INDEX[n] ?? s
+  }
+  return s
+}
+
+export function formatLoadStatusLabel(status: unknown): string {
+  const key = normalizeLoadStatusKey(status)
+  if (LOAD_STATUS_LABELS[key]) return LOAD_STATUS_LABELS[key]
+  const s = key.toLowerCase()
+  if (s === 'active') return 'Yayında'
+  if (s === 'assigned') return 'Atandı'
+  if (s.includes('onway') || s === 'on_way') return 'Yolda'
+  if (s === 'arrived') return 'Varıldı'
+  if (s === 'delivered') return 'Teslim edildi'
+  if (s === 'cancelled' || s.includes('cancel')) return 'İptal edildi'
+  return key || 'Bilinmiyor'
+}
+
+/** Tablo / liste için renkli durum pill sınıfı */
+export function getLoadStatusBadgeClass(status: unknown): string {
+  const key = normalizeLoadStatusKey(status)
+  switch (key) {
+    case 'Active':
+      return 'badge badge-load-active'
+    case 'Assigned':
+      return 'badge badge-load-assigned'
+    case 'OnWay':
+      return 'badge badge-load-onway'
+    case 'Arrived':
+    case 'Delivered':
+      return 'badge badge-load-delivered'
+    case 'Cancelled':
+      return 'badge badge-load-cancelled'
+    default:
+      return 'badge badge-muted'
+  }
+}
+
+const APPROVAL_STATUS_LABELS: Record<string, string> = {
+  Active: 'Onaylı',
+  Approved: 'Onaylı',
+  Rejected: 'Reddedildi',
+  Pending: 'Beklemede',
+  ManualApprovalRequired: 'Manuel inceleme',
+  PendingReview: 'İncelemede',
+}
+
+export function formatApprovalStatusLabel(status: unknown): string {
+  const key = normalizeKey(status)
+  if (APPROVAL_STATUS_LABELS[key]) return APPROVAL_STATUS_LABELS[key]
+  const s = key.toLowerCase()
+  if (s === 'active' || s.includes('approv')) return 'Onaylı'
+  if (s.includes('reject')) return 'Reddedildi'
+  if (s.includes('pending') || s.includes('manual') || s.includes('review')) return 'Beklemede'
+  return key || 'Bilinmiyor'
+}
+
+const LOAD_TYPE_LABELS: Record<string, string> = {
+  General: 'Genel',
+  Paletli: 'Paletli',
+  Dokme: 'Dökme',
+  SogukZincir: 'Soğuk zincir',
+  TehlikeliMadde: 'Tehlikeli madde',
+  Parsiyel: 'Parsiyel',
+}
+
+export function formatLoadTypeLabel(type: unknown): string {
+  const key = normalizeKey(type)
+  if (LOAD_TYPE_LABELS[key]) return LOAD_TYPE_LABELS[key]
+  return key || '—'
+}
+
+const VEHICLE_TYPE_LABELS: Record<string, string> = {
+  Tir: 'Tır',
+  Kamyon: 'Kamyon',
+  Frigorifik: 'Frigorifik',
+  Lowboy: 'Lowboy',
+  Tanker: 'Tanker',
+}
+
+export function formatVehicleTypeLabel(type: unknown): string {
+  const key = normalizeKey(type)
+  if (VEHICLE_TYPE_LABELS[key]) return VEHICLE_TYPE_LABELS[key]
+  return key || '—'
 }
 
 const BID_STATUS_LABELS: Record<string, string> = {

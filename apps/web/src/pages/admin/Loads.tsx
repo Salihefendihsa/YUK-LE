@@ -3,18 +3,20 @@ import { cancelAdminLoad, getAdminLoads } from '../../api/admin'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
 import './AdminPanel.css'
 import { Link } from 'react-router-dom'
-import { formatCurrencyTRY, normalizeArray } from '../../utils/format'
+import { formatCurrencyTRY } from '../../utils/format'
+import { formatLoadStatusLabel } from '../../utils/displayLabels'
+import type { AdminLoadRow } from '../../api/admin'
 
 export default function AdminLoadsPage() {
-  const [loads, setLoads] = useState<Array<Record<string, string | number>>>([])
+  const [loads, setLoads] = useState<AdminLoadRow[]>([])
   const [status, setStatus] = useState('')
   const [search, setSearch] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
 
   async function loadData() {
-    const data = await getAdminLoads(status || undefined, search || undefined)
-    setLoads(normalizeArray<Record<string, string | number>>(data))
+    const data = await getAdminLoads({ status: status || undefined, q: search || undefined })
+    setLoads(data)
   }
 
   useEffect(() => {
@@ -50,15 +52,15 @@ export default function AdminLoadsPage() {
           </thead>
           <tbody>
             {loadList.map((load) => (
-              <tr key={String(load.id)}>
-                <td className="mono"><Link to={`/admin/loads/${String(load.id)}`}>{String(load.id).slice(0, 8)}</Link></td>
-                <td>{String(load.fromCity)} → {String(load.toCity)}</td>
-                <td>{String(load.status)}</td>
+              <tr key={load.id}>
+                <td className="mono"><Link to={`/admin/loads/${load.id}`}>{load.id.slice(0, 8)}</Link></td>
+                <td>{load.fromCity} → {load.toCity}</td>
+                <td>{formatLoadStatusLabel(load.status)}</td>
                 <td>{formatCurrencyTRY(load.price)}</td>
                 <td>{formatCurrencyTRY(load.price)}</td>
                 <td>
                   <button className="btn btn-danger btn-sm" onClick={() => {
-                    if (window.confirm('Bu işlem geri alınamaz. İlan iptal edilsin mi?')) void cancelLoad(String(load.id))
+                    if (window.confirm('Bu işlem geri alınamaz. İlan iptal edilsin mi?')) void cancelLoad(load.id)
                   }}>İptal Et</button>
                 </td>
               </tr>

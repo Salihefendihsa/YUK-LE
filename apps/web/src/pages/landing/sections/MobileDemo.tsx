@@ -1,67 +1,36 @@
-import { Suspense, useLayoutEffect, useRef, useState } from 'react'
-import { Canvas } from '@react-three/fiber'
+import { useLayoutEffect, useRef } from 'react'
 import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { Phone } from '../models/Phone'
-
-function ScreenPanel({ hue }: { hue: string }) {
-  return (
-    <mesh position={[0, 0, 0]}>
-      <planeGeometry args={[0.44, 0.95]} />
-      <meshBasicMaterial color={hue} />
-    </mesh>
-  )
-}
 
 export function MobileDemoSection({ reduceMotion }: { reduceMotion: boolean }) {
   const root = useRef<HTMLElement>(null)
-  const [scrollP, setScrollP] = useState(0)
-
-  useLayoutEffect(() => {
-    const el = root.current
-    if (!el || reduceMotion) return
-    const st = ScrollTrigger.create({
-      trigger: el,
-      start: 'top bottom',
-      end: 'bottom top',
-      scrub: 1,
-      onUpdate: (self) => setScrollP(self.progress),
-    })
-    return () => st.kill()
-  }, [reduceMotion])
 
   useLayoutEffect(() => {
     const el = root.current
     if (!el || reduceMotion) return
     gsap.fromTo(
-      el.querySelectorAll('.landing-mobile__text > *'),
-      { x: -30, opacity: 0 },
+      el.querySelectorAll('.landing-mobile__reveal'),
+      { y: 30, opacity: 0 },
       {
-        x: 0,
+        y: 0,
         opacity: 1,
         stagger: 0.1,
-        duration: 0.65,
+        duration: 0.6,
         ease: 'power3.out',
-        scrollTrigger: { trigger: el, start: 'top 75%' },
+        scrollTrigger: { trigger: el, start: 'top 75%', once: true },
       },
     )
   }, [reduceMotion])
-
-  const page = Math.min(2, Math.floor(scrollP * 3))
-  const hues = ['#1a1428', '#14281a', '#281a14']
-  const hue = hues[page] ?? '#1a1428'
-  const rotY = reduceMotion ? 0.35 : scrollP * Math.PI * 0.9
 
   return (
     <section ref={root} className="landing-mobile" id="mobile">
       <div className="landing-mobile__inner">
         <div className="landing-mobile__text">
-          <p className="landing-mobile__eyebrow">Mobil</p>
-          <h2>Cebinizde yük yönetimi</h2>
-          <p className="landing-mobile__p">
+          <p className="landing-mobile__eyebrow landing-mobile__reveal">Mobil</p>
+          <h2 className="landing-mobile__reveal">Cebinizde Yük Yönetimi</h2>
+          <p className="landing-mobile__p landing-mobile__reveal">
             İlan açın, teklifleri görün, teslimatı takip edin — tek uygulamada.
           </p>
-          <div className="landing-mobile__stores">
+          <div className="landing-mobile__stores landing-mobile__reveal">
             <span className="landing-mobile__badge">Yakında</span>
             <button type="button" className="landing-mobile__store" data-cursor-hover>
               App Store
@@ -71,15 +40,28 @@ export function MobileDemoSection({ reduceMotion }: { reduceMotion: boolean }) {
             </button>
           </div>
         </div>
-        <div className="landing-mobile__device" aria-hidden>
-          <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0, 2.4], fov: 42 }}>
-            <Suspense fallback={null}>
-              <ambientLight intensity={0.5} />
-              <Phone rotateY={rotY} position={[0, -0.05, 0]}>
-                <ScreenPanel hue={hue} />
-              </Phone>
-            </Suspense>
-          </Canvas>
+        <div className="landing-mobile__device landing-mobile__reveal" aria-hidden>
+          <div className="landing-mobile__phone">
+            <div className="landing-mobile__island" />
+            <div className={`landing-mobile__screen-shell ${reduceMotion ? 'landing-mobile__screen-shell--reduced' : ''}`}>
+              <div className="landing-mobile-mini__nav">
+                <span className="landing-mobile-mini__wordmark">YÜK-LE</span>
+              </div>
+              <div className="landing-mobile-mini__hero">
+                <div className="landing-mobile-mini__hero-bg" />
+                <div className="landing-mobile-mini__hero-top-gradient" />
+                <div className="landing-mobile-mini__hero-copy">
+                  <div className="landing-mobile-mini__hero-line">Yükünüz GÜVENDE,</div>
+                  <div className="landing-mobile-mini__hero-line landing-mobile-mini__hero-line--accent">Yolunuz AÇIK.</div>
+                </div>
+              </div>
+              <div className="landing-mobile-mini__cta-wrap">
+                <button type="button" className="landing-mobile-mini__cta-btn">
+                  Hemen Başla
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

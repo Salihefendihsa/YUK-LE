@@ -8,7 +8,7 @@ const chips = [
   { title: 'KVKK Uyumlu', hint: 'Kişisel verileriniz koruma altında.', icon: '🛡️' },
   { title: 'Güvenli Havuz Ödeme', hint: 'Paranız teslimat sonrası şoföre.', icon: '💳' },
   { title: 'U-ETDS Yasal Bildirim', hint: 'Yasal yük bildirimleri düzenli.', icon: '📊' },
-  { title: 'Doğrulanmış Şoför', hint: 'Belgeler yapay zeka ile kontrol edilir.', icon: '✓' },
+  { title: 'Doğrulanmış Şoför', hint: 'Belgeler yapay zekâ ile kontrol edilir.', icon: '✓' },
   { title: 'Uçtan Uca Şifreli', hint: 'İletişim ve dosyalar korunur.', icon: '🔒' },
 ]
 
@@ -25,15 +25,15 @@ export function SecuritySection({ reduceMotion }: { reduceMotion: boolean }) {
     const el = root.current
     if (!el || reduceMotion) return
     gsap.fromTo(
-      el.querySelectorAll('.landing-sec__feat'),
-      { y: 56, opacity: 0 },
+      el.querySelectorAll('.landing-security__reveal'),
+      { y: 30, opacity: 0 },
       {
         y: 0,
         opacity: 1,
-        stagger: 0.14,
-        duration: 0.7,
+        stagger: 0.1,
+        duration: 0.6,
         ease: 'power3.out',
-        scrollTrigger: { trigger: el, start: 'top 72%' },
+        scrollTrigger: { trigger: el, start: 'top 75%', once: true },
       },
     )
   }, [reduceMotion])
@@ -47,7 +47,7 @@ export function SecuritySection({ reduceMotion }: { reduceMotion: boolean }) {
           </Suspense>
         </Canvas>
       </div>
-      <div className="landing-security__badges">
+      <div className="landing-security__badges landing-security__reveal">
         {chips.map((c) => (
           <div key={c.title} className="landing-security__chip">
             <span className="landing-security__chip-icon" aria-hidden>
@@ -60,11 +60,15 @@ export function SecuritySection({ reduceMotion }: { reduceMotion: boolean }) {
           </div>
         ))}
       </div>
-      <div className="landing-security__content">
+      <div className="landing-security__content landing-security__reveal">
         <h2 className="landing-security__h2">Güvenliğiniz Önceliğimiz</h2>
         <div className="landing-security__grid">
           {features.map((f) => (
-            <article key={f.title} className="landing-sec__feat landing-security__card" data-cursor-hover>
+            <article
+              key={f.title}
+              className="landing-sec__feat landing-security__card landing-security__reveal"
+              data-cursor-hover
+            >
               <h3>{f.title}</h3>
               <p>{f.text}</p>
             </article>

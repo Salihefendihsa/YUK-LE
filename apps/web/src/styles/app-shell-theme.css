@@ -4,11 +4,11 @@
   position: relative;
   display: flex;
   min-height: 100vh;
-  background: #090b0e;
+  background: #0a0d12;
   --shell-accent: #ff6b00;
   --shell-accent-2: #4a6cf7;
-  --shell-glass: rgba(28, 32, 41, 0.6);
-  --shell-glass-border: rgba(255, 107, 0, 0.1);
+  --shell-glass: #1a2030;
+  --shell-glass-border: rgba(255, 255, 255, 0.10);
   --shell-edge: linear-gradient(180deg, #ff6b00, #f59e0b);
 }
 
@@ -149,7 +149,7 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--shell-glass-border) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-card, 0 2px 12px rgba(0, 0, 0, 0.28));
   border-radius: 16px !important;
   transition:
     transform 0.22s var(--ease, ease),
@@ -187,17 +187,11 @@
 
 .app-layout .stat-value {
   font-family: var(--font-heading);
-  background: linear-gradient(180deg, #ffffff, #ff9a5c);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: #f9fafb;
 }
 
 .app-layout[data-app-role='admin'] .stat-value {
-  background: linear-gradient(180deg, #fff, #fca5a5);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: #f9fafb;
 }
 
 /* Buton vurguları */
@@ -222,7 +216,7 @@
 
 /* Sidebar — cam + sol aksan çizgisi (konum üst blokta: fixed) */
 .app-layout .sidebar {
-  background: rgba(13, 17, 22, 0.82) !important;
+  background: var(--color-sidebar-bg, #0d1018) !important;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
@@ -281,7 +275,7 @@
   position: sticky;
   top: 0;
   z-index: 210;
-  background: rgba(9, 11, 14, 0.85) !important;
+  background: rgba(10, 13, 18, 0.9) !important;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255, 107, 0, 0.1) !important;

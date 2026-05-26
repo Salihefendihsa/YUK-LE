@@ -1,9 +1,12 @@
+import { useEffect, useRef } from 'react'
+import { gsap } from 'gsap'
+
 const REVIEWS = [
   {
     name: 'Ayşe Korkmaz',
     job: 'Operasyon Müdürü',
     company: 'Anadolu Gıda A.Ş.',
-    text: "Eskiden telefon trafiğiyle uğraşıyorduk, şimdi her şey uygulamada. AI'ın önerdiği fiyatlar gayet adil, ne çok ne az.",
+    text: "Eskiden telefon trafiğiyle uğraşıyorduk, şimdi her şey uygulamada. Akıllı eşleştirmenin önerdiği fiyatlar gayet adil, ne çok ne az.",
     when: '6 hafta önce',
     tenure: '6 aydır kullanıyor',
     trips: '38 sefer tamamlandı',
@@ -33,7 +36,7 @@ const REVIEWS = [
     name: 'Hasan Çelik',
     job: 'Lojistik Koordinatörü',
     company: 'Anadolu Tekstil',
-    text: 'İlanı verdim, 10 dakika içinde 5 teklif geldi. Şoför evrakları AI ile kontrolden geçmiş, içim rahat.',
+    text: 'İlanı verdim, 10 dakika içinde 5 teklif geldi. Şoför evrakları akıllı doğrulama ile kontrolden geçmiş, içim rahat.',
     when: '3 hafta önce',
     tenure: '3 aydır kullanıyor',
     trips: '41 sefer tamamlandı',
@@ -43,7 +46,7 @@ const REVIEWS = [
     name: 'Fatma Aydın',
     job: 'İşletme Sahibi',
     company: 'Aydın Lojistik',
-    text: "Eşim baktı dedi 'bu uygulama nasıl bu kadar kolay'. Ben de 'AI yapıyor' dedim, anlamadı ama beğendi 😄",
+    text: "Eşim baktı dedi 'bu uygulama nasıl bu kadar kolay'. Ben de 'akıllı eşleştirme yapıyor' dedim, anlamadı ama beğendi 😄",
     when: '5 gün önce',
     tenure: '8 aydır kullanıyor',
     trips: '47 sefer tamamlandı',
@@ -122,17 +125,39 @@ function MarqueeRow({ reverse }: { reverse?: boolean }) {
 }
 
 export function TestimonialsSection() {
+  const root = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const el = root.current
+    if (!el) return
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduced) return
+
+    gsap.fromTo(
+      el.querySelectorAll('.landing-reviews__reveal'),
+      { opacity: 0, y: 30 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.6,
+        stagger: 0.1,
+        ease: 'power3.out',
+        scrollTrigger: { trigger: el, start: 'top 78%', once: true },
+      },
+    )
+  }, [])
+
   return (
-    <section className="landing-reviews" id="reviews">
-      <div className="landing-reviews__head-block">
+    <section ref={root} className="landing-reviews" id="reviews">
+      <div className="landing-reviews__head-block landing-reviews__reveal">
         <h2 className="landing-reviews__h2">Kullanıcılarımız Ne Diyor?</h2>
-        <p className="landing-reviews__lead">Türkiye&apos;nin dört bir yanından gerçek kullanıcı deneyimleri</p>
+        <p className="landing-reviews__lead">Türkiye&apos;nin dört bir yanından gerçek kullanıcı deneyimleri.</p>
       </div>
-      <div className="landing-reviews__rows">
+      <div className="landing-reviews__rows landing-reviews__reveal">
         <MarqueeRow />
         <MarqueeRow reverse />
       </div>
-      <div className="landing-reviews__stats">
+      <div className="landing-reviews__stats landing-reviews__reveal">
         <div className="landing-reviews__stat">
           <strong>⭐ 4.9/5</strong>
           <span>Ortalama Puan</span>

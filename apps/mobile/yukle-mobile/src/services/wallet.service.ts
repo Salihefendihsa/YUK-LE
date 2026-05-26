@@ -11,7 +11,7 @@ function normalizeSummary(raw: unknown): WalletSummary {
 }
 
 const AUDIT_LABELS: Record<string, string> = {
-  Hold: 'Ödeme blokede',
+  Hold: 'Ödeme beklemeye alındı',
   Release: 'Ödeme serbest bırakıldı',
   Commission: 'Şoför komisyonu',
   CustomerCommission: 'Müşteri komisyonu',
@@ -23,15 +23,11 @@ const AUDIT_LABELS: Record<string, string> = {
   Failed: 'Başarısız',
 };
 
-function txDescription(
-  loadId: unknown,
-  status: string,
-  reason?: string | null
-): string {
+/** Kullanıcıya gösterilen açıklama — API Reason ham metni eklenmez (eski kayıtlar dahil). */
+function txDescription(loadId: unknown, status: string): string {
   const id = loadId ? String(loadId).slice(0, 8) : '';
   const base = AUDIT_LABELS[status] ?? 'Cüzdan hareketi';
   const suffix = id ? ` (${id}…)` : '';
-  if (reason?.trim()) return `${base}${suffix}: ${reason.trim()}`;
   return `${base}${suffix}`;
 }
 
@@ -49,14 +45,13 @@ function normalizeTransactions(raw: unknown): WalletTransaction[] {
   return list.map((item) => {
     const r = item as Record<string, unknown>;
     const status = String(r.status ?? r.Status ?? '-');
-    const reason = r.reason != null ? String(r.reason) : r.Reason != null ? String(r.Reason) : null;
     return {
       id: Number(r.id ?? 0),
       loadId: r.loadId != null ? String(r.loadId) : null,
       amount: Number(r.amount ?? 0),
       status,
       createdAt: String(r.createdAt ?? ''),
-      description: txDescription(r.loadId, status, reason),
+      description: txDescription(r.loadId, status),
       direction: txDirection(status),
     };
   });

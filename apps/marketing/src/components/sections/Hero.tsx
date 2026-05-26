@@ -4,12 +4,28 @@ import Link from "next/link";
 import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap, registerGsapPlugins } from "@/lib/gsap";
+import { useHeroParallax } from "@/hooks/useHeroParallax";
+import { useMagneticHover } from "@/hooks/useMagneticHover";
+import { HeroBackground } from "./HeroBackground";
 
 registerGsapPlugins();
 gsap.registerPlugin(useGSAP);
 
-const DESKTOP_BREAKPOINT = "(min-width: 1024px)";
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
+
+const HERO_FROM = {
+  opacity: 0,
+  y: 24,
+  filter: "blur(12px)",
+};
+
+const HERO_TO = {
+  opacity: 1,
+  y: 0,
+  filter: "blur(0px)",
+  duration: 0.65,
+  ease: "power3.out",
+};
 
 function ArrowIcon() {
   return (
@@ -32,250 +48,180 @@ function ArrowIcon() {
   );
 }
 
-function StatCard({
-  label,
-  value,
-  accent = false,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-}) {
+function ScrollCue() {
   return (
-    <div className="rounded-2xl border border-white/8 bg-white/5 p-4 backdrop-blur-sm">
-      <p className="text-xs text-neutral-400">{label}</p>
-      <p
-        className={`mt-1 font-display text-lg font-bold ${accent ? "text-brand-400" : "text-white"}`}
-      >
-        {value}
-      </p>
-    </div>
+    <a
+      href="#yolculuk"
+      className="hero-scroll-cue absolute bottom-8 left-1/2 z-20 -translate-x-1/2 focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-500"
+      aria-label="Aşağı kaydır"
+    >
+      <span className="text-[0.625rem] font-semibold tracking-[0.24em] uppercase">
+        Aşağı kaydır
+      </span>
+      <span className="hero-scroll-cue__chevron flex flex-col items-center" aria-hidden>
+        <span className="hero-scroll-cue__line" />
+        <svg width="14" height="8" viewBox="0 0 14 8" fill="none" className="mt-1 text-brand-500/80">
+          <path
+            d="M1 1l6 6 6-6"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
+    </a>
   );
 }
 
 export function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const visualRef = useRef<HTMLDivElement>(null);
-  const glowRef = useRef<HTMLDivElement>(null);
+  const videoParallaxRef = useRef<HTMLDivElement>(null);
+  const eyebrowParallaxRef = useRef<HTMLDivElement>(null);
+  const contentParallaxRef = useRef<HTMLDivElement>(null);
+  const primaryCtaWrapRef = useRef<HTMLDivElement>(null);
 
-  useGSAP(
-    () => {
-      const reducedMotion = window.matchMedia(REDUCED_MOTION).matches;
-      const isDesktop = window.matchMedia(DESKTOP_BREAKPOINT).matches;
+  useHeroParallax(sectionRef, [
+    { ref: videoParallaxRef, max: 6, factor: 0.32 },
+    { ref: eyebrowParallaxRef, max: 10, factor: 0.92 },
+    { ref: contentParallaxRef, max: 10, factor: 1 },
+  ]);
 
-      const revealItems =
-        contentRef.current?.querySelectorAll("[data-hero-reveal]");
+  useMagneticHover(primaryCtaWrapRef, 0.2);
 
-      if (revealItems?.length && !reducedMotion) {
-        gsap.fromTo(
-          revealItems,
-          { autoAlpha: 0, y: 36 },
-          {
-            autoAlpha: 1,
-            y: 0,
-            duration: 0.95,
-            stagger: 0.11,
-            ease: "power3.out",
-            delay: 0.12,
-          },
-        );
-      } else if (revealItems?.length) {
-        gsap.set(revealItems, { autoAlpha: 1, y: 0 });
-      }
+  useGSAP(() => {
+    const reducedMotion = window.matchMedia(REDUCED_MOTION).matches;
+    const animated = gsap.utils.toArray<HTMLElement>("[data-hero-animate]");
 
-      if (reducedMotion || !isDesktop) return;
+    if (!animated.length) return;
 
-      if (visualRef.current && sectionRef.current) {
-        gsap.to(visualRef.current, {
-          yPercent: 14,
-          ease: "none",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top top",
-            end: "bottom top",
-            scrub: 0.6,
-          },
-        });
-      }
+    if (reducedMotion) {
+      gsap.set(animated, { opacity: 1, y: 0, filter: "blur(0px)", clearProps: "filter" });
+      return;
+    }
 
-      if (glowRef.current && sectionRef.current) {
-        gsap.to(glowRef.current, {
-          yPercent: -8,
-          ease: "none",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top top",
-            end: "bottom top",
-            scrub: 0.4,
-          },
-        });
-      }
-    },
-    { scope: sectionRef },
-  );
+    gsap.set(animated, HERO_FROM);
+
+    animated.forEach((el) => {
+      const delay = Number.parseFloat(el.dataset.heroDelay ?? "0") || 0;
+      gsap.to(el, { ...HERO_TO, delay });
+    });
+  }, []);
 
   return (
     <section
       ref={sectionRef}
       id="hero"
-      className="relative min-h-[100dvh] overflow-hidden bg-neutral-950 pt-24 pb-16 md:pt-28"
+      className="section-rhythm-a relative flex min-h-[100dvh] flex-col justify-center overflow-hidden pt-[4.25rem]"
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[64px_64px] mask-[radial-gradient(ellipse_at_center,black_20%,transparent_75%)]"
-      />
+      <div ref={videoParallaxRef} className="absolute inset-0 z-0 will-change-transform">
+        <HeroBackground />
+      </div>
 
-      <div
-        ref={glowRef}
-        aria-hidden
-        className="pointer-events-none absolute -top-32 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-brand-500/20 blur-[120px] will-change-transform"
-      />
-
-      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-12 px-5 lg:flex-row lg:items-center lg:gap-16 lg:px-8">
-        <div ref={contentRef} className="flex max-w-2xl flex-1 flex-col">
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center px-5 py-16 lg:px-8">
+        <div className="flex max-w-2xl flex-col">
           <div
-            data-hero-reveal
-            className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-semibold tracking-[0.14em] text-neutral-300 uppercase backdrop-blur-sm"
+            ref={eyebrowParallaxRef}
+            data-hero-animate
+            data-hero-delay="0.4"
+            className="liquid-glass mb-8 inline-flex w-fit items-center gap-2.5 rounded-full px-4 py-2 text-[0.6875rem] font-bold tracking-[0.16em] text-neutral-200 uppercase will-change-transform"
           >
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-500 opacity-60" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-500" />
+            <span className="relative flex h-2 w-2 shrink-0">
+              <span className="hero-eyebrow-dot inline-flex h-2 w-2 rounded-full bg-brand-500" />
             </span>
             TR&apos;nin ilk AI lojistiği
           </div>
 
-          <h1
-            data-hero-reveal
-            className="font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-[1.05] font-extrabold tracking-[-0.03em] text-white"
-          >
-            Yükünüz{" "}
-            <span className="bg-linear-to-r from-white to-neutral-400 bg-clip-text text-transparent">
-              güvende
-            </span>
-            ,
-            <br />
-            yolunuz{" "}
-            <span className="bg-linear-to-r from-brand-400 to-brand-600 bg-clip-text text-transparent">
-              açık
-            </span>
-            .
-          </h1>
+          <div ref={contentParallaxRef} className="will-change-transform">
+            <h1 className="font-display text-[clamp(2.75rem,7vw,5rem)] leading-[1.05] font-extrabold tracking-[-0.03em]">
+              <span
+                data-hero-animate
+                data-hero-delay="0.55"
+                className="block text-white"
+              >
+                Yükünüz GÜVENDE,
+              </span>
+              <span
+                data-hero-animate
+                data-hero-delay="0.68"
+                className="mt-1 block text-white"
+              >
+                Yolunuz{" "}
+                <span className="text-brand-500">AÇIK</span>.
+              </span>
+            </h1>
 
-          <p
-            data-hero-reveal
-            className="mt-6 max-w-xl text-base leading-relaxed text-neutral-300 md:text-lg"
-          >
-            Fabrikalar ile belgeli tır şoförlerini saniyeler içinde buluşturan
-            yapay zeka destekli lojistik pazaryeri. Eşleş, taşı, güvenle teslim
-            al.
-          </p>
-
-          <div
-            data-hero-reveal
-            className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center"
-          >
-            <Link
-              href="/register"
-              className="group inline-flex h-12 items-center justify-center gap-2 rounded-full bg-brand-500 px-6 text-sm font-semibold text-white transition-[transform,opacity,background-color] duration-300 hover:bg-brand-400 active:scale-[0.98]"
+            <p
+              data-hero-animate
+              data-hero-delay="0.82"
+              className="mt-6 max-w-lg text-[1.1rem] leading-relaxed text-neutral-300"
             >
-              Hemen Başla
-              <ArrowIcon />
-            </Link>
-            <Link
-              href="#features"
-              className="inline-flex h-12 items-center justify-center rounded-full border border-white/15 px-6 text-sm font-semibold text-neutral-200 transition-[transform,opacity,background-color] duration-300 hover:border-white/30 hover:bg-white/5 active:scale-[0.98]"
-            >
-              Nasıl Çalışır?
-            </Link>
-          </div>
+              Saniyeler içinde eşleş. Akıllıca taşı. Güvenle teslim al.
+            </p>
 
-          <div
-            data-hero-reveal
-            className="mt-10 flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-neutral-400"
-          >
-            <div className="flex items-center gap-2">
-              <div className="flex -space-x-2">
-                {["M", "A", "Z", "F"].map((initial) => (
-                  <span
-                    key={initial}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-800 bg-neutral-800 text-xs font-semibold text-neutral-200"
-                  >
-                    {initial}
-                  </span>
-                ))}
+            <div
+              data-hero-animate
+              data-hero-delay="0.95"
+              className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center"
+            >
+              <div ref={primaryCtaWrapRef} className="inline-flex will-change-transform">
+                <Link
+                  href="/register"
+                  className="hero-cta-primary group inline-flex h-[3.25rem] items-center justify-center gap-2 rounded-full bg-brand-500 px-8 text-base font-semibold text-white hover:bg-brand-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                >
+                  Hemen Başla
+                  <ArrowIcon />
+                </Link>
               </div>
+              <Link
+                href="#demo"
+                className="liquid-glass liquid-glass-hover inline-flex h-[3.25rem] items-center justify-center rounded-full px-8 text-base font-semibold text-neutral-100 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40"
+              >
+                Demo Talep Et
+              </Link>
+            </div>
+
+            <div
+              data-hero-animate
+              data-hero-delay="1.1"
+              className="mt-10 flex flex-wrap items-center gap-x-4 gap-y-3 text-sm text-neutral-400"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="flex -space-x-2" aria-hidden>
+                  {["M", "A", "Z", "F"].map((initial) => (
+                    <span
+                      key={initial}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-neutral-900/80 text-xs font-semibold text-neutral-200"
+                    >
+                      {initial}
+                    </span>
+                  ))}
+                </div>
+                <span>
+                  <strong className="text-neutral-200">2.847</strong> fabrika
+                </span>
+              </div>
+              <span className="text-neutral-500" aria-hidden>
+                ·
+              </span>
               <span>
-                <strong className="text-neutral-200">2.847</strong> fabrika
+                ★ <strong className="text-neutral-200">4.9</strong>
+              </span>
+              <span className="text-neutral-500" aria-hidden>
+                ·
+              </span>
+              <span>
+                <strong className="text-neutral-200">247</strong> aktif sefer
+              </span>
+              <span className="w-full text-xs text-neutral-500 sm:w-auto">
+                (örnek veri)
               </span>
             </div>
-            <span
-              className="hidden h-4 w-px bg-neutral-700 sm:block"
-              aria-hidden
-            />
-            <span className="text-neutral-300">
-              ★ <strong className="text-neutral-100">4.9</strong> ortalama puan
-            </span>
-            <span
-              className="hidden h-4 w-px bg-neutral-700 sm:block"
-              aria-hidden
-            />
-            <span className="inline-flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-success-500" aria-hidden />
-              <strong className="text-neutral-200">247</strong> aktif sefer
-            </span>
-          </div>
-        </div>
-
-        <div
-          ref={visualRef}
-          className="relative flex flex-1 items-center justify-center will-change-transform lg:justify-end"
-        >
-          <div className="relative aspect-4/5 w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-neutral-900 shadow-[0_24px_80px_rgba(0,0,0,0.45)] lg:max-w-lg">
-            <div className="absolute inset-0 bg-linear-to-br from-brand-500/25 via-transparent to-ai-500/20" />
-
-            <div className="relative flex h-full flex-col justify-between p-6 md:p-8">
-              <div>
-                <p className="text-xs font-medium tracking-[0.12em] text-neutral-400 uppercase">
-                  Canlı rota
-                </p>
-                <p className="mt-2 font-display text-2xl font-bold text-white">
-                  İstanbul → Ankara
-                </p>
-                <p className="mt-1 text-sm text-neutral-400">
-                  Tır · 24 ton · Soğutmalı
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <StatCard label="Mesafe" value="452 km" />
-                <StatCard label="AI fiyat" value="₺18.400" accent />
-                <StatCard label="Teklif" value="3 dk" />
-                <StatCard label="Teslimat" value="6 saat" />
-              </div>
-            </div>
-          </div>
-
-          <div className="absolute -bottom-4 -left-2 rounded-2xl border border-white/10 bg-neutral-900/90 px-4 py-3 shadow-xl backdrop-blur-md md:-left-6">
-            <p className="text-xs text-neutral-400">Gemini AI eşleştirme</p>
-            <p className="mt-0.5 text-sm font-semibold text-ai-300">
-              %97 uyumluluk skoru
-            </p>
           </div>
         </div>
       </div>
 
-      <div
-        aria-hidden
-        className="absolute bottom-8 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-3 md:flex"
-      >
-        <span className="text-[10px] font-semibold tracking-[0.24em] text-neutral-500 uppercase">
-          Kaydırın
-        </span>
-        <span className="relative h-10 w-px overflow-hidden bg-neutral-700">
-          <span className="absolute top-0 left-0 h-3 w-full animate-[scroll-dot_1.8s_ease-in-out_infinite] bg-brand-500" />
-        </span>
-      </div>
+      <ScrollCue />
     </section>
   );
 }

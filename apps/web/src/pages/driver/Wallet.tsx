@@ -2,20 +2,21 @@ import { useEffect, useState } from 'react'
 import { getWalletSummary, getWalletTransactions } from '../../api/wallet'
 import { PageEmpty, PageSkeleton } from '../../components/common/PageStates'
 import { formatWalletStatusLabel } from '../../utils/displayLabels'
-import { formatCurrencyTRY, formatDateTR, normalizeArray } from '../../utils/format'
+import { formatCurrencyTRY, formatDateTR } from '../../utils/format'
+import type { WalletTransactionRow } from '../../utils/walletTransactions'
 import '../shared/Page.css'
 import '../admin/AdminPanel.css'
 
 export default function DriverWalletPage() {
   const [loading, setLoading] = useState(true)
   const [summary, setSummary] = useState<Record<string, number>>({})
-  const [tx, setTx] = useState<Array<Record<string, unknown>>>([])
+  const [tx, setTx] = useState<WalletTransactionRow[]>([])
 
   useEffect(() => {
     Promise.all([getWalletSummary(), getWalletTransactions()])
       .then(([s, t]) => {
         setSummary(s)
-        setTx(normalizeArray<Record<string, unknown>>(t))
+        setTx(t)
       })
       .finally(() => setLoading(false))
   }, [])
@@ -78,9 +79,9 @@ export default function DriverWalletPage() {
             <tbody>
               {tx.map((i, idx) => (
                 <tr key={idx}>
-                  <td>{formatDateTR(String(i.createdAt ?? i.date ?? ''))}</td>
-                  <td>{String(i.description ?? '-')}</td>
-                  <td>{formatCurrencyTRY(i.amount as number | string | undefined)}</td>
+                  <td>{formatDateTR(String(i.createdAt ?? ''))}</td>
+                  <td>{i.description}</td>
+                  <td>{formatCurrencyTRY(i.amount)}</td>
                   <td>{formatWalletStatusLabel(i.status)}</td>
                 </tr>
               ))}

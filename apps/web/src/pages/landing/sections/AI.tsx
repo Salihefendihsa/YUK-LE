@@ -48,16 +48,15 @@ export function AISection({ reduceMotion }: { reduceMotion: boolean }) {
     const el = root.current
     if (!el || reduceMotion) return
     gsap.fromTo(
-      el.querySelectorAll('.landing-ai__card'),
-      { rotateY: -12, y: 50, opacity: 0 },
+      el.querySelectorAll('.landing-ai__reveal'),
+      { y: 30, opacity: 0 },
       {
-        rotateY: 0,
         y: 0,
         opacity: 1,
-        stagger: 0.12,
-        duration: 0.75,
+        stagger: 0.1,
+        duration: 0.6,
         ease: 'power3.out',
-        scrollTrigger: { trigger: el, start: 'top 70%' },
+        scrollTrigger: { trigger: el, start: 'top 75%', once: true },
       },
     )
   }, [reduceMotion])
@@ -72,7 +71,7 @@ export function AISection({ reduceMotion }: { reduceMotion: boolean }) {
         </Canvas>
       </div>
       <div className="landing-ai__content">
-        <div className="landing-ai__glass">
+        <div className="landing-ai__glass landing-ai__reveal">
           <p className="landing-ai__eyebrow">Yapay zeka destekli</p>
           <div className="landing-ai__terminal" aria-live="polite">
             <span>{'>'} Analiz ediliyor...</span>
@@ -81,11 +80,11 @@ export function AISection({ reduceMotion }: { reduceMotion: boolean }) {
             <span>{'>'} %95 uyum bulundu</span>
           </div>
         </div>
-        <h2 className="landing-ai__h2">Yapay Zeka Her Adımda Yanınızda</h2>
+        <h2 className="landing-ai__h2 landing-ai__reveal">Yapay Zekâ Her Adımda Yanınızda</h2>
         <div className="landing-ai__cards">
           {cards.map((c) => (
             <Link key={c.title} to={c.to} className="landing-ai__card-wrap" data-cursor-hover>
-              <article className="landing-ai__card">
+              <article className="landing-ai__card landing-ai__reveal">
                 <div className="landing-ai__card-icon">{c.icon}</div>
                 <h3>{c.title}</h3>
                 <p>{c.text}</p>

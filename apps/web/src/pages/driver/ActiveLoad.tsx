@@ -1,9 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { updateLocation } from '../../api/location'
-import { deliverLoad, getActiveLoads, pickupLoad } from '../../api/loads'
+import { deliverLoad, getActiveLoads, getLoad, pickupLoad } from '../../api/loads'
 import type { Load, LoadStatus } from '../../api/types'
+import LiveMap from '../../components/map/LiveMap'
+import type { MapMarker } from '../../components/map/mapTypes'
+import { isValidCoordinate } from '../../components/map/mapUtils'
 import { PageSkeleton } from '../../components/common/PageStates'
+import { resolveCoordinates } from '../../data/tr-location'
 import { formatDateTR, formatTimeTR, normalizeArray } from '../../utils/format'
 import '../shared/Page.css'
 
@@ -13,12 +17,20 @@ const STATUS_STEP: Record<LoadStatus, number> = {
   Active: 0,
   Assigned: 1,
   OnWay: 2,
+  Arrived: 3,
   Delivered: 4,
   Cancelled: -1,
 }
 
+const DRIVER_TRIP_STATUSES: LoadStatus[] = ['Assigned', 'OnWay', 'Arrived']
+
+function isDriverTripStatus(status: LoadStatus): boolean {
+  return DRIVER_TRIP_STATUSES.includes(status)
+}
+
 export default function DriverActiveLoadPage() {
   const [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('Konum paylaşımı kapalı.')
   const [sharing, setSharing] = useState(false)
   const [activeLoad, setActiveLoad] = useState<Load | null>(null)
@@ -27,14 +39,27 @@ export default function DriverActiveLoadPage() {
   const [deliverMsg, setDeliverMsg] = useState('')
   const watchTimerRef = useRef<number | null>(null)
 
-  useEffect(() => {
-    const load = async () => {
-      const rows = normalizeArray<Load>(await getActiveLoads())
-      const current = rows.find((row) => row.status === 'Assigned' || row.status === 'OnWay') ?? null
-      setActiveLoad(current)
-    }
-    load().finally(() => setLoading(false))
+  const fetchActiveLoad = useCallback(async () => {
+    const rows = normalizeArray<Load>(await getActiveLoads())
+    const current = rows.find((row) => isDriverTripStatus(row.status)) ?? null
+    setActiveLoad(current)
+    return current
   }, [])
+
+  const refreshTrip = useCallback(async (loadId: string) => {
+    const updated = await getLoad(loadId)
+    if (isDriverTripStatus(updated.status) || updated.status === 'Delivered') {
+      setActiveLoad(updated)
+      if (updated.status === 'Delivered') setSharing(false)
+    } else {
+      setActiveLoad(null)
+    }
+    return updated
+  }, [])
+
+  useEffect(() => {
+    fetchActiveLoad().finally(() => setLoading(false))
+  }, [fetchActiveLoad])
 
   useEffect(() => {
     if (!sharing || !activeLoad) return
@@ -75,8 +100,52 @@ export default function DriverActiveLoadPage() {
     return STATUS_STEP[activeLoad.status] ?? 0
   }, [activeLoad])
 
+  const canPickup = activeLoad?.status === 'Assigned'
+  const canDeliver = activeLoad?.status === 'OnWay' || activeLoad?.status === 'Arrived'
+  const isDelivered = activeLoad?.status === 'Delivered'
+
+  const origin = useMemo(() => {
+    if (!activeLoad) return null
+    return resolveCoordinates(activeLoad.fromCity, activeLoad.fromDistrict)
+  }, [activeLoad])
+
+  const mapMarkers = useMemo((): MapMarker[] => {
+    if (!activeLoad) return []
+    const list: MapMarker[] = []
+    if (origin && isValidCoordinate(origin.latitude, origin.longitude)) {
+      list.push({
+        id: 'origin',
+        kind: 'origin',
+        latitude: origin.latitude,
+        longitude: origin.longitude,
+        title: `Kalkış · ${activeLoad.fromCity}`,
+      })
+    }
+    if (isValidCoordinate(activeLoad.destinationLat, activeLoad.destinationLng)) {
+      list.push({
+        id: 'destination',
+        kind: 'destination',
+        latitude: activeLoad.destinationLat,
+        longitude: activeLoad.destinationLng,
+        title: `Varış · ${activeLoad.toCity}`,
+      })
+    }
+    if (coords && isValidCoordinate(coords.latitude, coords.longitude)) {
+      list.push({
+        id: 'driver',
+        kind: 'driver',
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        title: 'Konumunuz',
+      })
+    }
+    return list
+  }, [activeLoad, origin, coords])
+
+  const canShowMap = mapMarkers.length > 0
+
   if (loading) return <PageSkeleton rows={3} variant="card" />
-  const hasActiveLoad = Boolean(activeLoad)
+  const hasTrip = Boolean(activeLoad)
 
   return (
     <div className="page-wrap">
@@ -86,18 +155,36 @@ export default function DriverActiveLoadPage() {
           <p className="page-sub">Aktif seferde iken konum her 10 saniyede bir gönderilir.</p>
         </div>
       </div>
-      {!hasActiveLoad ? (
+      {!hasTrip ? (
         <div className="card">
           <p>Şu an aktif seferiniz yok. Yük Panosu&apos;ndan iş bulabilirsiniz.</p>
           <Link to="/driver/loads" className="btn btn-primary" style={{ marginTop: 12 }}>
             Yük Panosu
           </Link>
         </div>
+      ) : isDelivered ? (
+        <div className="card" style={{ textAlign: 'center', padding: 24 }}>
+          <h2 style={{ fontSize: 18, marginBottom: 8 }}>Sefer tamamlandı</h2>
+          <p className="muted">
+            {activeLoad?.fromCity} → {activeLoad?.toCity} teslim edildi.
+          </p>
+          {deliverMsg ? <p className="muted" style={{ marginTop: 10 }}>{deliverMsg}</p> : null}
+          <Link to="/driver/loads" className="btn btn-primary" style={{ marginTop: 16 }}>
+            Yük Panosu
+          </Link>
+        </div>
       ) : (
         <>
-          <div className="card panel-map-placeholder" style={{ height: 160 }}>
-            Güzergah haritası — {activeLoad?.fromCity} → {activeLoad?.toCity}
-          </div>
+          {canShowMap ? (
+            <LiveMap markers={mapMarkers} height={280} />
+          ) : (
+            <div className="card muted" style={{ padding: 20, textAlign: 'center' }}>
+              <p>
+                Harita için güzergah bilgisi henüz hazır değil. Konum paylaşımını açınca konumunuz haritada
+                görünür.
+              </p>
+            </div>
+          )}
 
           <div className="panel-trip-progress">
             {STEP_LABELS.map((label, i) => {
@@ -151,34 +238,63 @@ export default function DriverActiveLoadPage() {
             </div>
 
             <div className="item-row" style={{ marginTop: 12, flexWrap: 'wrap', gap: 10 }}>
-              <button type="button" className="btn btn-pickup-load" onClick={async () => activeLoad && (await pickupLoad(activeLoad.id))}>
-                Yükü Aldım
+              <button
+                type="button"
+                className="btn btn-pickup-load"
+                disabled={!canPickup || busy}
+                onClick={async () => {
+                  if (!activeLoad || !canPickup) return
+                  setBusy(true)
+                  setDeliverMsg('')
+                  try {
+                    await pickupLoad(activeLoad.id)
+                    await refreshTrip(activeLoad.id)
+                    setDeliverMsg('Yük alındı. Yola çıkabilirsiniz.')
+                  } catch (e: unknown) {
+                    setDeliverMsg(
+                      (e as { uiMessage?: string }).uiMessage ?? 'Yükleme kaydı başarısız. Lütfen tekrar deneyin.'
+                    )
+                  } finally {
+                    setBusy(false)
+                  }
+                }}
+              >
+                {busy && canPickup ? 'Kaydediliyor…' : 'Yükü Aldım'}
               </button>
               <button
                 type="button"
                 className="btn btn-deliver-load"
+                disabled={!canDeliver || busy}
                 onClick={async () => {
-                  if (!activeLoad) return
+                  if (!activeLoad || !canDeliver) return
                   const token = qrToken.trim()
                   if (!token) {
                     setDeliverMsg('Geçerli müşteri QR kodu zorunludur.')
                     return
                   }
+                  setBusy(true)
+                  setDeliverMsg('')
                   try {
-                    setDeliverMsg('')
                     await deliverLoad(activeLoad.id, {
                       qrToken: token,
                       targetLat: activeLoad.destinationLat,
                       targetLng: activeLoad.destinationLng,
                     })
+                    await refreshTrip(activeLoad.id)
                     setDeliverMsg('Yük teslim edildi.')
                     setQrToken('')
-                  } catch {
-                    setDeliverMsg('Teslim başarısız. QR kodunu ve sefer durumunu kontrol edin.')
+                    setSharing(false)
+                  } catch (e: unknown) {
+                    setDeliverMsg(
+                      (e as { uiMessage?: string }).uiMessage ??
+                        'Teslim başarısız. QR kodunu ve sefer durumunu kontrol edin.'
+                    )
+                  } finally {
+                    setBusy(false)
                   }
                 }}
               >
-                Teslim Ettim
+                {busy && canDeliver ? 'Kaydediliyor…' : 'Teslim Ettim'}
               </button>
             </div>
             {deliverMsg ? (
@@ -189,16 +305,9 @@ export default function DriverActiveLoadPage() {
             <p className="muted" style={{ marginTop: 10 }}>
               {message}
             </p>
-          </div>
-
-          <div className="card" style={{ textAlign: 'center' }}>
-            <h3 style={{ fontSize: 15 }}>Canlı konum</h3>
-            <p style={{ fontSize: 22, fontWeight: 700, marginTop: 10, fontFamily: 'var(--font-mono)' }}>
-              {coords ? `${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}` : 'Konum bekleniyor'}
-            </p>
-            {coords ? (
-              <span className="badge badge-info" style={{ marginTop: 8 }}>
-                🔵 Son gönderim
+            {sharing && coords ? (
+              <span className="badge badge-info" style={{ marginTop: 8, display: 'inline-block' }}>
+                Konum haritada güncelleniyor
               </span>
             ) : null}
           </div>

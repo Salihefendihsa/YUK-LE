@@ -7,25 +7,37 @@
   gap: var(--space-4);
 }
 
-.page-title {
+.app-layout .dashboard .page-title {
   font-size: 28px;
-  font-weight: 700;
+  font-weight: 800;
   margin-bottom: 6px;
+  color: #f3f4f6;
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  -webkit-text-fill-color: currentColor;
 }
 
-.page-sub { font-size: 14px; color: var(--color-text-muted); }
+.app-layout .dashboard .page-sub {
+  font-size: 14px;
+  color: #9ca3af;
+}
 
-/* Stat Grid */
+/* KPI kartları */
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--space-4);
 }
 
-.stat-card {
+.app-layout .dashboard .kpi-card,
+.app-layout .dashboard .stat-card.card {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  background: #1a2030;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.32);
 }
 
 .stat-icon {
@@ -38,19 +50,26 @@
   font-size: 20px;
 }
 
-.stat-value {
+.app-layout .dashboard .stat-value {
   font-family: var(--font-heading);
   font-size: 28px;
-  font-weight: 700;
-  color: var(--color-text);
+  font-weight: 800;
+  color: #ffffff;
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  -webkit-text-fill-color: currentColor;
 }
 
-.stat-label { font-size: 13px; color: var(--color-text-muted); }
+.app-layout .dashboard .stat-label {
+  font-size: 13px;
+  color: #d1d5db;
+}
 
-.stat-trend {
+.app-layout .dashboard .stat-trend {
   font-size: 11px;
   font-weight: 700;
-  color: rgba(74, 222, 128, 0.85);
+  color: #9ca3af;
   margin-top: 4px;
 }
 
@@ -62,6 +81,12 @@
   align-items: stretch;
 }
 
+.app-layout .dashboard .card {
+  background: #1a2030;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.32);
+}
+
 .card-header {
   display: flex;
   align-items: center;
@@ -69,42 +94,79 @@
   margin-bottom: var(--space-5);
 }
 
-.card-header h2 { font-size: 16px; font-weight: 600; }
-.view-all { font-size: 13px; color: var(--color-brand); }
+.app-layout .dashboard .card-header h2 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #f3f4f6;
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  -webkit-text-fill-color: currentColor;
+}
 
-/* Loads Table */
+.app-layout .dashboard .view-all { font-size: 13px; color: var(--color-brand); }
+
+.app-layout .dashboard .panel-spark-card h3,
+.app-layout .dashboard .dash-widget h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f3f4f6;
+}
+
+/* Son ilanlar tablosu */
 .loads-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
 }
 
-.loads-table th {
+.app-layout .dashboard .loads-table th {
   text-align: left;
   padding: 10px 12px;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--color-text-faint);
-  border-bottom: 1px solid var(--color-border-light);
+  color: #9ca3af;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
 }
 
-.loads-table td {
+.app-layout .dashboard .loads-table td {
   padding: 12px;
-  border-bottom: 1px solid var(--color-border-light);
-  color: var(--color-text-muted);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.loads-table tr:last-child td { border-bottom: none; }
-.loads-table tr:hover td { background: var(--color-card-hover); }
+.app-layout .dashboard .loads-table tr:last-child td { border-bottom: none; }
+.app-layout .dashboard .loads-table tbody tr:hover td { background: var(--color-card-hover); }
 
-.route-cell { display: flex; align-items: center; gap: 6px; }
-.city { font-weight: 600; color: var(--color-text); }
-.arrow { color: var(--color-brand); font-size: 12px; }
+.app-layout .dashboard .loads-table .route-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #e5e7eb;
+}
 
-.price-cell { font-weight: 600; color: var(--color-brand); font-family: var(--font-heading); }
-.date-cell { font-size: 13px; font-family: var(--font-mono); }
+.app-layout .dashboard .loads-table .route-cell .city {
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.app-layout .dashboard .loads-table .route-cell .arrow {
+  color: var(--color-brand);
+  font-size: 12px;
+}
+
+.app-layout .dashboard .loads-table .price-cell {
+  font-weight: 600;
+  color: #f3f4f6;
+  font-family: var(--font-heading);
+}
+
+.app-layout .dashboard .loads-table .date-cell {
+  font-size: 13px;
+  font-family: var(--font-mono);
+  color: #d1d5db;
+}
 
 /* Activity */
 .activity-list { list-style: none; display: flex; flex-direction: column; gap: var(--space-4); }
@@ -199,6 +261,11 @@
   gap: 12px;
   padding: 6px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: #d1d5db;
+}
+
+.dash-widget-list li strong {
+  color: #f3f4f6;
 }
 
 .dash-widget-ol {
@@ -206,6 +273,7 @@
   padding-left: 18px;
   font-size: 13px;
   line-height: 1.6;
+  color: #d1d5db;
 }
 
 .dash-widget-bullets {
@@ -213,7 +281,7 @@
   padding-left: 18px;
   font-size: 13px;
   line-height: 1.55;
-  color: var(--color-text-muted);
+  color: #9ca3af;
 }
 
 @media (max-width: 1024px) {

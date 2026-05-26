@@ -1,15 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --background: #090b0e;
-  --foreground: #d1d5db;
+  /* apps/web ile senkron tasarim tokenlari */
+  --bg-page: #0a0d12;
+  --surface-1: #1a2030;
+  --surface-2: #212840;
+  --border: rgba(255, 255, 255, 0.10);
+  --text-primary: #f3f4f6;
+  --text-secondary: #d1d5db;
+  --text-muted: #9ca3af;
+  --accent: #ff6b00;
+
+  --background: var(--bg-page);
+  --foreground: var(--text-secondary);
 
   --color-brand-600: #cc5500;
   --color-brand-500: #ff6b00;
   --color-brand-400: #ff8c38;
   --color-brand-300: #ffad70;
 
-  --color-neutral-950: #090b0e;
+  --color-neutral-950: var(--bg-page);
   --color-neutral-900: #111318;
   --color-neutral-800: #1c2029;
   --color-neutral-700: #272d3a;
@@ -27,6 +37,12 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-accent: var(--accent);
 
   --color-brand-600: var(--color-brand-600);
   --color-brand-500: var(--color-brand-500);
@@ -109,4 +125,208 @@ body {
 ::selection {
   background: color-mix(in srgb, var(--color-brand-500) 35%, transparent);
   color: white;
+}
+
+/* Tekrar kullanılabilir cam yüzey — nav, rozet, cam CTA */
+.liquid-glass {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(26, 32, 48, 0.75);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+}
+
+.liquid-glass-dark {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(26, 32, 48, 0.85);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+}
+
+/* Kart / panel — surface-1 */
+.marketing-surface-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.32);
+  border-radius: 1rem;
+}
+
+/* Bolum baslik hiyerarsisi */
+.section-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.section-eyebrow--accent {
+  color: var(--accent);
+  letter-spacing: 0.2em;
+}
+
+.section-heading {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(1.875rem, 4vw, 3rem);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+.section-lead {
+  margin-top: 1rem;
+  max-width: 600px;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+.section-lead--center {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Sayfa bolum ritmi — cift / tek zemin */
+.section-rhythm-a {
+  --section-bg: var(--bg-page);
+  position: relative;
+  background-color: var(--section-bg);
+}
+
+.section-rhythm-b {
+  --section-bg: #0e1218;
+  --section-fade-from: var(--bg-page);
+  position: relative;
+  background-color: var(--section-bg);
+}
+
+.section-rhythm-a.section-rhythm--fade {
+  --section-fade-from: #0e1218;
+}
+
+.section-rhythm--fade::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 0;
+  height: 120px;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    var(--section-fade-from, transparent) 0%,
+    var(--section-bg) 100%
+  );
+}
+
+.section-rhythm--fade > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* —— Hero mikro-hareketler —— */
+.liquid-glass-hover {
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.35s ease,
+    border-color 0.3s ease;
+}
+
+.liquid-glass-hover:hover {
+  background: rgba(33, 40, 64, 0.88);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.38);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.nav-link-glow {
+  transition:
+    color 0.25s ease,
+    text-shadow 0.35s ease;
+}
+
+.nav-link-glow:hover {
+  color: #fff;
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.12);
+}
+
+.hero-cta-primary {
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s ease,
+    background-color 0.25s ease;
+  will-change: transform;
+}
+
+.hero-cta-primary:hover {
+  transform: scale(1.03);
+  box-shadow:
+    0 14px 44px rgba(255, 107, 0, 0.48),
+    0 0 36px rgba(255, 107, 0, 0.28);
+}
+
+.hero-cta-primary:active {
+  transform: scale(0.98);
+}
+
+.hero-eyebrow-dot {
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-eyebrow-dot {
+    animation: hero-dot-pulse 2.6s ease-in-out infinite;
+  }
+
+  .hero-scroll-cue__chevron {
+    animation: hero-scroll-bounce 2.2s ease-in-out infinite;
+  }
+}
+
+@keyframes hero-dot-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 107, 0, 0.35);
+  }
+  50% {
+    transform: scale(1.12);
+    box-shadow: 0 0 10px 2px rgba(255, 107, 0, 0.4);
+  }
+}
+
+@keyframes hero-scroll-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translateY(7px);
+    opacity: 1;
+  }
+}
+
+.hero-scroll-cue {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba(156, 163, 175, 0.85);
+  transition: color 0.25s ease;
+}
+
+.hero-scroll-cue:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.hero-scroll-cue__line {
+  display: block;
+  width: 1px;
+  height: 2.5rem;
+  background: linear-gradient(to bottom, rgba(255, 107, 0, 0.7), transparent);
+  border-radius: 1px;
 }

@@ -21,6 +21,8 @@ public sealed class DemoProvaSeederJob(
     private const string DemoMarker = "DEMO_PROVA:v2";
     private const string TestCustomerEmail = "test@yukle.com";
     private const string TestDriverEmail = "sofor@yukle.com";
+    private const double DemoAnkaraLat = 39.9334;
+    private const double DemoAnkaraLng = 32.8597;
 
     private static readonly GeometryFactory Gf =
         new(new PrecisionModel(), 4326);
@@ -61,6 +63,8 @@ public sealed class DemoProvaSeederJob(
 
             if (!needsReseed)
             {
+                await EnsureDemoOnWayLoadAsync(db, customer.Id, driver.Id, cancellationToken);
+                await EnsureDemoDriverLocationAsync(db, driver, customer.Id, cancellationToken);
                 logger.LogInformation("DemoProvaSeeder: demo ilan seti güncel ({Count} kayıt), atlandı.", existing.Count);
                 return;
             }
@@ -206,6 +210,65 @@ public sealed class DemoProvaSeederJob(
                 }
             }
         }
+
+        await EnsureDemoOnWayLoadAsync(db, customer.Id, driver.Id, ct);
+        await EnsureDemoDriverLocationAsync(db, driver, customer.Id, ct);
+    }
+
+    /// <summary>
+    /// Demo canlı harita için en az bir demo ilanın OnWay + atanmış şoför durumda olmasını garanti eder.
+    /// </summary>
+    private static async Task EnsureDemoOnWayLoadAsync(
+        YukleDbContext db,
+        int customerId,
+        int driverId,
+        CancellationToken ct)
+    {
+        var onWayDemo = await db.Loads
+            .FirstOrDefaultAsync(
+                l => l.UserId == customerId
+                     && l.DriverId == driverId
+                     && l.Status == LoadStatus.OnWay
+                     && l.Description.StartsWith(DemoMarker),
+                ct);
+        if (onWayDemo is not null) return;
+
+        var candidate = await db.Loads
+            .Where(l =>
+                l.UserId == customerId
+                && l.Description.StartsWith(DemoMarker)
+                && l.Status != LoadStatus.Delivered
+                && l.Status != LoadStatus.Cancelled)
+            .OrderByDescending(l => l.CreatedAt)
+            .FirstOrDefaultAsync(ct);
+        if (candidate is null) return;
+
+        candidate.DriverId = driverId;
+        candidate.Status = LoadStatus.OnWay;
+        await db.SaveChangesAsync(ct);
+    }
+
+    /// <summary>Demo canlı takip: Antalya–Konya güzergahında örnek şoför konumu.</summary>
+    private static async Task EnsureDemoDriverLocationAsync(
+        YukleDbContext db,
+        User driver,
+        int customerId,
+        CancellationToken ct)
+    {
+        var hasOnWay = await db.Loads.AnyAsync(
+            l => l.UserId == customerId
+                 && l.DriverId == driver.Id
+                 && l.Status == LoadStatus.OnWay,
+            ct);
+        if (!hasOnWay) return;
+
+        var now = DateTime.UtcNow;
+        var simulatedMinutesAgo = 10 + (now.Minute % 6); // 10..15 dk arası güncellenmiş gibi
+
+        driver.LastKnownLatitude = DemoAnkaraLat;
+        driver.LastKnownLongitude = DemoAnkaraLng;
+        driver.LastLocationUpdate = now.AddMinutes(-simulatedMinutesAgo);
+        await db.SaveChangesAsync(ct);
     }
 
     private sealed record DemoLoadSpec(

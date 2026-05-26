@@ -39,6 +39,19 @@ export function StatsSection({ reduceMotion }: { reduceMotion: boolean }) {
       return
     }
 
+    gsap.fromTo(
+      el.querySelectorAll('.landing-stats__cell'),
+      { opacity: 0, y: 30 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.6,
+        stagger: 0.1,
+        ease: 'power3.out',
+        scrollTrigger: { trigger: el, start: 'top 80%', once: true },
+      },
+    )
+
     const st = ScrollTrigger.create({
       trigger: el,
       start: 'top 80%',

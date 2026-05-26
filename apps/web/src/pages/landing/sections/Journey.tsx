@@ -22,19 +22,20 @@ export function JourneySection({ reduceMotion }: { reduceMotion: boolean }) {
       <div className="section-network-glow" aria-hidden />
       <div className="section-network-container">
         <motion.header
+          data-section-reveal
           className="section-network-header"
-          initial={r ? false : { opacity: 0, y: 24 }}
+          initial={r ? false : { opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-100px' }}
-          transition={{ duration: 0.8, ease, delay: r ? 0 : 0.1 }}
+          transition={{ duration: 0.6, ease, delay: r ? 0 : 0.1 }}
         >
           <p className="section-network-eyebrow">
             <span className="eyebrow-dot" aria-hidden />
             OPERASYONEL GÜÇ
           </p>
           <h2 className="section-network-title">
-            <span className="section-network-title-line">Türkiye&apos;den başlar,</span>
-            <span className="section-network-title-line">dünyaya akar.</span>
+            <span className="section-network-title-line">Türkiye&apos;den Başlar,</span>
+            <span className="section-network-title-line">Dünyaya Akar.</span>
           </h2>
           <p className="section-network-subtitle">
             Türkiye&apos;de 2.847 fabrika ile başladık, 10 ülkede büyümeye devam ediyoruz.
@@ -43,11 +44,12 @@ export function JourneySection({ reduceMotion }: { reduceMotion: boolean }) {
         </motion.header>
 
         <motion.div
+          data-section-reveal
           className="globe-stage"
-          initial={r ? false : { opacity: 0, scale: 0.94 }}
-          whileInView={{ opacity: 1, scale: 1 }}
+          initial={r ? false : { opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-100px' }}
-          transition={{ duration: 1.2, ease, delay: r ? 0 : 0.2 }}
+          transition={{ duration: 0.6, ease, delay: r ? 0 : 0.2 }}
         >
           <AnimatePresence mode="wait">
             {!country ? (
@@ -78,8 +80,9 @@ export function JourneySection({ reduceMotion }: { reduceMotion: boolean }) {
 
         {!country ? (
           <motion.div
+            data-section-reveal
             className="country-selector"
-            initial={r ? false : { opacity: 0, y: 20 }}
+            initial={r ? false : { opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-60px' }}
             transition={{ duration: 0.6, ease, delay: r ? 0 : 0.3 }}
@@ -129,20 +132,22 @@ export function JourneySection({ reduceMotion }: { reduceMotion: boolean }) {
         ) : null}
 
         <motion.div
+          data-section-reveal
           className="network-metrics-row"
           initial={r ? false : { opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-100px' }}
-          transition={{ duration: 0.8, ease, delay: r ? 0 : 0.4 }}
+          transition={{ duration: 0.6, ease, delay: r ? 0 : 0.4 }}
         >
           <LiveMetrics horizontal reduceMotion={r} />
         </motion.div>
 
         <motion.div
-          initial={r ? false : { opacity: 0, y: 12 }}
+          data-section-reveal
+          initial={r ? false : { opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.65, ease, delay: r ? 0 : 0.55 }}
+          transition={{ duration: 0.6, ease, delay: r ? 0 : 0.5 }}
         >
           <TrustBar />
         </motion.div>

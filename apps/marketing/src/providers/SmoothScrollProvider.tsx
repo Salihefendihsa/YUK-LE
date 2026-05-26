@@ -29,7 +29,8 @@ export function SmoothScrollProvider({
     }
 
     const lenis = new Lenis({
-      lerp: 0.08,
+      lerp: 0.075,
+      duration: 1.15,
       smoothWheel: true,
       syncTouch: false,
     });
