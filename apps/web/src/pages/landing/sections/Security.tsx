@@ -2,6 +2,7 @@ import { Suspense, useEffect, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { gsap } from 'gsap'
 import { SecurityScene } from '../scenes/SecurityScene'
+import { useSectionInView } from '../hooks/useSectionInView'
 
 const chips = [
   { title: 'Banka Düzeyinde Şifreleme', hint: 'Verileriniz bankacılık seviyesinde korunur.', icon: '🔐' },
@@ -20,6 +21,8 @@ const features = [
 
 export function SecuritySection({ reduceMotion }: { reduceMotion: boolean }) {
   const root = useRef<HTMLElement>(null)
+  const inView = useSectionInView(root)
+  const canvasActive = inView && !reduceMotion
 
   useEffect(() => {
     const el = root.current
@@ -41,9 +44,14 @@ export function SecuritySection({ reduceMotion }: { reduceMotion: boolean }) {
   return (
     <section ref={root} className="landing-security" id="security">
       <div className="landing-security__canvas" aria-hidden>
-        <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0.4, 4.2], fov: 45 }} gl={{ alpha: true }}>
+        <Canvas
+          dpr={[1, 1.5]}
+          camera={{ position: [0, 0.4, 4.2], fov: 45 }}
+          gl={{ alpha: true }}
+          frameloop={canvasActive ? 'always' : 'never'}
+        >
           <Suspense fallback={null}>
-            <SecurityScene />
+            <SecurityScene active={canvasActive} />
           </Suspense>
         </Canvas>
       </div>

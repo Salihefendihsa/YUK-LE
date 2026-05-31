@@ -1,9 +1,14 @@
-import { useMemo, useRef, type MutableRefObject } from 'react'
+import { useEffect, useMemo, useRef, type MutableRefObject } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { BufferGeometry, Float32BufferAttribute, LineBasicMaterial, LineSegments, Vector3 } from 'three'
 import type { Group as ThreeGroup } from 'three'
 
-export function AIScene({ mouseRef }: { mouseRef: MutableRefObject<{ x: number; y: number }> }) {
+type Props = {
+  mouseRef: MutableRefObject<{ x: number; y: number }>
+  active: boolean
+}
+
+export function AIScene({ mouseRef, active }: Props) {
   const linesRef = useRef<LineSegments>(null)
   const groupRef = useRef<ThreeGroup>(null)
 
@@ -38,7 +43,16 @@ export function AIScene({ mouseRef }: { mouseRef: MutableRefObject<{ x: number; 
     return { geometry: geo, spherePositions: flat }
   }, [])
 
+  useEffect(() => {
+    return () => {
+      geometry.dispose()
+      const mat = linesRef.current?.material
+      if (mat && !Array.isArray(mat)) mat.dispose()
+    }
+  }, [geometry])
+
   useFrame((state) => {
+    if (!active) return
     const t = state.clock.elapsedTime
     const g = groupRef.current
     if (g) {

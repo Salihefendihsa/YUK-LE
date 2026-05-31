@@ -2,9 +2,10 @@ import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Group, Mesh } from 'three'
 
-function OrbitingBadge({ index }: { index: number }) {
+function OrbitingBadge({ index, active }: { index: number; active: boolean }) {
   const ref = useRef<Group>(null)
   useFrame((state) => {
+    if (!active) return
     const g = ref.current
     if (!g) return
     const t = state.clock.elapsedTime * 0.35 + index * 0.4
@@ -28,10 +29,11 @@ function OrbitingBadge({ index }: { index: number }) {
   )
 }
 
-export function SecurityScene() {
+export function SecurityScene({ active }: { active: boolean }) {
   const shield = useRef<Mesh>(null)
 
   useFrame((state) => {
+    if (!active) return
     const m = shield.current
     if (m) m.rotation.y = state.clock.elapsedTime * 0.22
   })
@@ -66,7 +68,7 @@ export function SecurityScene() {
       </mesh>
 
       {Array.from({ length: 6 }).map((_, i) => (
-        <OrbitingBadge key={i} index={i} />
+        <OrbitingBadge key={i} index={i} active={active} />
       ))}
     </>
   )

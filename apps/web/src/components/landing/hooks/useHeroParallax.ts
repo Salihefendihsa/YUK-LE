@@ -23,86 +23,51 @@ export function useHeroParallax(
 ) {
   useEffect(() => {
     const container = containerRef.current
-    if (!container) return
+    if (!container || !canUseParallax()) return
 
-    let targetX = 0
-    let targetY = 0
-    let currentX = 0
-    let currentY = 0
-    let rafId = 0
-    let enabled = false
-
-    const resetLayers = () => {
-      for (const { ref } of layers) {
-        const el = ref.current
-        if (el) el.style.transform = ''
-      }
-    }
-
-    const tick = () => {
-      currentX += (targetX - currentX) * 0.07
-      currentY += (targetY - currentY) * 0.07
-
+    const applyTransform = (targetX: number, targetY: number) => {
       for (const { ref, max, factor } of layers) {
         const el = ref.current
         if (!el) continue
-        const x = currentX * max * 2 * factor
-        const y = currentY * max * 2 * factor
+        const x = targetX * max * 2 * factor
+        const y = targetY * max * 2 * factor
         el.style.transform = `translate3d(${x}px, ${y}px, 0)`
       }
-
-      rafId = requestAnimationFrame(tick)
     }
+
+    const resetLayers = () => applyTransform(0, 0)
 
     const onMove = (event: MouseEvent) => {
       const rect = container.getBoundingClientRect()
       if (rect.width <= 0 || rect.height <= 0) return
-      targetX = (event.clientX - rect.left) / rect.width - 0.5
-      targetY = (event.clientY - rect.top) / rect.height - 0.5
+      const targetX = (event.clientX - rect.left) / rect.width - 0.5
+      const targetY = (event.clientY - rect.top) / rect.height - 0.5
+      applyTransform(targetX, targetY)
     }
 
-    const onLeave = () => {
-      targetX = 0
-      targetY = 0
-    }
+    const onLeave = () => resetLayers()
 
-    const start = () => {
-      if (!canUseParallax() || enabled) return
-      enabled = true
-      container.addEventListener('mousemove', onMove)
-      container.addEventListener('mouseleave', onLeave)
-      rafId = requestAnimationFrame(tick)
-    }
-
-    const stop = () => {
-      if (!enabled) return
-      enabled = false
-      container.removeEventListener('mousemove', onMove)
-      container.removeEventListener('mouseleave', onLeave)
-      cancelAnimationFrame(rafId)
-      targetX = 0
-      targetY = 0
-      currentX = 0
-      currentY = 0
-      resetLayers()
-    }
+    container.addEventListener('mousemove', onMove)
+    container.addEventListener('mouseleave', onLeave)
 
     const desktopMq = window.matchMedia(DESKTOP_BREAKPOINT)
     const motionMq = window.matchMedia(REDUCED_MOTION)
 
     const onMqChange = () => {
-      stop()
-      start()
+      if (!canUseParallax()) {
+        resetLayers()
+      }
     }
 
-    start()
     desktopMq.addEventListener('change', onMqChange)
     motionMq.addEventListener('change', onMqChange)
 
     return () => {
+      container.removeEventListener('mousemove', onMove)
+      container.removeEventListener('mouseleave', onLeave)
       desktopMq.removeEventListener('change', onMqChange)
       motionMq.removeEventListener('change', onMqChange)
-      stop()
+      resetLayers()
     }
     // layers ref'leri mount'ta sabit
     // eslint-disable-next-line react-hooks/exhaustive-deps

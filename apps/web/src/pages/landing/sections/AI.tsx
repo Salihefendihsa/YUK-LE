@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Canvas } from '@react-three/fiber'
 import { gsap } from 'gsap'
 import { AIScene } from '../scenes/AIScene'
+import { useSectionInView } from '../hooks/useSectionInView'
 
 const cards = [
   {
@@ -31,6 +32,8 @@ const cards = [
 export function AISection({ reduceMotion }: { reduceMotion: boolean }) {
   const root = useRef<HTMLElement>(null)
   const mouseRef = useRef({ x: 0, y: 0 })
+  const inView = useSectionInView(root)
+  const canvasActive = inView && !reduceMotion
 
   useEffect(() => {
     const el = root.current
@@ -64,9 +67,14 @@ export function AISection({ reduceMotion }: { reduceMotion: boolean }) {
   return (
     <section ref={root} className="landing-ai" id="ai">
       <div className="landing-ai__canvas" aria-hidden>
-        <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0, 8], fov: 50 }} gl={{ alpha: true }}>
+        <Canvas
+          dpr={[1, 1.5]}
+          camera={{ position: [0, 0, 8], fov: 50 }}
+          gl={{ alpha: true }}
+          frameloop={canvasActive ? 'always' : 'never'}
+        >
           <Suspense fallback={null}>
-            <AIScene mouseRef={mouseRef} />
+            <AIScene mouseRef={mouseRef} active={canvasActive} />
           </Suspense>
         </Canvas>
       </div>
