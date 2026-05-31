@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { Logo } from '@/components/brand/Logo'
 
 const navLinks = [
   { href: '#yolculuk', label: 'Yolculuk' },
@@ -16,7 +17,7 @@ export function LandingNavbar() {
           data-hero-delay="0.1"
           className="lm-logo"
         >
-          YÜK<span>-LE</span>
+          <Logo variant="full" size="md" theme="dark" />
         </Link>
 
         <nav className="lm-nav-links" aria-label="Ana menü">

@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { login } from '../../api/auth'
 import { useAuthStore } from '../../store/auth.store'
 import GlassCard from '../../components/common/GlassCard'
+import { Logo } from '../../components/brand/Logo'
 import './Login.css'
 
 type RoleOption = 'Customer' | 'Driver'
@@ -90,20 +91,15 @@ export default function Login() {
           <GlassCard className="login-glass-panel">
             <div className="login-logo">
               <Link to="/" className="login-logo-link">
-                <div className="login-logo-icon">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                    <path d="M3 12L12 4L21 12V20H15V15H9V20H3V12Z" fill="white" />
-                  </svg>
-                </div>
-                <span>YÜK-LE</span>
+                <Logo variant="full" size="md" theme="dark" />
               </Link>
             </div>
 
             <h1 className="login-tagline">
               <span className="login-tagline-line">Yükünüz</span>{' '}
-              <em className="login-tagline-em">güvende,</em>
+              <em className="login-tagline-em">Güvende,</em>
               <br />
-              <span className="login-tagline-line login-tagline-accent">yolunuz açık.</span>
+              <span className="login-tagline-line login-tagline-accent">Yolunuz Açık.</span>
             </h1>
 
             <ul className="login-features">

@@ -1,0 +1,126 @@
+.logo {
+  display: inline-flex;
+  align-items: center;
+  --logo-text: #f4f4f5;
+  --logo-cap-size: 16px;
+  --logo-mark-size: calc(var(--logo-cap-size) * 1.5);
+  --logo-gap: calc(var(--logo-mark-size) * 0.4);
+  --logo-diagonal-len: 46;
+}
+
+.logo--light {
+  --logo-text: #18181b;
+}
+
+.logo--sm {
+  --logo-cap-size: 14px;
+}
+
+.logo--md {
+  --logo-cap-size: 16px;
+}
+
+.logo--lg {
+  --logo-cap-size: 20px;
+}
+
+.logo__lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--logo-gap);
+}
+
+.logo__mark-wrap {
+  display: inline-flex;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
+.logo__mark {
+  display: block;
+  height: var(--logo-mark-size);
+  width: var(--logo-mark-size);
+  flex-shrink: 0;
+}
+
+.logo__mark-bg,
+.logo__mark-arrow,
+.logo__mark-diagonal {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.logo__wordmark {
+  font-family: 'Sora', var(--font-heading, system-ui), sans-serif;
+  font-weight: 700;
+  font-size: var(--logo-cap-size);
+  letter-spacing: -1px;
+  line-height: 1;
+  color: var(--logo-text);
+  white-space: nowrap;
+  transform: translateY(0.05em);
+}
+
+.logo--fade-in {
+  animation: logo-fade-in 0.45s ease both;
+}
+
+@keyframes logo-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .logo__mark-bg {
+    transition: transform 0.35s ease-out;
+  }
+
+  .logo__mark-arrow {
+    transition: transform 0.35s ease-out;
+  }
+
+  .logo__mark-wrap:hover .logo__mark-bg {
+    transform: scale(1.05);
+  }
+
+  .logo__mark-wrap:hover .logo__mark-arrow {
+    transform: translateY(-5px);
+  }
+
+  .logo__mark-wrap:hover .logo__mark-diagonal {
+    animation: logo-diagonal-draw 0.35s ease-out forwards;
+  }
+}
+
+@keyframes logo-diagonal-draw {
+  from {
+    stroke-dashoffset: var(--logo-diagonal-len);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo--fade-in {
+    animation: none;
+  }
+
+  .logo__mark-bg,
+  .logo__mark-arrow {
+    transition: none !important;
+  }
+
+  .logo__mark-wrap:hover .logo__mark-bg,
+  .logo__mark-wrap:hover .logo__mark-arrow {
+    transform: none;
+  }
+
+  .logo__mark-wrap:hover .logo__mark-diagonal {
+    animation: none;
+  }
+}

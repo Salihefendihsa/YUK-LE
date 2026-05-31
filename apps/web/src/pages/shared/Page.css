@@ -4,6 +4,16 @@
   gap: 16px;
 }
 
+.page-title,
+.topbar-page-title,
+.register-title,
+.login-tagline-line,
+.login-tagline-em,
+.login-tagline-accent,
+.page-sub {
+  text-transform: capitalize;
+}
+
 .page-head {
   display: flex;
   justify-content: space-between;

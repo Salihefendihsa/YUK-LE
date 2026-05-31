@@ -14,10 +14,10 @@ export default function KullanimKosullariPage() {
             padding: 24,
           }}
         >
-          <h1 style={{ marginBottom: 20 }}>YÜK-LE KULLANIM KOŞULLARI</h1>
+          <h1 style={{ marginBottom: 20 }}>Navlonix KULLANIM KOŞULLARI</h1>
 
         <p><strong>1. Taraflar ve Kapsam</strong><br />
-          YÜK-LE platformu; yük sahipleri (fabrika/müşteri) ile tır/kamyon şoförlerini dijital olarak buluşturan bir
+          Navlonix platformu; yük sahipleri (fabrika/müşteri) ile tır/kamyon şoförlerini dijital olarak buluşturan bir
           B2B lojistik pazaryeridir.
         </p>
 
@@ -48,7 +48,7 @@ export default function KullanimKosullariPage() {
 
         <p><strong>5. Ödeme ve Komisyon</strong></p>
         <ul>
-          <li>Tüm ödemeler YÜK-LE güvenli ödeme havuzu üzerinden</li>
+          <li>Tüm ödemeler Navlonix güvenli ödeme havuzu üzerinden</li>
           <li>Platform komisyonu: teklif tutarı üzerinden %2 (müşteri ve şoför tarafı)</li>
           <li>Bireysel şoförler için stopaj kesintisi uygulanabilir</li>
           <li>Ödemeler teslimat onayından sonra serbest bırakılır</li>
@@ -70,7 +70,7 @@ export default function KullanimKosullariPage() {
         </ul>
 
         <p><strong>8. Sorumluluk Sınırlaması</strong><br />
-          YÜK-LE bir aracı platform olup taşıma işleminden doğrudan sorumlu değildir. Taşımacılık sorumluluğu anlaşma
+          Navlonix bir aracı platform olup taşıma işleminden doğrudan sorumlu değildir. Taşımacılık sorumluluğu anlaşma
           yapan şoför ve yük sahibine aittir.
         </p>
 
@@ -79,7 +79,7 @@ export default function KullanimKosullariPage() {
         </p>
 
         <p><strong>10. Değişiklikler</strong><br />
-          YÜK-LE bu koşulları önceden bildirerek değiştirme hakkını saklı tutar.
+          Navlonix bu koşulları önceden bildirerek değiştirme hakkını saklı tutar.
         </p>
 
           <p>Son güncelleme: Mayıs 2026</p>

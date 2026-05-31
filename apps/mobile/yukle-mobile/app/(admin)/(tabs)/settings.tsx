@@ -30,7 +30,7 @@ export default function AdminSettingsScreen() {
       <Card variant="elevated" padding={4}>
         <Text style={styles.cardTitle}>Yönetici bilgileri (salt okunur)</Text>
         <TextField value={user?.fullName ?? 'Yönetici'} editable={false} icon="person-outline" />
-        <TextField value="admin@yuk-le.com" editable={false} icon="mail-outline" />
+        <TextField value="admin@navlonix.com" editable={false} icon="mail-outline" />
       </Card>
 
       <Card variant="elevated" padding={4}>

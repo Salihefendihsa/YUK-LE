@@ -1,4 +1,4 @@
-# YÜK-LE — Sistem Mimarisi Genel Bakış
+# Navlonix — Sistem Mimarisi Genel Bakış
 
 ## Mevcut yapı (v2.5.6+): Modüler monolit
 

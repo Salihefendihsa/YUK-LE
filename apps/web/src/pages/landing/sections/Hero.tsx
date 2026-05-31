@@ -33,13 +33,10 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: (reduceMotion: boolean) =>
-    reduceMotion
-      ? { opacity: 1, y: 0, filter: 'blur(0px)' }
-      : { opacity: 0, y: 20, filter: 'blur(10px)' },
+    reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 },
   visible: (reduceMotion: boolean) => ({
     opacity: 1,
     y: 0,
-    filter: 'blur(0px)',
     transition: {
       duration: reduceMotion ? 0 : 0.7,
       ease,
@@ -129,9 +126,9 @@ export function HeroSection({ reduceMotion }: { reduceMotion: boolean }) {
           </motion.h1>
 
           <motion.p className="hero-subtitle" variants={itemVariants} custom={r}>
-            Saniyeler içinde eşleş. Akıllıca taşı.
+            Saniyeler İçinde Eşleş. Akıllıca Taşı.
             <br />
-            Güvenle teslim al.
+            Güvenle Teslim Al.
           </motion.p>
 
           <motion.div className="hero-cta-group" variants={itemVariants} custom={r}>
@@ -172,13 +169,6 @@ export function HeroSection({ reduceMotion }: { reduceMotion: boolean }) {
             </div>
           </motion.div>
         </motion.div>
-      </div>
-
-      <div className="hero-scroll-indicator" aria-hidden>
-        <span className="hero-scroll-label">KAYDIRIN</span>
-        <div className="hero-scroll-line">
-          <div className="hero-scroll-dot" />
-        </div>
       </div>
     </section>
   )

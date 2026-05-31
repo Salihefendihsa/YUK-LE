@@ -14,10 +14,10 @@ export default function KvkkPage() {
             padding: 24,
           }}
         >
-          <h1 style={{ marginBottom: 8 }}>YÜK-LE KİŞİSEL VERİLERİN KORUNMASI KANUNU (KVKK)</h1>
+          <h1 style={{ marginBottom: 8 }}>Navlonix KİŞİSEL VERİLERİN KORUNMASI KANUNU (KVKK)</h1>
           <h2 style={{ fontSize: 18, marginBottom: 20 }}>AYDINLATMA METNİ</h2>
 
-        <p><strong>1. Veri Sorumlusu</strong><br />YÜK-LE Lojistik Teknolojileri A.Ş. olarak...</p>
+        <p><strong>1. Veri Sorumlusu</strong><br />Navlonix Lojistik Teknolojileri A.Ş. olarak...</p>
 
         <p><strong>2. İşlenen Kişisel Veriler</strong></p>
         <ul>
@@ -69,7 +69,7 @@ export default function KvkkPage() {
           <li>Zararın giderilmesini talep etme</li>
         </ul>
 
-          <p><strong>7. İletişim</strong><br />KVKK haklarınız için: kvkk@yük-le.com</p>
+          <p><strong>7. İletişim</strong><br />KVKK haklarınız için: kvkk@navlonix.com</p>
         </div>
       </div>
       <Footer />

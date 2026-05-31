@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/assets/yukle-banner.png" alt="YÜK-LE Banner" width="100%"/>
+  <img src="docs/assets/yukle-banner.png" alt="Navlonix Banner" width="100%"/>
 </p>
 
-<h1 align="center">🚛 YÜK-LE</h1>
+<h1 align="center">🚛 Navlonix</h1>
 
 <p align="center">
   <strong>Fabrikalar ile Güvenilir Tır Şoförlerini Saniyeler İçinde Buluşturan<br/>Yapay Zeka Destekli Yeni Nesil Lojistik Pazaryeri</strong>
@@ -33,11 +33,11 @@
 
 ## 📖 Proje Hakkında
 
-**YÜK-LE**, endüstriyel yük taşımacılığını dijitalleştiren, B2B/B2C lojistik pazaryeri vizyonudur. Fabrikalar yük ilanı oluşturur, yapay zeka ile hesaplanan adil fiyat üzerinden şoförler teklif verir; tam teşekküllü ödeme (escrow), U-ETDS ve teslimat kanıtı gibi katmanlar **yol haritasında** tanımlıdır; backend şu an **tek bir ASP.NET Core** projesinde (`Yukle.Api`) modüler monolit olarak geliştirilmektedir.
+**Navlonix**, endüstriyel yük taşımacılığını dijitalleştiren, B2B/B2C lojistik pazaryeri vizyonudur. Fabrikalar yük ilanı oluşturur, yapay zeka ile hesaplanan adil fiyat üzerinden şoförler teklif verir; tam teşekküllü ödeme (escrow), U-ETDS ve teslimat kanıtı gibi katmanlar **yol haritasında** tanımlıdır; backend şu an **tek bir ASP.NET Core** projesinde (`Yukle.Api`) modüler monolit olarak geliştirilmektedir.
 
 ### 🎯 Çözdüğümüz Problem
 
-| Geleneksel Yöntem | YÜK-LE ile |
+| Geleneksel Yöntem | Navlonix ile |
 |---|---|
 | ❌ Telefon/WhatsApp ile şoför arama | ✅ Konum bazlı anlık eşleştirme (PostGIS + OSRM) |
 | ❌ Pazarlık ve güvensiz fiyatlama | ✅ AI destekli adil taban fiyat |
@@ -342,5 +342,5 @@ Sorularınız veya iş birliği teklifleriniz için:
 ---
 
 <p align="center">
-  <strong>🚛 YÜK-LE — Yükünüz Güvende, Yolunuz Açık! 🛣️</strong>
+  <strong>🚛 Navlonix — Yükünüz Güvende, Yolunuz Açık! 🛣️</strong>
 </p>

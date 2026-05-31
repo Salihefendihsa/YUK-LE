@@ -83,6 +83,7 @@
   background-clip: text;
   color: transparent;
   margin-bottom: 0.5rem;
+  text-transform: capitalize;
 }
 
 .marketing-page__subtitle {
@@ -90,6 +91,7 @@
   color: #9ca3af;
   margin-bottom: 2rem;
   line-height: 1.55;
+  text-transform: capitalize;
 }
 
 .marketing-page__body section {
@@ -102,6 +104,7 @@
   font-weight: 800;
   color: #ffdcb8;
   margin-bottom: 0.5rem;
+  text-transform: capitalize;
 }
 
 .marketing-page__body p {

@@ -246,8 +246,8 @@ export function RoleBenefits() {
             Herkes İçin Tek Platform
           </h2>
           <p className="section-lead section-lead--center">
-            Yük sahipleri, şoförler ve operasyon yöneticileri için özel olarak
-            tasarlandı.
+            Yük Sahipleri, Şoförler Ve Operasyon Yöneticileri İçin Özel Olarak
+            Tasarlandı.
           </p>
         </header>
 

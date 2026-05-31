@@ -35,29 +35,29 @@ export default function AppLayout() {
   const navigate = useNavigate()
 
   const titleMap: Record<string, string> = {
-    '/customer/dashboard': 'Genel Bakış | YÜK-LE',
-    '/customer/loads': 'İlanlarım | YÜK-LE',
-    '/customer/loads/create': 'Yeni İlan | YÜK-LE',
-    '/customer/addresses': 'Belgelerim | YÜK-LE',
-    '/customer/wallet': 'Cüzdan | YÜK-LE',
-    '/customer/history': 'Geçmiş | YÜK-LE',
-    '/customer/profile': 'Profil | YÜK-LE',
-    '/customer/chats': 'Sohbetlerim | YÜK-LE',
-    '/customer/settings': 'Ayarlar | YÜK-LE',
-    '/customer/analytics': 'Analitik | YÜK-LE',
-    '/customer/bids': 'Teklifler | YÜK-LE',
-    '/customer/track': 'Canlı Harita | YÜK-LE',
-    '/driver/dashboard': 'Genel Bakış | YÜK-LE',
-    '/driver/wallet': 'Cüzdan | YÜK-LE',
-    '/driver/history': 'Geçmiş | YÜK-LE',
-    '/driver/profile': 'Profil | YÜK-LE',
-    '/driver/chats': 'Sohbetlerim | YÜK-LE',
-    '/driver/settings': 'Ayarlar | YÜK-LE',
-    '/admin/dashboard': 'Admin Paneli | YÜK-LE',
-    '/admin/tracking': 'Canlı Takip | YÜK-LE',
-    '/admin/ratings': 'Puanlama Yönetimi | YÜK-LE',
-    '/admin/chats': 'Tüm Sohbetler | YÜK-LE',
-    '/admin/settings': 'Ayarlar | YÜK-LE',
+    '/customer/dashboard': 'Genel Bakış | Navlonix',
+    '/customer/loads': 'İlanlarım | Navlonix',
+    '/customer/loads/create': 'Yeni İlan | Navlonix',
+    '/customer/addresses': 'Belgelerim | Navlonix',
+    '/customer/wallet': 'Cüzdan | Navlonix',
+    '/customer/history': 'Geçmiş | Navlonix',
+    '/customer/profile': 'Profil | Navlonix',
+    '/customer/chats': 'Sohbetlerim | Navlonix',
+    '/customer/settings': 'Ayarlar | Navlonix',
+    '/customer/analytics': 'Analitik | Navlonix',
+    '/customer/bids': 'Teklifler | Navlonix',
+    '/customer/track': 'Canlı Harita | Navlonix',
+    '/driver/dashboard': 'Genel Bakış | Navlonix',
+    '/driver/wallet': 'Cüzdan | Navlonix',
+    '/driver/history': 'Geçmiş | Navlonix',
+    '/driver/profile': 'Profil | Navlonix',
+    '/driver/chats': 'Sohbetlerim | Navlonix',
+    '/driver/settings': 'Ayarlar | Navlonix',
+    '/admin/dashboard': 'Admin Paneli | Navlonix',
+    '/admin/tracking': 'Canlı Takip | Navlonix',
+    '/admin/ratings': 'Puanlama Yönetimi | Navlonix',
+    '/admin/chats': 'Tüm Sohbetler | Navlonix',
+    '/admin/settings': 'Ayarlar | Navlonix',
   }
 
   const pageTitle = useMemo(() => {
@@ -70,9 +70,9 @@ export default function AppLayout() {
   }, [location.pathname])
 
   useEffect(() => {
-    document.title = titleMap[location.pathname] ?? 'YÜK-LE'
+    document.title = titleMap[location.pathname] ?? 'Navlonix'
     const meta = document.querySelector('meta[name="description"]')
-    if (meta) meta.setAttribute('content', 'YÜK-LE dijital lojistik platformu ile güvenli yük taşıma, teklif ve takip hizmetleri.')
+    if (meta) meta.setAttribute('content', 'Navlonix dijital lojistik platformu ile güvenli yük taşıma, teklif ve takip hizmetleri.')
   }, [location.pathname])
 
   useEffect(() => {
@@ -132,9 +132,6 @@ export default function AppLayout() {
 
   return (
     <div className={`app-layout ${collapsed ? 'sidebar-collapsed' : ''}`} data-app-role={appRole}>
-      <span className="shell-orb shell-orb--1" aria-hidden />
-      <span className="shell-orb shell-orb--2" aria-hidden />
-      <span className="shell-orb shell-orb--3" aria-hidden />
       <Sidebar collapsed={collapsed} mobileOpen={mobileOpen} />
       {mobileOpen ? <div className="mobile-overlay" onClick={() => setMobileOpen(false)} /> : null}
       <div className="app-main">

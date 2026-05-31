@@ -59,7 +59,7 @@ export default function AdminLoginRoute() {
           </Text>
           <View style={s.testBox}>
             <Text style={s.testTitle}>TEST ADMIN</Text>
-            <Text style={s.testItem}>admin@yuk-le.com / Admin123!</Text>
+            <Text style={s.testItem}>admin@navlonix.com / Admin123!</Text>
           </View>
         </View>
       }
@@ -78,7 +78,7 @@ export default function AdminLoginRoute() {
       <Text style={styles.fieldLabel}>E-posta</Text>
       <TextField
         icon="mail-outline"
-        placeholder="admin@yuk-le.com"
+        placeholder="admin@navlonix.com"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"

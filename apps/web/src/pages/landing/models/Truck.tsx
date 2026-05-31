@@ -25,7 +25,7 @@ function useBrandTexture() {
     g.textAlign = 'center'
     g.textBaseline = 'middle'
     g.fillStyle = '#ff6b00'
-    g.fillText('YÜK-LE', 256, 130)
+    g.fillText('Navlonix', 256, 130)
     const t = new CanvasTexture(canvas)
     t.colorSpace = SRGBColorSpace
     t.needsUpdate = true

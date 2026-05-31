@@ -1,8 +1,15 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { Inter, JetBrains_Mono, Plus_Jakarta_Sans, Sora } from "next/font/google";
 import { Navbar } from "@/components/layout/Navbar";
 import { SmoothScrollProvider } from "@/providers/SmoothScrollProvider";
 import "./globals.css";
+
+const sora = Sora({
+  variable: "--font-logo",
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  display: "swap",
+});
 
 const plusJakarta = Plus_Jakarta_Sans({
   variable: "--font-display",
@@ -23,12 +30,12 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "YÜK-LE — Yapay Zeka Destekli Lojistik Pazaryeri",
+  title: "Navlonix — Yapay Zeka Destekli Lojistik Pazaryeri",
   description:
     "Fabrikalar ile güvenilir tır şoförlerini saniyeler içinde buluşturan yeni nesil lojistik platformu.",
-  keywords: ["lojistik", "yük taşıma", "nakliye", "AI", "YÜK-LE"],
+  keywords: ["lojistik", "yük taşıma", "nakliye", "AI", "Navlonix"],
   openGraph: {
-    title: "YÜK-LE — Dijital Lojistik Platformu",
+    title: "Navlonix — Dijital Lojistik Platformu",
     description:
       "Eşleş, taşı, güvenle teslim al. Yapay zeka destekli B2B lojistik pazaryeri.",
     type: "website",
@@ -44,7 +51,7 @@ export default function RootLayout({
   return (
     <html
       lang="tr"
-      className={`${plusJakarta.variable} ${inter.variable} ${jetbrainsMono.variable} h-full scroll-smooth`}
+      className={`${sora.variable} ${plusJakarta.variable} ${inter.variable} ${jetbrainsMono.variable} h-full scroll-smooth`}
     >
       <body className="min-h-full bg-[var(--bg-page)] font-body text-[var(--text-secondary)] antialiased">
         <SmoothScrollProvider>

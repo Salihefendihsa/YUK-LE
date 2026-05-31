@@ -16,7 +16,7 @@ async function login(emailOrPhone, password) {
 
 async function main() {
   console.log('API:', API);
-  const admin = await login('admin@yuk-le.com', 'Admin123!');
+  const admin = await login('admin@navlonix.com', 'Admin123!');
   const token = admin.token ?? admin.Token;
   const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 

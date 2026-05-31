@@ -89,7 +89,7 @@ function IconEscrow() {
 
 const FEATURES: Feature[] = [
   {
-    title: "Yapay zekâ ile en doğru eşleşme",
+    title: "Yapay Zekâ İle En Doğru Eşleşme",
     description:
       "Fabrikalar ve belgeli şoförler saniyeler içinde en optimum rotada buluşur. Zaman ve maliyet kaybı biter.",
     icon: <IconAiMatch />,
@@ -97,21 +97,21 @@ const FEATURES: Feature[] = [
     gridClass: "md:col-span-7 md:row-span-2",
   },
   {
-    title: "Kapıdan kapıya canlı konum",
+    title: "Kapıdan Kapıya Canlı Konum",
     description:
       "Yükün durumunu ve tırın rotasını anlık olarak harita üzerinden şeffafça izleyin. Her adım kontrolünüzde olsun.",
     icon: <IconLiveMap />,
     gridClass: "md:col-span-5",
   },
   {
-    title: "Belgeli ve doğrulanmış şoförler",
+    title: "Belgeli Ve Doğrulanmış Şoförler",
     description:
       "Tüm sürücülerin evrakları, K1 ve psikoteknik belgeleri admin panelinde sıkı denetimden geçer. Güven önceliğimizdir.",
     icon: <IconVerified />,
     gridClass: "md:col-span-5",
   },
   {
-    title: "Teslimatta serbest bırakılan güvenli ödeme",
+    title: "Teslimatta Serbest Bırakılan Güvenli Ödeme",
     description:
       "Ödeme yük teslim edilene kadar güvence altında tutulur. Teslimat sorunsuz tamamlandığında şoföre aktarılır.",
     icon: <IconEscrow />,
@@ -210,10 +210,10 @@ export function Features() {
         <header className="mx-auto mb-12 max-w-2xl text-center md:mb-14">
           <p className="section-eyebrow section-eyebrow--accent">Özellikler</p>
           <h2 id="features-heading" className="section-heading mt-3">
-            Lojistiği yeniden tanımlayan güç
+            Lojistiği Yeniden Tanımlayan Güç
           </h2>
           <p className="section-lead section-lead--center">
-            Eşleşmeden ödemeye kadar her adımda şeffaflık ve kontrol.
+            Eşleşmeden Ödemeye Kadar Her Adımda Şeffaflık Ve Kontrol.
           </p>
         </header>
 

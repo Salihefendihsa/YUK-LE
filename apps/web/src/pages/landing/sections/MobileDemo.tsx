@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
 import { gsap } from 'gsap'
+import { Logo } from '@/components/brand/Logo'
 
 export function MobileDemoSection({ reduceMotion }: { reduceMotion: boolean }) {
   const root = useRef<HTMLElement>(null)
@@ -28,7 +29,7 @@ export function MobileDemoSection({ reduceMotion }: { reduceMotion: boolean }) {
           <p className="landing-mobile__eyebrow landing-mobile__reveal">Mobil</p>
           <h2 className="landing-mobile__reveal">Cebinizde Yük Yönetimi</h2>
           <p className="landing-mobile__p landing-mobile__reveal">
-            İlan açın, teklifleri görün, teslimatı takip edin — tek uygulamada.
+            İlan Açın, Teklifleri Görün, Teslimatı Takip Edin — Tek Uygulamada.
           </p>
           <div className="landing-mobile__stores landing-mobile__reveal">
             <span className="landing-mobile__badge">Yakında</span>
@@ -45,7 +46,7 @@ export function MobileDemoSection({ reduceMotion }: { reduceMotion: boolean }) {
             <div className="landing-mobile__island" />
             <div className={`landing-mobile__screen-shell ${reduceMotion ? 'landing-mobile__screen-shell--reduced' : ''}`}>
               <div className="landing-mobile-mini__nav">
-                <span className="landing-mobile-mini__wordmark">YÜK-LE</span>
+                <Logo variant="wordmark" size="sm" theme="dark" />
               </div>
               <div className="landing-mobile-mini__hero">
                 <div className="landing-mobile-mini__hero-bg" />

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { MARKETING_DOCS, type MarketingDocId } from './marketingContent'
+import { Logo } from '@/components/brand/Logo'
 import './marketing.css'
 
 const CTA_REGISTER_IDS = new Set<MarketingDocId>(['belge-tanima', 'adil-fiyat', 'akilli-eslestirme', 'features', 'pricing'])
@@ -17,7 +18,7 @@ export default function MarketingDocumentPage({ id }: Props) {
       <div className="marketing-page__bg" aria-hidden />
       <header className="marketing-page__header">
         <Link to="/" className="marketing-page__logo">
-          🚛 <span>YÜK-LE</span>
+          <Logo variant="full" size="sm" theme="dark" />
         </Link>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <Link to="/login" className="marketing-page__link">

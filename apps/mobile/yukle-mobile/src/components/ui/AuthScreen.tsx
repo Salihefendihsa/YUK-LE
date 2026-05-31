@@ -55,7 +55,7 @@ export function AuthScreen({ children, title, subtitle, footer, contentStyle }: 
             <View style={styles.logoBox}>
               <Ionicons name="cube" size={28} color={palette.brand} />
             </View>
-            <Text style={styles.brand}>YUK-LE</Text>
+            <Text style={styles.brand}>Navlonix</Text>
             <Text style={styles.tagline}>Akıllı lojistik platformu</Text>
           </View>
 

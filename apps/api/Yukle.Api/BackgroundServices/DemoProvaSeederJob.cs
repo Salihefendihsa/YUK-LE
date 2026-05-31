@@ -19,8 +19,8 @@ public sealed class DemoProvaSeederJob(
     ILogger<DemoProvaSeederJob> logger) : IHostedService
 {
     private const string DemoMarker = "DEMO_PROVA:v2";
-    private const string TestCustomerEmail = "test@yukle.com";
-    private const string TestDriverEmail = "sofor@yukle.com";
+    private const string TestCustomerEmail = "test@navlonix.com";
+    private const string TestDriverEmail = "sofor@navlonix.com";
     private const double DemoAnkaraLat = 39.9334;
     private const double DemoAnkaraLng = 32.8597;
 

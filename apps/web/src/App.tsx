@@ -21,7 +21,7 @@ function App() {
   return (
     <>
       <div style={{ padding: '2rem', textAlign: 'center' }}>
-        <h1>YÜK-LE Web Paneli</h1>
+        <h1>Navlonix Web Paneli</h1>
         <div className="card" style={{ marginTop: '2rem' }}>
           <button onClick={checkHealth} style={{ padding: '10px 20px', fontSize: '16px', cursor: 'pointer' }}>
             Backend Sistem Kontrolü

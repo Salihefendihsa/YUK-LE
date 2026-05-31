@@ -327,7 +327,7 @@ export function Trust() {
         <header className="mx-auto mb-14 max-w-2xl text-center">
           <p className="section-eyebrow section-eyebrow--accent">Güven</p>
           <h2 id="trust-heading" className="section-heading mt-3">
-            Rakamlarla ve deneyimle güven
+            Rakamlarla Ve Deneyimle Güven
           </h2>
         </header>
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useId, type CSSProperties } from 'react'
+import { Logo } from '@/components/brand/Logo'
 
 type MinimalLoaderProps = {
   onComplete: () => void
@@ -10,7 +11,7 @@ type LoaderPhase = 'loading' | 'reveal' | 'exiting'
 
 const RADIUS = 70
 
-export function MinimalLoader({ onComplete, onProgress, duration = 2500 }: MinimalLoaderProps) {
+export function MinimalLoader({ onComplete, onProgress, duration = 1200 }: MinimalLoaderProps) {
   const uid = useId().replace(/:/g, '')
   const gradId = `circleGrad-${uid}`
   const glowId = `circleGlow-${uid}`
@@ -156,8 +157,7 @@ export function MinimalLoader({ onComplete, onProgress, duration = 2500 }: Minim
             ) : null}
           </svg>
           <div className="circle-loader-wordmark">
-            <span className="circle-loader-dot" aria-hidden />
-            <span className="circle-loader-text">YÜK-LE</span>
+            <Logo variant="full" size="lg" theme="dark" fadeIn />
           </div>
         </div>
         <div className="circle-loader-status">

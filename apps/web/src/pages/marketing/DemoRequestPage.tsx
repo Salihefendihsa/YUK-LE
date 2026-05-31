@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from '@/components/common/Toast'
+import { Logo } from '@/components/brand/Logo'
 import './marketing.css'
 
 export default function DemoRequestPage() {
@@ -25,7 +26,7 @@ export default function DemoRequestPage() {
       <div className="marketing-page__bg" aria-hidden />
       <header className="marketing-page__header">
         <Link to="/" className="marketing-page__logo">
-          🚛 <span>YÜK-LE</span>
+          <Logo variant="full" size="sm" theme="dark" />
         </Link>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <Link to="/login" className="marketing-page__link">
@@ -41,7 +42,7 @@ export default function DemoRequestPage() {
         <article className="marketing-page__article glass-card demo-page__form-card">
           <p className="marketing-page__eyebrow">Kurumsal</p>
           <h1 className="marketing-page__title">Demo Talebi</h1>
-          <p className="marketing-page__subtitle">Ekibiniz için canlı tur planlayalım; formu doldurmanız yeterli.</p>
+          <p className="marketing-page__subtitle">Ekibiniz İçin Canlı Tur Planlayalım; Formu Doldurmanız Yeterli.</p>
           <form className="demo-page__form" onSubmit={onSubmit}>
             <label className="demo-page__field">
               <span>Ad Soyad</span>
@@ -75,7 +76,7 @@ export default function DemoRequestPage() {
         <aside className="demo-page__aside glass-card" aria-label="Tanıtım videosu">
           <p className="marketing-page__eyebrow">Tanıtım</p>
           <h2 className="demo-page__aside-title">Video Alanı</h2>
-          <p className="marketing-page__subtitle">Ürün turu videosu burada yer alacak. Şimdilik yer tutucu.</p>
+          <p className="marketing-page__subtitle">Ürün Turu Videosu Burada Yer Alacak. Şimdilik Yer Tutucu.</p>
           <div className="demo-page__video-placeholder">▶</div>
         </aside>
       </div>

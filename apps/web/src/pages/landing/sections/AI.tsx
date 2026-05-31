@@ -72,7 +72,7 @@ export function AISection({ reduceMotion }: { reduceMotion: boolean }) {
       </div>
       <div className="landing-ai__content">
         <div className="landing-ai__glass landing-ai__reveal">
-          <p className="landing-ai__eyebrow">Yapay zeka destekli</p>
+          <p className="landing-ai__eyebrow">Yapay Zeka Destekli</p>
           <div className="landing-ai__terminal" aria-live="polite">
             <span>{'>'} Analiz ediliyor...</span>
             <span>{'>'} Fiyat hesaplanıyor...</span>

@@ -44,7 +44,7 @@ export function AppDrawerContent({ navigation, role }: Props) {
       ]}
     >
       <View style={styles.brandBlock}>
-        <Text style={styles.logo}>YÜK-LE</Text>
+        <Text style={styles.logo}>Navlonix</Text>
         <View style={styles.accentLine} />
         <Text style={styles.userName} numberOfLines={1}>
           {user?.fullName ?? 'Kullanıcı'}

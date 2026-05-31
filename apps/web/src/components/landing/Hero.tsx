@@ -41,7 +41,7 @@ function ArrowIcon() {
 
 function ScrollCue() {
   return (
-    <a href="#yolculuk" className="hero-scroll-cue" aria-label="Aşağı kaydır">
+    <a href="#journey" className="hero-scroll-cue" aria-label="Türkiye ağına kaydır">
       Aşağı kaydır
       <span className="hero-scroll-cue__chevron" aria-hidden>
         <span className="hero-scroll-cue__line" />

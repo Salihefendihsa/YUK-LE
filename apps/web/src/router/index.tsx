@@ -117,7 +117,7 @@ function HomeRoute() {
             color: '#fff',
           }}
         >
-          YÜK-LE…
+          Navlonix…
         </div>
       }
     >

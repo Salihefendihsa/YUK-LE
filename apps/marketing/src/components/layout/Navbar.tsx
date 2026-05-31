@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "@/components/brand/Logo";
 
 const navLinks = [
   { href: "#yolculuk", label: "Yolculuk" },
@@ -15,12 +16,9 @@ export function Navbar() {
           href="/"
           data-hero-animate
           data-hero-delay="0.1"
-          className="font-display text-[1.375rem] leading-none font-bold tracking-[-0.03em] text-brand-500"
+          className="inline-flex items-center"
         >
-          YÜK
-          <span className="text-white underline decoration-brand-500 decoration-2 underline-offset-4">
-            -LE
-          </span>
+          <Logo variant="full" size="md" theme="dark" />
         </Link>
 
         <nav className="hidden items-center gap-7 md:flex" aria-label="Ana menü">

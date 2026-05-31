@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { register } from '../../api/auth'
 import { digitsOnly, formatIBAN, formatPhone, validateEmail, validateIBAN, validatePassword, validatePhone, validateTC, validateTaxNumber } from '../../utils/validators'
+import { Logo } from '../../components/brand/Logo'
 import './Register.css'
 import './Login.css'
 
@@ -158,12 +159,7 @@ export default function Register() {
       <div className="register-box glass-card">
         <div className="register-logo">
           <Link to="/" className="login-logo-link">
-            <div className="logo-icon-sm">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M3 12L12 4L21 12V20H15V15H9V20H3V12Z" fill="white" />
-              </svg>
-            </div>
-            <span>YÜK-LE</span>
+            <Logo variant="full" size="sm" theme="dark" />
           </Link>
         </div>
 

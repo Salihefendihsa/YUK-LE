@@ -81,7 +81,7 @@ export function HeroBackground() {
           letterSpacing: '0.08em',
         }}
       >
-        © 2026 YÜK-LE
+        © 2026 Navlonix
       </div>
     </div>
   )

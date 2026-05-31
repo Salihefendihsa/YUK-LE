@@ -17,11 +17,16 @@
 /* Logo */
 .sidebar-logo {
   display: flex;
-  align-items: center;
-  gap: var(--space-3);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
   padding: var(--space-5) var(--space-4);
   border-bottom: 1px solid var(--color-border-light);
   min-height: var(--topbar-height);
+}
+
+.sidebar.collapsed .sidebar-logo {
+  align-items: center;
 }
 
 .logo-icon {

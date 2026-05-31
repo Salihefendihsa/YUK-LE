@@ -23,7 +23,7 @@ async function main() {
   const driver = await login('5000000002', 'Test123!');
   console.log('Sofor OK:', driver.role, driver.fullName);
 
-  const admin = await login('admin@yuk-le.com', 'Admin123!');
+  const admin = await login('admin@navlonix.com', 'Admin123!');
   if (admin.role !== 'Admin') throw new Error(`Admin role bekleniyor, gelen: ${admin.role}`);
   console.log('Admin OK:', admin.role, admin.fullName);
 

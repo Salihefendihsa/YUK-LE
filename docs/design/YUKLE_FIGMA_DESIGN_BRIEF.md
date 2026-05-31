@@ -1,4 +1,4 @@
-# YÜK-LE — Figma Design Brief
+# Navlonix — Figma Design Brief
 ### Web Dashboard & Mobile App · v1.0 · Nisan 2026
 
 ---
@@ -25,7 +25,7 @@
 ## 1. Ürün Özeti & Tasarım Vizyonu
 
 ### Ne Yapıyor?
-YÜK-LE; fabrikaları ve endüstriyel üreticileri, güvenilir ve belgeli tır şoförleriyle **saniyeler içinde buluşturan**, yapay zeka destekli B2B lojistik pazaryeridir. Eski usul WhatsApp pazarlıklarının, belirsiz nakit ödemelerin ve belge kaosunun sonunu getiriyor.
+Navlonix; fabrikaları ve endüstriyel üreticileri, güvenilir ve belgeli tır şoförleriyle **saniyeler içinde buluşturan**, yapay zeka destekli B2B lojistik pazaryeridir. Eski usul WhatsApp pazarlıklarının, belirsiz nakit ödemelerin ve belge kaosunun sonunu getiriyor.
 
 ### Tasarım Vizyonu (Tek Cümle)
 > **"Endüstriyel güç, dijital zariflik — her şoför ve fabrika müdürünün güvenle kullandığı, hem sert hem akıllı bir platform."**
@@ -94,7 +94,7 @@ Başarı kriteri: Yakınımdaki yük ilanını gör → fiyata bak → teklif ve
 ### Persona C — PLATFORM ADMİNİ
 
 ```
-Rol          : YÜK-LE operasyon ekibi
+Rol          : Navlonix operasyon ekibi
 Cihaz        : Masaüstü
 İhtiyaç      : Belge onay/red, kullanıcı yönetimi, analizler
 ```
@@ -104,7 +104,7 @@ Cihaz        : Masaüstü
 ## 3. Marka Kimliği & Ton
 
 ### Logo Karakteri
-YÜK-LE logosu şu özellikleri taşımalı:
+Navlonix logosu şu özellikleri taşımalı:
 - Kelimede gizli "YÜK" kısmı güçlü / ağır hissettirmeli
 - "-LE" eki aksiyon / yükle / harekete geç enerjisi
 - Wordmark: **Geometric sans-serif**, condensed, büyük harf tercihli
@@ -181,7 +181,7 @@ Başlık (Display/Heading) : "Plus Jakarta Sans" — Variable, 400-800
 Gövde (Body/UI)          : "Inter" — Variable, 400-600
 Monospace (kod, ID, plaka): "JetBrains Mono" — 400-500
 ```
-> Google Fonts üzerinden erişilebilir. Plus Jakarta Sans'ın condensed ağırlıkları YÜK-LE'nin güçlü ve modern tonuna mükemmel oturuyor.
+> Google Fonts üzerinden erişilebilir. Plus Jakarta Sans'ın condensed ağırlıkları Navlonix'nin güçlü ve modern tonuna mükemmel oturuyor.
 
 ### Type Scale
 
@@ -1201,4 +1201,4 @@ Bu brief, uygulamanın **teknik gerçekliğine** dayanmaktadır:
 
 ---
 
-*YÜK-LE Design Brief · v1.0 · Hazırlayan: Hilmi Salih Altınışık · 2026*
+*Navlonix Design Brief · v1.0 · Hazırlayan: Hilmi Salih Altınışık · 2026*

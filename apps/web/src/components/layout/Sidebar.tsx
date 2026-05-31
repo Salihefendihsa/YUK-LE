@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth.store'
+import { Logo } from '../brand/Logo'
 import './Sidebar.css'
 
 interface NavItem {
@@ -76,21 +77,14 @@ export default function Sidebar({ collapsed, mobileOpen }: SidebarProps) {
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
       <div className="sidebar-logo">
-        <div className="logo-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M3 12L12 4L21 12V20H15V15H9V20H3V12Z" fill={user?.role === 'Admin' ? '#EF4444' : 'var(--color-brand)'} />
-          </svg>
-        </div>
-        {!collapsed && (
-          <div className="logo-text-wrap">
-            <span className="logo-text">YÜK-LE</span>
-            <span className="logo-panel-tag">
-              {user?.role === 'Customer' && 'Müşteri Paneli'}
-              {user?.role === 'Driver' && 'Şoför Paneli'}
-              {user?.role === 'Admin' && 'Yönetici'}
-            </span>
-          </div>
-        )}
+        <Logo variant={collapsed ? 'mark' : 'full'} size="sm" theme="dark" />
+        {!collapsed ? (
+          <span className="logo-panel-tag">
+            {user?.role === 'Customer' && 'Müşteri Paneli'}
+            {user?.role === 'Driver' && 'Şoför Paneli'}
+            {user?.role === 'Admin' && 'Yönetici'}
+          </span>
+        ) : null}
       </div>
 
       <nav className="sidebar-nav">

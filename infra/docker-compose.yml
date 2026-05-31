@@ -1,4 +1,4 @@
-# YÜK-LE yerel geliştirme ortamı
+# Navlonix yerel geliştirme ortamı
 # PostGIS + Redis (şifreli) + ASP.NET Core API
 # Tüm servisler aynı "yukle-net" bridge network'ünde çalışır.
 
@@ -65,7 +65,7 @@ services:
     environment:
       ACCEPT_EULA: Y
 
-  # ── YÜK-LE API ─────────────────────────────────────────────────────────────
+  # ── Navlonix API ─────────────────────────────────────────────────────────────
   api:
     build:
       context: ../apps/api/Yukle.Api

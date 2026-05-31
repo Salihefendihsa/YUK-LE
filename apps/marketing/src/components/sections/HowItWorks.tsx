@@ -183,11 +183,11 @@ export function HowItWorks() {
             Nasıl Çalışır
           </p>
           <h2 id="how-it-works-heading" data-reveal className="section-heading">
-            Yük vermek hiç bu kadar kolay olmamıştı
+            Yük Vermek Hiç Bu Kadar Kolay Olmamıştı
           </h2>
           <p data-reveal className="section-lead section-lead--center">
-            Beş adımda ilandan teslimata — şeffaf teklifler, güvenli ödeme ve canlı takip
-            tek akışta.
+            Beş Adımda İlandan Teslimata — Şeffaf Teklifler, Güvenli Ödeme Ve Canlı Takip
+            Tek Akışta.
           </p>
         </RevealGroup>
 

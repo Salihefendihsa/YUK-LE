@@ -33,13 +33,13 @@ public sealed class AdminSeederJob(
             string adminPassword = "Admin123!";
             byte[] adminPasswordHash = Encoding.UTF8.GetBytes(BCrypt.Net.BCrypt.HashPassword(adminPassword));
 
-            var adminUser = await db.Users.SingleOrDefaultAsync(u => u.Email == "admin@yuk-le.com", cancellationToken);
+            var adminUser = await db.Users.SingleOrDefaultAsync(u => u.Email == "admin@navlonix.com", cancellationToken);
             if (adminUser is null)
             {
                 adminUser = new User
                 {
                     FullName = "System Administrator",
-                    Email = "admin@yuk-le.com",
+                    Email = "admin@navlonix.com",
                     Phone = "+900000000000",
                     Role = UserRole.Admin,
                     CreatedAt = DateTime.UtcNow
@@ -70,13 +70,13 @@ public sealed class AdminSeederJob(
     {
         byte[] testPasswordHash = Encoding.UTF8.GetBytes(BCrypt.Net.BCrypt.HashPassword("Test123!"));
 
-        var testCustomer = await db.Users.SingleOrDefaultAsync(u => u.Email == "test@yukle.com", cancellationToken);
+        var testCustomer = await db.Users.SingleOrDefaultAsync(u => u.Email == "test@navlonix.com", cancellationToken);
         if (testCustomer is null)
         {
             testCustomer = new User
             {
                 FullName = "Test Müşteri A.Ş.",
-                Email = "test@yukle.com",
+                Email = "test@navlonix.com",
                 Phone = "5000000001",
                 Role = UserRole.Customer,
                 CreatedAt = DateTime.UtcNow
@@ -91,13 +91,13 @@ public sealed class AdminSeederJob(
         testCustomer.IsPhoneVerified = true;
         testCustomer.ApprovalStatus = ApprovalStatus.Active;
 
-        var testDriver = await db.Users.SingleOrDefaultAsync(u => u.Email == "sofor@yukle.com", cancellationToken);
+        var testDriver = await db.Users.SingleOrDefaultAsync(u => u.Email == "sofor@navlonix.com", cancellationToken);
         if (testDriver is null)
         {
             testDriver = new User
             {
                 FullName = "Test Şoför",
-                Email = "sofor@yukle.com",
+                Email = "sofor@navlonix.com",
                 Phone = "5000000002",
                 Role = UserRole.Driver,
                 CreatedAt = DateTime.UtcNow

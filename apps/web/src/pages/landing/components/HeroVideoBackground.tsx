@@ -43,10 +43,6 @@ export function HeroVideoBackground() {
         <img src="/hero-trucks.jpg" alt="" />
       )}
       <div className="hero-video-scrim" />
-      <div className="hero-video-watermark-cover" aria-hidden>
-        <span className="hero-video-watermark-text">KAYDIRIN</span>
-        <span className="hero-video-watermark-btn">YÜK-LE</span>
-      </div>
     </div>
   )
 }

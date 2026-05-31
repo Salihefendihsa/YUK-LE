@@ -188,6 +188,16 @@ body {
   margin-right: auto;
 }
 
+.section-heading,
+.section-lead,
+.marketing-page__title,
+.marketing-page__subtitle,
+[data-feature-card] h3,
+#yolculuk article h3,
+#trust article h3 {
+  text-transform: capitalize;
+}
+
 /* Sayfa bolum ritmi — cift / tek zemin */
 .section-rhythm-a {
   --section-bg: var(--bg-page);
@@ -307,6 +317,100 @@ body {
   50% {
     transform: translateY(7px);
     opacity: 1;
+  }
+}
+
+@keyframes logo-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.footer-marquee {
+  width: 100%;
+}
+
+.footer-marquee__viewport {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 3%,
+    #000 97%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 3%,
+    #000 97%,
+    transparent 100%
+  );
+}
+
+.footer-marquee__segment {
+  flex-shrink: 0;
+  padding-inline: 1.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(107 114 128);
+  white-space: nowrap;
+}
+
+.footer-marquee__segment--measure {
+  position: absolute;
+  left: 0;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.footer-marquee__track {
+  display: flex;
+  width: max-content;
+  animation: footer-marquee-scroll 32s linear infinite;
+  will-change: transform;
+}
+
+@keyframes footer-marquee-scroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(calc(-1 * var(--marquee-shift, 0px)), 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-marquee__track {
+    animation: none;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+    white-space: normal;
+    text-align: center;
+    gap: 0.25rem;
+  }
+
+  .footer-marquee__track .footer-marquee__segment:not(:first-of-type) {
+    display: none;
+  }
+
+  .footer-marquee__segment--measure {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-fade-in {
+    animation: none !important;
   }
 }
 

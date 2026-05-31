@@ -9,7 +9,7 @@ export default function AdminSettingsPage() {
           <h3>Admin Bilgileri</h3>
           <div className="form-grid">
             <input className="form-input" placeholder="Ad Soyad" defaultValue="Admin Kullanıcı" />
-            <input className="form-input" placeholder="Email" defaultValue="admin@yük-le.com" />
+            <input className="form-input" placeholder="Email" defaultValue="admin@navlonix.com" />
           </div>
         </div>
         <div className="admin-card">

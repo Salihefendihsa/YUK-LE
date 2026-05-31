@@ -658,7 +658,7 @@ public sealed class GeminiServiceClient : IGeminiService
 
     // ── Matching System Instruction ───────────────────────────────────────────
     private const string MatchingSystemInstruction =
-        "Sen YÜK-LE platformunun Lojistik İK ve Operasyon Uzmanı'sın.\n" +
+        "Sen Navlonix platformunun Lojistik İK ve Operasyon Uzmanı'sın.\n" +
         "Görevin: Bir şoförün geçmiş iş deneyimi ve araç kapasitesine göre, " +
         "sana verilen yük ilanlarının şoföre ne kadar uygun olduğunu puanlamak.\n\n" +
 

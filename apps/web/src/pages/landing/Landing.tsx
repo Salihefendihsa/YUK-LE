@@ -65,12 +65,12 @@ export default function Landing() {
 
   const contentRevealStyle = useMemo(() => {
     const vis: 'visible' | 'hidden' = loadProgress >= 80 || ready ? 'visible' : 'hidden'
+    const offset = 1 - heroReveal
     return {
       opacity: heroReveal,
-      filter: `blur(${(1 - heroReveal) * 24}px)`,
-      transform: `scale(${1 + (1 - heroReveal) * 0.04})`,
+      transform: `translateY(${offset * 20}px) scale(${1 + offset * 0.04})`,
       visibility: vis,
-      transition: 'opacity 0.15s ease-out, filter 0.15s ease-out, transform 0.15s ease-out',
+      transition: 'opacity 0.15s ease-out, transform 0.15s ease-out',
     }
   }, [heroReveal, loadProgress, ready])
 
@@ -94,15 +94,29 @@ export default function Landing() {
   return (
     <div className={`landing-root ${ready ? 'landing-root--ready' : ''}`}>
       {!ready && (
-        <MinimalLoader onComplete={onIntroComplete} onProgress={setLoadProgress} duration={2500} />
+        <MinimalLoader onComplete={onIntroComplete} onProgress={setLoadProgress} duration={1200} />
       )}
       <div className="landing-root-content" style={contentRevealStyle}>
         <LandingNavbar />
         <main>
           <HeroSection reduceMotion={light3d} />
+
+          {/* 1. Kanıt: Türkiye ağı */}
           <LazySection id="journey" rootMargin="500px" minHeight="700px">
             <JourneySection reduceMotion={light3d} />
           </LazySection>
+
+          {/* 2–3. Süreç + yetenekler (haritanın hemen altı) */}
+          <div className="landing-story-flow landing-marketing">
+            <LazySection id="yolculuk" rootMargin="400px" minHeight="640px">
+              <HowItWorks />
+            </LazySection>
+            <LazySection id="ozellikler" rootMargin="400px" minHeight="560px">
+              <Features />
+            </LazySection>
+          </div>
+
+          {/* 4. Farklılaştırıcı & güven */}
           <LazySection id="ai" rootMargin="500px" minHeight="700px">
             <AISection reduceMotion={reduceMotion} />
           </LazySection>
@@ -115,21 +129,13 @@ export default function Landing() {
           <LazySection id="mobile" rootMargin="500px" minHeight="700px">
             <MobileDemoSection reduceMotion={light3d} />
           </LazySection>
+
+          {/* 5. Sosyal kanıt & dönüşüm */}
           <LazySection id="testimonials" rootMargin="400px" minHeight="500px">
             <TestimonialsSection />
           </LazySection>
           <LazySection id="pricing" rootMargin="400px" minHeight="600px">
             <PricingSection />
-          </LazySection>
-          <LazySection id="yolculuk" rootMargin="400px" minHeight="700px">
-            <div className="landing-marketing">
-              <HowItWorks />
-            </div>
-          </LazySection>
-          <LazySection id="ozellikler-marketing" rootMargin="400px" minHeight="700px">
-            <div className="landing-marketing">
-              <Features />
-            </div>
           </LazySection>
           <LazySection id="cta" rootMargin="300px" minHeight="400px">
             <CTASection />

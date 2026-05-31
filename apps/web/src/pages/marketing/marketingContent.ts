@@ -23,7 +23,7 @@ export type MarketingDoc = {
 export const MARKETING_DOCS: Record<MarketingDocId, MarketingDoc> = {
   features: {
     title: 'Özellikler',
-    subtitle: 'YÜK-LE ile lojistik süreçlerinizi tek platformda yönetin.',
+    subtitle: 'Navlonix ile lojistik süreçlerinizi tek platformda yönetin.',
     sections: [
       {
         heading: 'Yapay Zeka Destekli Eşleştirme',

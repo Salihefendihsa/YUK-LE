@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { login } from '../../api/auth'
 import { useAuthStore } from '../../store/auth.store'
 import { toast } from '@/components/common/Toast'
+import { Logo } from '@/components/brand/Logo'
 import '../auth/Login.css'
 
 export default function AdminLoginPage() {
@@ -40,10 +41,7 @@ export default function AdminLoginPage() {
         ← Ana Sayfa
       </Link>
       <Link to="/" className="login-logo-link ap-login-brand-link">
-        <span className="ap-login-brand-icon" aria-hidden>
-          🚛
-        </span>
-        <span className="ap-login-brand-text">YÜK-LE</span>
+        <Logo variant="full" size="md" theme="dark" />
       </Link>
       <form className="ap-login-card glass-card" onSubmit={onSubmit} noValidate>
         <div className="ap-login-shield" aria-hidden>
@@ -67,7 +65,7 @@ export default function AdminLoginPage() {
             className="form-input"
             type="email"
             autoComplete="username"
-            placeholder="yonetici@yukle.com"
+            placeholder="yonetici@navlonix.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />

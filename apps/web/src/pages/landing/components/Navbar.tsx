@@ -1,26 +1,34 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Logo } from '@/components/brand/Logo'
 
 const links = [
-  { id: 'journey', label: 'Yolculuk' },
-  { id: 'ai', label: 'Akıllı Eşleştirme' },
-  { id: 'security', label: 'Güvenlik' },
+  { id: 'journey', label: 'Türkiye Ağı' },
+  { id: 'yolculuk', label: 'Nasıl Çalışır' },
+  { id: 'ozellikler', label: 'Özellikler' },
+  { id: 'ai', label: 'AI' },
   { id: 'pricing', label: 'Fiyat' },
 ]
 
 export function LandingNavbar() {
   const [scrolled, setScrolled] = useState(false)
-  const [compact, setCompact] = useState(false)
+  const scrollRafRef = useRef(0)
 
   useEffect(() => {
     const onScroll = () => {
-      const y = window.scrollY
-      setScrolled(y > 100)
-      setCompact(y > 100)
+      if (scrollRafRef.current) return
+      scrollRafRef.current = requestAnimationFrame(() => {
+        scrollRafRef.current = 0
+        const next = window.scrollY > 100
+        setScrolled((prev) => (prev === next ? prev : next))
+      })
     }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current)
+    }
   }, [])
 
   const scrollTo = (id: string) => {
@@ -29,14 +37,11 @@ export function LandingNavbar() {
 
   return (
     <header
-      className={`landing-nav ${scrolled ? 'landing-nav--scrolled' : ''} ${compact ? 'landing-nav--compact' : ''}`}
+      className={`landing-nav ${scrolled ? 'landing-nav--scrolled landing-nav--compact' : ''}`}
     >
       <div className="landing-nav__inner">
         <Link to="/" className="landing-nav__brand">
-          <span className="landing-nav__brand-icon" aria-hidden>
-            🚛
-          </span>
-          <span className="landing-nav__brand-text">YÜK-LE</span>
+          <Logo variant="full" size="md" theme="dark" />
         </Link>
 
         <nav className="landing-nav__menu" aria-label="Ana menü">
