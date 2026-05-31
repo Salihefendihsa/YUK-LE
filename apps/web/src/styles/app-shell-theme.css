@@ -97,6 +97,22 @@
   border-color: rgba(239, 68, 68, 0.35) !important;
 }
 
+/* Sayfa geçişi */
+.app-outlet-wrap {
+  animation: app-page-in 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes app-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* Başlıklar */
 .app-layout .page-title {
   font-family: var(--font-heading);
@@ -276,4 +292,30 @@
 .topbar-notify-item:hover {
   transform: scale(1.02);
   border-color: rgba(255, 107, 0, 0.35);
+}
+
+/* Panel shell — mobil & reduced motion: blur/ dekoratif animasyon kapalı */
+@media (max-width: 767px) {
+  .app-layout .card,
+  .app-layout .sidebar,
+  .app-layout .topbar,
+  .topbar-notify-panel {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-outlet-wrap {
+    animation: none;
+  }
+
+  .app-layout .card,
+  .app-layout .sidebar,
+  .app-layout .topbar,
+  .topbar-notify-backdrop,
+  .topbar-notify-panel {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 }

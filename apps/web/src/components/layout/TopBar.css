@@ -46,9 +46,8 @@
   max-width: 420px;
   padding: 8px 12px;
   border-radius: 12px;
-  background: rgba(9, 11, 14, 0.55);
+  background: rgba(9, 11, 14, 0.92);
   border: 1px solid rgba(255, 107, 0, 0.12);
-  backdrop-filter: blur(12px);
 }
 
 .topbar-search-icon {
@@ -274,7 +273,7 @@
 }
 
 .glass-notify {
-  backdrop-filter: blur(14px);
+  background: rgba(28, 32, 41, 0.96);
 }
 
 @media (max-width: 900px) {

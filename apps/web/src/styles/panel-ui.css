@@ -3,8 +3,6 @@
 /* ── Liste kartları (app içi) ─────────────────────────────────────── */
 .app-layout .item-card {
   background: var(--shell-glass) !important;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--shell-glass-border) !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28);
   border-radius: 16px !important;
@@ -77,8 +75,6 @@
   border-radius: 16px;
   padding: 20px;
   background: var(--shell-glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--shell-glass-border);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
 }
@@ -313,8 +309,6 @@
   padding: 20px 18px;
   border-radius: 16px;
   background: var(--shell-glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--shell-glass-border);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28);
 }
@@ -452,8 +446,6 @@
   border-radius: 20px;
   padding: 24px 26px;
   background: var(--shell-glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--shell-glass-border);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
   display: grid;
@@ -583,7 +575,6 @@
   border-radius: 18px;
   padding: 22px;
   background: var(--shell-glass);
-  backdrop-filter: blur(20px);
   border: 1px solid var(--shell-glass-border);
   transition:
     transform 0.2s ease,
@@ -700,8 +691,7 @@
   font-weight: 700;
   font-size: 13px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(28, 13, 13, 0.45);
-  backdrop-filter: blur(12px);
+  background: rgba(28, 13, 13, 0.92);
   transition:
     transform 0.18s ease,
     border-color 0.18s ease;
@@ -743,9 +733,7 @@
   position: fixed;
   inset: 0;
   z-index: 400;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.65);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -767,9 +755,7 @@
   max-width: 420px;
   border-radius: 18px;
   padding: 22px;
-  background: rgba(28, 32, 41, 0.88);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: rgba(28, 32, 41, 0.96);
   border: 1px solid rgba(255, 107, 0, 0.15);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
   animation: modal-card-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
@@ -868,9 +854,7 @@
 }
 
 .app-layout[data-app-role='admin'] .admin-card {
-  background: rgba(28, 13, 13, 0.72) !important;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(28, 13, 13, 0.92) !important;
   border: 1px solid rgba(239, 68, 68, 0.22) !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
   transition:
@@ -887,23 +871,19 @@
 
 .app-layout[data-app-role='admin'] .admin-filters,
 .app-layout[data-app-role='admin'] .admin-table-wrap {
-  background: rgba(28, 13, 13, 0.55) !important;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(28, 13, 13, 0.92) !important;
   border: 1px solid rgba(239, 68, 68, 0.18) !important;
   border-radius: 16px !important;
 }
 
 .app-layout[data-app-role='driver'] .admin-table-wrap {
   background: var(--shell-glass) !important;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--shell-glass-border) !important;
   border-radius: 16px !important;
 }
 
 .app-layout[data-app-role='admin'] .topbar-notify-panel {
-  background: rgba(28, 10, 10, 0.88) !important;
+  background: rgba(28, 10, 10, 0.96) !important;
   border-left-color: rgba(239, 68, 68, 0.25);
 }
 
@@ -915,4 +895,54 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+/* Panel — mobil & reduced motion: kalan blur + dekoratif animasyon kapalı */
+@media (max-width: 767px) {
+  .app-layout .item-card,
+  .app-layout .panel-empty-state,
+  .app-layout .panel-error-banner,
+  .app-layout .panel-stepper-v,
+  .app-layout .panel-driver-hero,
+  .app-layout .panel-doc-card,
+  .app-layout .admin-quick-card,
+  .app-layout .modal-backdrop,
+  .app-layout .modal-card,
+  .app-layout .admin-card,
+  .app-layout .admin-filters,
+  .app-layout .admin-table-wrap {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .panel-wallet-icon,
+  .kpi-pulse,
+  .panel-qr-wrap::before {
+    animation: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-layout .item-card,
+  .app-layout .panel-empty-state,
+  .app-layout .panel-error-banner,
+  .app-layout .panel-stepper-v,
+  .app-layout .panel-driver-hero,
+  .app-layout .panel-doc-card,
+  .app-layout .admin-quick-card,
+  .app-layout .modal-backdrop,
+  .app-layout .modal-card,
+  .app-layout .admin-card,
+  .app-layout .admin-filters,
+  .app-layout .admin-table-wrap {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .panel-skeleton .skeleton,
+  .panel-wallet-icon,
+  .kpi-pulse,
+  .panel-qr-wrap::before {
+    animation: none !important;
+  }
 }
