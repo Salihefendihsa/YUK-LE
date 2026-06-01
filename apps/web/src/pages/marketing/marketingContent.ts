@@ -124,24 +124,26 @@ export const MARKETING_DOCS: Record<MarketingDocId, MarketingDoc> = {
   },
   kariyer: {
     title: 'Kariyer',
-    subtitle: 'Ürün ve mühendislikte birlikte büyüyelim.',
+    subtitle: 'Navlonix\'te birlikte büyüyelim.',
     sections: [
       {
-        heading: 'Açık pozisyonlar',
+        heading: 'Yakında',
         body: [
-          'Backend (.NET), frontend (React), mobil ve veri bilimi rolleri için başvuruları people@yukle.tr adresine iletebilirsiniz.',
-          'Uzaktan hibrit çalışma; Elazığ ve İstanbul ofis buluşmaları.',
+          'Şu anda aktif açık pozisyonumuz bulunmuyor; ancak lojistik, yazılım veya yapay zekâ alanında fark yaratmak isteyen yetenekli insanlarla tanışmaya her zaman açığız.',
+          'CV\'nizi kariyer@navlonix.com adresine gönderin. Yeni pozisyonlar açıldığında ilk burada duyuracağız.',
         ],
       },
     ],
   },
   blog: {
     title: 'Blog',
-    subtitle: 'Lojistikte ürün ve regülasyon notları.',
+    subtitle: 'Lojistik, yapay zekâ ve sektör içgörüleri yakında burada.',
     sections: [
       {
         heading: 'Yakında',
-        body: ['U-ETDS güncellemeleri, yapay zeka fiyatlandırma notları ve müşteri hikayeleri bu alanda yayınlanacak.'],
+        body: [
+          'Navlonix\'in yük taşımacılığını nasıl dönüştürdüğüne dair yazılar, ipuçları ve güncellemeler için takipte kal.',
+        ],
       },
     ],
   },
@@ -151,7 +153,10 @@ export const MARKETING_DOCS: Record<MarketingDocId, MarketingDoc> = {
     sections: [
       {
         heading: 'İletişim',
-        body: ['Basın bültenleri ve görsel materyaller için press@yukle.tr adresinden bize ulaşın.'],
+        body: [
+          'Basın, medya ve iş birliği talepleriniz için: basin@navlonix.com.',
+          'Marka varlıkları (logo, görseller) ve şirket bilgileri talep üzerine paylaşılır.',
+        ],
       },
     ],
   },

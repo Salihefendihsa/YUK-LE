@@ -12,8 +12,8 @@ export type FooterTopic = {
   customerPoints: FooterPoint[]
   driverTitle: string
   driverPoints: FooterPoint[]
-  /** Footer’da görünür ama tıklanamaz; modal açılmaz */
-  comingSoon?: boolean
+  /** Footer’da “Yakında” rozeti gösterilir; link yine tıklanabilir */
+  soonBadge?: boolean
   docLink?: { to: string; label: string }
 }
 
@@ -117,7 +117,7 @@ export const FOOTER_COLUMNS: { title: string; topics: FooterTopic[] }[] = [
       {
         id: 'kariyer',
         label: 'Kariyer',
-        comingSoon: true,
+        soonBadge: true,
         group: 'Şirket',
         summary: 'Ürün, mühendislik ve operasyon ekiplerinde uzaktan/hibrit çalışma.',
         customerTitle: 'Yük veren',
@@ -132,11 +132,12 @@ export const FOOTER_COLUMNS: { title: string; topics: FooterTopic[] }[] = [
           { label: 'Mobil ürün', text: 'Sahadan test ve UX geri bildirimi.' },
           { label: 'Destek', text: 'Belge, ödeme ve hesap güvenliği.' },
         ],
+        docLink: { to: '/kariyer', label: 'Kariyer sayfasına git' },
       },
       {
         id: 'blog',
         label: 'Blog',
-        comingSoon: true,
+        soonBadge: true,
         group: 'Şirket',
         summary: 'Navlun, AI, mevzuat ve operasyon içerikleri; fabrika ve şoför için ayrı etiketler.',
         customerTitle: 'Yük veren',
@@ -151,11 +152,12 @@ export const FOOTER_COLUMNS: { title: string; topics: FooterTopic[] }[] = [
           { label: 'Belge', text: 'SRC ve yenileme hatırlatmaları.' },
           { label: 'Saha', text: 'Güvenli teslimat uygulamaları.' },
         ],
+        docLink: { to: '/blog', label: 'Blog sayfasına git' },
       },
       {
         id: 'basin',
         label: 'Basın',
-        comingSoon: true,
+        soonBadge: true,
         group: 'Şirket',
         summary: 'Basın kiti, logo kuralları ve onaylı kurucu görüşmeleri.',
         customerTitle: 'Yük veren',
@@ -170,6 +172,7 @@ export const FOOTER_COLUMNS: { title: string; topics: FooterTopic[] }[] = [
           { label: 'Ödeme', text: 'Güvenli ödeme altyapısı haberleri.' },
           { label: 'Görsel', text: 'Saha ve mobil uygulama materyalleri.' },
         ],
+        docLink: { to: '/basin', label: 'Basın sayfasına git' },
       },
     ],
   },

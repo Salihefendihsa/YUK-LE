@@ -99,7 +99,9 @@ function FooterDocLink({
         }}
       >
         {label}
-        <span aria-hidden> →</span>
+        <span className="landing-footer-modal__cta-arrow" aria-hidden>
+          →
+        </span>
       </button>
     )
   }
@@ -107,7 +109,9 @@ function FooterDocLink({
   return (
     <Link to={to} className="landing-footer-modal__cta" data-cursor-hover onClick={onNavigate}>
       {label}
-      <span aria-hidden> →</span>
+      <span className="landing-footer-modal__cta-arrow" aria-hidden>
+        →
+      </span>
     </Link>
   )
 }
@@ -256,25 +260,17 @@ export function LandingFooter() {
               <ul className="landing-footer__link-list">
                 {col.topics.map((topic) => (
                   <li key={topic.id}>
-                    {topic.comingSoon ? (
-                      <span
-                        className="landing-footer__link landing-footer__link--soon"
-                        aria-disabled="true"
-                        title="Yakında"
-                      >
-                        {topic.label}
+                    <button
+                      type="button"
+                      className={`landing-footer__link${topic.soonBadge ? ' landing-footer__link--soon' : ''}`}
+                      data-cursor-hover
+                      onClick={() => openTopic(topic.id)}
+                    >
+                      {topic.label}
+                      {topic.soonBadge ? (
                         <span className="landing-footer__soon-badge">Yakında</span>
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        className="landing-footer__link"
-                        data-cursor-hover
-                        onClick={() => openTopic(topic.id)}
-                      >
-                        {topic.label}
-                      </button>
-                    )}
+                      ) : null}
+                    </button>
                   </li>
                 ))}
               </ul>
