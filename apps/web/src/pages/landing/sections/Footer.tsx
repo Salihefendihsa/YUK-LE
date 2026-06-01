@@ -72,6 +72,46 @@ function MarqueeStrip() {
   )
 }
 
+function scrollToLandingSection(sectionId: string) {
+  document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function FooterDocLink({
+  to,
+  label,
+  onNavigate,
+}: {
+  to: string
+  label: string
+  onNavigate: () => void
+}) {
+  const hashMatch = /^\/#([\w-]+)$/.exec(to)
+  if (hashMatch) {
+    const sectionId = hashMatch[1]
+    return (
+      <button
+        type="button"
+        className="landing-footer-modal__cta"
+        data-cursor-hover
+        onClick={() => {
+          onNavigate()
+          window.requestAnimationFrame(() => scrollToLandingSection(sectionId))
+        }}
+      >
+        {label}
+        <span aria-hidden> →</span>
+      </button>
+    )
+  }
+
+  return (
+    <Link to={to} className="landing-footer-modal__cta" data-cursor-hover onClick={onNavigate}>
+      {label}
+      <span aria-hidden> →</span>
+    </Link>
+  )
+}
+
 function PointList({ points }: { points: FooterPoint[] }) {
   return (
     <ul className="landing-footer-modal__list">
@@ -156,10 +196,7 @@ function FooterDetailModal({ topic, onClose }: { topic: FooterTopic; onClose: ()
 
         {topic.docLink ? (
           <footer className="landing-footer-modal__foot">
-            <Link to={topic.docLink.to} className="landing-footer-modal__cta" data-cursor-hover>
-              {topic.docLink.label}
-              <span aria-hidden> →</span>
-            </Link>
+            <FooterDocLink to={topic.docLink.to} label={topic.docLink.label} onNavigate={onClose} />
           </footer>
         ) : null}
       </div>
@@ -219,14 +256,25 @@ export function LandingFooter() {
               <ul className="landing-footer__link-list">
                 {col.topics.map((topic) => (
                   <li key={topic.id}>
-                    <button
-                      type="button"
-                      className="landing-footer__link"
-                      data-cursor-hover
-                      onClick={() => openTopic(topic.id)}
-                    >
-                      {topic.label}
-                    </button>
+                    {topic.comingSoon ? (
+                      <span
+                        className="landing-footer__link landing-footer__link--soon"
+                        aria-disabled="true"
+                        title="Yakında"
+                      >
+                        {topic.label}
+                        <span className="landing-footer__soon-badge">Yakında</span>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        className="landing-footer__link"
+                        data-cursor-hover
+                        onClick={() => openTopic(topic.id)}
+                      >
+                        {topic.label}
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>

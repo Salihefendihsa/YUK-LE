@@ -51,6 +51,10 @@ function useLandingPrefs() {
   return { reduceMotion, light3d }
 }
 
+function scrollToLandingSection(sectionId: string) {
+  document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 export default function Landing() {
   const [ready, setReady] = useState(false)
   const [loadProgress, setLoadProgress] = useState(0)
@@ -89,6 +93,15 @@ export default function Landing() {
       document.documentElement.classList.remove('landing-page')
       document.body.style.overflow = ''
     }
+  }, [ready])
+
+  useEffect(() => {
+    if (!ready) return
+    const sectionId = window.location.hash.replace(/^#/, '')
+    if (!sectionId) return
+    const scroll = () => scrollToLandingSection(sectionId)
+    const t = window.requestAnimationFrame(scroll)
+    return () => window.cancelAnimationFrame(t)
   }, [ready])
 
   return (

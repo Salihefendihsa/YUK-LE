@@ -94,18 +94,31 @@ export const MARKETING_DOCS: Record<MarketingDocId, MarketingDoc> = {
   },
   hakkimizda: {
     title: 'Hakkımızda',
-    subtitle: 'Türkiye merkezli, veri odaklı lojistik teknolojisi.',
+    subtitle: 'Navlonix Hakkında',
     sections: [
       {
-        heading: 'Misyon',
+        heading: 'Navlonix Hakkında',
         body: [
-          'Yük sahipleri ile profesyonel şoförleri güvenli, ölçülebilir ve hukuka uygun biçimde buluşturmak.',
-          'Yapay zekayı operasyonun kalbine yerleştirerek fiyat keşfi, risk ve doluluk yönetimini iyileştirmek.',
+          'Navlonix, yük verenler ile tır şoförlerini yapay zekâ destekli bir pazaryerinde buluşturan dijital lojistik platformudur. Fabrikalar ve işletmeler yüklerini saniyeler içinde ilana çevirir, uygun şoförlerle hızlıca eşleşir ve tüm süreci tek bir yerden şeffaf biçimde yönetir.',
         ],
       },
       {
-        heading: 'Değerler',
-        body: ['Şeffaflık, güvenlik, saha gerçekleriyle tasarım ve sürekli öğrenen ürün geliştirme.'],
+        heading: 'Türkiye\'de dijital lojistik',
+        body: [
+          'Türkiye\'de yük taşımacılığı uzun süredir telefon trafiği, belirsiz fiyatlar ve güven sorunlarıyla yürüyor. Navlonix bu süreci dijitalleştirir: yapay zekâ; mesafe, yük tipi ve piyasa verilerini analiz ederek gerekçeli ve adil bir navlun bandı önerir — ne eksik ne fazla. Böylece hem yük veren hem şoför kazanır.',
+        ],
+      },
+      {
+        heading: 'Platformun temelleri',
+        body: [
+          'Şeffaf fiyatlandırma, güvenli ödeme, belge doğrulama ve canlı konum takibi platformun temelinde yer alır. Amacımız lojistiği herkes için daha hızlı, adil ve güvenilir hâle getirmek.',
+        ],
+      },
+      {
+        heading: 'Vizyonumuz',
+        body: [
+          'Türkiye\'den başlayıp bölgesel ticaretin akıllı altyapısı olmak için yola çıktık. Navlonix ile yükünüz güvende, yolunuz açık.',
+        ],
       },
     ],
   },
@@ -215,14 +228,36 @@ export const MARKETING_DOCS: Record<MarketingDocId, MarketingDoc> = {
     ],
   },
   cerezler: {
-    title: 'Çerezler',
-    subtitle: 'Deneyimi iyileştirmek için sınırlı çerez kullanımı.',
+    title: 'Çerez Politikası',
+    subtitle:
+      'Bu Çerez Politikası, Navlonix tarafından işletilen web sitesi ve uygulamalarında çerezlerin nasıl kullanıldığını açıklar.',
     sections: [
       {
-        heading: 'Amaç',
+        heading: 'Çerez Nedir?',
         body: [
-          'Oturum güvenliği, tercih hatırlama ve anonim kullanım istatistikleri için çerezler kullanılabilir.',
-          'Tarayıcı ayarlarından çerezleri yönetebilir; ayrıntılı bilgi için Gizlilik Politikası sayfamıza bakabilirsiniz.',
+          'Çerezler, bir siteyi ziyaret ettiğinizde cihazınıza kaydedilen küçük metin dosyalarıdır; tercihlerinizi hatırlamamızı ve daha iyi bir deneyim sunmamızı sağlar.',
+        ],
+      },
+      {
+        heading: 'Kullandığımız Çerez Türleri',
+        body: [
+          'Zorunlu çerezler: Oturum açma, güvenlik gibi temel işlevler için gereklidir; devre dışı bırakılamaz.',
+          'İşlevsel çerezler: Dil, tema gibi tercihlerinizi hatırlar.',
+          'Performans/analitik çerezler: Platformun nasıl kullanıldığını anlayıp iyileştirmemize yardımcı olur (anonim istatistik).',
+          'Pazarlama çerezleri: Yalnızca onayınızla, ilgi alanınıza uygun içerik için kullanılabilir.',
+        ],
+      },
+      {
+        heading: 'Çerezleri Yönetme',
+        body: [
+          'Tarayıcı ayarlarınızdan çerezleri silebilir veya engelleyebilirsiniz; ancak zorunlu çerezleri kapatmak bazı bölümlerin düzgün çalışmamasına yol açabilir.',
+        ],
+      },
+      {
+        heading: 'Veri Sorumlusu',
+        body: [
+          'Veri Sorumlusu: Navlonix Lojistik Teknolojileri A.Ş. Sorularınız için: kvkk@navlonix.com. Detay için Gizlilik Politikası ve KVKK Aydınlatma Metni\'ni inceleyebilirsiniz.',
+          'Bu politika güncellenebilir; güncel sürüm her zaman bu sayfada yayımlanır.',
         ],
       },
     ],

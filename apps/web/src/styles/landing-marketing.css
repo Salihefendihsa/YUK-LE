@@ -548,6 +548,7 @@ html.landing-marketing-active body {
 .landing-marketing .lm-how-it-works .lm-timeline-wrap {
   position: relative;
   margin-top: 0.75rem;
+  overflow-x: hidden;
   --lm-node-size: 3.25rem;
   --lm-spine-y: calc(0.35rem + var(--lm-node-size) / 2);
 }
@@ -617,10 +618,10 @@ html.landing-marketing-active body {
 }
 
 .landing-marketing .lm-timeline__step {
-  display: grid;
-  grid-template-columns: var(--lm-node-size) minmax(0, 1fr);
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
   gap: 1rem 1.25rem;
-  align-items: start;
   padding-bottom: 2rem;
   position: relative;
 }
@@ -630,12 +631,16 @@ html.landing-marketing-active body {
 }
 
 .landing-marketing .lm-timeline__col {
-  display: contents;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 1.25rem;
 }
 
 .landing-marketing .lm-timeline__head {
-  grid-column: 1;
-  grid-row: 1;
+  flex-shrink: 0;
   display: flex;
   justify-content: center;
   padding-top: 0.35rem;
@@ -671,8 +676,8 @@ html.landing-marketing-active body {
 }
 
 .landing-marketing .lm-timeline__panel {
-  grid-column: 2;
-  grid-row: 1;
+  flex: 1;
+  min-width: 0;
   display: flex;
   gap: 1rem;
   align-items: flex-start;
@@ -846,8 +851,16 @@ html.landing-marketing-active body {
   color: var(--text-secondary);
 }
 
-/* Tablet+: snake timeline (3 + 3) */
-@media (min-width: 768px) {
+@media (max-width: 1023px) {
+  .landing-marketing .lm-how-it-works [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}
+
+/* Desktop+: snake timeline (3 + 3) */
+@media (min-width: 1024px) {
   .landing-marketing .lm-timeline__track--flow {
     display: none;
   }
@@ -959,6 +972,7 @@ html.landing-marketing-active body {
     display: block;
     padding-bottom: 0;
     min-width: 0;
+    flex-direction: column;
   }
 
   .landing-marketing .lm-timeline__step:nth-child(1) {
@@ -996,8 +1010,6 @@ html.landing-marketing-active body {
   }
 
   .landing-marketing .lm-timeline__head {
-    grid-column: auto;
-    grid-row: auto;
     padding-top: 0;
     flex-shrink: 0;
   }
@@ -1012,8 +1024,6 @@ html.landing-marketing-active body {
   }
 
   .landing-marketing .lm-timeline__panel {
-    grid-column: auto;
-    grid-row: auto;
     flex: 1;
     width: 100%;
     min-height: 10.75rem;

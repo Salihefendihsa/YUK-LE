@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Logo } from '@/components/brand/Logo'
 
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)'
 
@@ -43,6 +44,9 @@ export function HeroVideoBackground() {
         <img src="/hero-trucks.jpg" alt="" />
       )}
       <div className="hero-video-scrim" />
+      <div className="hero-video-brand-watermark" aria-hidden>
+        <Logo variant="full" size="sm" theme="dark" />
+      </div>
     </div>
   )
 }

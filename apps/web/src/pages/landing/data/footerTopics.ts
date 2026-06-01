@@ -12,6 +12,8 @@ export type FooterTopic = {
   customerPoints: FooterPoint[]
   driverTitle: string
   driverPoints: FooterPoint[]
+  /** Footer’da görünür ama tıklanamaz; modal açılmaz */
+  comingSoon?: boolean
   docLink?: { to: string; label: string }
 }
 
@@ -110,10 +112,12 @@ export const FOOTER_COLUMNS: { title: string; topics: FooterTopic[] }[] = [
           { label: 'Açık komisyon', text: 'Kesintiler panelde görünür.' },
           { label: 'Saha sesi', text: 'Geri bildirimler ürüne yansır.' },
         ],
+        docLink: { to: '/hakkimizda', label: 'Hakkımızda sayfasına git' },
       },
       {
         id: 'kariyer',
         label: 'Kariyer',
+        comingSoon: true,
         group: 'Şirket',
         summary: 'Ürün, mühendislik ve operasyon ekiplerinde uzaktan/hibrit çalışma.',
         customerTitle: 'Yük veren',
@@ -128,11 +132,11 @@ export const FOOTER_COLUMNS: { title: string; topics: FooterTopic[] }[] = [
           { label: 'Mobil ürün', text: 'Sahadan test ve UX geri bildirimi.' },
           { label: 'Destek', text: 'Belge, ödeme ve hesap güvenliği.' },
         ],
-        docLink: { to: '/kariyer', label: 'Açık pozisyonlar' },
       },
       {
         id: 'blog',
         label: 'Blog',
+        comingSoon: true,
         group: 'Şirket',
         summary: 'Navlun, AI, mevzuat ve operasyon içerikleri; fabrika ve şoför için ayrı etiketler.',
         customerTitle: 'Yük veren',
@@ -147,11 +151,11 @@ export const FOOTER_COLUMNS: { title: string; topics: FooterTopic[] }[] = [
           { label: 'Belge', text: 'SRC ve yenileme hatırlatmaları.' },
           { label: 'Saha', text: 'Güvenli teslimat uygulamaları.' },
         ],
-        docLink: { to: '/blog', label: 'Blogu oku' },
       },
       {
         id: 'basin',
         label: 'Basın',
+        comingSoon: true,
         group: 'Şirket',
         summary: 'Basın kiti, logo kuralları ve onaylı kurucu görüşmeleri.',
         customerTitle: 'Yük veren',

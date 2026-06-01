@@ -82,10 +82,21 @@ export function AISection({ reduceMotion }: { reduceMotion: boolean }) {
         <div className="landing-ai__glass landing-ai__reveal">
           <p className="landing-ai__eyebrow">Yapay Zeka Destekli</p>
           <div className="landing-ai__terminal" aria-live="polite">
-            <span>{'>'} Analiz ediliyor...</span>
-            <span>{'>'} Fiyat hesaplanıyor...</span>
-            <span className="landing-ai__price">₺3.847</span>
-            <span>{'>'} %95 uyum bulundu</span>
+            <span className="landing-ai__terminal-line" style={{ animationDelay: '0s' }}>
+              {'>'} Yük ve mesafe analiz ediliyor...
+            </span>
+            <span className="landing-ai__terminal-line" style={{ animationDelay: '0.35s' }}>
+              {'>'} Piyasa verileri taranıyor...
+            </span>
+            <span
+              className="landing-ai__terminal-line landing-ai__terminal-line--ok"
+              style={{ animationDelay: '0.7s' }}
+            >
+              ✓ Gerekçeli adil fiyat hazır
+            </span>
+            <span className="landing-ai__terminal-line" style={{ animationDelay: '1.05s' }}>
+              {'>'} %95 şoför uyumu bulundu
+            </span>
           </div>
         </div>
         <h2 className="landing-ai__h2 landing-ai__reveal">Yapay Zekâ Her Adımda Yanınızda</h2>

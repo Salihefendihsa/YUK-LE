@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react'
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { RevealGroup } from './Reveal'
 import { useScrollReveal } from './hooks/useScrollReveal'
 
@@ -137,12 +137,24 @@ function TimelineStep({ step, index }: { step: Step; index: number }) {
 export function HowItWorks() {
   const sectionRef = useRef<HTMLElement>(null)
   const timelineRef = useRef<HTMLDivElement>(null)
+  const [desktopTimeline, setDesktopTimeline] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches,
+  )
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)')
+    const onChange = () => setDesktopTimeline(mq.matches)
+    onChange()
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
 
   useScrollReveal(timelineRef, {
     selector: '[data-reveal]',
     stagger: 0.08,
     start: 'top 80%',
     trigger: sectionRef,
+    enabled: desktopTimeline,
   })
 
   return (
