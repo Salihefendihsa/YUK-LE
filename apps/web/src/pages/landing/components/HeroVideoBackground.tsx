@@ -2,20 +2,22 @@ import { useEffect, useRef, useState } from 'react'
 import { Logo } from '@/components/brand/Logo'
 
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)'
+const MOBILE_WIDTH = '(max-width: 767px)'
 
 export function HeroVideoBackground() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [usePosterOnly, setUsePosterOnly] = useState(false)
 
   useEffect(() => {
-    const mq = window.matchMedia(REDUCED_MOTION)
+    const motionMq = window.matchMedia(REDUCED_MOTION)
+    const mobileMq = window.matchMedia(MOBILE_WIDTH)
 
     const apply = () => {
-      const reduced = mq.matches
-      setUsePosterOnly(reduced)
+      const posterOnly = motionMq.matches || mobileMq.matches
+      setUsePosterOnly(posterOnly)
       const video = videoRef.current
       if (!video) return
-      if (reduced) {
+      if (posterOnly) {
         video.pause()
       } else {
         void video.play().catch(() => {})
@@ -23,8 +25,12 @@ export function HeroVideoBackground() {
     }
 
     apply()
-    mq.addEventListener('change', apply)
-    return () => mq.removeEventListener('change', apply)
+    motionMq.addEventListener('change', apply)
+    mobileMq.addEventListener('change', apply)
+    return () => {
+      motionMq.removeEventListener('change', apply)
+      mobileMq.removeEventListener('change', apply)
+    }
   }, [])
 
   return (

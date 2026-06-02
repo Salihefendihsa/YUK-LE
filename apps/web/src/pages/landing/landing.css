@@ -3121,25 +3121,18 @@ html.landing-page body {
   z-index: 0;
 }
 
-.landing-cta__glow {
+.landing-cta__overlay {
   position: absolute;
-  top: -20%;
-  left: 50%;
-  width: min(900px, 120%);
-  height: 70%;
-  transform: translateX(-50%);
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 107, 0, 0.22) 0%,
-    rgba(255, 107, 0, 0.08) 38%,
-    transparent 72%
-  );
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(6, 8, 11, 0.62) 0%, rgba(6, 8, 11, 0.72) 100%),
+    linear-gradient(110deg, rgba(14, 16, 20, 0.52) 0%, rgba(14, 16, 20, 0.2) 55%, rgba(14, 16, 20, 0.58) 100%);
 }
 
 .landing-cta__grid {
   position: absolute;
   inset: 0;
-  opacity: 0.35;
+  opacity: 0.22;
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
@@ -3154,7 +3147,7 @@ html.landing-page body {
   height: 100%;
   object-fit: cover;
   object-position: center 35%;
-  opacity: 0.08;
+  opacity: 1;
 }
 
 .landing-cta__inner {

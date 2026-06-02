@@ -47,9 +47,9 @@ export function CTASection() {
     <section className="landing-cta" id="cta">
       {overlay}
       <div className="landing-cta__bg" aria-hidden>
-        <div className="landing-cta__glow" />
+        <img className="landing-cta__trucks" src="/cta-bg.png" alt="" decoding="async" />
+        <div className="landing-cta__overlay" />
         <div className="landing-cta__grid" />
-        <img className="landing-cta__trucks" src="/hero-trucks.jpg" alt="" decoding="async" />
       </div>
 
       <div className="landing-cta__inner">
