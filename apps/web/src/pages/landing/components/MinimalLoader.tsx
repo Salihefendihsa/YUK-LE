@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Logo } from '@/components/brand/Logo'
 
-const RING_SIZE = 132
-const RING_STROKE = 2.5
-const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2
-const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
-
 type MinimalLoaderProps = {
   onComplete: () => void
   onProgress?: (progress: number) => void
@@ -85,7 +80,6 @@ export function MinimalLoader({ onComplete, onProgress, duration = 1200 }: Minim
   } as CSSProperties
 
   const pct = Math.floor(progress)
-  const ringOffset = RING_CIRCUMFERENCE * (1 - Math.min(Math.max(progress, 0), 100) / 100)
 
   return (
     <div
@@ -99,43 +93,25 @@ export function MinimalLoader({ onComplete, onProgress, duration = 1200 }: Minim
       <div className="circle-loader-bg" aria-hidden />
       <div className="circle-loader-vignette" aria-hidden />
       <div className="circle-loader-content">
+        <div className="circle-loader-brand">
+          <Logo variant="full" size="md" theme="dark" fadeIn />
+        </div>
         <div
-          className="circle-loader-ring-wrap"
-          style={{ ['--loader-ring-offset' as string]: String(ringOffset) } as CSSProperties}
-          aria-hidden
+          className="circle-loader-progress"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={pct}
+          aria-label="Yükleme ilerlemesi"
         >
-          <svg
-            className="circle-loader-ring-svg"
-            viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}
-            width={RING_SIZE}
-            height={RING_SIZE}
-          >
-            <circle
-              className="circle-loader-ring-track"
-              cx={RING_SIZE / 2}
-              cy={RING_SIZE / 2}
-              r={RING_RADIUS}
-              fill="none"
-            />
-            <circle
-              className="circle-loader-ring-progress"
-              cx={RING_SIZE / 2}
-              cy={RING_SIZE / 2}
-              r={RING_RADIUS}
-              fill="none"
-              strokeDasharray={RING_CIRCUMFERENCE}
-              strokeDashoffset={ringOffset}
-            />
-          </svg>
-          <div className="circle-loader-ring-inner">
-            <div className="circle-loader-brand">
-              <Logo variant="full" size="md" theme="dark" fadeIn />
-            </div>
-            <div className="circle-loader-status">
-              <span>YÜKLENİYOR</span>
-              <span className="circle-loader-status-pct">%{pct}</span>
-            </div>
-          </div>
+          <span
+            className="circle-loader-progress-fill"
+            style={{ transform: `scaleX(${Math.min(Math.max(progress, 0), 100) / 100})` } as CSSProperties}
+          />
+        </div>
+        <div className="circle-loader-status">
+          <span>YÜKLENİYOR</span>
+          <span className="circle-loader-status-pct">%{pct}</span>
         </div>
       </div>
     </div>

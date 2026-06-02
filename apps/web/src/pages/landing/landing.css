@@ -164,9 +164,9 @@ html.landing-page body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.25rem;
+  gap: 0.9rem;
   padding: 24px;
-  max-width: min(100vw - 32px, 360px);
+  max-width: min(100vw - 32px, 340px);
   margin: auto;
   opacity: 1;
   transition:
@@ -174,60 +174,38 @@ html.landing-page body {
     transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.circle-loader-ring-wrap {
-  position: relative;
-  width: 132px;
-  height: 132px;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-}
-
-.circle-loader-ring-svg {
-  position: absolute;
-  inset: 0;
-  transform: rotate(-90deg);
-}
-
-.circle-loader-ring-track {
-  stroke: rgba(255, 255, 255, 0.1);
-  stroke-width: 2.5;
-}
-
-.circle-loader-ring-progress {
-  stroke: #ff7a1a;
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 0.08s linear;
-}
-
-.circle-loader-ring-inner {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  max-width: 88px;
-  text-align: center;
-}
-
 .circle-loader-brand {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  max-height: 56px;
+  max-height: 64px;
 }
 
 .circle-loader-brand .logo {
-  --logo-cap-size: 20px;
+  --logo-cap-size: 16px;
 }
 
 .circle-loader-brand .logo__mark {
   height: var(--logo-mark-size);
   width: var(--logo-mark-size);
+}
+
+.circle-loader-progress {
+  position: relative;
+  width: min(220px, calc(100vw - 56px));
+  height: 4px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.circle-loader-progress-fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  background: #ff7a1a;
+  transition: transform 0.08s linear;
 }
 
 .circle-loader--loading[data-progress-late='true'] .circle-loader-content {
@@ -243,20 +221,20 @@ html.landing-page body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.3rem;
   font-family: 'Plus Jakarta Sans', var(--font-heading, system-ui), sans-serif;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.45);
 }
 
 .circle-loader-status-pct {
-  color: rgba(255, 182, 39, 0.85);
+  color: rgba(255, 255, 255, 0.58);
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.12em;
-  font-size: 10px;
+  letter-spacing: 0.1em;
+  font-size: 9px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -269,37 +247,28 @@ html.landing-page body {
     transition: none;
   }
 
-  .circle-loader-ring-progress {
+  .circle-loader-progress-fill {
     transition: none;
   }
 }
 
 @media (max-width: 767px) {
-  .circle-loader-ring-wrap {
-    width: 116px;
-    height: 116px;
-  }
-
-  .circle-loader-ring-svg {
-    width: 116px;
-    height: 116px;
-  }
-
-  .circle-loader-ring-inner {
-    max-width: 76px;
+  .circle-loader-content {
+    gap: 0.8rem;
+    padding: 20px 16px;
   }
 
   .circle-loader-brand {
-    max-height: 48px;
+    max-height: 52px;
   }
 
   .circle-loader-brand .logo {
-    --logo-cap-size: 13px;
+    --logo-cap-size: 14px;
   }
 
-  .circle-loader-content {
-    gap: 1rem;
-    padding: 20px 16px;
+  .circle-loader-progress {
+    width: min(190px, calc(100vw - 56px));
+    height: 3px;
   }
 }
 
