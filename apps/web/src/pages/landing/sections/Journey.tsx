@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { TurkeyNetworkMap } from '../components/TurkeyNetworkMap'
 import { LiveMetrics } from '../components/LiveMetrics'
@@ -18,6 +19,42 @@ const MORE_REGIONS_COUNT = COUNTRIES.filter((c) => c.code !== 'tr' && !COMING_SO
 
 export function JourneySection({ reduceMotion }: { reduceMotion: boolean }) {
   const r = reduceMotion
+  const mapStageRef = useRef<HTMLDivElement>(null)
+  const [mapReduceMotion, setMapReduceMotion] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  )
+  const [mapLite, setMapLite] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches,
+  )
+  const [mapInView, setMapInView] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const onChange = () => setMapReduceMotion(mq.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const onChange = () => setMapLite(mq.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+
+  useEffect(() => {
+    const el = mapStageRef.current
+    if (!el || mapReduceMotion) {
+      setMapInView(true)
+      return
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => setMapInView(entry.isIntersecting),
+      { root: null, rootMargin: '80px 0px', threshold: 0.12 },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [mapReduceMotion])
 
   return (
     <section className="section-network section-network--story-lead" id="journey">
@@ -46,6 +83,7 @@ export function JourneySection({ reduceMotion }: { reduceMotion: boolean }) {
         </motion.header>
 
         <motion.div
+          ref={mapStageRef}
           data-section-reveal
           className="globe-stage"
           initial={r ? false : { opacity: 0, y: 30 }}
@@ -54,7 +92,11 @@ export function JourneySection({ reduceMotion }: { reduceMotion: boolean }) {
           transition={{ duration: 0.6, ease, delay: r ? 0 : 0.2 }}
         >
           <div className="stage-content">
-            <TurkeyNetworkMap reduceMotion={r} />
+            <TurkeyNetworkMap
+              reduceMotion={mapReduceMotion}
+              liteMotion={mapLite && !mapReduceMotion}
+              paused={!mapInView && !mapReduceMotion}
+            />
           </div>
         </motion.div>
 

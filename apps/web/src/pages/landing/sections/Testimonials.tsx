@@ -509,8 +509,8 @@ function MarqueeRow({
       <div className="landing-reviews__row">
         <div ref={viewportRef} className="landing-reviews__viewport landing-reviews__viewport--manual">
           <div ref={trackRef} className="landing-reviews__marquee landing-reviews__marquee--static">
-            {items.map((r, i) => (
-              <ReviewCard key={`${r.id}-${i}`} review={r} onOpen={onOpenReview} dragMovedRef={dragMovedRef} />
+            {reviews.map((r) => (
+              <ReviewCard key={r.id} review={r} onOpen={onOpenReview} dragMovedRef={dragMovedRef} />
             ))}
           </div>
         </div>
@@ -596,7 +596,7 @@ export function TestimonialsSection() {
   }, [reduceMotion])
 
   const autoDesktop = !reduceMotion && !isMobile
-  const autoMobile = !reduceMotion && isMobile
+  const autoMobile = false
   const speed = isMobile ? MARQUEE_SPEED_MOBILE : MARQUEE_SPEED
 
   const mobileReviews = [...REVIEWS_TOP, ...REVIEWS_BOTTOM]

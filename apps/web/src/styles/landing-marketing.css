@@ -851,14 +851,6 @@ html.landing-marketing-active body {
   color: var(--text-secondary);
 }
 
-@media (max-width: 1023px) {
-  .landing-marketing .lm-how-it-works [data-reveal] {
-    opacity: 1 !important;
-    transform: none !important;
-    filter: none !important;
-  }
-}
-
 /* Desktop+: snake timeline (3 + 3) */
 @media (min-width: 1024px) {
   .landing-marketing .lm-timeline__track--flow {
@@ -1290,6 +1282,34 @@ html.landing-marketing-active body {
   color: var(--lm-ai-soft);
   background: rgba(139, 92, 246, 0.2);
   border: 1px solid rgba(139, 92, 246, 0.4);
+}
+
+/* Mobil: ikon animasyonlarını sadeleştir (görünüm korunur, CPU/GPU yükü düşer) */
+@media (max-width: 767px) {
+  .landing-marketing .lm-timeline__icon::before,
+  .landing-marketing .lm-timeline__icon::after,
+  .landing-marketing .lm-timeline__icon-ring {
+    animation: none;
+  }
+
+  .landing-marketing .lm-timeline__icon--motion-2 .lm-timeline__icon-glyph,
+  .landing-marketing .lm-timeline__icon--motion-3 .lm-timeline__icon-glyph,
+  .landing-marketing .lm-timeline__icon--motion-5 .lm-timeline__icon-glyph {
+    animation: none;
+  }
+
+  .landing-marketing .lm-timeline__node {
+    animation: none;
+  }
+}
+
+.landing-marketing .lm-how-it-works--offscreen .lm-timeline__node,
+.landing-marketing .lm-how-it-works--offscreen .lm-timeline__icon,
+.landing-marketing .lm-how-it-works--offscreen .lm-timeline__icon::before,
+.landing-marketing .lm-how-it-works--offscreen .lm-timeline__icon::after,
+.landing-marketing .lm-how-it-works--offscreen .lm-timeline__icon-ring,
+.landing-marketing .lm-how-it-works--offscreen .lm-timeline__icon-glyph {
+  animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {

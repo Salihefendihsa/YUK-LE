@@ -30,11 +30,19 @@ const TURKEY_ROUTES: ReadonlyArray<readonly [string, string]> = [
   ['Bursa', 'Ankara'],
 ]
 
+/** Mobilde daha az rota/şehir animasyonu; görünür değilken duraklatma */
 type Props = {
   reduceMotion?: boolean
+  liteMotion?: boolean
+  paused?: boolean
 }
 
-export function TurkeyNetworkMap({ reduceMotion = false }: Props) {
+export function TurkeyNetworkMap({
+  reduceMotion = false,
+  liteMotion = false,
+  paused = false,
+}: Props) {
+  const motionOff = reduceMotion || paused
   const { mapPath, cityPositions } = useMemo(() => {
     const collection = turkeyGeo as FeatureCollection<MultiPolygon>
     const feature = collection.features[0] as Feature<MultiPolygon> | undefined
@@ -73,8 +81,16 @@ export function TurkeyNetworkMap({ reduceMotion = false }: Props) {
     [cityPositions],
   )
 
+  const mapClass = [
+    'turkey-network-map',
+    liteMotion && !motionOff ? 'turkey-network-map--lite' : '',
+    paused && !reduceMotion ? 'turkey-network-map--paused' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <div className="turkey-network-map">
+    <div className={mapClass}>
       <div className="turkey-network-map__ambient" aria-hidden />
       <svg
         viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
@@ -138,6 +154,12 @@ export function TurkeyNetworkMap({ reduceMotion = false }: Props) {
           if (!from || !to) return null
           const midX = (from.x + to.x) / 2
           const midY = (from.y + to.y) / 2 - 36
+          const animateRoute = !motionOff && (!liteMotion || i < 4)
+          const routeClass = motionOff
+            ? 'turkey-network-route turkey-network-route--static'
+            : liteMotion
+              ? 'turkey-network-route turkey-network-route--lite'
+              : 'turkey-network-route'
           return (
             <path
               key={`${route[0]}-${route[1]}`}
@@ -146,23 +168,19 @@ export function TurkeyNetworkMap({ reduceMotion = false }: Props) {
               stroke="url(#turkey-route-flow)"
               strokeWidth="1.25"
               pathLength={100}
-              strokeDasharray={100}
-              strokeDashoffset={100}
+              strokeDasharray={animateRoute && !liteMotion ? 100 : undefined}
+              strokeDashoffset={animateRoute && !liteMotion ? 100 : 0}
               strokeLinecap="round"
-              className={
-                reduceMotion
-                  ? 'turkey-network-route turkey-network-route--static'
-                  : 'turkey-network-route'
-              }
-              style={{ animationDelay: `${i * 0.35}s` }}
+              className={animateRoute ? routeClass : 'turkey-network-route turkey-network-route--static'}
+              style={animateRoute ? { animationDelay: `${i * 0.35}s` } : undefined}
             />
           )
         })}
 
         {cityPositions.map((city, i) => (
           <g key={city.name} className="turkey-network-city">
-            <circle cx={city.x} cy={city.y} r="20" fill="url(#turkey-city-glow)" opacity={0.5} />
-            {!reduceMotion ? (
+            <circle cx={city.x} cy={city.y} r="20" fill="url(#turkey-city-glow)" opacity={liteMotion ? 0.35 : 0.5} />
+            {!motionOff && (!liteMotion || i < 4) ? (
               <circle
                 cx={city.x}
                 cy={city.y}

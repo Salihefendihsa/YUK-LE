@@ -253,6 +253,12 @@ html.landing-page body {
 }
 
 @media (max-width: 767px) {
+  .circle-loader-bg::before,
+  .circle-loader-bg::after {
+    animation: none;
+    will-change: auto;
+  }
+
   .circle-loader-content {
     gap: 0.8rem;
     padding: 20px 16px;
@@ -270,11 +276,34 @@ html.landing-page body {
     width: min(190px, calc(100vw - 56px));
     height: 3px;
   }
+
+  .landing-root-content {
+    will-change: auto;
+  }
+
+  .globe-ambient {
+    animation: none;
+    filter: none;
+  }
+
+  .landing-reviews__card {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(28, 32, 41, 0.94);
+  }
+
+  .landing-reviews__card:hover {
+    box-shadow: 0 0 40px rgba(255, 107, 0, 0.08);
+  }
+
+  .landing-footer__marquee-track {
+    will-change: transform;
+  }
 }
 
 .landing-root-content {
   min-height: 100vh;
-  will-change: opacity, filter, transform;
+  will-change: transform;
 }
 
 /* Navbar */
@@ -1285,6 +1314,26 @@ html.landing-page body {
   animation: none;
   stroke-dashoffset: 0;
   opacity: 0.5;
+}
+
+.turkey-network-route--lite {
+  animation: turkey-network-flow-lite 3.8s ease-in-out infinite;
+  stroke-dashoffset: 0;
+}
+
+@keyframes turkey-network-flow-lite {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.92;
+  }
+}
+
+.turkey-network-map--paused .turkey-network-route,
+.turkey-network-map--paused .turkey-network-city__pulse {
+  animation-play-state: paused;
 }
 
 @keyframes turkey-network-flow {
@@ -2980,6 +3029,27 @@ html.landing-page body {
     mask-image: linear-gradient(90deg, transparent 0%, #000 4%, #000 96%, transparent 100%);
     -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 4%, #000 96%, transparent 100%);
   }
+
+  .landing-reviews__viewport--manual {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    overscroll-behavior-x: contain;
+    cursor: default;
+  }
+
+  .landing-reviews__viewport--manual .landing-reviews__marquee {
+    width: 100%;
+    gap: 0.8rem;
+    padding-inline: 0.25rem;
+  }
+
+  .landing-reviews__viewport--manual .landing-reviews__card {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    cursor: default;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -4010,15 +4080,16 @@ html.landing-page body {
 
 @media (max-width: 767px) {
   .hero-video-brand-watermark {
-    right: 12px;
-    bottom: 12px;
-    width: min(120px, calc(100vw - 24px));
-    height: 36px;
+    right: 8px;
+    bottom: 8px;
+    width: 138px;
+    height: 40px;
     padding: 6px 10px;
+    border-radius: 7px;
   }
 
   .hero-video-brand-watermark .logo {
-    --logo-cap-size: 10px;
+    --logo-cap-size: 11px;
   }
 }
 
@@ -4051,7 +4122,7 @@ html.landing-page body {
 }
 
 /* Landing perf — mobil & reduced motion: sürekli CSS animasyonları kapalı */
-@media (max-width: 767px), (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce) {
   .landing-root *,
   .landing-root *::before,
   .landing-root *::after,

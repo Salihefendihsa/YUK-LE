@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { RevealGroup } from './Reveal'
 import { useScrollReveal } from './hooks/useScrollReveal'
+import { prefersReducedMotion } from '../../lib/scrollReveal'
 
 type Step = {
   title: string
@@ -137,16 +138,18 @@ function TimelineStep({ step, index }: { step: Step; index: number }) {
 export function HowItWorks() {
   const sectionRef = useRef<HTMLElement>(null)
   const timelineRef = useRef<HTMLDivElement>(null)
-  const [desktopTimeline, setDesktopTimeline] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches,
-  )
+  const [iconsActive, setIconsActive] = useState(true)
 
   useEffect(() => {
-    const mq = window.matchMedia('(min-width: 1024px)')
-    const onChange = () => setDesktopTimeline(mq.matches)
-    onChange()
-    mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
+    const el = sectionRef.current
+    if (!el || prefersReducedMotion()) return
+
+    const io = new IntersectionObserver(
+      ([entry]) => setIconsActive(entry.isIntersecting),
+      { root: null, rootMargin: '60px 0px', threshold: 0.06 },
+    )
+    io.observe(el)
+    return () => io.disconnect()
   }, [])
 
   useScrollReveal(timelineRef, {
@@ -154,14 +157,14 @@ export function HowItWorks() {
     stagger: 0.08,
     start: 'top 80%',
     trigger: sectionRef,
-    enabled: desktopTimeline,
+    enabled: !prefersReducedMotion(),
   })
 
   return (
     <section
       ref={sectionRef}
       id="yolculuk"
-      className="section-rhythm-b section-rhythm--fade lm-section-pad lm-how-it-works lm-how-it-works--story"
+      className={`section-rhythm-b section-rhythm--fade lm-section-pad lm-how-it-works lm-how-it-works--story${iconsActive ? '' : ' lm-how-it-works--offscreen'}`}
       aria-labelledby="how-it-works-heading"
     >
       <div className="lm-section-inner lm-container">

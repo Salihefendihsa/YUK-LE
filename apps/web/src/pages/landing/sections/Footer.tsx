@@ -279,7 +279,7 @@ export function LandingFooter() {
         </div>
 
         <div className="landing-footer__bottom">
-          <p>© 2026 Navlonix — Yapay zeka destekli lojistik.</p>
+          <p>© 2026 Navlonix — Yapay Zekâ Destekli Lojistik.</p>
           <p className="landing-footer__locale">
             <span aria-hidden>🇹🇷</span> Türkiye · TR
           </p>
