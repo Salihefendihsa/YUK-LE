@@ -46,8 +46,10 @@ export function HeroVideoBackground() {
         <img src="/hero-trucks.jpg" alt="" />
       )}
       <div className="hero-video-scrim" />
-      <div className="hero-video-brand-watermark" aria-hidden>
-        <Logo variant="full" size="sm" theme="dark" />
+      <div className="hero-video-corner-brand" aria-hidden>
+        <div className="hero-video-corner-brand__sign">
+          <Logo variant="full" size="md" theme="dark" />
+        </div>
       </div>
     </div>
   )

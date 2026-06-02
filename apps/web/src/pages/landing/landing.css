@@ -4053,43 +4053,87 @@ html.landing-page body {
     linear-gradient(to top, rgba(0, 0, 0, 0.45) 0%, transparent 50%);
 }
 
-.hero-video-brand-watermark {
+/* Sağ alt: yumuşak feather vinyet + Navlonix imzası (filigran örtüsü, kutu yok) */
+.hero-video-corner-brand {
+  --hero-corner-w: clamp(15rem, 50vmin, 30rem);
+  --hero-corner-h: clamp(7.5rem, 30vmin, 15rem);
   position: absolute;
-  right: 16px;
-  bottom: 16px;
+  right: 0;
+  bottom: 0;
   z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 150px;
-  height: 44px;
-  padding: 8px 12px;
-  border-radius: 8px;
+  width: var(--hero-corner-w);
+  height: var(--hero-corner-h);
   pointer-events: none;
-  background: linear-gradient(
-    135deg,
-    rgba(9, 11, 14, 0.96) 0%,
-    rgba(9, 11, 14, 0.88) 100%
-  );
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  isolation: isolate;
 }
 
-.hero-video-brand-watermark .logo {
-  --logo-cap-size: 12px;
+.hero-video-corner-brand::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(
+      ellipse 150% 150% at 100% 100%,
+      rgba(5, 7, 13, 0.98) 0%,
+      rgba(6, 9, 16, 0.96) 14%,
+      rgba(7, 10, 18, 0.9) 26%,
+      rgba(8, 12, 20, 0.74) 40%,
+      rgba(9, 13, 22, 0.48) 54%,
+      rgba(10, 14, 24, 0.22) 66%,
+      rgba(10, 14, 24, 0.06) 76%,
+      transparent 88%
+    ),
+    linear-gradient(
+      135deg,
+      transparent 0%,
+      transparent 34%,
+      rgba(8, 11, 19, 0.12) 48%,
+      rgba(7, 10, 17, 0.38) 62%,
+      rgba(6, 8, 15, 0.72) 76%,
+      rgba(5, 7, 13, 0.92) 90%,
+      rgba(5, 7, 13, 0.98) 100%
+    );
+}
+
+.hero-video-corner-brand__sign {
+  position: absolute;
+  z-index: 1;
+  right: clamp(1rem, 3.5vw, 1.25rem);
+  bottom: clamp(1rem, 3.5vw, 1.25rem);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.4));
+}
+
+.hero-video-corner-brand__sign .logo {
+  --logo-cap-size: clamp(14px, 3.4vw, 17px);
 }
 
 @media (max-width: 767px) {
-  .hero-video-brand-watermark {
-    right: 8px;
-    bottom: 8px;
-    width: 138px;
-    height: 40px;
-    padding: 6px 10px;
-    border-radius: 7px;
+  .hero-video-corner-brand {
+    --hero-corner-w: clamp(12.5rem, 56vw, 19rem);
+    --hero-corner-h: clamp(6.5rem, 32vmin, 11.5rem);
   }
 
-  .hero-video-brand-watermark .logo {
-    --logo-cap-size: 11px;
+  .hero-video-corner-brand__sign {
+    right: clamp(0.875rem, 4vw, 1.125rem);
+    bottom: clamp(0.875rem, 4vw, 1.125rem);
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .hero-video-corner-brand {
+    --hero-corner-w: clamp(14.5rem, 44vmin, 24rem);
+    --hero-corner-h: clamp(7rem, 26vmin, 13rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-video-corner-brand {
+    --hero-corner-w: clamp(17rem, 32vmin, 30rem);
+    --hero-corner-h: clamp(8rem, 22vmin, 15rem);
   }
 }
 
