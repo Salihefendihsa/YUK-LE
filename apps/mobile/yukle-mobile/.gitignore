@@ -21,6 +21,10 @@ expo-env.d.ts
 # Metro
 .metro-health-check*
 
+# Expo Go QR / dev artifacts
+expo-go-qr.png
+*-qr.png
+
 # debug
 npm-debug.*
 yarn-debug.*
