@@ -93,7 +93,7 @@ export function LoginScreen() {
     >
       <TextField
         icon="call-outline"
-        placeholder="5XX XXX XX XX"
+        placeholder="5XXXXXXXXX"
         value={phone}
         onChangeText={(t) => setPhone(formatPhone(t))}
         keyboardType="phone-pad"

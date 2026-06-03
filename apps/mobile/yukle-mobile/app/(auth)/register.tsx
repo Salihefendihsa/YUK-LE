@@ -1,11 +1,15 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Switch, Text, TextInput, View } from 'react-native';
+import { Pressable, Switch, Text, View } from 'react-native';
 import { AlertBanner } from '../../src/components/ui/AlertBanner';
 import { AuthScreen } from '../../src/components/ui/AuthScreen';
+import { FadeInView } from '../../src/components/ui/FadeInView';
 import { PrimaryButton } from '../../src/components/ui/PrimaryButton';
+import { TextField } from '../../src/components/ui/TextField';
 import { authFormStyles as s } from '../../src/constants/authFormStyles';
 import { palette } from '../../src/theme/colors';
+import { space, spacing } from '../../src/theme/spacing';
+import { typography } from '../../src/theme/typography';
 import { authService } from '../../src/services/auth.service';
 import type { RegisterRole } from '../../src/types/auth';
 import {
@@ -169,203 +173,209 @@ export default function RegisterScreen() {
 
   return (
     <AuthScreen title="Hesap Oluştur" subtitle="Platforma ücretsiz katılın">
-        <View style={s.roleRow}>
-          <Pressable
-            style={[s.roleBtn, role === 'Customer' && s.roleBtnActive]}
-            onPress={() => setRole('Customer')}
-          >
-            <Text style={[s.roleBtnText, role === 'Customer' && s.roleBtnTextActive]}>Müşteri</Text>
-          </Pressable>
-          <Pressable
-            style={[s.roleBtn, role === 'Driver' && s.roleBtnActive]}
-            onPress={() => setRole('Driver')}
-          >
-            <Text style={[s.roleBtnText, role === 'Driver' && s.roleBtnTextActive]}>Şoför</Text>
-          </Pressable>
-        </View>
-
-        <Text style={s.stepBadge}>Adım {step} / 3</Text>
-        {error ? <AlertBanner message={error} tone="error" /> : null}
-
-        {step === 1 ? (
-          <>
-            <Text style={s.label}>Ad Soyad *</Text>
-            <TextInput
-              style={s.input}
-              value={fullName}
-              onChangeText={setFullName}
-              placeholder="Ad Soyad"
-              placeholderTextColor={palette.textMuted}
-            />
-            <Text style={s.label}>Telefon *</Text>
-            <TextInput
-              style={s.input}
-              value={phone}
-              onChangeText={(t) => setPhone(formatPhone(t))}
-              keyboardType="phone-pad"
-              maxLength={13}
-              placeholder="5XX XXX XX XX"
-              placeholderTextColor={palette.textMuted}
-            />
-            <Text style={s.label}>E-posta *</Text>
-            <TextInput
-              style={s.input}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              placeholder="ornek@firma.com"
-              placeholderTextColor={palette.textMuted}
-            />
-            <View style={s.stepRow}>
-              <View />
-              <Pressable
-                style={[s.stepBtn, s.stepBtnPrimary]}
-                onPress={() => validateStep1() && setStep(2)}
-              >
-                <Text style={s.stepBtnTextPrimary}>İleri</Text>
-              </Pressable>
-            </View>
-          </>
-        ) : null}
-
-        {step === 2 ? (
-          <>
-            {role === 'Customer' ? (
-              <>
-                <Text style={s.label}>Vergi Numarası *</Text>
-                <TextInput
-                  style={s.input}
-                  value={taxNumber}
-                  onChangeText={(t) => setTaxNumber(digitsOnly(t).slice(0, 10))}
-                  keyboardType="number-pad"
-                  maxLength={10}
-                  placeholderTextColor={palette.textMuted}
-                />
-                <Text style={s.label}>Şirket Adı *</Text>
-                <TextInput
-                  style={s.input}
-                  value={companyName}
-                  onChangeText={setCompanyName}
-                  placeholderTextColor={palette.textMuted}
-                />
-                <Text style={s.label}>Şirket Adresi *</Text>
-                <TextInput
-                  style={s.input}
-                  value={companyAddress}
-                  onChangeText={setCompanyAddress}
-                  placeholderTextColor={palette.textMuted}
-                />
-              </>
-            ) : (
-              <>
-                <Text style={s.label}>TC Kimlik No *</Text>
-                <TextInput
-                  style={s.input}
-                  value={tcIdentityNumber}
-                  onChangeText={(t) => setTcIdentityNumber(digitsOnly(t).slice(0, 11))}
-                  keyboardType="number-pad"
-                  maxLength={11}
-                  placeholderTextColor={palette.textMuted}
-                />
-                <Text style={s.label}>Doğum Tarihi * (YYYY-MM-DD)</Text>
-                <TextInput
-                  style={s.input}
-                  value={birthDate}
-                  onChangeText={setBirthDate}
-                  placeholder="1990-05-15"
-                  placeholderTextColor={palette.textMuted}
-                />
-                <Text style={s.label}>Ehliyet Sınıfı *</Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
-                  {LICENSE_CLASSES.map((c) => (
-                    <Pressable
-                      key={c}
-                      style={[s.stepBtn, licenseClass === c && s.stepBtnPrimary]}
-                      onPress={() => setLicenseClass(c)}
-                    >
-                      <Text style={licenseClass === c ? s.stepBtnTextPrimary : s.stepBtnText}>{c}</Text>
-                    </Pressable>
-                  ))}
-                </View>
-                <Text style={s.label}>IBAN *</Text>
-                <TextInput
-                  style={s.input}
-                  value={iban}
-                  onChangeText={(t) => setIban(formatIBAN(t).slice(0, 32))}
-                  placeholder="TR00 0000..."
-                  placeholderTextColor={palette.textMuted}
-                />
-                <Text style={s.label}>İkametgah Adresi *</Text>
-                <TextInput
-                  style={s.input}
-                  value={address}
-                  onChangeText={setAddress}
-                  placeholderTextColor={palette.textMuted}
-                />
-              </>
-            )}
-            <View style={s.stepRow}>
-              <Pressable style={s.stepBtn} onPress={() => setStep(1)}>
-                <Text style={s.stepBtnText}>Geri</Text>
-              </Pressable>
-              <Pressable
-                style={[s.stepBtn, s.stepBtnPrimary]}
-                onPress={() => validateStep2() && setStep(3)}
-              >
-                <Text style={s.stepBtnTextPrimary}>İleri</Text>
-              </Pressable>
-            </View>
-          </>
-        ) : null}
-
-        {step === 3 ? (
-          <>
-            <Text style={s.label}>Şifre *</Text>
-            <TextInput
-              style={s.input}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              placeholderTextColor={palette.textMuted}
-            />
-            <Text style={[s.sub, { marginTop: -8 }]}>Güç: {passwordState.strength}</Text>
-            <Text style={s.label}>Şifre Tekrar *</Text>
-            <TextInput
-              style={s.input}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-              placeholderTextColor={palette.textMuted}
-            />
-            <View style={s.checkRow}>
-              <Switch value={acceptedKvkk} onValueChange={setAcceptedKvkk} trackColor={{ true: palette.brand }} />
-              <Text style={s.checkLabel}>KVKK metnini kabul ediyorum</Text>
-            </View>
-            <View style={s.checkRow}>
-              <Switch value={acceptedTerms} onValueChange={setAcceptedTerms} trackColor={{ true: palette.brand }} />
-              <Text style={s.checkLabel}>Kullanım koşullarını kabul ediyorum</Text>
-            </View>
-            {role === 'Driver' ? (
-              <View style={s.checkRow}>
-                <Switch
-                  value={acceptedLocationTracking}
-                  onValueChange={setAcceptedLocationTracking}
-                  trackColor={{ true: palette.brand }}
-                />
-                <Text style={s.checkLabel}>Aktif seferde konum takibine onay veriyorum</Text>
-              </View>
-            ) : null}
-            <PrimaryButton title="Hesap Oluştur" onPress={handleSubmit} loading={loading} />
-            <Pressable style={s.stepBtn} onPress={() => setStep(2)}>
-              <Text style={[s.stepBtnText, { textAlign: 'center', marginTop: 8 }]}>Geri</Text>
-            </Pressable>
-          </>
-        ) : null}
-
-        <Pressable onPress={() => router.push('/(auth)/login')}>
-          <Text style={s.link}>Zaten hesabınız var mı? Giriş Yap</Text>
+      <View style={s.roleRow}>
+        <Pressable
+          style={[s.roleBtn, role === 'Customer' && s.roleBtnActive]}
+          onPress={() => setRole('Customer')}
+        >
+          <Text style={[s.roleBtnText, role === 'Customer' && s.roleBtnTextActive]}>Müşteri</Text>
         </Pressable>
+        <Pressable
+          style={[s.roleBtn, role === 'Driver' && s.roleBtnActive]}
+          onPress={() => setRole('Driver')}
+        >
+          <Text style={[s.roleBtnText, role === 'Driver' && s.roleBtnTextActive]}>Şoför</Text>
+        </Pressable>
+      </View>
+
+      <Text style={s.stepBadge}>Adım {step} / 3</Text>
+      {error ? <AlertBanner message={error} tone="error" /> : null}
+
+      {step === 1 ? (
+        <FadeInView key="step1">
+          <TextField
+            label="Ad Soyad *"
+            icon="person-outline"
+            placeholder="Ad Soyad"
+            value={fullName}
+            onChangeText={setFullName}
+            autoCapitalize="words"
+          />
+          <TextField
+            label="Telefon *"
+            icon="call-outline"
+            placeholder="5XXXXXXXXX"
+            value={phone}
+            onChangeText={(t) => setPhone(formatPhone(t))}
+            keyboardType="phone-pad"
+            maxLength={13}
+          />
+          <TextField
+            label="E-posta *"
+            icon="mail-outline"
+            placeholder="ornek@firma.com"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <View style={s.stepRow}>
+            <View />
+            <Pressable
+              style={[s.stepBtn, s.stepBtnPrimary]}
+              onPress={() => validateStep1() && setStep(2)}
+            >
+              <Text style={s.stepBtnTextPrimary}>İleri</Text>
+            </Pressable>
+          </View>
+        </FadeInView>
+      ) : null}
+
+      {step === 2 ? (
+        <FadeInView key={`step2-${role}`}>
+          {role === 'Customer' ? (
+            <>
+              <TextField
+                label="Vergi Numarası *"
+                icon="business-outline"
+                placeholder="1234567890"
+                value={taxNumber}
+                onChangeText={(t) => setTaxNumber(digitsOnly(t).slice(0, 10))}
+                keyboardType="number-pad"
+                maxLength={10}
+              />
+              <TextField
+                label="Şirket Adı *"
+                icon="briefcase-outline"
+                placeholder="ABC Lojistik A.Ş."
+                value={companyName}
+                onChangeText={setCompanyName}
+              />
+              <TextField
+                label="Şirket Adresi *"
+                icon="location-outline"
+                placeholder="Mahalle, Sokak, No, İlçe, İl"
+                value={companyAddress}
+                onChangeText={setCompanyAddress}
+                multiline
+              />
+            </>
+          ) : (
+            <>
+              <TextField
+                label="TC Kimlik No *"
+                icon="card-outline"
+                placeholder="11 hane"
+                value={tcIdentityNumber}
+                onChangeText={(t) => setTcIdentityNumber(digitsOnly(t).slice(0, 11))}
+                keyboardType="number-pad"
+                maxLength={11}
+              />
+              <TextField
+                label="Doğum Tarihi * (YYYY-MM-DD)"
+                icon="calendar-outline"
+                placeholder="1990-05-15"
+                value={birthDate}
+                onChangeText={setBirthDate}
+                autoCapitalize="none"
+              />
+              <Text style={[typography.caption, { textTransform: 'none', color: palette.textSecondary, marginBottom: space.sm }]}>
+                Ehliyet Sınıfı *
+              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginBottom: spacing[4] }}>
+                {LICENSE_CLASSES.map((c) => (
+                  <Pressable
+                    key={c}
+                    style={[s.stepBtn, licenseClass === c && s.stepBtnPrimary]}
+                    onPress={() => setLicenseClass(c)}
+                  >
+                    <Text style={licenseClass === c ? s.stepBtnTextPrimary : s.stepBtnText}>{c}</Text>
+                  </Pressable>
+                ))}
+              </View>
+              <TextField
+                label="IBAN *"
+                icon="wallet-outline"
+                placeholder="TR00 0000 0000 0000 0000 0000 00"
+                value={iban}
+                onChangeText={(t) => setIban(formatIBAN(t).slice(0, 32))}
+                autoCapitalize="characters"
+                autoCorrect={false}
+              />
+              <TextField
+                label="İkametgah Adresi *"
+                icon="home-outline"
+                placeholder="Mahalle, Sokak, No, İlçe, İl"
+                value={address}
+                onChangeText={setAddress}
+                multiline
+              />
+            </>
+          )}
+          <View style={s.stepRow}>
+            <Pressable style={s.stepBtn} onPress={() => setStep(1)}>
+              <Text style={s.stepBtnText}>Geri</Text>
+            </Pressable>
+            <Pressable
+              style={[s.stepBtn, s.stepBtnPrimary]}
+              onPress={() => validateStep2() && setStep(3)}
+            >
+              <Text style={s.stepBtnTextPrimary}>İleri</Text>
+            </Pressable>
+          </View>
+        </FadeInView>
+      ) : null}
+
+      {step === 3 ? (
+        <FadeInView key="step3">
+          <TextField
+            label="Şifre *"
+            icon="lock-closed-outline"
+            placeholder="********"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
+          <Text style={[typography.bodySmall, { marginTop: -spacing[2], marginBottom: spacing[3], color: palette.textMuted }]}>
+            Güç: {passwordState.strength}
+          </Text>
+          <TextField
+            label="Şifre Tekrar *"
+            icon="lock-closed-outline"
+            placeholder="********"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry
+          />
+          <View style={s.checkRow}>
+            <Switch value={acceptedKvkk} onValueChange={setAcceptedKvkk} trackColor={{ true: palette.brand, false: palette.borderLight }} />
+            <Text style={s.checkLabel}>KVKK metnini kabul ediyorum</Text>
+          </View>
+          <View style={s.checkRow}>
+            <Switch value={acceptedTerms} onValueChange={setAcceptedTerms} trackColor={{ true: palette.brand, false: palette.borderLight }} />
+            <Text style={s.checkLabel}>Kullanım koşullarını kabul ediyorum</Text>
+          </View>
+          {role === 'Driver' ? (
+            <View style={s.checkRow}>
+              <Switch
+                value={acceptedLocationTracking}
+                onValueChange={setAcceptedLocationTracking}
+                trackColor={{ true: palette.brand, false: palette.borderLight }}
+              />
+              <Text style={s.checkLabel}>Aktif seferde konum takibine onay veriyorum</Text>
+            </View>
+          ) : null}
+          <PrimaryButton title="Hesap Oluştur" onPress={handleSubmit} loading={loading} />
+          <Pressable style={[s.stepBtn, { marginTop: spacing[3], alignItems: 'center' }]} onPress={() => setStep(2)}>
+            <Text style={s.stepBtnText}>Geri</Text>
+          </Pressable>
+        </FadeInView>
+      ) : null}
+
+      <Pressable onPress={() => router.push('/(auth)/login')}>
+        <Text style={s.link}>Zaten hesabınız var mı? Giriş Yap</Text>
+      </Pressable>
     </AuthScreen>
   );
 }

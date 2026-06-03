@@ -16,6 +16,7 @@ import { typography } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import { Logo } from '../brand/Logo';
 import { Card } from './Card';
+import { FadeInView } from './FadeInView';
 
 type Props = {
   children: ReactNode;
@@ -50,18 +51,20 @@ export function AuthScreen({ children, title, subtitle, footer, contentStyle }: 
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.logoBlock}>
+          <FadeInView style={styles.logoBlock}>
             <Logo variant="full" size="lg" theme="dark" />
             <Text style={styles.tagline}>Akıllı lojistik platformu</Text>
-          </View>
+          </FadeInView>
 
-          <Card variant="glass" padding={6} style={[styles.formCard, contentStyle]}>
-            <Text style={styles.formTitle}>{title}</Text>
-            {subtitle ? <Text style={styles.formSub}>{subtitle}</Text> : null}
-            {children}
-          </Card>
+          <FadeInView delay={80}>
+            <Card variant="glass" padding={6} style={[styles.formCard, contentStyle]}>
+              <Text style={styles.formTitle}>{title}</Text>
+              {subtitle ? <Text style={styles.formSub}>{subtitle}</Text> : null}
+              {children}
+            </Card>
+          </FadeInView>
 
-          {footer}
+          {footer ? <FadeInView delay={160}>{footer}</FadeInView> : null}
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
