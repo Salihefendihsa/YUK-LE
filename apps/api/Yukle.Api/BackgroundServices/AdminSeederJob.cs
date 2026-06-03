@@ -90,12 +90,26 @@ public sealed class AdminSeederJob(
             // Var olan admin'in role'ü manuel değiştirilmiş olabilir — emniyet:
             adminUser.Role = UserRole.Admin;
 
-            await UpsertTestUsersAsync(db, cancellationToken);
+            // Admin'i ÖNCE commit et — test users seed'inde collision olursa
+            // (5000000001 / 5000000002 başka kayıtta varsa) tek transaction'da
+            // batch rollback admin'i de geri alıyordu. Ayrı SaveChanges = izolasyon.
             await db.SaveChangesAsync(cancellationToken);
-
             logger.LogInformation(
-                "AdminSeeder: admin ({Email}) ve test kullanıcıları başarıyla seed edildi.",
-                adminEmail);
+                "AdminSeeder: admin ({Email}) başarıyla seed edildi.", adminEmail);
+
+            // Test users best-effort — admin başarısını riske atmadan dene.
+            try
+            {
+                await UpsertTestUsersAsync(db, cancellationToken);
+                await db.SaveChangesAsync(cancellationToken);
+                logger.LogInformation("AdminSeeder: test kullanıcıları seed edildi.");
+            }
+            catch (Exception testEx)
+            {
+                logger.LogWarning(testEx,
+                    "AdminSeeder: test kullanıcıları seed edilemedi (muhtemelen phone collision: " +
+                    "5000000001/5000000002 başka kayıtta). Admin login etkilenmedi.");
+            }
         }
         catch (Exception ex)
         {
