@@ -4053,10 +4053,11 @@ html.landing-page body {
     linear-gradient(to top, rgba(0, 0, 0, 0.45) 0%, transparent 50%);
 }
 
-/* Sağ alt: yumuşak feather vinyet + Navlonix imzası (filigran örtüsü, kutu yok) */
+/* Sağ alt: feather vinyet + Navlonix imzası — filigran örtüsü, sert kutu yok */
 .hero-video-corner-brand {
-  --hero-corner-w: clamp(15rem, 50vmin, 30rem);
-  --hero-corner-h: clamp(7.5rem, 30vmin, 15rem);
+  --hero-corner-w: clamp(16rem, 54vmin, 34rem);
+  --hero-corner-h: clamp(8rem, 34vmin, 16.5rem);
+  --hero-vignette-core: #060810;
   position: absolute;
   right: 0;
   bottom: 0;
@@ -4065,6 +4066,23 @@ html.landing-page body {
   height: var(--hero-corner-h);
   pointer-events: none;
   isolation: isolate;
+  /* Dikdörtgen sınırı görünmez — tüm katman videoya erir */
+  -webkit-mask-image: radial-gradient(
+    ellipse 118% 118% at 100% 100%,
+    #000 0%,
+    #000 42%,
+    rgba(0, 0, 0, 0.85) 58%,
+    rgba(0, 0, 0, 0.35) 74%,
+    transparent 92%
+  );
+  mask-image: radial-gradient(
+    ellipse 118% 118% at 100% 100%,
+    #000 0%,
+    #000 42%,
+    rgba(0, 0, 0, 0.85) 58%,
+    rgba(0, 0, 0, 0.35) 74%,
+    transparent 92%
+  );
 }
 
 .hero-video-corner-brand::before {
@@ -4074,66 +4092,71 @@ html.landing-page body {
   z-index: 0;
   background:
     radial-gradient(
-      ellipse 150% 150% at 100% 100%,
-      rgba(5, 7, 13, 0.98) 0%,
-      rgba(6, 9, 16, 0.96) 14%,
-      rgba(7, 10, 18, 0.9) 26%,
-      rgba(8, 12, 20, 0.74) 40%,
-      rgba(9, 13, 22, 0.48) 54%,
-      rgba(10, 14, 24, 0.22) 66%,
-      rgba(10, 14, 24, 0.06) 76%,
-      transparent 88%
+      ellipse 165% 165% at 100% 100%,
+      var(--hero-vignette-core) 0%,
+      var(--hero-vignette-core) 10%,
+      rgba(6, 8, 14, 0.99) 18%,
+      rgba(7, 10, 17, 0.97) 26%,
+      rgba(8, 11, 19, 0.9) 36%,
+      rgba(9, 12, 21, 0.78) 46%,
+      rgba(10, 13, 22, 0.58) 56%,
+      rgba(10, 14, 23, 0.34) 66%,
+      rgba(10, 14, 24, 0.14) 76%,
+      rgba(10, 14, 24, 0.04) 84%,
+      transparent 94%
     ),
     linear-gradient(
       135deg,
       transparent 0%,
-      transparent 34%,
-      rgba(8, 11, 19, 0.12) 48%,
-      rgba(7, 10, 17, 0.38) 62%,
-      rgba(6, 8, 15, 0.72) 76%,
-      rgba(5, 7, 13, 0.92) 90%,
-      rgba(5, 7, 13, 0.98) 100%
+      transparent 28%,
+      rgba(8, 11, 18, 0.08) 42%,
+      rgba(7, 10, 16, 0.28) 54%,
+      rgba(6, 8, 14, 0.55) 66%,
+      rgba(6, 8, 14, 0.82) 78%,
+      rgba(6, 8, 14, 0.96) 90%,
+      var(--hero-vignette-core) 100%
     );
 }
 
 .hero-video-corner-brand__sign {
   position: absolute;
   z-index: 1;
-  right: clamp(1rem, 3.5vw, 1.25rem);
-  bottom: clamp(1rem, 3.5vw, 1.25rem);
+  right: clamp(1rem, 4vw, 1.25rem);
+  bottom: clamp(1rem, 4vw, 1.25rem);
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
-  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55)) drop-shadow(0 6px 20px rgba(0, 0, 0, 0.35));
 }
 
 .hero-video-corner-brand__sign .logo {
-  --logo-cap-size: clamp(14px, 3.4vw, 17px);
+  --logo-text: #f8fafc;
+  --logo-cap-size: clamp(15px, 3.6vw, 18px);
 }
 
 @media (max-width: 767px) {
   .hero-video-corner-brand {
-    --hero-corner-w: clamp(12.5rem, 56vw, 19rem);
-    --hero-corner-h: clamp(6.5rem, 32vmin, 11.5rem);
+    --hero-corner-w: clamp(13.5rem, 58vw, 21rem);
+    --hero-corner-h: clamp(7.25rem, 36vmin, 12.5rem);
   }
 
   .hero-video-corner-brand__sign {
-    right: clamp(0.875rem, 4vw, 1.125rem);
-    bottom: clamp(0.875rem, 4vw, 1.125rem);
+    right: clamp(1rem, 5vw, 1.125rem);
+    bottom: clamp(1rem, 5vw, 1.125rem);
   }
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
   .hero-video-corner-brand {
-    --hero-corner-w: clamp(14.5rem, 44vmin, 24rem);
-    --hero-corner-h: clamp(7rem, 26vmin, 13rem);
+    --hero-corner-w: clamp(15.5rem, 46vmin, 26rem);
+    --hero-corner-h: clamp(7.5rem, 28vmin, 14rem);
   }
 }
 
 @media (min-width: 1024px) {
   .hero-video-corner-brand {
-    --hero-corner-w: clamp(17rem, 32vmin, 30rem);
-    --hero-corner-h: clamp(8rem, 22vmin, 15rem);
+    --hero-corner-w: clamp(18rem, 34vmin, 34rem);
+    --hero-corner-h: clamp(8.5rem, 24vmin, 16.5rem);
   }
 }
 
