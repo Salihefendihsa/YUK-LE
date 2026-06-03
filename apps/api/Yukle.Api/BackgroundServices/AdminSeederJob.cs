@@ -30,21 +30,56 @@ public sealed class AdminSeederJob(
             using var scope = scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<YukleDbContext>();
 
-            string adminPassword = "Admin123!";
+            const string adminEmail = "admin@navlonix.com";
+            // Phone alanı User entity'de UNIQUE (YukleDbContext.HasIndex(Phone).IsUnique).
+            // Eski seeder bu aday phone'u sabit kullanıyordu — başka bir kullanıcı
+            // aynı numara ile kayıtlıysa SaveChanges UNIQUE violation atıyor ve
+            // ADMIN HİÇ OLUŞMUYORDU. Aşağıdaki idempotent upsert:
+            //   1) Email ile mevcut admin'i ara (Email de UNIQUE).
+            //   2) Yoksa: aday phone'u collision check'le; gerekirse benzersiz
+            //      synthetic phone (`admin-<guid>`) ile oluştur.
+            //   3) Her durumda şifre + onay flag'leri güncelle.
+            // Backend login `u.Phone == input || u.Email == input` dual-mode olduğu
+            // için admin sadece email ile giriş yapar; phone'un değeri kritik değil.
+            const string adminPhoneCandidate = "+900000000000";
+            const string adminPassword = "Admin123!";
             byte[] adminPasswordHash = Encoding.UTF8.GetBytes(BCrypt.Net.BCrypt.HashPassword(adminPassword));
 
-            var adminUser = await db.Users.SingleOrDefaultAsync(u => u.Email == "admin@navlonix.com", cancellationToken);
+            var adminUser = await db.Users.SingleOrDefaultAsync(u => u.Email == adminEmail, cancellationToken);
             if (adminUser is null)
             {
+                var candidatePhoneTaken = await db.Users
+                    .AnyAsync(u => u.Phone == adminPhoneCandidate, cancellationToken);
+                var adminPhone = candidatePhoneTaken
+                    ? $"admin-{Guid.NewGuid():N}"
+                    : adminPhoneCandidate;
+
                 adminUser = new User
                 {
                     FullName = "System Administrator",
-                    Email = "admin@navlonix.com",
-                    Phone = "+900000000000",
+                    Email = adminEmail,
+                    Phone = adminPhone,
                     Role = UserRole.Admin,
                     CreatedAt = DateTime.UtcNow
                 };
                 await db.Users.AddAsync(adminUser, cancellationToken);
+
+                if (candidatePhoneTaken)
+                {
+                    logger.LogWarning(
+                        "AdminSeeder: aday telefon ({Candidate}) başka bir kullanıcıda kullanılıyor; " +
+                        "admin için benzersiz synthetic phone atandı ({SyntheticPhone}). " +
+                        "Admin yine email ile giriş yapar.",
+                        adminPhoneCandidate, adminPhone);
+                }
+                else
+                {
+                    logger.LogInformation("AdminSeeder: yeni admin oluşturuldu (email={Email}).", adminEmail);
+                }
+            }
+            else
+            {
+                logger.LogInformation("AdminSeeder: mevcut admin bulundu, kimlik bilgileri güncelleniyor.");
             }
 
             adminUser.PasswordHash = adminPasswordHash;
@@ -52,15 +87,21 @@ public sealed class AdminSeederJob(
             adminUser.IsActive = true;
             adminUser.IsPhoneVerified = true;
             adminUser.ApprovalStatus = ApprovalStatus.Active;
+            // Var olan admin'in role'ü manuel değiştirilmiş olabilir — emniyet:
+            adminUser.Role = UserRole.Admin;
 
             await UpsertTestUsersAsync(db, cancellationToken);
             await db.SaveChangesAsync(cancellationToken);
 
-            logger.LogWarning("AdminSeeder: Admin ve test kullanıcıları başarıyla güncellendi.");
+            logger.LogInformation(
+                "AdminSeeder: admin ({Email}) ve test kullanıcıları başarıyla seed edildi.",
+                adminEmail);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "AdminSeeder çalışırken beklenmeyen bir hata oluştu.");
+            logger.LogError(ex,
+                "AdminSeeder çalışırken hata: {Message}. Admin login muhtemelen çalışmayacak.",
+                ex.Message);
         }
     }
 
