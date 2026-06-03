@@ -15,9 +15,11 @@ export interface LoginRequest {
 }
 
 type ApiErrorPayload = {
+  // .NET ProblemDetails (RFC 7807): title generic ("Geçersiz İstek"),
+  // detail gerçek hata mesajıdır. Bazı custom endpoint'ler `message` döner.
   message?: string;
-  title?: string;
   detail?: string;
+  title?: string;
   errors?: Record<string, string[]>;
 };
 
@@ -51,16 +53,23 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** Login için Metro/dev'de gerçek hatayı loglar — credential mi, network mi
- *  ayırt etmek için. Üretimde de zarar vermez (console no-op). */
-function logLoginFailure(err: AxiosError, attempt: number): void {
+/** Login için Metro/dev'de gerçek hatayı loglar — credential mi, network mi,
+ *  body shape mi ayırt etmek için. Üretimde no-op. */
+function logLoginFailure(err: AxiosError, attempt: number, sentData: LoginRequest): void {
   const payload = err.response?.data as ApiErrorPayload | undefined;
+  // Şifreyi maskele; phone/email ham (debug için kritik).
+  const sanitized = { phone: sentData.phone, password: sentData.password ? `***(${sentData.password.length})` : '' };
   console.log('[auth.login fail]', {
     attempt,
     code: err.code,
     message: err.message,
     status: err.response?.status,
-    payloadMessage: payload?.message ?? payload?.title ?? payload?.detail,
+    sent: sanitized,
+    // RFC 7807 ProblemDetails: title = generic, detail = gerçek mesaj
+    payloadTitle: payload?.title,
+    payloadDetail: payload?.detail,
+    payloadMessage: payload?.message,
+    payloadErrors: payload?.errors,
     hasResponse: Boolean(err.response),
   });
 }
@@ -84,13 +93,17 @@ export function getLoginErrorMessage(error: unknown): string {
 
   const status = err.response.status;
   const payload = err.response.data;
+  // ÖNCELİK: backend custom `message` > RFC 7807 `detail` (gerçek mesaj) >
+  // ModelState `errors` > `title` (sadece HTTP başlığı, son çare).
+  // Eski sıra (`title` öncelikliydi) → kullanıcıya "Geçersiz İstek" gibi yanıltıcı
+  // generic mesaj gösteriliyordu.
   const payloadMsg =
     payload?.message ??
-    payload?.title ??
     payload?.detail ??
     (payload?.errors
       ? Object.values(payload.errors).flat().filter(Boolean).join('\n')
-      : undefined);
+      : undefined) ??
+    payload?.title;
 
   // 400/401: backend mesajı varsa onu kullan, yoksa dürüst credential mesajı
   if (status === 400 || status === 401) {
@@ -120,7 +133,7 @@ export const authService = {
       return res.data;
     } catch (rawErr) {
       const err = rawErr as AxiosError;
-      logLoginFailure(err, _attempt);
+      logLoginFailure(err, _attempt, data);
       // Transient + ilk deneme → kısa backoff sonrası 1 retry. Geçici ağ
       // dalgalanması "şifre hatalı" gibi görünmesin.
       if (_attempt === 1 && isTransientError(err)) {
