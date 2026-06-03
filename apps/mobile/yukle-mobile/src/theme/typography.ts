@@ -18,6 +18,21 @@ const webFontFamily = {
 
 export const fontFamily = Platform.OS === 'web' ? webFontFamily : nativeFontFamily;
 
+/** Logo wordmark — Sora 700 (web Logo.css ile aynı) */
+const nativeLogoFontFamily = {
+  regular: 'Sora_400Regular',
+  semiBold: 'Sora_600SemiBold',
+  bold: 'Sora_700Bold',
+} as const;
+
+const webLogoFontFamily = {
+  regular: 'Sora_400Regular, system-ui, sans-serif',
+  semiBold: 'Sora_600SemiBold, system-ui, sans-serif',
+  bold: 'Sora_700Bold, system-ui, sans-serif',
+} as const;
+
+export const logoFontFamily = Platform.OS === 'web' ? webLogoFontFamily : nativeLogoFontFamily;
+
 export const typography = {
   display: {
     fontFamily: fontFamily.bold,

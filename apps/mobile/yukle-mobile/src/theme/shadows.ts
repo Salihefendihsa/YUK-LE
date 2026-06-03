@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import { palette } from './colors';
 
 export const shadows = {
   sm: Platform.select({
@@ -25,7 +26,7 @@ export const shadows = {
   }),
   brand: Platform.select({
     ios: {
-      shadowColor: '#FF6B00',
+      shadowColor: palette.brand,
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.35,
       shadowRadius: 16,

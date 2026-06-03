@@ -126,8 +126,8 @@ export default function CustomerCreateLoadScreen() {
         setVolume(load.volume > 0 ? String(load.volume) : '');
         setPrice(String(load.price));
         setDescription(load.description ?? '');
-        setPickupDate(new Date(load.pickupDate));
-        setDeliveryDate(new Date(load.deliveryDate));
+        setPickupDate(new Date(load.pickupDate).toISOString());
+        setDeliveryDate(new Date(load.deliveryDate).toISOString());
         setOpenBidCount(bids.filter((b) => b.status === 'Pending').length);
         const fromC = resolveCoordinates(load.fromCity, load.fromDistrict);
         const toC = resolveCoordinates(load.toCity, load.toDistrict);

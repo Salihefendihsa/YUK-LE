@@ -10,6 +10,7 @@ import {
   ROLE_LABELS,
   type AppRole,
 } from '../../navigation/drawerMenus';
+import { Logo } from '../brand/Logo';
 import { useAuthStore } from '../../store/auth.store';
 import { palette } from '../../theme/colors';
 import { fontFamily } from '../../theme/typography';
@@ -44,7 +45,7 @@ export function AppDrawerContent({ navigation, role }: Props) {
       ]}
     >
       <View style={styles.brandBlock}>
-        <Text style={styles.logo}>Navlonix</Text>
+        <Logo variant="full" size="md" theme="dark" />
         <View style={styles.accentLine} />
         <Text style={styles.userName} numberOfLines={1}>
           {user?.fullName ?? 'Kullanıcı'}
@@ -104,12 +105,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[5],
     paddingBottom: spacing[4],
     gap: spacing[1],
-  },
-  logo: {
-    fontFamily: fontFamily.bold,
-    fontSize: 26,
-    color: palette.brand,
-    letterSpacing: 1,
   },
   accentLine: {
     width: 48,

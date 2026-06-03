@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode } from 'react';
 import {
@@ -13,9 +12,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { palette } from '../../theme/colors';
-import { fontFamily, typography } from '../../theme/typography';
-import { radius } from '../../theme/radius';
+import { typography } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
+import { Logo } from '../brand/Logo';
 import { Card } from './Card';
 
 type Props = {
@@ -52,10 +51,7 @@ export function AuthScreen({ children, title, subtitle, footer, contentStyle }: 
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.logoBlock}>
-            <View style={styles.logoBox}>
-              <Ionicons name="cube" size={28} color={palette.brand} />
-            </View>
-            <Text style={styles.brand}>Navlonix</Text>
+            <Logo variant="full" size="lg" theme="dark" />
             <Text style={styles.tagline}>Akıllı lojistik platformu</Text>
           </View>
 
@@ -102,27 +98,10 @@ const styles = StyleSheet.create({
     left: -50,
     opacity: 0.12,
   },
-  logoBlock: { alignItems: 'center', marginBottom: spacing[8] },
-  logoBox: {
-    width: 72,
-    height: 72,
-    borderRadius: radius.lg,
-    backgroundColor: palette.brandMuted,
-    borderWidth: 1,
-    borderColor: palette.brandBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing[4],
-  },
-  brand: {
-    fontFamily: fontFamily.bold,
-    fontSize: 32,
-    letterSpacing: 1,
-    color: palette.text,
-  },
+  logoBlock: { alignItems: 'center', marginBottom: spacing[8], gap: spacing[3] },
   tagline: {
     ...typography.caption,
-    marginTop: spacing[1],
+    marginTop: spacing[2],
     color: palette.textSecondary,
   },
   formCard: {

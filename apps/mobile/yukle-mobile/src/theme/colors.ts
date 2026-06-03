@@ -1,10 +1,10 @@
 /** Web tokens.css + landing — tek kaynak */
 export const palette = {
-  brand: '#FF6B00',
-  brandHover: '#FF8C38',
-  brandPress: '#CC5500',
-  brandMuted: 'rgba(255, 107, 0, 0.12)',
-  brandBorder: 'rgba(255, 107, 0, 0.35)',
+  brand: '#FF7A1A',
+  brandHover: '#FF9444',
+  brandPress: '#E56E15',
+  brandMuted: 'rgba(255, 122, 26, 0.12)',
+  brandBorder: 'rgba(255, 122, 26, 0.35)',
 
   gold: '#FFB627',
   goldMuted: 'rgba(255, 182, 39, 0.12)',
