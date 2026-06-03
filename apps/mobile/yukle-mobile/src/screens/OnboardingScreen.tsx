@@ -67,8 +67,10 @@ export function OnboardingScreen() {
   };
 
   const finish = async () => {
+    // Welcome ana giriş; onboarding bittiğinde yeni kullanıcı muhtemelen kayda
+    // yönelir. Mevcut kullanıcı login'i Welcome'dan zaten seçebilir.
     await markOnboardingSeen();
-    router.replace('/(auth)/login');
+    router.replace('/(auth)/register');
   };
 
   const onMomentumScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
