@@ -39,7 +39,7 @@ export default function AdminLoginRoute() {
       setAuth(response);
       router.replace('/(admin)/(tabs)/dashboard');
     } catch (err: unknown) {
-      setError(authService.getErrorMessage(err));
+      setError(authService.getLoginErrorMessage(err));
     } finally {
       setLoading(false);
     }

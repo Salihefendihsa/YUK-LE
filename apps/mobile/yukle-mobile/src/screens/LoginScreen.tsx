@@ -69,7 +69,7 @@ export function LoginScreen() {
         return;
       }
 
-      setError(authService.getErrorMessage(err));
+      setError(authService.getLoginErrorMessage(err));
     } finally {
       setLoading(false);
     }

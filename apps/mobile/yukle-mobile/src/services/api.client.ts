@@ -6,8 +6,27 @@ import { translateUserFacingError } from '../utils/apiErrors';
 export const apiClient = axios.create({
   baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
-  timeout: 15000,
+  // Mobil zayıf ağ + JIT cold-start için artırıldı (eski 15s timeout
+  // kullanıcıya 'şifre hatalı' gibi yanıltıcı mesaj üretiyordu).
+  timeout: 25000,
 });
+
+/** Anonymous endpoint'ler — backend bu yollarda JWT validate etmemeli;
+ *  stale/expired token istemeden eklenirse middleware 401 dönüp asıl
+ *  credential kontrolüne girmiyor (intermittent login bug). */
+const ANON_PATHS = [
+  '/Auth/login',
+  '/Auth/register',
+  '/Auth/verify-otp',
+  '/Auth/resend-otp',
+  '/Auth/forgot-password',
+  '/Auth/reset-password',
+];
+
+function isAnonymousRequest(url: string | undefined): boolean {
+  if (!url) return false;
+  return ANON_PATHS.some((p) => url === p || url.startsWith(`${p}?`) || url.includes(p));
+}
 
 type ApiErrorPayload = {
   message?: string;
@@ -63,6 +82,14 @@ export function getApiErrorMessage(error: unknown): string {
 }
 
 apiClient.interceptors.request.use((config) => {
+  // Anonymous endpoint'lerde stale Authorization header gönderme.
+  // (config.headers axios v1'de AxiosHeaders; delete güvenli.)
+  if (isAnonymousRequest(config.url)) {
+    if (config.headers && 'Authorization' in (config.headers as object)) {
+      delete (config.headers as Record<string, unknown>).Authorization;
+    }
+    return config;
+  }
   const token = useAuthStore.getState().token;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
