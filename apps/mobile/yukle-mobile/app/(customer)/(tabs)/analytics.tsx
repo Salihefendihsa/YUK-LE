@@ -20,17 +20,23 @@ import { radius } from '../../../src/theme/radius';
 import { space, spacing } from '../../../src/theme/spacing';
 import { formatCurrencyTRY } from '../../../src/utils/format';
 
+// TODO Faz 4+: Gerçek analitik API'sı bağlanınca DEMO_* constants'lerini kaldır
+// ve veriyi backend'den fetch et. Web ve mobil senkron olarak demo'dan canlıya
+// geçmeli. Şu an /api/Analytics endpoint'i yok (web Analytics.tsx hard-coded).
 export default function CustomerAnalyticsScreen() {
   return (
     <ScreenScroll contentContainerStyle={styles.scroll}>
-      <ScreenHeader title="Analitik (Demo)" subtitle="Örnek veriler — canlı rapor bağlı değil" />
+      <ScreenHeader
+        title="Analitik (Yakında)"
+        subtitle="Canlı veri yakında bağlanacak — şu an örnek görünüm"
+      />
 
       <FadeInView>
       <Card variant="elevated" padding={3} style={styles.demoBanner}>
-        <StatusPill label="DEMO / ÖRNEK VERİ" tone="warning" />
+        <StatusPill label="YAKINDA — ÖRNEK GÖRÜNÜM" tone="warning" />
         <Text style={styles.demoBannerText}>
-          Bu ekrandaki grafik ve rakamlar yalnızca arayüz demosudur. Gerçek harcama ve güzergah verisi
-          gösterilmez.
+          Harcama, güzergah ve sürdürülebilirlik raporları hesabınıza yakında bağlanacak.
+          Bu ekrandaki rakamlar yalnızca tasarım önizlemesidir.
         </Text>
       </Card>
       </FadeInView>

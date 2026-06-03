@@ -20,6 +20,12 @@ export const CUSTOMER_DRAWER_ITEMS: DrawerMenuItem[] = [
   { href: '/(customer)/(tabs)/dashboard', label: 'Ana Sayfa', icon: 'home-outline', activeMatch: 'dashboard' },
   { href: '/(customer)/(tabs)/loads', label: 'İlanlarım', icon: 'cube-outline', activeMatch: 'loads' },
   {
+    href: '/(customer)/(tabs)/bids',
+    label: 'Teklifler',
+    icon: 'pricetag-outline',
+    activeMatch: 'bids',
+  },
+  {
     href: '/(customer)/(tabs)/create-load',
     label: 'İlan Oluştur',
     icon: 'add-circle-outline',
