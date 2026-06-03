@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Text, TextInput, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { logResolvedApiBase } from '../src/constants/api';
 import { screenRootStyle } from '../src/constants/layout';
 import { palette } from '../src/theme/colors';
 import { fontFamily } from '../src/theme/typography';
@@ -46,6 +47,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) {
       applyDefaultFont();
+      logResolvedApiBase();
       setReady(true);
     }
   }, [loaded]);
@@ -53,6 +55,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (error) {
       console.warn('[fonts] Plus Jakarta yuklenemedi, sistem fontu kullanilacak:', error);
+      logResolvedApiBase();
       setReady(true);
     }
   }, [error]);

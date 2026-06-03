@@ -46,8 +46,15 @@ export function formatIBAN(iban: string): string {
   return normalized.match(/.{1,4}/g)?.join(' ') ?? normalized;
 }
 
+/** Login API — web ile aynı: 10 haneli 5XXXXXXXXX (baştaki 0 kaldırılır). */
+export function normalizeLoginPhone(phone: string): string {
+  let d = digitsOnly(phone);
+  if (d.length === 11 && d.startsWith('0')) d = d.slice(1);
+  return d.slice(0, 10);
+}
+
 export function formatPhone(phone: string): string {
-  const raw = digitsOnly(phone).slice(0, 10);
+  const raw = normalizeLoginPhone(phone);
   if (raw.length <= 3) return raw;
   if (raw.length <= 6) return `${raw.slice(0, 3)} ${raw.slice(3)}`;
   if (raw.length <= 8) return `${raw.slice(0, 3)} ${raw.slice(3, 6)} ${raw.slice(6)}`;

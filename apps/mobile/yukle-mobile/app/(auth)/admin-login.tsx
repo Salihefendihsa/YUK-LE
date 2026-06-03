@@ -39,10 +39,7 @@ export default function AdminLoginRoute() {
       setAuth(response);
       router.replace('/(admin)/(tabs)/dashboard');
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'E-posta veya şifre hatalı.';
-      setError(message);
+      setError(authService.getErrorMessage(err));
     } finally {
       setLoading(false);
     }

@@ -9,6 +9,7 @@ import { TextField } from '../components/ui/TextField';
 import { authFormStyles as s } from '../constants/authFormStyles';
 import { authService } from '../services/auth.service';
 import { useAuthStore } from '../store/auth.store';
+import { formatPhone, normalizeLoginPhone } from '../utils/validators';
 import { palette } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
@@ -28,7 +29,7 @@ export function LoginScreen() {
     if (params.verified === '1') {
       setInfo('Hesabınız doğrulandı, giriş yapabilirsiniz.');
       if (params.phone) {
-        const d = String(params.phone).replace(/\D/g, '').slice(0, 10);
+        const d = normalizeLoginPhone(String(params.phone));
         if (d) setPhone(d);
       }
     } else if (params.reset === '1') {
@@ -37,15 +38,15 @@ export function LoginScreen() {
   }, [params.verified, params.phone, params.reset]);
 
   const handleLogin = async () => {
-    const digits = phone.replace(/\D/g, '');
-    if (!digits || !password) {
+    const normalizedPhone = normalizeLoginPhone(phone);
+    if (!normalizedPhone || !password) {
       setError('Telefon numarası ve şifre gerekli');
       return;
     }
     setLoading(true);
     setError('');
     try {
-      const response = await authService.login({ phone: digits, password });
+      const response = await authService.login({ phone: normalizedPhone, password });
       setAuth(response);
       if (response.role === 'Customer') {
         router.replace('/(customer)/(tabs)/dashboard');
@@ -55,10 +56,20 @@ export function LoginScreen() {
         setError('Bu hesap mobil uygulamada desteklenmiyor');
       }
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Telefon numarası veya şifre hatalı';
-      setError(message);
+      const statusCode = (err as { response?: { status?: number } })?.response?.status;
+      const payload = (err as {
+        response?: { data?: { requiresVerification?: boolean; phone?: string } };
+      })?.response?.data;
+
+      if (statusCode === 403 && payload?.requiresVerification) {
+        router.push({
+          pathname: '/(auth)/verify-phone',
+          params: { phone: payload.phone ?? normalizedPhone },
+        });
+        return;
+      }
+
+      setError(authService.getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -82,11 +93,11 @@ export function LoginScreen() {
     >
       <TextField
         icon="call-outline"
-        placeholder="05XX XXX XX XX"
+        placeholder="5XX XXX XX XX"
         value={phone}
-        onChangeText={setPhone}
+        onChangeText={(t) => setPhone(formatPhone(t))}
         keyboardType="phone-pad"
-        maxLength={11}
+        maxLength={13}
       />
 
       <TextField

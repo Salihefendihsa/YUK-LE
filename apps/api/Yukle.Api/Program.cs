@@ -67,6 +67,14 @@ if (!allowedOrigins.Contains("http://localhost:8081", StringComparer.OrdinalIgno
     allowedOrigins = [.. allowedOrigins, "http://localhost:8081"];
 }
 
+foreach (var expoWebOrigin in new[] { "http://localhost:8082", "http://127.0.0.1:8082", "http://localhost:19006" })
+{
+    if (!allowedOrigins.Contains(expoWebOrigin, StringComparer.OrdinalIgnoreCase))
+    {
+        allowedOrigins = [.. allowedOrigins, expoWebOrigin];
+    }
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("YuklePolicy", policy =>

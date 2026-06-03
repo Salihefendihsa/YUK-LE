@@ -1,6 +1,6 @@
-import axios, { AxiosError } from 'axios';
-import { API_URL } from '../constants/api';
+import { AxiosError } from 'axios';
 import { translateUserFacingError } from '../utils/apiErrors';
+import { apiClient, getApiErrorMessage } from './api.client';
 import type {
   ForgotPasswordRequest,
   LoginResponse,
@@ -37,12 +37,11 @@ function extractError(error: unknown): string {
   return 'Bir hata oluştu. Lütfen tekrar deneyin.';
 }
 
-const anon = { timeout: 15000, headers: { 'Content-Type': 'application/json' } };
-
 export const authService = {
+  /** apps/web auth.ts ile aynı: POST /Auth/login, body { phone, password } */
   async login(data: LoginRequest): Promise<LoginResponse> {
-    const response = await axios.post<LoginResponse>(`${API_URL}/Auth/login`, data, anon);
-    return response.data;
+    const res = await apiClient.post<LoginResponse>('/Auth/login', data);
+    return res.data;
   },
 
   async register(data: RegisterRequest): Promise<void> {
@@ -51,24 +50,24 @@ export const authService = {
     if (!body.iban) delete body.iban;
     if (!body.address) delete body.address;
     if (!body.licenseClass) delete body.licenseClass;
-    await axios.post(`${API_URL}/Auth/register`, body, anon);
+    await apiClient.post('/Auth/register', body);
   },
 
   async verifyOtp(data: VerifyOtpRequest): Promise<void> {
-    await axios.post(`${API_URL}/Auth/verify-otp`, data, anon);
+    await apiClient.post('/Auth/verify-otp', data);
   },
 
   async resendVerificationOtp(phone: string): Promise<void> {
-    await axios.post(`${API_URL}/Auth/resend-otp`, { phone }, anon);
+    await apiClient.post('/Auth/resend-otp', { phone });
   },
 
   async forgotPassword(data: ForgotPasswordRequest): Promise<void> {
-    await axios.post(`${API_URL}/Auth/forgot-password`, data, anon);
+    await apiClient.post('/Auth/forgot-password', data);
   },
 
   async resetPassword(data: ResetPasswordRequest): Promise<void> {
-    await axios.post(`${API_URL}/Auth/reset-password`, data, anon);
+    await apiClient.post('/Auth/reset-password', data);
   },
 
-  getErrorMessage: extractError,
+  getErrorMessage: (error: unknown) => getApiErrorMessage(error) || extractError(error),
 };
