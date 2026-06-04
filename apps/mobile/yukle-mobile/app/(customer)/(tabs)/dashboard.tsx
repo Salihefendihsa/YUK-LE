@@ -39,6 +39,7 @@ export default function CustomerDashboardScreen() {
   const [rating, setRating] = useState<UserRatingSummary | null>(null);
   const [weekStats, setWeekStats] = useState({ newLoads: 0, completed: 0, spend: 0 });
   const [monthly, setMonthly] = useState<BarDatum[]>([]);
+  const [topDrivers, setTopDrivers] = useState<{ name: string; trips: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -58,6 +59,7 @@ export default function CustomerDashboardScreen() {
       setRating(ratingData);
       setWeekStats(computeWeekStats(loads));
       setMonthly(computeMonthlyActivity(history.items));
+      setTopDrivers(computeTopDrivers(history.items));
     } catch (e) {
       setError(getApiErrorMessage(e));
     }
@@ -189,6 +191,45 @@ export default function CustomerDashboardScreen() {
         </Card>
       </FadeInView>
 
+      <FadeInView delay={180}>
+        <Card variant="gradient" padding={4} style={styles.driversCard}>
+          <View style={styles.showcaseHead}>
+            <Ionicons name="people-outline" size={16} color={palette.brand} />
+            <Text style={styles.showcaseTitle}>Sık çalıştığın şoförler</Text>
+          </View>
+          {topDrivers.length === 0 ? (
+            <Text style={styles.emptyNote}>Henüz şoförle çalışmadın</Text>
+          ) : (
+            topDrivers.map((d, i) => (
+              <View key={d.name} style={[styles.driverRow, i > 0 ? styles.driverRowBorder : null]}>
+                <View style={styles.driverAvatar}>
+                  <Text style={styles.driverAvatarText}>{driverInitials(d.name)}</Text>
+                </View>
+                <Text style={styles.driverName} numberOfLines={1}>
+                  {d.name}
+                </Text>
+                <Text style={styles.driverTrips}>{d.trips} sefer</Text>
+              </View>
+            ))
+          )}
+        </Card>
+      </FadeInView>
+
+      <FadeInView delay={220}>
+        <Card variant="gradient" padding={4} style={styles.chartCard}>
+          <View style={styles.showcaseHead}>
+            <Ionicons name="bulb-outline" size={16} color={palette.brand} />
+            <Text style={styles.showcaseTitle}>Akıllı öneriler</Text>
+            <View style={styles.soonBadge}>
+              <Text style={styles.soonBadgeText}>Yakında</Text>
+            </View>
+          </View>
+          <Text style={styles.emptyNote}>
+            Yapay zekâ destekli rota ve fiyat önerileri yakında.
+          </Text>
+        </Card>
+      </FadeInView>
+
       <Text style={styles.sectionTitle}>Son 5 ilan</Text>
       <Text style={styles.sectionSub}>Tüm ilanlar için İlanlarım sekmesine gidin</Text>
       {recentLoads.length === 0 ? (
@@ -271,6 +312,26 @@ function computeMonthlyActivity(rows: { deliveryDate?: string | null }[]): BarDa
     if (idx !== undefined) buckets[idx].value += 1;
   }
   return buckets.map((b) => ({ label: b.label, value: b.value }));
+}
+
+/** Sık çalışılan şoförler: history (Delivered) satırlarını driverName'e göre grupla, sefer sayısına göre azalan ilk 3. (Backend driverId döndürmüyor; gruplama isim üzerinden.) */
+function computeTopDrivers(rows: { driverName?: string | null }[]): { name: string; trips: number }[] {
+  const counts = new Map<string, number>();
+  for (const r of rows) {
+    const name = r.driverName?.trim();
+    if (!name) continue;
+    counts.set(name, (counts.get(name) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([name, trips]) => ({ name, trips }))
+    .sort((a, b) => b.trips - a.trips)
+    .slice(0, 3);
+}
+
+/** Baş-harf avatarı (drawer'daki getInitials mantığı). */
+function driverInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return parts.slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || '?';
 }
 
 function WeekMetric({ value, label }: { value: string; label: string }) {
@@ -394,6 +455,36 @@ const styles = StyleSheet.create({
     color: palette.textMuted,
     marginTop: spacing[2],
   },
+  driversCard: { gap: spacing[1] },
+  driverRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+    paddingVertical: spacing[2],
+  },
+  driverRowBorder: { borderTopWidth: 1, borderTopColor: palette.borderSubtle },
+  driverAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: palette.brandMuted,
+    borderWidth: 1,
+    borderColor: palette.brandBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  driverAvatarText: { fontFamily: fontFamily.bold, fontSize: 13, color: palette.brand },
+  driverName: { flex: 1, fontFamily: fontFamily.medium, fontSize: 14, color: palette.text },
+  driverTrips: { fontFamily: fontFamily.bold, fontSize: 13, color: palette.gold },
+  soonBadge: {
+    backgroundColor: palette.brandMuted,
+    borderWidth: 1,
+    borderColor: palette.brandBorder,
+    borderRadius: 8,
+    paddingHorizontal: spacing[2],
+    paddingVertical: 2,
+  },
+  soonBadgeText: { fontFamily: fontFamily.semiBold, fontSize: 11, color: palette.brand },
   sectionTitle: { ...typography.h3, marginTop: spacing[2] },
   sectionSub: { ...typography.caption, textTransform: 'none', color: palette.textMuted, marginBottom: spacing[2] },
   loadCard: { marginBottom: spacing[2] },
