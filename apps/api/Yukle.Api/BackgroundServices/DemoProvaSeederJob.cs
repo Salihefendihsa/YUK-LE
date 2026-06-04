@@ -40,8 +40,11 @@ public sealed class DemoProvaSeederJob(
     /// <summary>Tüm demo sürümlerini (eski "DEMO_PROVA:v2" dahil) kapsayan temizlik prefix'i.</summary>
     private const string DemoCleanupPrefix = "DEMO_";
 
-    private const string TestCustomerEmail = "test@navlonix.com";
-    private const string TestDriverEmail = "sofor@navlonix.com";
+    // Test hesapları farklı ortamlarda iki domain'den biriyle kurulmuş olabilir
+    // (navlonix.com veya yukle.com). Sıralı fallback ile ilk eşleşeni kullanırız;
+    // hesap RENAME edilmez, login mantığına dokunulmaz — sadece lookup esnetilir.
+    private static readonly string[] TestCustomerEmails = { "test@navlonix.com", "test@yukle.com" };
+    private static readonly string[] TestDriverEmails = { "sofor@navlonix.com", "sofor@yukle.com" };
 
     // 12 Delivered + 2 Active + 1 OnWay + 1 Cancelled
     private const int ExpectedDemoLoadCount = 16;
@@ -63,10 +66,12 @@ public sealed class DemoProvaSeederJob(
             var db = scope.ServiceProvider.GetRequiredService<YukleDbContext>();
             var payments = scope.ServiceProvider.GetRequiredService<IPaymentService>();
 
-            var customer = await db.Users.SingleOrDefaultAsync(u => u.Email == TestCustomerEmail, ct);
+            var customer = await FindFirstByEmailAsync(db, TestCustomerEmails, ct);
             if (customer is null)
             {
-                logger.LogWarning("DemoSeeder: test müşterisi ({Email}) bulunamadı, atlandı.", TestCustomerEmail);
+                logger.LogWarning(
+                    "DemoSeeder: test müşterisi ({Emails}) bulunamadı, atlandı.",
+                    string.Join(" / ", TestCustomerEmails));
                 return;
             }
 
@@ -98,6 +103,18 @@ public sealed class DemoProvaSeederJob(
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
+    /// <summary>Aday e-posta listesini sırayla dener; ilk eşleşen kullanıcıyı döner (yoksa null).</summary>
+    private static async Task<User?> FindFirstByEmailAsync(
+        YukleDbContext db, string[] candidateEmails, CancellationToken ct)
+    {
+        foreach (var email in candidateEmails)
+        {
+            var user = await db.Users.SingleOrDefaultAsync(u => u.Email == email, ct);
+            if (user is not null) return user;
+        }
+        return null;
+    }
+
     // ── Temizlik: SADECE demo işaretli ilanlar + demo şoförler (FK güvenli sıra) ──────────
     private static async Task<int> CleanupDemoAsync(YukleDbContext db, int customerId, CancellationToken ct)
     {
@@ -127,7 +144,7 @@ public sealed class DemoProvaSeederJob(
             customer.PendingBalance = 0;
         }
 
-        var testDriver = await db.Users.FirstOrDefaultAsync(u => u.Email == TestDriverEmail, ct);
+        var testDriver = await FindFirstByEmailAsync(db, TestDriverEmails, ct);
         if (testDriver is not null)
         {
             testDriver.WalletBalance = 0;
