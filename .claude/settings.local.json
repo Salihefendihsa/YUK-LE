@@ -53,7 +53,12 @@
       "Bash(cat shadows.ts)",
       "Bash(cat src/constants/layout.ts)",
       "Bash(cat src/constants/layout.tsx)",
-      "Bash(grep -nA18 \"user/{userId}\" ../../api/Yukle.Api/Controllers/RatingsController.cs)"
+      "Bash(grep -nA18 \"user/{userId}\" ../../api/Yukle.Api/Controllers/RatingsController.cs)",
+      "Bash(Select-String -Pattern \"error|Build succeeded|Hata|Derleme\")",
+      "Bash(psql --version)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(echo \"WEB EXIT: $?\")",
+      "Bash(echo \"MOBILE EXIT: $?\")"
     ]
   }
 }
