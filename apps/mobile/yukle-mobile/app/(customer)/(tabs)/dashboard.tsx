@@ -15,6 +15,7 @@ import { ScreenContainer, ScreenScroll } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getCustomerDashboard } from '../../../src/services/dashboard.service';
 import { getCustomerLoads } from '../../../src/services/loads.service';
+import { getUserRatings, type UserRatingSummary } from '../../../src/services/ratings.service';
 import type { CustomerDashboard } from '../../../src/types/dashboard';
 import type { Load } from '../../../src/types/load';
 import { useAuthStore } from '../../../src/store/auth.store';
@@ -33,6 +34,8 @@ export default function CustomerDashboardScreen() {
 
   const [stats, setStats] = useState<CustomerDashboard | null>(null);
   const [recentLoads, setRecentLoads] = useState<Load[]>([]);
+  const [rating, setRating] = useState<UserRatingSummary | null>(null);
+  const [weekStats, setWeekStats] = useState({ newLoads: 0, completed: 0, spend: 0 });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -40,13 +43,20 @@ export default function CustomerDashboardScreen() {
   const fetchData = useCallback(async () => {
     try {
       setError('');
-      const [dashboardData, loads] = await Promise.all([getCustomerDashboard(), getCustomerLoads()]);
+      const uid = user?.userId;
+      const [dashboardData, loads, ratingData] = await Promise.all([
+        getCustomerDashboard(),
+        getCustomerLoads(),
+        uid ? getUserRatings(uid) : Promise.resolve(null),
+      ]);
       setStats(dashboardData);
       setRecentLoads(loads.slice(0, 5));
+      setRating(ratingData);
+      setWeekStats(computeWeekStats(loads));
     } catch (e) {
       setError(getApiErrorMessage(e));
     }
-  }, []);
+  }, [user?.userId]);
 
   useEffect(() => {
     fetchData().finally(() => setLoading(false));
@@ -124,6 +134,39 @@ export default function CustomerDashboardScreen() {
       </View>
       </FadeInView>
 
+      <FadeInView delay={100}>
+        <View style={styles.showcaseRow}>
+          <Card variant="gradient" padding={4} style={styles.showcaseCard}>
+            <View style={styles.showcaseHead}>
+              <Ionicons name="star" size={16} color={palette.brand} />
+              <Text style={styles.showcaseTitle}>Performans skorum</Text>
+            </View>
+            {rating && rating.count > 0 ? (
+              <>
+                <Text style={styles.scoreBig}>{rating.average.toFixed(1)}</Text>
+                <Text style={styles.showcaseMeta}>{rating.count} değerlendirme</Text>
+              </>
+            ) : (
+              <Text style={styles.emptyNote}>Henüz değerlendirme yok</Text>
+            )}
+          </Card>
+
+          <Card variant="gradient" padding={4} style={styles.showcaseCard}>
+            <View style={styles.showcaseHead}>
+              <Ionicons name="calendar-outline" size={16} color={palette.brand} />
+              <Text style={styles.showcaseTitle}>Bu hafta</Text>
+            </View>
+            <View style={styles.weekGrid}>
+              <WeekMetric value={String(weekStats.newLoads)} label="Yeni ilan" />
+              <WeekMetric value={String(weekStats.completed)} label="Tamamlanan" />
+            </View>
+            <Text style={styles.weekSpend}>
+              Harcama: {formatCurrencyTRY(weekStats.spend)}
+            </Text>
+          </Card>
+        </View>
+      </FadeInView>
+
       <Text style={styles.sectionTitle}>Son 5 ilan</Text>
       <Text style={styles.sectionSub}>Tüm ilanlar için İlanlarım sekmesine gidin</Text>
       {recentLoads.length === 0 ? (
@@ -165,6 +208,37 @@ export default function CustomerDashboardScreen() {
       )}
     </ScreenScroll>
     </ScreenBackground>
+  );
+}
+
+/** Bu hafta = son 7 gün (rolling). Yeni ilan: createdAt; tamamlanan/harcama: Delivered + deliveryDate (gercek deliveredAt alani yok, planli teslim tarihi en yakin sinyal). */
+function computeWeekStats(loads: Load[]) {
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  let newLoads = 0;
+  let completed = 0;
+  let spend = 0;
+  for (const l of loads) {
+    const created = Date.parse(l.createdAt);
+    if (!Number.isNaN(created) && created >= weekAgo) newLoads += 1;
+    if (l.status === 'Delivered') {
+      const delivered = Date.parse(l.deliveryDate);
+      if (!Number.isNaN(delivered) && delivered >= weekAgo) {
+        completed += 1;
+        spend += l.price ?? 0;
+      }
+    }
+  }
+  return { newLoads, completed, spend };
+}
+
+function WeekMetric({ value, label }: { value: string; label: string }) {
+  return (
+    <View style={styles.weekMetric}>
+      <Text style={styles.weekValue} numberOfLines={1}>
+        {value}
+      </Text>
+      <Text style={styles.weekLabel}>{label}</Text>
+    </View>
   );
 }
 
@@ -236,6 +310,41 @@ const styles = StyleSheet.create({
     marginBottom: spacing[1],
   },
   statLabel: { ...typography.caption, textTransform: 'none', color: palette.textMuted },
+  showcaseRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] },
+  showcaseCard: { flexGrow: 1, flexShrink: 1, minWidth: 0, flexBasis: '47%' },
+  showcaseHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+    marginBottom: spacing[2],
+  },
+  showcaseTitle: { fontFamily: fontFamily.bold, fontSize: 13, color: palette.text },
+  showcaseMeta: { ...typography.caption, textTransform: 'none', color: palette.textMuted },
+  scoreBig: { fontFamily: fontFamily.bold, fontSize: 32, color: palette.brand },
+  emptyNote: {
+    ...typography.caption,
+    textTransform: 'none',
+    color: palette.textMuted,
+    paddingVertical: spacing[2],
+  },
+  weekGrid: { flexDirection: 'row', gap: spacing[3] },
+  weekMetric: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
+  weekValue: { fontFamily: fontFamily.bold, fontSize: 20, color: palette.brand },
+  weekLabel: {
+    ...typography.caption,
+    textTransform: 'none',
+    color: palette.textMuted,
+    marginTop: 2,
+  },
+  weekSpend: {
+    fontFamily: fontFamily.bold,
+    fontSize: 13,
+    color: palette.gold,
+    marginTop: spacing[3],
+    borderTopWidth: 1,
+    borderTopColor: palette.borderSubtle,
+    paddingTop: spacing[2],
+  },
   sectionTitle: { ...typography.h3, marginTop: spacing[2] },
   sectionSub: { ...typography.caption, textTransform: 'none', color: palette.textMuted, marginBottom: spacing[2] },
   loadCard: { marginBottom: spacing[2] },
