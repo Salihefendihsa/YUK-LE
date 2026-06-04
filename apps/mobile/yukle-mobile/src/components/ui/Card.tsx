@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { palette } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { shadows } from '../../theme/shadows';
@@ -8,7 +9,7 @@ import { space } from '../../theme/spacing';
 type Props = {
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
-  variant?: 'default' | 'glass' | 'elevated';
+  variant?: 'default' | 'glass' | 'elevated' | 'gradient';
   padding?: keyof typeof import('../../theme/spacing').spacing;
 };
 
@@ -34,11 +35,22 @@ export function Card({ children, style, variant = 'glass', padding = 6 }: Props)
         variant === 'glass' && styles.glass,
         variant === 'elevated' && styles.elevated,
         variant === 'default' && styles.default,
+        variant === 'gradient' && styles.gradient,
         { padding: paddingMap[padding] ?? space.lg },
         shadows.card,
         style,
       ]}
     >
+      {variant === 'gradient' && (
+        <LinearGradient
+          colors={['rgba(255,122,26,0.16)', 'rgba(255,122,26,0.03)', 'transparent']}
+          locations={[0, 0.5, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+      )}
       {children}
     </View>
   );
@@ -61,5 +73,9 @@ const styles = StyleSheet.create({
   default: {
     backgroundColor: palette.surface,
     borderColor: palette.borderSubtle,
+  },
+  gradient: {
+    backgroundColor: palette.card,
+    borderColor: palette.brandBorder,
   },
 });

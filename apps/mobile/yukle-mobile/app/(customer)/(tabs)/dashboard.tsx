@@ -9,6 +9,7 @@ import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { ScreenBackground } from '../../../src/components/ui/ScreenBackground';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
 import { ScreenContainer, ScreenScroll } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
@@ -59,14 +60,18 @@ export default function CustomerDashboardScreen() {
 
   if (loading) {
     return (
-      <ScreenContainer>
-        <LoadingState message="Panel yükleniyor..." variant="skeleton" />
-      </ScreenContainer>
+      <ScreenBackground>
+        <ScreenContainer style={styles.transparent}>
+          <LoadingState message="Panel yükleniyor..." variant="skeleton" />
+        </ScreenContainer>
+      </ScreenBackground>
     );
   }
 
   return (
+    <ScreenBackground>
     <ScreenScroll
+      style={styles.transparent}
       contentContainerStyle={styles.scroll}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
@@ -89,7 +94,7 @@ export default function CustomerDashboardScreen() {
       {error ? <AlertBanner message={error} tone="error" /> : null}
 
       <FadeInView>
-        <Card variant="glass" padding={5} style={styles.hero}>
+        <Card variant="gradient" padding={5} style={styles.hero}>
         <View style={styles.heroTop}>
           <View style={styles.heroIcon}>
             <Ionicons name="business-outline" size={26} color={palette.brand} />
@@ -159,6 +164,7 @@ export default function CustomerDashboardScreen() {
         })
       )}
     </ScreenScroll>
+    </ScreenBackground>
   );
 }
 
@@ -174,8 +180,8 @@ function StatCard({
   wide?: boolean;
 }) {
   return (
-    <Card variant="default" padding={4} style={wide ? styles.statWide : styles.stat}>
-      <Ionicons name={icon} size={18} color={palette.gold} style={{ marginBottom: spacing[2] }} />
+    <Card variant="gradient" padding={4} style={wide ? styles.statWide : styles.stat}>
+      <Ionicons name={icon} size={18} color={palette.brand} style={{ marginBottom: spacing[2] }} />
       <Text style={styles.statValue} numberOfLines={1}>
         {value}
       </Text>
@@ -186,6 +192,7 @@ function StatCard({
 
 const styles = StyleSheet.create({
   scroll: { padding: spacing[4], paddingBottom: spacing[8], gap: spacing[4] },
+  transparent: { backgroundColor: 'transparent' },
   createBtn: {
     backgroundColor: palette.brand,
     borderRadius: 8,
@@ -225,7 +232,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontFamily: fontFamily.bold,
     fontSize: 17,
-    color: palette.text,
+    color: palette.brand,
     marginBottom: spacing[1],
   },
   statLabel: { ...typography.caption, textTransform: 'none', color: palette.textMuted },
