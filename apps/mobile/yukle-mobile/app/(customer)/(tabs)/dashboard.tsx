@@ -57,7 +57,7 @@ export default function CustomerDashboardScreen() {
       setStats(dashboardData);
       setRecentLoads(loads.slice(0, 5));
       setRating(ratingData);
-      setWeekStats(computeWeekStats(loads));
+      setWeekStats(computeWeekStats(loads, history.items));
       setMonthly(computeMonthlyActivity(history.items));
       setTopDrivers(computeTopDrivers(history.items));
     } catch (e) {
@@ -274,21 +274,28 @@ export default function CustomerDashboardScreen() {
   );
 }
 
-/** Bu hafta = son 7 gün (rolling). Yeni ilan: createdAt; tamamlanan/harcama: Delivered + deliveryDate (gercek deliveredAt alani yok, planli teslim tarihi en yakin sinyal). */
-function computeWeekStats(loads: Load[]) {
+/** Bu hafta = son 7 gün (rolling). Yeni ilan: ilan listesi createdAt; tamamlanan/harcama: HISTORY deliveryDate (web ile aynı kaynak). */
+function computeWeekStats(
+  loads: Load[],
+  historyItems: { deliveryDate?: string | null; price: number }[]
+) {
   const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  // Yeni ilan: aktif/tüm ilan listesinden createdAt son 7 gün.
   let newLoads = 0;
-  let completed = 0;
-  let spend = 0;
   for (const l of loads) {
     const created = Date.parse(l.createdAt);
     if (!Number.isNaN(created) && created >= weekAgo) newLoads += 1;
-    if (l.status === 'Delivered') {
-      const delivered = Date.parse(l.deliveryDate);
-      if (!Number.isNaN(delivered) && delivered >= weekAgo) {
-        completed += 1;
-        spend += l.price ?? 0;
-      }
+  }
+  // Tamamlanan + harcama: HISTORY (yalnız Delivered) deliveryDate son 7 gün.
+  // Web ile birebir aynı kaynak — aktif liste teslimleri taşımayabilir.
+  let completed = 0;
+  let spend = 0;
+  for (const h of historyItems) {
+    if (!h.deliveryDate) continue;
+    const delivered = Date.parse(h.deliveryDate);
+    if (!Number.isNaN(delivered) && delivered >= weekAgo) {
+      completed += 1;
+      spend += h.price ?? 0;
     }
   }
   return { newLoads, completed, spend };

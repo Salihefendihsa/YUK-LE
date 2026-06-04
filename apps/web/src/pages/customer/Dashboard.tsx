@@ -17,21 +17,28 @@ type RatingSummary = { average: number; count: number }
 
 const MONTHS_TR = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara']
 
-/** Bu hafta = son 7 gün (rolling). Yeni ilan: createdAt; tamamlanan/harcama: Delivered + deliveryDate. (mobil ile aynı) */
-function computeWeekStats(loads: Load[]): WeekStats {
+/** Bu hafta = son 7 gün (rolling). Yeni ilan: ilan listesi createdAt; tamamlanan/harcama: HISTORY deliveryDate (mobil ile aynı kaynak). */
+function computeWeekStats(
+  loads: Load[],
+  historyItems: { deliveryDate?: string | null; price: number }[],
+): WeekStats {
   const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  // Yeni ilan: aktif/tüm ilan listesinden createdAt son 7 gün.
   let newLoads = 0
-  let completed = 0
-  let spend = 0
   for (const l of loads) {
     const created = Date.parse(l.createdAt)
     if (!Number.isNaN(created) && created >= weekAgo) newLoads += 1
-    if (l.status === 'Delivered') {
-      const delivered = Date.parse(l.deliveryDate)
-      if (!Number.isNaN(delivered) && delivered >= weekAgo) {
-        completed += 1
-        spend += l.price ?? 0
-      }
+  }
+  // Tamamlanan + harcama: HISTORY (yalnız Delivered) deliveryDate son 7 gün.
+  // Aktif liste teslimleri taşımayabilir; bu yüzden history kullanılır.
+  let completed = 0
+  let spend = 0
+  for (const h of historyItems) {
+    if (!h.deliveryDate) continue
+    const delivered = Date.parse(h.deliveryDate)
+    if (!Number.isNaN(delivered) && delivered >= weekAgo) {
+      completed += 1
+      spend += h.price ?? 0
     }
   }
   return { newLoads, completed, spend }
@@ -91,8 +98,8 @@ export default function CustomerDashboard() {
         setStats(dashboardData)
         const list = normalizeArray<Load>(activeLoads)
         setLoads(list.slice(0, 5))
-        setWeekStats(computeWeekStats(list))
         const historyItems = history?.items ?? []
+        setWeekStats(computeWeekStats(list, historyItems))
         setMonthly(computeMonthlyActivity(historyItems))
         setTopDrivers(computeTopDrivers(historyItems))
         const r = ratingData as { average?: number; count?: number } | null
