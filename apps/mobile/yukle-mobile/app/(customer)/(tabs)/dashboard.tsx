@@ -9,11 +9,13 @@ import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { MiniBarChart, type BarDatum } from '../../../src/components/ui/MiniBarChart';
 import { ScreenBackground } from '../../../src/components/ui/ScreenBackground';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
 import { ScreenContainer, ScreenScroll } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getCustomerDashboard } from '../../../src/services/dashboard.service';
+import { getCustomerLoadHistory } from '../../../src/services/history.service';
 import { getCustomerLoads } from '../../../src/services/loads.service';
 import { getUserRatings, type UserRatingSummary } from '../../../src/services/ratings.service';
 import type { CustomerDashboard } from '../../../src/types/dashboard';
@@ -36,6 +38,7 @@ export default function CustomerDashboardScreen() {
   const [recentLoads, setRecentLoads] = useState<Load[]>([]);
   const [rating, setRating] = useState<UserRatingSummary | null>(null);
   const [weekStats, setWeekStats] = useState({ newLoads: 0, completed: 0, spend: 0 });
+  const [monthly, setMonthly] = useState<BarDatum[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -44,15 +47,17 @@ export default function CustomerDashboardScreen() {
     try {
       setError('');
       const uid = user?.userId;
-      const [dashboardData, loads, ratingData] = await Promise.all([
+      const [dashboardData, loads, ratingData, history] = await Promise.all([
         getCustomerDashboard(),
         getCustomerLoads(),
         uid ? getUserRatings(uid) : Promise.resolve(null),
+        getCustomerLoadHistory(1, 100),
       ]);
       setStats(dashboardData);
       setRecentLoads(loads.slice(0, 5));
       setRating(ratingData);
       setWeekStats(computeWeekStats(loads));
+      setMonthly(computeMonthlyActivity(history.items));
     } catch (e) {
       setError(getApiErrorMessage(e));
     }
@@ -167,6 +172,23 @@ export default function CustomerDashboardScreen() {
         </View>
       </FadeInView>
 
+      <FadeInView delay={140}>
+        <Card variant="gradient" padding={4} style={styles.chartCard}>
+          <View style={styles.showcaseHead}>
+            <Ionicons name="bar-chart-outline" size={16} color={palette.brand} />
+            <Text style={styles.showcaseTitle}>Aylık aktivite</Text>
+          </View>
+          {monthly.some((m) => m.value > 0) ? (
+            <>
+              <MiniBarChart data={monthly} />
+              <Text style={styles.chartNote}>Son 6 ayda teslim edilen ilan sayısı</Text>
+            </>
+          ) : (
+            <Text style={styles.emptyNote}>Yeterli geçmiş yok</Text>
+          )}
+        </Card>
+      </FadeInView>
+
       <Text style={styles.sectionTitle}>Son 5 ilan</Text>
       <Text style={styles.sectionSub}>Tüm ilanlar için İlanlarım sekmesine gidin</Text>
       {recentLoads.length === 0 ? (
@@ -229,6 +251,26 @@ function computeWeekStats(loads: Load[]) {
     }
   }
   return { newLoads, completed, spend };
+}
+
+const MONTHS_TR = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+
+/** Son 6 ay, teslim edilen ilan SAYISI. Bucket = deliveryDate (history'de createdAt yok; hepsi Delivered). */
+function computeMonthlyActivity(rows: { deliveryDate?: string | null }[]): BarDatum[] {
+  const now = new Date();
+  const buckets = Array.from({ length: 6 }, (_, k) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (5 - k), 1);
+    return { key: `${d.getFullYear()}-${d.getMonth()}`, label: MONTHS_TR[d.getMonth()], value: 0 };
+  });
+  const indexByKey = new Map(buckets.map((b, i) => [b.key, i]));
+  for (const r of rows) {
+    if (!r.deliveryDate) continue;
+    const d = new Date(r.deliveryDate);
+    if (Number.isNaN(d.getTime())) continue;
+    const idx = indexByKey.get(`${d.getFullYear()}-${d.getMonth()}`);
+    if (idx !== undefined) buckets[idx].value += 1;
+  }
+  return buckets.map((b) => ({ label: b.label, value: b.value }));
 }
 
 function WeekMetric({ value, label }: { value: string; label: string }) {
@@ -344,6 +386,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: palette.borderSubtle,
     paddingTop: spacing[2],
+  },
+  chartCard: { gap: spacing[2] },
+  chartNote: {
+    ...typography.caption,
+    textTransform: 'none',
+    color: palette.textMuted,
+    marginTop: spacing[2],
   },
   sectionTitle: { ...typography.h3, marginTop: spacing[2] },
   sectionSub: { ...typography.caption, textTransform: 'none', color: palette.textMuted, marginBottom: spacing[2] },
