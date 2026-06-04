@@ -1,41 +1,111 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getCustomerDashboard } from '../../api/dashboard'
-import { getActiveLoads } from '../../api/loads'
+import { getActiveLoads, getCustomerLoadHistory } from '../../api/loads'
+import { getUserRatings } from '../../api/ratings'
+import { useAuthStore } from '../../store/auth.store'
 import type { CustomerDashboard as Stats, Load } from '../../api/types'
 import { PageEmpty, PageError, PageSkeleton } from '../../components/common/PageStates'
 import { formatCurrencyTRY, formatDateTR, normalizeArray } from '../../utils/format'
 import { formatLoadStatusLabel, getLoadStatusBadgeClass } from '../../utils/displayLabels'
 import './Dashboard.css'
 
+type WeekStats = { newLoads: number; completed: number; spend: number }
+type MonthDatum = { label: string; value: number }
+type TopDriver = { name: string; trips: number }
+type RatingSummary = { average: number; count: number }
+
+const MONTHS_TR = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara']
+
+/** Bu hafta = son 7 gün (rolling). Yeni ilan: createdAt; tamamlanan/harcama: Delivered + deliveryDate. (mobil ile aynı) */
+function computeWeekStats(loads: Load[]): WeekStats {
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  let newLoads = 0
+  let completed = 0
+  let spend = 0
+  for (const l of loads) {
+    const created = Date.parse(l.createdAt)
+    if (!Number.isNaN(created) && created >= weekAgo) newLoads += 1
+    if (l.status === 'Delivered') {
+      const delivered = Date.parse(l.deliveryDate)
+      if (!Number.isNaN(delivered) && delivered >= weekAgo) {
+        completed += 1
+        spend += l.price ?? 0
+      }
+    }
+  }
+  return { newLoads, completed, spend }
+}
+
+/** Son 6 ay, teslim edilen ilan SAYISI. Bucket = deliveryDate. (mobil ile aynı) */
+function computeMonthlyActivity(rows: { deliveryDate?: string | null }[]): MonthDatum[] {
+  const now = new Date()
+  const buckets = Array.from({ length: 6 }, (_, k) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (5 - k), 1)
+    return { key: `${d.getFullYear()}-${d.getMonth()}`, label: MONTHS_TR[d.getMonth()], value: 0 }
+  })
+  const indexByKey = new Map(buckets.map((b, i) => [b.key, i]))
+  for (const r of rows) {
+    if (!r.deliveryDate) continue
+    const d = new Date(r.deliveryDate)
+    if (Number.isNaN(d.getTime())) continue
+    const idx = indexByKey.get(`${d.getFullYear()}-${d.getMonth()}`)
+    if (idx !== undefined) buckets[idx].value += 1
+  }
+  return buckets.map((b) => ({ label: b.label, value: b.value }))
+}
+
+/** Sık çalışılan şoförler: history (Delivered) satırlarını driverName'e göre grupla, ilk 3. (mobil ile aynı) */
+function computeTopDrivers(rows: { driverName?: string | null }[]): TopDriver[] {
+  const counts = new Map<string, number>()
+  for (const r of rows) {
+    const name = r.driverName?.trim()
+    if (!name) continue
+    counts.set(name, (counts.get(name) ?? 0) + 1)
+  }
+  return [...counts.entries()]
+    .map(([name, trips]) => ({ name, trips }))
+    .sort((a, b) => b.trips - a.trips)
+    .slice(0, 3)
+}
+
 export default function CustomerDashboard() {
+  const userId = useAuthStore((s) => s.user?.userId)
   const [stats, setStats] = useState<Stats | null>(null)
   const [loads, setLoads] = useState<Load[]>([])
+  const [weekStats, setWeekStats] = useState<WeekStats>({ newLoads: 0, completed: 0, spend: 0 })
+  const [monthly, setMonthly] = useState<MonthDatum[]>([])
+  const [topDrivers, setTopDrivers] = useState<TopDriver[]>([])
+  const [rating, setRating] = useState<RatingSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    Promise.all([getCustomerDashboard(), getActiveLoads()])
-      .then(([dashboardData, activeLoads]) => {
+    Promise.all([
+      getCustomerDashboard(),
+      getActiveLoads(),
+      getCustomerLoadHistory(1, 100),
+      userId ? getUserRatings(userId) : Promise.resolve(null),
+    ])
+      .then(([dashboardData, activeLoads, history, ratingData]) => {
         setStats(dashboardData)
-        setLoads(normalizeArray<Load>(activeLoads).slice(0, 5))
+        const list = normalizeArray<Load>(activeLoads)
+        setLoads(list.slice(0, 5))
+        setWeekStats(computeWeekStats(list))
+        const historyItems = history?.items ?? []
+        setMonthly(computeMonthlyActivity(historyItems))
+        setTopDrivers(computeTopDrivers(historyItems))
+        const r = ratingData as { average?: number; count?: number } | null
+        setRating(r ? { average: Number(r.average ?? 0), count: Number(r.count ?? 0) } : null)
       })
       .catch((e: { uiMessage?: string }) => {
         setError(e.uiMessage ?? 'Dashboard verileri yüklenemedi.')
       })
       .finally(() => setLoading(false))
-  }, [])
+  }, [userId])
 
-  const sparkHeights = useMemo(() => {
-    const a = stats?.activeLoadCount ?? 0
-    const w = stats?.onWayLoadCount ?? 0
-    const d = stats?.deliveredLoadCount ?? 0
-    const base = Math.max(1, a + w + d)
-    return [0.35, 0.5, 0.55, 0.48, 0.62, 0.7, 0.58].map((f, i) => {
-      const mix = ((i % 3 === 0 ? a : i % 3 === 1 ? w : d) / base) * 0.5 + f * 0.5
-      return Math.round(28 + mix * 72)
-    })
-  }, [stats?.activeLoadCount, stats?.onWayLoadCount, stats?.deliveredLoadCount])
+  const maxMonthly = Math.max(1, ...monthly.map((m) => m.value))
+  const hasMonthly = monthly.some((m) => m.value > 0)
 
   if (loading) {
     return <PageSkeleton rows={6} variant="table" />
@@ -144,19 +214,33 @@ export default function CustomerDashboard() {
         </div>
 
         <div className="card panel-spark-card">
-          <h3>Aylık aktivite özeti</h3>
+          <h3>Aylık aktivite</h3>
           <p className="page-sub" style={{ marginBottom: 12 }}>
-            İlan hareketlerinize göre normalize edilmiş görünüm
+            Son 6 ayda teslim edilen ilan sayısı
           </p>
-          <div className="panel-spark-bars">
-            {sparkHeights.map((h, i) => (
-              <div key={i} className="panel-spark-bar" style={{ height: `${h}%` }} title={`Hafta ${i + 1}`} />
-            ))}
-          </div>
-          <div className="panel-spark-labels">
-            <span>H1</span>
-            <span>H7</span>
-          </div>
+          {hasMonthly ? (
+            <>
+              <div className="panel-spark-bars">
+                {monthly.map((m, i) => (
+                  <div
+                    key={i}
+                    className="panel-spark-bar"
+                    style={{ height: `${m.value === 0 ? 6 : Math.round(20 + (m.value / maxMonthly) * 80)}%` }}
+                    title={`${m.label}: ${m.value} teslim`}
+                  />
+                ))}
+              </div>
+              <div className="panel-spark-labels">
+                {monthly.map((m, i) => (
+                  <span key={i}>{m.label}</span>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="muted" style={{ fontSize: 13 }}>
+              Yeterli geçmiş yok
+            </p>
+          )}
         </div>
       </div>
 
@@ -166,45 +250,76 @@ export default function CustomerDashboard() {
           <ul className="dash-widget-list">
             <li>
               <span>Yeni ilan</span>
-              <strong>5</strong>
+              <strong>{weekStats.newLoads}</strong>
             </li>
             <li>
               <span>Tamamlanan</span>
-              <strong>3</strong>
+              <strong>{weekStats.completed}</strong>
             </li>
             <li>
               <span>Toplam harcama</span>
-              <strong>₺12.450</strong>
+              <strong>{formatCurrencyTRY(weekStats.spend)}</strong>
             </li>
           </ul>
         </div>
         <div className="card dash-widget">
           <h3>🏆 Favori şoförlerim</h3>
           <p className="muted" style={{ fontSize: 13 }}>
-            En çok çalıştığınız 3 şoför (demo)
+            En çok çalıştığınız 3 şoför
           </p>
-          <ol className="dash-widget-ol">
-            <li>Ahmet K. — 12 sefer</li>
-            <li>Mehmet Y. — 9 sefer</li>
-            <li>Can D. — 7 sefer</li>
-          </ol>
+          {topDrivers.length === 0 ? (
+            <p className="muted" style={{ fontSize: 13, marginTop: 8 }}>
+              Henüz şoförle çalışmadın
+            </p>
+          ) : (
+            <ol className="dash-widget-ol">
+              {topDrivers.map((d) => (
+                <li key={d.name}>
+                  {d.name} — {d.trips} sefer
+                </li>
+              ))}
+            </ol>
+          )}
           <Link to="/customer/loads/create" className="btn btn-primary btn-sm" style={{ marginTop: 10 }}>
             Hızlı ilan
           </Link>
         </div>
         <div className="card dash-widget">
           <h3>💡 Akıllı öneriler</h3>
-          <ul className="dash-widget-bullets">
-            <li>İstanbul → Bursa güzergahında bu hafta talep yüksek; fiyat avantajı olabilir.</li>
-            <li>Frigorifik araç arayan bir şoför sizin güzergahınıza uygun fiyat veriyor.</li>
-          </ul>
+          <p className="muted" style={{ fontSize: 13 }}>
+            <span
+              style={{
+                display: 'inline-block',
+                padding: '2px 8px',
+                marginRight: 8,
+                borderRadius: 999,
+                fontSize: 11,
+                fontWeight: 700,
+                background: 'rgba(37, 99, 235, 0.12)',
+                color: 'var(--color-brand)',
+              }}
+            >
+              Yakında
+            </span>
+            Yapay zekâ destekli rota ve fiyat önerileri yakında.
+          </p>
         </div>
         <div className="card dash-widget">
           <h3>📈 Performans skorum</h3>
-          <p style={{ fontSize: 36, fontWeight: 800, margin: '4px 0', color: 'var(--color-brand)' }}>4.9</p>
-          <p className="muted" style={{ fontSize: 13 }}>
-            Hızlı ödeme rozeti · Güvenilir müşteri
-          </p>
+          {rating && rating.count > 0 ? (
+            <>
+              <p style={{ fontSize: 36, fontWeight: 800, margin: '4px 0', color: 'var(--color-brand)' }}>
+                {rating.average.toFixed(1)}
+              </p>
+              <p className="muted" style={{ fontSize: 13 }}>
+                {rating.count} değerlendirme
+              </p>
+            </>
+          ) : (
+            <p className="muted" style={{ fontSize: 13, marginTop: 8 }}>
+              Henüz değerlendirme yok
+            </p>
+          )}
         </div>
       </div>
     </div>
