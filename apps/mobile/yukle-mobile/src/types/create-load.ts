@@ -1,10 +1,10 @@
 import type { Load } from './load';
 
-/** API enum: VehicleType */
-export type VehicleTypeValue = 0 | 1 | 2 | 3;
+/** API enum: VehicleType (0..11 — Yukle.Api/Models/Enums.cs, sona eklemeli) */
+export type VehicleTypeValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
 
-/** API enum: LoadType */
-export type LoadTypeValue = 0 | 1 | 2 | 3 | 4;
+/** API enum: LoadType (0..15 — Yukle.Api/Models/Enums.cs, sona eklemeli) */
+export type LoadTypeValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
 
 export interface CreateLoadPayload {
   fromCity: string;

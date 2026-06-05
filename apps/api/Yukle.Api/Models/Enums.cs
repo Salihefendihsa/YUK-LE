@@ -1,22 +1,49 @@
 namespace Yukle.Api.Models;
 
-/// <summary>Araç türleri.</summary>
+/// <summary>
+/// Araç türleri. ÖNEMLİ: Mevcut üyeler (0–3) SİLİNMEZ/YENİDEN SIRALANMAZ —
+/// veritabanında integer olarak saklandığı için yeni üyeler yalnızca SONA eklenir.
+/// </summary>
 public enum VehicleType
 {
-    TIR,
-    Kamyon,
-    Kamyonet,
-    Panelvan
+    TIR,            // 0
+    Kamyon,         // 1
+    Kamyonet,       // 2
+    Panelvan,       // 3
+    // ── v3 ek araç tipleri (sona eklendi) ──
+    Frigorifik,        // 4
+    Tenteli,           // 5
+    AcikKasa,          // 6  (Açık Kasa / Platform)
+    Lowboy,            // 7
+    Tanker,            // 8
+    Damperli,          // 9
+    KonteynerTasiyici, // 10 (Konteyner Taşıyıcı)
+    Silobas            // 11
 }
 
-/// <summary>Yük türleri.</summary>
+/// <summary>
+/// Yük türleri. ÖNEMLİ: Mevcut üyeler (0–4) SİLİNMEZ/YENİDEN SIRALANMAZ —
+/// veritabanında integer olarak saklandığı için yeni üyeler yalnızca SONA eklenir.
+/// </summary>
 public enum LoadType
 {
-    Paletli,
-    Dökme,
-    SoğukZincir,
-    TehlikeliMadde,
-    Parsiyel
+    Paletli,        // 0
+    Dökme,          // 1  (Dökme Yük)
+    SoğukZincir,    // 2  (Soğuk Zincir)
+    TehlikeliMadde, // 3  (Tehlikeli Madde / ADR)
+    Parsiyel,       // 4
+    // ── v3 ek yük türleri (sona eklendi) ──
+    GenelKargo,       // 5
+    Konteyner,        // 6
+    ProjeAgirYuk,     // 7  (Proje / Ağır Yük)
+    CanliHayvan,      // 8
+    Gida,             // 9
+    InsaatMalzemesi,  // 10
+    AkaryakitSivi,    // 11 (Akaryakıt / Sıvı)
+    TahilHububat,     // 12 (Tahıl / Hububat)
+    Otomotiv,         // 13 (Araç Taşıma)
+    MobilyaBeyazEsya, // 14 (Mobilya / Beyaz Eşya)
+    Kimyasal          // 15
 }
 
 /// <summary>Yük ilanının yaşam döngüsü.</summary>

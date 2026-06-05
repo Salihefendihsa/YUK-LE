@@ -44,20 +44,42 @@ const VEHICLE_OPTIONS: { value: VehicleTypeValue; label: string }[] = [
   { value: 1, label: 'Kamyon' },
   { value: 2, label: 'Kamyonet' },
   { value: 3, label: 'Panelvan' },
+  { value: 4, label: 'Frigorifik' },
+  { value: 5, label: 'Tenteli' },
+  { value: 6, label: 'Açık Kasa (Platform)' },
+  { value: 7, label: 'Lowboy' },
+  { value: 8, label: 'Tanker' },
+  { value: 9, label: 'Damperli' },
+  { value: 10, label: 'Konteyner Taşıyıcı' },
+  { value: 11, label: 'Silobas' },
 ];
 
 const LOAD_TYPE_OPTIONS: { value: LoadTypeValue; label: string }[] = [
   { value: 0, label: 'Paletli' },
-  { value: 1, label: 'Dökme' },
+  { value: 1, label: 'Dökme Yük' },
   { value: 2, label: 'Soğuk Zincir' },
-  { value: 3, label: 'Tehlikeli Madde' },
+  { value: 3, label: 'Tehlikeli Madde (ADR)' },
   { value: 4, label: 'Parsiyel' },
+  { value: 5, label: 'Genel Kargo' },
+  { value: 6, label: 'Konteyner' },
+  { value: 7, label: 'Proje / Ağır Yük' },
+  { value: 8, label: 'Canlı Hayvan' },
+  { value: 9, label: 'Gıda' },
+  { value: 10, label: 'İnşaat Malzemesi' },
+  { value: 11, label: 'Akaryakıt / Sıvı' },
+  { value: 12, label: 'Tahıl / Hububat' },
+  { value: 13, label: 'Otomotiv (Araç Taşıma)' },
+  { value: 14, label: 'Mobilya / Beyaz Eşya' },
+  { value: 15, label: 'Kimyasal' },
 ];
 
 function parseNum(v: string): number | null {
   const n = Number(v.replace(',', '.'));
   return Number.isFinite(n) ? n : null;
 }
+
+// Açık adres anlamlı olmalı ("dsa" gibi kısa girişler reddedilir).
+const MIN_ADDRESS_LEN = 10;
 
 /** Baştaki sıfırları temizler, virgülü noktaya çevirir, tek ondalık bırakır; boşsa boş kalır. */
 function sanitizeNumeric(raw: string): string {
@@ -195,8 +217,8 @@ export default function CustomerCreateLoadScreen() {
       fromDistrict.trim().length > 0 &&
       toCity.trim().length > 0 &&
       toDistrict.trim().length > 0 &&
-      fromAddressLine.trim().length > 0 &&
-      toAddressLine.trim().length > 0 &&
+      fromAddressLine.trim().length >= MIN_ADDRESS_LEN &&
+      toAddressLine.trim().length >= MIN_ADDRESS_LEN &&
       fromCoords != null &&
       toCoords != null &&
       pickupDate.length > 0 &&
@@ -345,6 +367,11 @@ export default function CustomerCreateLoadScreen() {
   };
 
   const handleCreate = async () => {
+    if (fromAddressLine.trim().length < MIN_ADDRESS_LEN || toAddressLine.trim().length < MIN_ADDRESS_LEN) {
+      setError(`Çıkış ve varış açık adresleri en az ${MIN_ADDRESS_LEN} karakter olmalıdır (mahalle, sokak, no).`);
+      setStep(1);
+      return;
+    }
     if (!canSubmit) return;
     createAbortRef.current?.abort();
     const ac = new AbortController();

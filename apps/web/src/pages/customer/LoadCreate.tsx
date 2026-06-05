@@ -8,7 +8,7 @@ import { createAddress, getMyAddresses } from '../../api/addresses'
 import type { CreateLoadRequest, VehicleTypeValue, LoadTypeValue } from '../../api/types'
 import TurkishDateTimePicker from '../../components/common/TurkishDateTimePicker'
 import { PageError } from '../../components/common/PageStates'
-import { TR_CITIES, getDistrictsByCity, getNeighborhoodsByDistrict, resolveCoordinates } from '../../data/tr-location'
+import { TR_CITIES, getDistrictsByCity, resolveCoordinates } from '../../data/tr-location'
 import { formatCurrencyTRY } from '../../utils/format'
 import { formatCurrency } from '../../utils/validators'
 import '../shared/Page.css'
@@ -19,14 +19,33 @@ const VEHICLES: { value: VehicleTypeValue; name: string; label: string }[] = [
   { value: 1, name: 'Kamyon', label: 'Kamyon' },
   { value: 2, name: 'Kamyonet', label: 'Kamyonet' },
   { value: 3, name: 'Panelvan', label: 'Panelvan' },
+  { value: 4, name: 'Frigorifik', label: 'Frigorifik' },
+  { value: 5, name: 'Tenteli', label: 'Tenteli' },
+  { value: 6, name: 'AcikKasa', label: 'Açık Kasa (Platform)' },
+  { value: 7, name: 'Lowboy', label: 'Lowboy' },
+  { value: 8, name: 'Tanker', label: 'Tanker' },
+  { value: 9, name: 'Damperli', label: 'Damperli' },
+  { value: 10, name: 'KonteynerTasiyici', label: 'Konteyner Taşıyıcı' },
+  { value: 11, name: 'Silobas', label: 'Silobas' },
 ]
 
 const LOAD_TYPES: { value: LoadTypeValue; label: string }[] = [
   { value: 0, label: 'Paletli' },
-  { value: 1, label: 'Dökme' },
+  { value: 1, label: 'Dökme Yük' },
   { value: 2, label: 'Soğuk Zincir' },
-  { value: 3, label: 'Tehlikeli Madde' },
+  { value: 3, label: 'Tehlikeli Madde (ADR)' },
   { value: 4, label: 'Parsiyel' },
+  { value: 5, label: 'Genel Kargo' },
+  { value: 6, label: 'Konteyner' },
+  { value: 7, label: 'Proje / Ağır Yük' },
+  { value: 8, label: 'Canlı Hayvan' },
+  { value: 9, label: 'Gıda' },
+  { value: 10, label: 'İnşaat Malzemesi' },
+  { value: 11, label: 'Akaryakıt / Sıvı' },
+  { value: 12, label: 'Tahıl / Hububat' },
+  { value: 13, label: 'Otomotiv (Araç Taşıma)' },
+  { value: 14, label: 'Mobilya / Beyaz Eşya' },
+  { value: 15, label: 'Kimyasal' },
 ]
 
 /** Baştaki sıfırları temizler, virgülü noktaya çevirir, tek ondalık bırakır; boşsa boş kalır. */
@@ -46,6 +65,9 @@ function toNum(s: string): number | null {
   const n = Number(s)
   return Number.isFinite(n) ? n : null
 }
+
+// Açık adres anlamlı olmalı ("dsa" gibi kısa girişler reddedilir).
+const MIN_ADDRESS_LEN = 10
 
 /**
  * İlçe + açık adresi backend'e tek string olarak birleştirir (migration yok).
@@ -67,8 +89,6 @@ export default function CustomerLoadCreatePage() {
   const [error, setError] = useState('')
   const [addresses, setAddresses] = useState<Array<Record<string, unknown>>>([])
 
-  const [fromNeighborhood, setFromNeighborhood] = useState('')
-  const [toNeighborhood, setToNeighborhood] = useState('')
   const [fromAddressLine, setFromAddressLine] = useState('')
   const [toAddressLine, setToAddressLine] = useState('')
 
@@ -140,8 +160,8 @@ export default function CustomerLoadCreatePage() {
           form.fromDistrict.trim() &&
           form.toCity.trim() &&
           form.toDistrict.trim() &&
-          fromAddressLine.trim() &&
-          toAddressLine.trim(),
+          fromAddressLine.trim().length >= MIN_ADDRESS_LEN &&
+          toAddressLine.trim().length >= MIN_ADDRESS_LEN,
       ) &&
       fromCoords != null &&
       toCoords != null &&
@@ -234,6 +254,11 @@ export default function CustomerLoadCreatePage() {
     setLoading(true)
     setError('')
     try {
+      if (fromAddressLine.trim().length < MIN_ADDRESS_LEN || toAddressLine.trim().length < MIN_ADDRESS_LEN) {
+        setError(`Çıkış ve varış açık adresleri en az ${MIN_ADDRESS_LEN} karakter olmalıdır (mahalle, sokak, no).`)
+        setStep(1)
+        return
+      }
       if (!step1Valid) {
         setError('Lütfen güzergah, açık adresler ve tarihleri eksiksiz doldurun.')
         setStep(1)
@@ -371,7 +396,6 @@ export default function CustomerLoadCreatePage() {
                   onChange={(e) => {
                     update('fromCity', e.target.value)
                     update('fromDistrict', '')
-                    setFromNeighborhood('')
                   }}
                 />
               </label>
@@ -382,24 +406,12 @@ export default function CustomerLoadCreatePage() {
                   value={form.fromDistrict}
                   onChange={(e) => {
                     update('fromDistrict', e.target.value)
-                    setFromNeighborhood('')
                   }}
                 >
                   <option value="">İlçe seçin</option>
                   {getDistrictsByCity(form.fromCity).map((district) => (
                     <option key={district} value={district}>
                       {district}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="form-group">
-                <span className="form-label">Çıkış Mahallesi</span>
-                <select className="form-input" value={fromNeighborhood} onChange={(e) => setFromNeighborhood(e.target.value)}>
-                  <option value="">Mahalle seçin</option>
-                  {getNeighborhoodsByDistrict(form.fromDistrict).map((hood) => (
-                    <option key={hood} value={hood}>
-                      {hood}
                     </option>
                   ))}
                 </select>
@@ -424,7 +436,6 @@ export default function CustomerLoadCreatePage() {
                   onChange={(e) => {
                     update('toCity', e.target.value)
                     update('toDistrict', '')
-                    setToNeighborhood('')
                   }}
                 />
               </label>
@@ -435,24 +446,12 @@ export default function CustomerLoadCreatePage() {
                   value={form.toDistrict}
                   onChange={(e) => {
                     update('toDistrict', e.target.value)
-                    setToNeighborhood('')
                   }}
                 >
                   <option value="">İlçe seçin</option>
                   {getDistrictsByCity(form.toCity).map((district) => (
                     <option key={district} value={district}>
                       {district}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="form-group">
-                <span className="form-label">Varış Mahallesi</span>
-                <select className="form-input" value={toNeighborhood} onChange={(e) => setToNeighborhood(e.target.value)}>
-                  <option value="">Mahalle seçin</option>
-                  {getNeighborhoodsByDistrict(form.toDistrict).map((hood) => (
-                    <option key={hood} value={hood}>
-                      {hood}
                     </option>
                   ))}
                 </select>

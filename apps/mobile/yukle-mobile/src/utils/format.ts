@@ -18,13 +18,44 @@ function normalizeStatus(raw: unknown): LoadStatus {
 const LOAD_TYPE_DISPLAY: Record<string, string> = {
   General: 'Genel',
   Paletli: 'Paletli',
-  Dokme: 'Dökme',
+  Dokme: 'Dökme Yük',
+  Dökme: 'Dökme Yük',
   SogukZincir: 'Soğuk Zincir',
-  TehlikeliMadde: 'Tehlikeli Madde',
+  SoğukZincir: 'Soğuk Zincir',
+  TehlikeliMadde: 'Tehlikeli Madde (ADR)',
   Parsiyel: 'Parsiyel',
+  GenelKargo: 'Genel Kargo',
+  Konteyner: 'Konteyner',
+  ProjeAgirYuk: 'Proje / Ağır Yük',
+  CanliHayvan: 'Canlı Hayvan',
+  Gida: 'Gıda',
+  InsaatMalzemesi: 'İnşaat Malzemesi',
+  AkaryakitSivi: 'Akaryakıt / Sıvı',
+  TahilHububat: 'Tahıl / Hububat',
+  Otomotiv: 'Otomotiv (Araç Taşıma)',
+  MobilyaBeyazEsya: 'Mobilya / Beyaz Eşya',
+  Kimyasal: 'Kimyasal',
 };
 
-const LOAD_TYPE_BY_INDEX = ['Paletli', 'Dökme', 'Soğuk Zincir', 'Tehlikeli Madde', 'Parsiyel'];
+// Backend LoadType index sırası (Yukle.Api/Models/Enums.cs) ile birebir.
+const LOAD_TYPE_BY_INDEX = [
+  'Paletli',
+  'Dökme Yük',
+  'Soğuk Zincir',
+  'Tehlikeli Madde (ADR)',
+  'Parsiyel',
+  'Genel Kargo',
+  'Konteyner',
+  'Proje / Ağır Yük',
+  'Canlı Hayvan',
+  'Gıda',
+  'İnşaat Malzemesi',
+  'Akaryakıt / Sıvı',
+  'Tahıl / Hububat',
+  'Otomotiv (Araç Taşıma)',
+  'Mobilya / Beyaz Eşya',
+  'Kimyasal',
+];
 
 /** API enum/string veya indeks → kullanıcıya gösterilen yük tipi etiketi */
 export function formatLoadTypeLabel(raw: unknown): string {

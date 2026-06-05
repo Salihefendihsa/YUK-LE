@@ -40,7 +40,21 @@ export async function createLoad(
   };
 }
 
-const VEHICLE_API_NAMES = ['TIR', 'Kamyon', 'Kamyonet', 'Panelvan'] as const;
+// Backend VehicleType index sırası (Yukle.Api/Models/Enums.cs) ile birebir.
+const VEHICLE_API_NAMES = [
+  'TIR',
+  'Kamyon',
+  'Kamyonet',
+  'Panelvan',
+  'Frigorifik',
+  'Tenteli',
+  'AcikKasa',
+  'Lowboy',
+  'Tanker',
+  'Damperli',
+  'KonteynerTasiyici',
+  'Silobas',
+] as const;
 
 function normalizePriceSuggestion(raw: unknown): AiMarketAnalysis | null {
   if (!raw || typeof raw !== 'object') return null;

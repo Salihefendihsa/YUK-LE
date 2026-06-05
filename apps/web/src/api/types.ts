@@ -68,12 +68,40 @@ export interface DriverDashboard {
 // ── Loads ─────────────────────────────────────────────────────────────
 export type LoadStatus = 'Active' | 'Assigned' | 'OnWay' | 'Arrived' | 'Delivered' | 'Cancelled'
 // Backend enum üye adlarıyla birebir hizalı (Yukle.Api/Models/Enums.cs).
-export type VehicleType = 'TIR' | 'Kamyon' | 'Kamyonet' | 'Panelvan'
-export type LoadType = 'Paletli' | 'Dökme' | 'SoğukZincir' | 'TehlikeliMadde' | 'Parsiyel'
+export type VehicleType =
+  | 'TIR'
+  | 'Kamyon'
+  | 'Kamyonet'
+  | 'Panelvan'
+  | 'Frigorifik'
+  | 'Tenteli'
+  | 'AcikKasa'
+  | 'Lowboy'
+  | 'Tanker'
+  | 'Damperli'
+  | 'KonteynerTasiyici'
+  | 'Silobas'
+export type LoadType =
+  | 'Paletli'
+  | 'Dökme'
+  | 'SoğukZincir'
+  | 'TehlikeliMadde'
+  | 'Parsiyel'
+  | 'GenelKargo'
+  | 'Konteyner'
+  | 'ProjeAgirYuk'
+  | 'CanliHayvan'
+  | 'Gida'
+  | 'InsaatMalzemesi'
+  | 'AkaryakitSivi'
+  | 'TahilHububat'
+  | 'Otomotiv'
+  | 'MobilyaBeyazEsya'
+  | 'Kimyasal'
 
 // Backend System.Text.Json enum'ları integer index bekler (mobil paritesi).
-export type VehicleTypeValue = 0 | 1 | 2 | 3
-export type LoadTypeValue = 0 | 1 | 2 | 3 | 4
+export type VehicleTypeValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11
+export type LoadTypeValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15
 
 export interface Load {
   id: string

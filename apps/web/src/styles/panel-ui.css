@@ -296,6 +296,7 @@
   gap: 20px;
   align-items: start;
   max-width: 100%;
+  overflow-x: clip;
 }
 
 /* CSS grid taşma onarımı: içerik kolonu min-width:auto yüzünden soldan kesilmesin */

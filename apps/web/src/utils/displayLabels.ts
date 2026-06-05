@@ -103,24 +103,46 @@ export function formatApprovalStatusLabel(status: unknown): string {
   return key || 'Bilinmiyor'
 }
 
-/** Yukle.Api.Models.LoadType — 0 Paletli … 4 Parsiyel */
+/** Yukle.Api.Models.LoadType — 0 Paletli … 15 Kimyasal (sona eklemeli) */
 const LOAD_TYPE_BY_INDEX: Record<number, string> = {
   0: 'Paletli',
   1: 'Dökme',
   2: 'SoğukZincir',
   3: 'TehlikeliMadde',
   4: 'Parsiyel',
+  5: 'GenelKargo',
+  6: 'Konteyner',
+  7: 'ProjeAgirYuk',
+  8: 'CanliHayvan',
+  9: 'Gida',
+  10: 'InsaatMalzemesi',
+  11: 'AkaryakitSivi',
+  12: 'TahilHububat',
+  13: 'Otomotiv',
+  14: 'MobilyaBeyazEsya',
+  15: 'Kimyasal',
 }
 
 const LOAD_TYPE_LABELS: Record<string, string> = {
   General: 'Genel',
   Paletli: 'Paletli',
-  Dökme: 'Dökme',
-  Dokme: 'Dökme',
-  SoğukZincir: 'Soğuk zincir',
-  SogukZincir: 'Soğuk zincir',
-  TehlikeliMadde: 'Tehlikeli madde',
+  Dökme: 'Dökme Yük',
+  Dokme: 'Dökme Yük',
+  SoğukZincir: 'Soğuk Zincir',
+  SogukZincir: 'Soğuk Zincir',
+  TehlikeliMadde: 'Tehlikeli Madde (ADR)',
   Parsiyel: 'Parsiyel',
+  GenelKargo: 'Genel Kargo',
+  Konteyner: 'Konteyner',
+  ProjeAgirYuk: 'Proje / Ağır Yük',
+  CanliHayvan: 'Canlı Hayvan',
+  Gida: 'Gıda',
+  InsaatMalzemesi: 'İnşaat Malzemesi',
+  AkaryakitSivi: 'Akaryakıt / Sıvı',
+  TahilHububat: 'Tahıl / Hububat',
+  Otomotiv: 'Otomotiv (Araç Taşıma)',
+  MobilyaBeyazEsya: 'Mobilya / Beyaz Eşya',
+  Kimyasal: 'Kimyasal',
 }
 
 function typeKey(raw: unknown, byIndex: Record<number, string>): string {
@@ -137,12 +159,20 @@ export function formatLoadTypeLabel(type: unknown): string {
   return key || '—'
 }
 
-/** Yukle.Api.Models.VehicleType — 0 TIR … 3 Panelvan */
+/** Yukle.Api.Models.VehicleType — 0 TIR … 11 Silobas (sona eklemeli) */
 const VEHICLE_TYPE_BY_INDEX: Record<number, string> = {
   0: 'TIR',
   1: 'Kamyon',
   2: 'Kamyonet',
   3: 'Panelvan',
+  4: 'Frigorifik',
+  5: 'Tenteli',
+  6: 'AcikKasa',
+  7: 'Lowboy',
+  8: 'Tanker',
+  9: 'Damperli',
+  10: 'KonteynerTasiyici',
+  11: 'Silobas',
 }
 
 const VEHICLE_TYPE_LABELS: Record<string, string> = {
@@ -152,8 +182,13 @@ const VEHICLE_TYPE_LABELS: Record<string, string> = {
   Kamyonet: 'Kamyonet',
   Panelvan: 'Panelvan',
   Frigorifik: 'Frigorifik',
+  Tenteli: 'Tenteli',
+  AcikKasa: 'Açık Kasa (Platform)',
   Lowboy: 'Lowboy',
   Tanker: 'Tanker',
+  Damperli: 'Damperli',
+  KonteynerTasiyici: 'Konteyner Taşıyıcı',
+  Silobas: 'Silobas',
 }
 
 export function formatVehicleTypeLabel(type: unknown): string {

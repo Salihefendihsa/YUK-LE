@@ -62,18 +62,24 @@ export default function AppLayout() {
 
   const pageTitle = useMemo(() => {
     const full = titleMap[location.pathname]
-    if (!full) {
-      const seg = location.pathname.split('/').filter(Boolean).pop()
-      return seg ? seg.charAt(0).toUpperCase() + seg.slice(1) : 'Panel'
+    if (full) return full.split('|')[0]?.trim() ?? 'Panel'
+
+    const segs = location.pathname.split('/').filter(Boolean)
+    const last = segs[segs.length - 1] ?? ''
+    // Ham GUID'i başlık olarak gösterme (ör. /customer/loads/56d2d8c0-...)
+    const isGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(last)
+    if (isGuid) {
+      if (location.pathname.includes('/loads/')) return 'Yük Detayı'
+      return 'Detay'
     }
-    return full.split('|')[0]?.trim() ?? 'Panel'
+    return last ? last.charAt(0).toUpperCase() + last.slice(1) : 'Panel'
   }, [location.pathname])
 
   useEffect(() => {
-    document.title = titleMap[location.pathname] ?? 'Navlonix'
+    document.title = `${pageTitle} | Navlonix`
     const meta = document.querySelector('meta[name="description"]')
     if (meta) meta.setAttribute('content', 'Navlonix dijital lojistik platformu ile güvenli yük taşıma, teklif ve takip hizmetleri.')
-  }, [location.pathname])
+  }, [location.pathname, pageTitle])
 
   useEffect(() => {
     const onResize = () => {
