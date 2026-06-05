@@ -295,6 +295,22 @@
   grid-template-columns: 220px 1fr;
   gap: 20px;
   align-items: start;
+  max-width: 100%;
+}
+
+/* CSS grid taşma onarımı: içerik kolonu min-width:auto yüzünden soldan kesilmesin */
+.panel-create-shell > * {
+  min-width: 0;
+}
+
+.panel-create-shell .form-grid {
+  max-width: 100%;
+}
+
+.panel-create-shell .form-input,
+.panel-create-shell textarea.form-input {
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 900px) {

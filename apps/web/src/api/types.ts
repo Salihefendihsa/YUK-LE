@@ -67,8 +67,13 @@ export interface DriverDashboard {
 
 // ── Loads ─────────────────────────────────────────────────────────────
 export type LoadStatus = 'Active' | 'Assigned' | 'OnWay' | 'Arrived' | 'Delivered' | 'Cancelled'
-export type VehicleType = 'Tir' | 'Kamyon' | 'Frigorifik' | 'Lowboy' | 'Tanker'
-export type LoadType = 'General' | 'Paletli' | 'Dokme' | 'SogukZincir' | 'TehlikeliMadde' | 'Parsiyel'
+// Backend enum üye adlarıyla birebir hizalı (Yukle.Api/Models/Enums.cs).
+export type VehicleType = 'TIR' | 'Kamyon' | 'Kamyonet' | 'Panelvan'
+export type LoadType = 'Paletli' | 'Dökme' | 'SoğukZincir' | 'TehlikeliMadde' | 'Parsiyel'
+
+// Backend System.Text.Json enum'ları integer index bekler (mobil paritesi).
+export type VehicleTypeValue = 0 | 1 | 2 | 3
+export type LoadTypeValue = 0 | 1 | 2 | 3 | 4
 
 export interface Load {
   id: string
@@ -113,8 +118,9 @@ export interface CreateLoadRequest {
   deliveryDate: string
   weight: number
   volume?: number
-  loadType: LoadType
-  requiredVehicleType: VehicleType
+  // Backend enum index olarak gönderilir (mobil ile aynı; string isim deserialize edilmez).
+  loadType: LoadTypeValue
+  requiredVehicleType: VehicleTypeValue
   price: number
   currency: string
   description?: string

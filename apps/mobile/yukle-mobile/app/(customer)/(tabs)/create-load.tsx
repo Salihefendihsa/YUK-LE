@@ -59,6 +59,34 @@ function parseNum(v: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** Baştaki sıfırları temizler, virgülü noktaya çevirir, tek ondalık bırakır; boşsa boş kalır. */
+function sanitizeNumeric(raw: string): string {
+  let s = raw.replace(/[^\d.,]/g, '').replace(/,/g, '.');
+  const i = s.indexOf('.');
+  if (i !== -1) s = s.slice(0, i + 1) + s.slice(i + 1).replace(/\./g, '');
+  s = s.replace(/^0+(?=\d)/, ''); // "060" → "60"; "0" ve "0.5" korunur
+  return s;
+}
+
+/**
+ * İlçe + açık adresi backend'e tek string olarak birleştirir (migration yok).
+ * Backend FromDistrict/ToDistrict StringLength(100) olduğundan sonuç 100 ile sınırlanır.
+ */
+function mergeDistrictAddress(district: string, addressLine: string): string {
+  const d = district.trim();
+  const a = addressLine.trim();
+  if (!a) return d;
+  const combined = `${d} — ${a}`;
+  return combined.length <= 100 ? combined : combined.slice(0, 100);
+}
+
+/** Birleştirilmiş ilçe string'ini saf ilçe + açık adrese ayırır (edit prefill). */
+function splitDistrictAddress(value: string): { district: string; addressLine: string } {
+  const idx = value.indexOf(' — ');
+  if (idx === -1) return { district: value.trim(), addressLine: '' };
+  return { district: value.slice(0, idx).trim(), addressLine: value.slice(idx + 3).trim() };
+}
+
 function coordsFromAddress(addr: DeliveryAddress) {
   if (addr.latitude != null && addr.longitude != null) {
     return { latitude: addr.latitude, longitude: addr.longitude };
@@ -98,6 +126,8 @@ export default function CustomerCreateLoadScreen() {
   const [fromDistrict, setFromDistrict] = useState('');
   const [toCity, setToCity] = useState('');
   const [toDistrict, setToDistrict] = useState('');
+  const [fromAddressLine, setFromAddressLine] = useState('');
+  const [toAddressLine, setToAddressLine] = useState('');
   const [pickupDate, setPickupDate] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
   const [vehicleType, setVehicleType] = useState<VehicleTypeValue>(1);
@@ -118,10 +148,14 @@ export default function CustomerCreateLoadScreen() {
     void Promise.all([getLoadById(editId), getBidsForLoad(editId)])
       .then(([load, bids]) => {
         if (cancelled) return;
+        const fromSplit = splitDistrictAddress(load.fromDistrict);
+        const toSplit = splitDistrictAddress(load.toDistrict);
         setFromCity(load.fromCity);
-        setFromDistrict(load.fromDistrict);
+        setFromDistrict(fromSplit.district);
+        setFromAddressLine(fromSplit.addressLine);
         setToCity(load.toCity);
-        setToDistrict(load.toDistrict);
+        setToDistrict(toSplit.district);
+        setToAddressLine(toSplit.addressLine);
         setWeight(String(load.weight));
         setVolume(load.volume > 0 ? String(load.volume) : '');
         setPrice(String(load.price));
@@ -129,8 +163,8 @@ export default function CustomerCreateLoadScreen() {
         setPickupDate(new Date(load.pickupDate).toISOString());
         setDeliveryDate(new Date(load.deliveryDate).toISOString());
         setOpenBidCount(bids.filter((b) => b.status === 'Pending').length);
-        const fromC = resolveCoordinates(load.fromCity, load.fromDistrict);
-        const toC = resolveCoordinates(load.toCity, load.toDistrict);
+        const fromC = resolveCoordinates(load.fromCity, fromSplit.district);
+        const toC = resolveCoordinates(load.toCity, toSplit.district);
         if (fromC) setFromCoordsOverride(fromC);
         if (toC) setToCoordsOverride(toC);
       })
@@ -161,17 +195,35 @@ export default function CustomerCreateLoadScreen() {
       fromDistrict.trim().length > 0 &&
       toCity.trim().length > 0 &&
       toDistrict.trim().length > 0 &&
+      fromAddressLine.trim().length > 0 &&
+      toAddressLine.trim().length > 0 &&
       fromCoords != null &&
       toCoords != null &&
       pickupDate.length > 0 &&
       deliveryDate.length > 0
     );
-  }, [fromCity, fromDistrict, toCity, toDistrict, fromCoords, toCoords, pickupDate, deliveryDate]);
+  }, [
+    fromCity,
+    fromDistrict,
+    toCity,
+    toDistrict,
+    fromAddressLine,
+    toAddressLine,
+    fromCoords,
+    toCoords,
+    pickupDate,
+    deliveryDate,
+  ]);
 
   const step2Valid = useMemo(() => {
     const w = parseNum(weight);
-    return w != null && w >= 1 && w <= 40000;
-  }, [weight]);
+    if (w == null || w < 1 || w > 40000) return false;
+    if (volume.trim() !== '') {
+      const vol = parseNum(volume);
+      if (vol == null || vol <= 0 || vol > 10000) return false;
+    }
+    return description.trim().length > 0;
+  }, [weight, volume, description]);
 
   const step3Valid = useMemo(() => {
     const p = parseNum(price);
@@ -266,9 +318,9 @@ export default function CustomerCreateLoadScreen() {
     const vol = parseNum(volume);
     return {
       fromCity: fromCity.trim(),
-      fromDistrict: fromDistrict.trim(),
+      fromDistrict: mergeDistrictAddress(fromDistrict, fromAddressLine),
       toCity: toCity.trim(),
-      toDistrict: toDistrict.trim(),
+      toDistrict: mergeDistrictAddress(toDistrict, toAddressLine),
       fromLatitude: fromCoords!.latitude,
       fromLongitude: fromCoords!.longitude,
       toLatitude: toCoords!.latitude,
@@ -431,6 +483,13 @@ export default function CustomerCreateLoadScreen() {
                 setFromCoordsOverride(null);
               }}
             />
+            <TextField
+              label="Çıkış açık adresi (mahalle, sokak, no)"
+              value={fromAddressLine}
+              onChangeText={setFromAddressLine}
+              placeholder="Örn: Cumhuriyet Mah. Atatürk Cad. No:12"
+              maxLength={80}
+            />
             <TrLocationFields
               labelPrefix="Varış"
               city={toCity}
@@ -440,6 +499,13 @@ export default function CustomerCreateLoadScreen() {
                 setToDistrict(district);
                 setToCoordsOverride(null);
               }}
+            />
+            <TextField
+              label="Varış açık adresi (mahalle, sokak, no)"
+              value={toAddressLine}
+              onChangeText={setToAddressLine}
+              placeholder="Örn: Barbaros Mah. 1. Sok. No:5 Daire 3"
+              maxLength={80}
             />
 
             <DateTimePickerField
@@ -488,10 +554,20 @@ export default function CustomerCreateLoadScreen() {
                 />
               ))}
             </View>
-            <TextField label="Ağırlık (kg)" value={weight} onChangeText={setWeight} keyboardType="numeric" />
-            <TextField label="Hacim (m³)" value={volume} onChangeText={setVolume} keyboardType="numeric" />
             <TextField
-              label="Açıklama"
+              label="Ağırlık (kg)"
+              value={weight}
+              onChangeText={(t) => setWeight(sanitizeNumeric(t))}
+              keyboardType="numeric"
+            />
+            <TextField
+              label="Hacim (m³) — opsiyonel"
+              value={volume}
+              onChangeText={(t) => setVolume(sanitizeNumeric(t))}
+              keyboardType="numeric"
+            />
+            <TextField
+              label="Açıklama (zorunlu)"
               value={description}
               onChangeText={setDescription}
               multiline
@@ -534,7 +610,7 @@ export default function CustomerCreateLoadScreen() {
                 </Text>
               )}
             </Card>
-            <TextField label="Liste fiyatı (TL)" value={price} onChangeText={setPrice} keyboardType="numeric" icon="cash-outline" />
+            <TextField label="Liste fiyatı (TL)" value={price} onChangeText={(t) => setPrice(sanitizeNumeric(t))} keyboardType="numeric" icon="cash-outline" />
             {parseNum(price) != null ? (
               <Text style={styles.preview}>Önizleme: {formatCurrencyTRY(parseNum(price)!)}</Text>
             ) : null}

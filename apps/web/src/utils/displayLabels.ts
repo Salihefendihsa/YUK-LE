@@ -103,31 +103,61 @@ export function formatApprovalStatusLabel(status: unknown): string {
   return key || 'Bilinmiyor'
 }
 
+/** Yukle.Api.Models.LoadType — 0 Paletli … 4 Parsiyel */
+const LOAD_TYPE_BY_INDEX: Record<number, string> = {
+  0: 'Paletli',
+  1: 'Dökme',
+  2: 'SoğukZincir',
+  3: 'TehlikeliMadde',
+  4: 'Parsiyel',
+}
+
 const LOAD_TYPE_LABELS: Record<string, string> = {
   General: 'Genel',
   Paletli: 'Paletli',
+  Dökme: 'Dökme',
   Dokme: 'Dökme',
+  SoğukZincir: 'Soğuk zincir',
   SogukZincir: 'Soğuk zincir',
   TehlikeliMadde: 'Tehlikeli madde',
   Parsiyel: 'Parsiyel',
 }
 
+function typeKey(raw: unknown, byIndex: Record<number, string>): string {
+  if (raw == null) return ''
+  if (typeof raw === 'number' && Number.isFinite(raw)) return byIndex[raw] ?? String(raw)
+  const s = String(raw).trim()
+  if (/^\d+$/.test(s)) return byIndex[Number(s)] ?? s
+  return s
+}
+
 export function formatLoadTypeLabel(type: unknown): string {
-  const key = normalizeKey(type)
+  const key = typeKey(type, LOAD_TYPE_BY_INDEX)
   if (LOAD_TYPE_LABELS[key]) return LOAD_TYPE_LABELS[key]
   return key || '—'
 }
 
+/** Yukle.Api.Models.VehicleType — 0 TIR … 3 Panelvan */
+const VEHICLE_TYPE_BY_INDEX: Record<number, string> = {
+  0: 'TIR',
+  1: 'Kamyon',
+  2: 'Kamyonet',
+  3: 'Panelvan',
+}
+
 const VEHICLE_TYPE_LABELS: Record<string, string> = {
-  Tir: 'Tır',
+  TIR: 'TIR',
+  Tir: 'TIR',
   Kamyon: 'Kamyon',
+  Kamyonet: 'Kamyonet',
+  Panelvan: 'Panelvan',
   Frigorifik: 'Frigorifik',
   Lowboy: 'Lowboy',
   Tanker: 'Tanker',
 }
 
 export function formatVehicleTypeLabel(type: unknown): string {
-  const key = normalizeKey(type)
+  const key = typeKey(type, VEHICLE_TYPE_BY_INDEX)
   if (VEHICLE_TYPE_LABELS[key]) return VEHICLE_TYPE_LABELS[key]
   return key || '—'
 }
