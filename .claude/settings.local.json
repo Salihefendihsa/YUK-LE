@@ -71,7 +71,24 @@
       "Bash(grep -v \"Migrations\\\\|RequiredVehicleType =\\\\|\\\\.Type =\\\\|Type = dto\\\\|//\")",
       "Bash(grep -n \"box-sizing\\\\|\\\\*,\\\\|^\\\\* {\\\\|page-wrap\\\\|max-width\\\\|overflow-x\" apps/web/src/styles/globals.css)",
       "Read(//tmp/**)",
-      "Bash(curl -s -o /tmp/newload.txt -w 'HTTP %{http_code}\\\\n' -X POST http://localhost:5151/api/loads -H 'Authorization: Bearer __TRACKED_VAR__' -H 'Content-Type: application/json' -d '{\"fromCity\":\"İstanbul\",\"fromDistrict\":\"Tuzla — Aydintepe Mah. Sahil Yolu No:5\",\"toCity\":\"Kocaeli\",\"toDistrict\":\"Gebze — Sanayi Mah. 200. Sok No:8\",\"fromLatitude\":40.8161,\"fromLongitude\":29.3000,\"toLatitude\":40.8023,\"toLongitude\":29.4307,\"pickupDate\":\"2026-06-10T09:00:00.000Z\",\"deliveryDate\":\"2026-06-11T09:00:00.000Z\",\"requiredVehicleType\":8,\"loadType\":11,\"weight\":24000,\"volume\":30,\"price\":18000,\"currency\":\"TRY\",\"description\":\"Akaryakit sevkiyati tanker\"}')"
+      "Bash(curl -s -o /tmp/newload.txt -w 'HTTP %{http_code}\\\\n' -X POST http://localhost:5151/api/loads -H 'Authorization: Bearer __TRACKED_VAR__' -H 'Content-Type: application/json' -d '{\"fromCity\":\"İstanbul\",\"fromDistrict\":\"Tuzla — Aydintepe Mah. Sahil Yolu No:5\",\"toCity\":\"Kocaeli\",\"toDistrict\":\"Gebze — Sanayi Mah. 200. Sok No:8\",\"fromLatitude\":40.8161,\"fromLongitude\":29.3000,\"toLatitude\":40.8023,\"toLongitude\":29.4307,\"pickupDate\":\"2026-06-10T09:00:00.000Z\",\"deliveryDate\":\"2026-06-11T09:00:00.000Z\",\"requiredVehicleType\":8,\"loadType\":11,\"weight\":24000,\"volume\":30,\"price\":18000,\"currency\":\"TRY\",\"description\":\"Akaryakit sevkiyati tanker\"}')",
+      "Bash(\"/c/Program Files/PostgreSQL/17/bin/psql.exe\" -h localhost -U postgres -d yukledb -c '\\\\d \"Bids\"')",
+      "Bash(\"/c/Program Files/PostgreSQL/17/bin/psql.exe\" -h localhost -U postgres -d yukledb -c '\\\\d \"Loads\"')",
+      "Bash(export PGPASSWORD=adb16adb)",
+      "Bash('/c/Program Files/PostgreSQL/17/bin/psql.exe' -h localhost -U postgres -d yukledb -c 'SELECT \"Id\",\"Email\",\"Role\" FROM \"Users\" WHERE \"Email\" IN \\('\\\\''test@yukle.com'\\\\'','\\\\''sofor@yukle.com'\\\\''\\);')",
+      "Bash('/c/Program Files/PostgreSQL/17/bin/psql.exe' -h localhost -U postgres -d yukledb -c 'SELECT \"Id\",\"UserId\",\"DriverId\",\"FromDistrict\",\"ToDistrict\",\"Price\",\"Status\" FROM \"Loads\" WHERE \"Price\" IN \\(22222,18000\\) OR \"FromCity\" ILIKE '\\\\''%Amasya%'\\\\'' OR \"FromCity\" ILIKE '\\\\''%Istanbul%'\\\\'' OR \"FromCity\" ILIKE '\\\\''%İstanbul%'\\\\'';')",
+      "Bash(export PGCLIENTENCODING=LATIN5)",
+      "Bash('/c/Program Files/PostgreSQL/17/bin/psql.exe' -h localhost -U postgres -d yukledb -c 'SELECT b.\"Id\", b.\"LoadId\", b.\"DriverId\", b.\"Amount\", b.\"Status\", b.\"CreatedAt\" FROM \"Bids\" b WHERE b.\"DriverId\"=5 ORDER BY b.\"CreatedAt\";')",
+      "Bash('/c/Program Files/PostgreSQL/17/bin/psql.exe' -h localhost -U postgres -d yukledb -c 'SELECT \"Id\",\"UserId\",\"DriverId\",\"FromCity\",\"ToCity\",\"Price\",\"Status\" FROM \"Loads\" WHERE \"Price\" IN \\(22222,18000\\);')",
+      "Bash('/c/Program Files/PostgreSQL/17/bin/psql.exe' -h localhost -U postgres -d yukledb -c 'SELECT \"DriverId\", count\\(*\\) FROM \"Bids\" GROUP BY \"DriverId\";')",
+      "Bash('/c/Program Files/PostgreSQL/17/bin/psql.exe' -h localhost -U postgres -d yukledb -c 'SELECT \"Id\",\"Status\",\"DriverId\",\"FromCity\",\"ToCity\",\"Price\",\"CreatedAt\" FROM \"Loads\" WHERE \"UserId\"=4 ORDER BY \"CreatedAt\";')",
+      "Bash(\"/c/Program Files/PostgreSQL/17/bin/psql.exe\" -h localhost -U postgres -d yukledb -c \"SELECT column_name FROM information_schema.columns WHERE table_name='Users' AND \\(column_name ILIKE '%lat%' OR column_name ILIKE '%lon%' OR column_name ILIKE '%location%'\\);\")",
+      "Bash('/c/Program Files/PostgreSQL/17/bin/psql.exe' -h localhost -U postgres -d yukledb -c 'SELECT \"Id\",\"Email\",\"Role\",\"LastKnownLatitude\",\"LastKnownLongitude\",\"LastLocationUpdate\" FROM \"Users\" WHERE \"Role\"=1 AND \\(\"LastKnownLatitude\" IS NOT NULL OR \"LastLocationUpdate\" IS NOT NULL\\);')",
+      "Bash('/c/Program Files/PostgreSQL/17/bin/psql.exe' -h localhost -U postgres -d yukledb -c 'SELECT \"Id\",\"Status\",\"UserId\",\"DriverId\",\"FromCity\",\"ToCity\" FROM \"Loads\" WHERE \"Status\"=2;')",
+      "Bash('/c/Program Files/PostgreSQL/17/bin/psql.exe' -h localhost -U postgres -d yukledb -c 'SELECT \"Id\",\"Email\",\"LastKnownLatitude\",\"LastKnownLongitude\",\"LastLocationUpdate\" FROM \"Users\" WHERE \"Id\"=25;')",
+      "Bash(echo \"API_EXIT=$?\")",
+      "Bash(grep -rn \"{load.type\\\\|{l.type\\\\|{r.type\\\\|\\\\.type}\\\\|Tip:\\\\|Yük türü\\\\|Yük Türü\\\\|formatLoadTypeLabel\" pages/customer/LoadDetail.tsx pages/driver/Loads.tsx pages/customer/Loads.tsx pages/driver/LoadDetail.tsx pages/customer/Dashboard.tsx)",
+      "Bash(grep -rln \"formatLoadTypeLabel\" pages/customer/Loads.tsx pages/driver/LoadDetail.tsx)"
     ]
   }
 }
