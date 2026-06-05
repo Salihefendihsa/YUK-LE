@@ -51,7 +51,9 @@ export default function DeliveryQrSection({ loadId }: Props) {
         <div id="delivery-qr-wrap">
           <QRCode value={token} size={220} ecLevel="M" eyeRadius={4} />
         </div>
-        <code style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, wordBreak: 'break-all' }}>{loadId}</code>
+        <span className="muted" style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, letterSpacing: 1 }}>
+          Teslimat Kodu: #{loadId.slice(0, 8).toUpperCase()}
+        </span>
         <button type="button" className="btn btn-secondary btn-sm" onClick={() => downloadPng()}>
           QR Kodu İndir
         </button>
