@@ -148,28 +148,27 @@ public sealed class MatchingController(
         if (!int.TryParse(driverIdClaim, out var driverId))
             return Unauthorized(new { Message = "Geçerli bir şoför kimliği bulunamadı." });
 
-        // Yük ve şoför bilgisi paralel çek
-        var loadTask   = db.Loads.Include(l => l.Owner).AsNoTracking()
+        // Yük ve şoför bilgisi SIRAYLA çekilir.
+        // NOT: Scoped DbContext thread-safe değildir; bu sorgular Task.WhenAll ile
+        // paralel çalıştırılırsa "A second operation was started on this context"
+        // hatası (400) oluşur. Bu yüzden bilinçli olarak ardışık await kullanılır.
+        var load = await db.Loads.Include(l => l.Owner).AsNoTracking()
                               .FirstOrDefaultAsync(l => l.Id == id, ct);
-        var driverTask = db.Users.AsNoTracking()
+
+        var driver = await db.Users.AsNoTracking()
                               .FirstOrDefaultAsync(u => u.Id == driverId, ct);
-        var vehicleTask= db.Vehicles.Where(v => v.DriverId == driverId && v.IsActive)
+
+        var vehicle = await db.Vehicles.Where(v => v.DriverId == driverId && v.IsActive)
                               .OrderByDescending(v => v.Id)
                               .AsNoTracking()
                               .FirstOrDefaultAsync(ct);
-        var historyTask= db.Loads
+
+        var history = await db.Loads
                               .Where(l => l.DriverId == driverId && l.Status == LoadStatus.Delivered)
                               .OrderByDescending(l => l.DeliveryDate)
                               .Take(HistoryDepth)
                               .AsNoTracking()
                               .ToListAsync(ct);
-
-        await Task.WhenAll(loadTask, driverTask, vehicleTask, historyTask);
-
-        var load    = loadTask.Result;
-        var driver  = driverTask.Result;
-        var vehicle = vehicleTask.Result;
-        var history = historyTask.Result;
 
         if (load   is null) return NotFound(new { Message = "Yük bulunamadı." });
         if (driver is null) return NotFound(new { Message = "Şoför bulunamadı." });
