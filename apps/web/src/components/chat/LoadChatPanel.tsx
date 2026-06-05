@@ -4,7 +4,6 @@ import { getChatMessages } from '../../api/chat'
 import { createChatConnection } from '../../lib/chatHub'
 import { useAuthStore } from '../../store/auth.store'
 import { formatTimeTR } from '../../utils/format'
-import { getAccessTokenForHub } from '../../utils/signalrToken'
 
 type ChatMessage = {
   id?: string
@@ -28,8 +27,20 @@ export default function LoadChatPanel({ loadId }: Props) {
   const [connected, setConnected] = useState(false)
 
   useEffect(() => {
-    const token = getAccessTokenForHub()
-    const connection = createChatConnection(token)
+    const connection = createChatConnection()
+    let cancelled = false
+
+    // Gruba katıldıktan SONRA "Bağlandı" göster — yalnızca soket açık değil,
+    // gerçekten odaya girince. Yeniden bağlanışta da odaya tekrar katılmak şart
+    // (yeni ConnectionId → sunucu grup üyeliği sıfırlanır, yoksa mesaj gelmez).
+    const joinGroup = async () => {
+      try {
+        await connection.invoke('JoinChatGroup', loadId)
+        if (!cancelled) setConnected(true)
+      } catch {
+        if (!cancelled) setConnected(false)
+      }
+    }
 
     connection.on('ReceiveMessage', (payload: ChatMessage) => {
       setMessages((prev) => {
@@ -38,7 +49,17 @@ export default function LoadChatPanel({ loadId }: Props) {
       })
     })
 
-    let cancelled = false
+    // Bağlantı yaşam döngüsünü UI'ya yansıt + restart sonrası kendini toparla.
+    connection.onreconnecting(() => {
+      if (!cancelled) setConnected(false)
+    })
+    connection.onreconnected(() => {
+      void joinGroup()
+    })
+    connection.onclose(() => {
+      if (!cancelled) setConnected(false)
+    })
+
     void (async () => {
       try {
         const data = await getChatMessages(loadId)
@@ -61,10 +82,9 @@ export default function LoadChatPanel({ loadId }: Props) {
 
     connection
       .start()
-      .then(async () => {
+      .then(() => {
         if (cancelled) return
-        setConnected(true)
-        await connection.invoke('JoinChatGroup', loadId)
+        return joinGroup()
       })
       .catch(() => {
         if (!cancelled) setConnected(false)
@@ -88,7 +108,7 @@ export default function LoadChatPanel({ loadId }: Props) {
   return (
     <div className="card">
       <h3>Sohbet</h3>
-      <p className="muted">{connected ? 'Bağlı' : 'Bağlantı kuruluyor...'}</p>
+      <p className="muted">{connected ? 'Bağlandı' : 'Bağlantı kuruluyor...'}</p>
       <div style={{ maxHeight: 260, overflow: 'auto', display: 'grid', gap: 8, marginTop: 10 }}>
         {messages.map((m, idx) => {
           const mine = Number(m.senderId ?? -1) === Number(user?.userId ?? -2)

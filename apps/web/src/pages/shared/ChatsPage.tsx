@@ -176,7 +176,7 @@ export default function ChatsPage({ mode }: { mode: ChatsMode }) {
     const token = readToken()
     if (!token) return
 
-    const connection = createChatConnection(token)
+    const connection = createChatConnection()
     setConn(connection)
 
     connection.on('ReceiveMessage', (payload: Record<string, unknown>) => {
