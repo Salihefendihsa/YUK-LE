@@ -371,3 +371,70 @@ export async function getAdminActiveDrivers(): Promise<AdminActiveDriverRow[]> {
   if (!Array.isArray(data)) return []
   return data.map(normalizeActiveDriver)
 }
+
+export type AdminChatSummaryRow = {
+  loadId: string
+  customerName: string
+  driverName: string
+  route: string
+  lastMessage: string
+  lastMessageAt: string
+  messageCount: number
+}
+
+export type AdminChatMessageRow = {
+  id: string
+  loadId: string
+  senderUserId: number
+  senderName: string
+  senderRole: string
+  message: string
+  createdAt: string
+  isBlocked: boolean
+  blockReason?: string | null
+}
+
+function normalizeChatSummary(raw: unknown): AdminChatSummaryRow {
+  const r = raw as Record<string, unknown>
+  return {
+    loadId: String(r.loadId ?? r.LoadId ?? ''),
+    customerName: String(r.customerName ?? r.CustomerName ?? '-'),
+    driverName: String(r.driverName ?? r.DriverName ?? '-'),
+    route: String(r.route ?? r.Route ?? ''),
+    lastMessage: String(r.lastMessage ?? r.LastMessage ?? ''),
+    lastMessageAt: String(r.lastMessageAt ?? r.LastMessageAt ?? ''),
+    messageCount: Number(r.messageCount ?? r.MessageCount ?? 0),
+  }
+}
+
+function normalizeChatMessage(raw: unknown): AdminChatMessageRow {
+  const r = raw as Record<string, unknown>
+  return {
+    id: String(r.id ?? r.Id ?? ''),
+    loadId: String(r.loadId ?? r.LoadId ?? ''),
+    senderUserId: Number(r.senderUserId ?? r.SenderUserId ?? 0),
+    senderName: String(r.senderName ?? r.SenderName ?? ''),
+    senderRole: String(r.senderRole ?? r.SenderRole ?? ''),
+    message: String(r.message ?? r.Message ?? ''),
+    createdAt: String(r.createdAt ?? r.CreatedAt ?? ''),
+    isBlocked: Boolean(r.isBlocked ?? r.IsBlocked),
+    blockReason:
+      r.blockReason != null ? String(r.blockReason) : r.BlockReason != null ? String(r.BlockReason) : null,
+  }
+}
+
+/** GET /Admin/chats — tüm konuşma özetleri (read-only) */
+export async function getAdminChats(): Promise<AdminChatSummaryRow[]> {
+  const res = await apiClient.get('/Admin/chats')
+  const data = res.data
+  if (!Array.isArray(data)) return []
+  return data.map(normalizeChatSummary)
+}
+
+/** GET /Admin/chats/{loadId} — bir yükün tam transkripti (engellenmiş dahil, read-only) */
+export async function getAdminChatMessages(loadId: string): Promise<AdminChatMessageRow[]> {
+  const res = await apiClient.get(`/Admin/chats/${loadId}`)
+  const data = res.data
+  if (!Array.isArray(data)) return []
+  return data.map(normalizeChatMessage)
+}

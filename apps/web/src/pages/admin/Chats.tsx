@@ -1,100 +1,214 @@
-import { useEffect, useState } from 'react'
-import { getAdminBlockedMessages } from '../../api/admin'
+import { useCallback, useEffect, useState } from 'react'
+import {
+  getAdminBlockedMessages,
+  getAdminChatMessages,
+  getAdminChats,
+  type AdminChatMessageRow,
+  type AdminChatSummaryRow,
+} from '../../api/admin'
 import { PageEmpty, PageError, PageSkeleton } from '../../components/common/PageStates'
 import { formatDateTR, formatTimeTR, normalizeArray } from '../../utils/format'
 import './AdminPanel.css'
 
+type Tab = 'all' | 'blocked'
+
 export default function AdminChatsPage() {
+  const [tab, setTab] = useState<Tab>('all')
+
+  // Tüm sohbetler (read-only tam transkript)
+  const [chats, setChats] = useState<AdminChatSummaryRow[]>([])
+  const [selected, setSelected] = useState<AdminChatSummaryRow | null>(null)
+  const [messages, setMessages] = useState<AdminChatMessageRow[]>([])
+  const [msgLoading, setMsgLoading] = useState(false)
+
+  // Engellenen mesajlar
   const [blocked, setBlocked] = useState<Array<Record<string, unknown>>>([])
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [selectedLoadId, setSelectedLoadId] = useState<string>('')
+
+  const loadChats = useCallback(
+    () =>
+      getAdminChats()
+        .then((data) => setChats(data))
+        .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'Sohbet listesi alınamadı.')),
+    [],
+  )
+
+  const loadBlocked = useCallback(
+    () =>
+      getAdminBlockedMessages()
+        .then((data) => setBlocked(normalizeArray<Record<string, unknown>>(data)))
+        .catch((e: { uiMessage?: string }) =>
+          setError(e.uiMessage ?? 'Engellenen mesajlar alınamadı.'),
+        ),
+    [],
+  )
 
   useEffect(() => {
-    const load = () => getAdminBlockedMessages()
-      .then((data) => setBlocked(normalizeArray<Record<string, unknown>>(data)))
-      .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'Sohbet verisi alınamadı.'))
-      .finally(() => setLoading(false))
-    load()
-    const timer = setInterval(() => { void load() }, 30000)
+    Promise.all([loadChats(), loadBlocked()]).finally(() => setLoading(false))
+    const timer = setInterval(() => {
+      void loadChats()
+      void loadBlocked()
+    }, 30000)
     return () => clearInterval(timer)
-  }, [])
+  }, [loadChats, loadBlocked])
+
+  const openChat = async (row: AdminChatSummaryRow) => {
+    setSelected(row)
+    setMsgLoading(true)
+    setMessages([])
+    try {
+      setMessages(await getAdminChatMessages(row.loadId))
+    } catch (e) {
+      setError((e as { uiMessage?: string }).uiMessage ?? 'Mesaj geçmişi alınamadı.')
+    } finally {
+      setMsgLoading(false)
+    }
+  }
 
   if (loading) return <PageSkeleton rows={8} variant="table" />
-  const groupedConversations = Object.values(
-    blocked.reduce((acc, msg) => {
-      const loadId = String(msg.loadId ?? '')
-      if (!loadId) return acc
-      const bucket = (acc[loadId] ?? []) as Array<Record<string, unknown>>
-      bucket.push(msg)
-      acc[loadId] = bucket
-      return acc
-    }, {} as Record<string, Array<Record<string, unknown>>>)
-  ) as Array<Array<Record<string, unknown>>>
-  const activeConversation: Array<Record<string, unknown>> =
-    groupedConversations.find((group) => String(group[0]?.loadId ?? '') === selectedLoadId) ?? []
 
   return (
     <div className="admin-page">
       <h1 className="admin-title">Sohbet Yönetimi</h1>
+      <p className="muted">İzleme modu — yönetici sohbete katılmaz, yalnızca okur.</p>
       {error ? <PageError message={error} /> : null}
-      <div className="admin-grid-2">
-        <div className="admin-card">
-          <h3>Konuşma Listesi</h3>
-          {groupedConversations.map((group) => {
-            const first = group[0] ?? {}
-            const loadId = String(first.loadId ?? '')
-            const last = group[group.length - 1] ?? {}
-            return (
-              <button
-                key={loadId}
-                className="admin-card"
-                style={{ width: '100%', textAlign: 'left', marginBottom: 8, borderColor: selectedLoadId === loadId ? '#f97316' : undefined }}
-                onClick={() => setSelectedLoadId(loadId)}
-              >
-                <strong>Yük #{loadId}</strong>
-                <p className="muted">Şoför: {String(first.driverName ?? '-')} | Müşteri: {String(first.customerName ?? '-')}</p>
-                <p className="muted">Son: {String(last.message ?? '-')}</p>
-              </button>
-            )
-          })}
-          {groupedConversations.length === 0 ? <PageEmpty icon="💬" title="Konuşma listesi boş" description="Sohbetler burada izleme modunda listelenecek." actionLabel="Yenile" onAction={() => window.location.reload()} /> : null}
-        </div>
-        <div className="admin-card">
-          <h3>Mesaj Görüntüleyici</h3>
-          {activeConversation.map((msg, i) => (
-            <div key={`${String(msg.timestampUtc)}-${i}`} className="admin-card" style={{ marginBottom: 8 }}>
-              <div className="item-row">
-                <strong>{String(msg.senderName ?? 'Kullanıcı')}</strong>
-                <span className="muted">{formatDateTR(String(msg.timestampUtc))} {formatTimeTR(String(msg.timestampUtc))}</span>
-              </div>
-              <p style={{ color: Boolean(msg.isBlocked) ? '#ef4444' : undefined }}>{String(msg.message ?? '')}</p>
-            </div>
-          ))}
-          {activeConversation.length > 0 ? <button className="btn btn-warning btn-sm">Kullanıcıyı Uyar</button> : null}
-          {activeConversation.length === 0 ? <PageEmpty icon="🧾" title="Mesaj detayı bekleniyor" description="Bir konuşma seçtiğinizde geçmiş burada gösterilir." actionLabel="Yenile" onAction={() => window.location.reload()} /> : null}
-        </div>
+
+      <div className="admin-filters">
+        <button
+          className={tab === 'all' ? 'btn btn-primary btn-sm' : 'btn btn-sm'}
+          onClick={() => setTab('all')}
+        >
+          💬 Tüm Sohbetler
+        </button>
+        <button
+          className={tab === 'blocked' ? 'btn btn-primary btn-sm' : 'btn btn-sm'}
+          onClick={() => setTab('blocked')}
+        >
+          🛡️ Engellenen Mesajlar {blocked.length > 0 ? `(${blocked.length})` : ''}
+        </button>
       </div>
 
-      <div className="admin-card">
-        <h3>Engellenen Mesajlar</h3>
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead><tr><th>Zaman</th><th>Kim</th><th>Yük</th><th>Mesaj</th></tr></thead>
-            <tbody>
-              {blocked.map((b, i) => (
-                <tr key={`${String(b.timestampUtc)}-${i}`}>
-                  <td>{formatDateTR(String(b.timestampUtc))} {formatTimeTR(String(b.timestampUtc))}</td>
-                  <td>{String(b.senderName)}</td>
-                  <td className="mono">{String(b.loadId)}</td>
-                  <td className="danger">{String(b.message)}</td>
-                </tr>
+      {tab === 'all' ? (
+        <div className="admin-grid-2">
+          <div className="admin-card">
+            <h3>Konuşma Listesi</h3>
+            {chats.map((c) => (
+              <button
+                key={c.loadId}
+                className="admin-card"
+                style={{
+                  width: '100%',
+                  textAlign: 'left',
+                  marginBottom: 8,
+                  borderColor: selected?.loadId === c.loadId ? '#f97316' : undefined,
+                }}
+                onClick={() => void openChat(c)}
+              >
+                <strong>{c.route || `Yük #${c.loadId}`}</strong>
+                <p className="muted">
+                  Müşteri: {c.customerName} | Şoför: {c.driverName}
+                </p>
+                <p className="muted">Son: {c.lastMessage || '-'}</p>
+                <p className="muted">
+                  {c.lastMessageAt ? `${formatDateTR(c.lastMessageAt)} ${formatTimeTR(c.lastMessageAt)} · ` : ''}
+                  {c.messageCount} mesaj
+                </p>
+              </button>
+            ))}
+            {chats.length === 0 ? (
+              <PageEmpty
+                icon="💬"
+                title="Konuşma kaydı yok"
+                description="Müşteri ↔ şoför sohbetleri burada izleme modunda listelenir."
+                actionLabel="Yenile"
+                onAction={() => void loadChats()}
+              />
+            ) : null}
+          </div>
+
+          <div className="admin-card">
+            <h3>Mesaj Geçmişi {selected ? `— ${selected.customerName} / ${selected.driverName}` : ''}</h3>
+            {msgLoading ? <PageSkeleton rows={5} /> : null}
+            {!msgLoading &&
+              messages.map((m) => (
+                <div
+                  key={m.id}
+                  className="admin-card"
+                  style={{ marginBottom: 8, borderColor: m.isBlocked ? '#ef4444' : undefined }}
+                >
+                  <div className="item-row">
+                    <strong>
+                      {m.senderName} {m.senderRole ? `(${m.senderRole})` : ''}
+                      {m.isBlocked ? ' · 🚫 Engellendi' : ''}
+                    </strong>
+                    <span className="muted">
+                      {formatDateTR(m.createdAt)} {formatTimeTR(m.createdAt)}
+                    </span>
+                  </div>
+                  <p style={{ color: m.isBlocked ? '#ef4444' : undefined }}>{m.message}</p>
+                  {m.blockReason ? <p className="muted">Sebep: {m.blockReason}</p> : null}
+                </div>
               ))}
-            </tbody>
-          </table>
+            {!msgLoading && selected && messages.length === 0 ? (
+              <PageEmpty
+                icon="🧾"
+                title="Bu konuşmada mesaj yok"
+                description="Henüz mesaj gönderilmemiş."
+                actionLabel="Yenile"
+                onAction={() => void openChat(selected)}
+              />
+            ) : null}
+            {!msgLoading && !selected ? (
+              <PageEmpty
+                icon="🧾"
+                title="Mesaj detayı bekleniyor"
+                description="Bir konuşma seçtiğinizde tam geçmiş burada gösterilir."
+                actionLabel="Listeyi yenile"
+                onAction={() => void loadChats()}
+              />
+            ) : null}
+          </div>
         </div>
-        {blocked.length === 0 ? <PageEmpty icon="🛡️" title="Engellenen mesaj yok" description="Filtrelenen mesajlar burada listelenir." actionLabel="Yenile" onAction={() => window.location.reload()} /> : null}
-      </div>
+      ) : (
+        <div className="admin-card">
+          <h3>Engellenen Mesajlar</h3>
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Zaman</th>
+                  <th>Kim</th>
+                  <th>Yük</th>
+                  <th>Mesaj</th>
+                </tr>
+              </thead>
+              <tbody>
+                {blocked.map((b, i) => (
+                  <tr key={`${String(b.timestampUtc)}-${i}`}>
+                    <td>
+                      {formatDateTR(String(b.timestampUtc))} {formatTimeTR(String(b.timestampUtc))}
+                    </td>
+                    <td>{String(b.senderName)}</td>
+                    <td className="mono">{String(b.loadId)}</td>
+                    <td className="danger">{String(b.message)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {blocked.length === 0 ? (
+            <PageEmpty
+              icon="🛡️"
+              title="Engellenen mesaj yok"
+              description="Filtrelenen mesajlar burada listelenir."
+              actionLabel="Yenile"
+              onAction={() => void loadBlocked()}
+            />
+          ) : null}
+        </div>
+      )}
     </div>
   )
 }
