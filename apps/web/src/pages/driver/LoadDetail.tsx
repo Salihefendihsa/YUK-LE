@@ -7,6 +7,7 @@ import type { Load, MatchedLoad } from '../../api/types'
 import LoadChatPanel from '../../components/chat/LoadChatPanel'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
 import { formatCurrencyTRY } from '../../utils/format'
+import { formatLoadTypeLabel } from '../../utils/displayLabels'
 import { formatCurrency } from '../../utils/validators'
 import '../shared/Page.css'
 
@@ -86,7 +87,7 @@ export default function DriverLoadDetailPage() {
             </div>
             <div className="item-row" style={{ marginTop: 8 }}>
               <strong>Yük türü</strong>
-              <span>{load.type}</span>
+              <span>{formatLoadTypeLabel(load.type)}</span>
             </div>
           </div>
         </>

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { getLoads } from '../../api/loads'
 import type { Load } from '../../api/types'
 import { PageEmpty, PageError, PageSkeleton } from '../../components/common/PageStates'
+import { formatLoadTypeLabel } from '../../utils/displayLabels'
 import '../shared/Page.css'
 
 const STATUS: Record<string, string> = {
@@ -73,7 +74,7 @@ export default function CustomerLoadsPage() {
               </div>
             ) : null}
             <div className="item-row" style={{ marginTop: 10 }}>
-              <span className="muted">{load.type}</span>
+              <span className="muted">{formatLoadTypeLabel(load.type)}</span>
               <strong>₺{load.price.toLocaleString('tr-TR')}</strong>
             </div>
             <div className="item-row" style={{ marginTop: 6 }}>
