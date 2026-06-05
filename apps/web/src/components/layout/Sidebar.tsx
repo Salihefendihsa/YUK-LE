@@ -24,10 +24,11 @@ const CUSTOMER_NAV: NavItem[] = [
 const DRIVER_NAV: NavItem[] = [
   { label: 'Ana Ekran', path: '/driver/dashboard', icon: '🏠' },
   { label: 'Yük Panosu', path: '/driver/loads', icon: '📦' },
+  { label: 'Tekliflerim', path: '/driver/bids', icon: '💼' },
   { label: 'Aktif Seferim', path: '/driver/active-load', icon: '🚛' },
   { label: 'Sohbetlerim', path: '/driver/chats', icon: '💬' },
-  { label: 'Belgelerim', path: '/driver/documents', icon: '📄' },
   { label: 'Cüzdanım', path: '/driver/wallet', icon: '💰' },
+  { label: 'Belgelerim', path: '/driver/documents', icon: '📄' },
   { label: 'Profilim', path: '/driver/profile', icon: '👤' },
 ]
 

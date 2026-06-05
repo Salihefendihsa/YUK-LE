@@ -186,6 +186,18 @@ export interface CreateBidRequest {
   note?: string
 }
 
+// Şoförün verdiği teklifler (GET /Bids/driver → DriverBidListDto)
+export interface DriverBid {
+  id: number
+  loadId: string
+  fromCity: string
+  toCity: string
+  amount: number
+  note?: string
+  offerDate: string
+  status: BidStatus
+}
+
 // ── Matching ──────────────────────────────────────────────────────────
 export interface MatchedLoad {
   load: Load

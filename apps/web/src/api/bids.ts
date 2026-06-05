@@ -1,8 +1,14 @@
 import { apiClient } from './client'
-import type { Bid, CreateBidRequest } from './types'
+import type { Bid, CreateBidRequest, DriverBid } from './types'
 
 export async function getBidsForLoad(loadId: string): Promise<Bid[]> {
   const res = await apiClient.get<Bid[]>(`/Bids/load/${loadId}`)
+  return res.data
+}
+
+// Giriş yapan şoförün verdiği tüm teklifler (status zaten string döner)
+export async function getDriverBids(): Promise<DriverBid[]> {
+  const res = await apiClient.get<DriverBid[]>('/Bids/driver')
   return res.data
 }
 
