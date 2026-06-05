@@ -32,8 +32,8 @@ public class LoadListDto
     public decimal Price          { get; set; }
     public string  Currency       { get; set; } = "TRY";
 
-    // Durum
-    public LoadStatus Status      { get; set; }
+    // Durum — enum adı string olarak ("Active", "OnWay", …); diğer tüm DTO'larla tutarlı.
+    public string Status          { get; set; } = string.Empty;
 
     // Sahip bilgisi
     public int    OwnerId         { get; set; }

@@ -340,7 +340,7 @@ public sealed class LoadsController(
         var load = await loadService.GetLoadByIdAsync(id);
         if (load == null) return NotFound(new { Message = "Yük bulunamadı." });
 
-        if (load.Status != LoadStatus.OnWay && load.Status != LoadStatus.Assigned)
+        if (load.Status != nameof(LoadStatus.OnWay) && load.Status != nameof(LoadStatus.Assigned))
             return BadRequest(new { Message = "QR kod yalnızca atanmış veya yoldaki yükler için üretilebilir." });
 
         var qrToken = tokenService.GenerateDeliveryQrToken(id);
@@ -513,7 +513,7 @@ public sealed class LoadsController(
 
         if (User.IsInRole("Driver"))
         {
-            if (load.Status == LoadStatus.Active)
+            if (load.Status == nameof(LoadStatus.Active))
                 return true;
             if (load.DriverId == userId)
                 return true;

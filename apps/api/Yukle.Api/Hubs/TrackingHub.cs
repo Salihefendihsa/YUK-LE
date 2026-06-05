@@ -193,7 +193,7 @@ public sealed class TrackingHub(
             var load = await _loadService.GetLoadByIdAsync(loadGuid);
 
             // Yalnızca yolda olan yükler kontrol edilir — spam koruması burada.
-            if (load is null || load.Status != LoadStatus.OnWay)
+            if (load is null || load.Status != nameof(LoadStatus.OnWay))
                 return;
 
             var distanceKm = CalculateDistance(lat, lng, load.DestinationLat, load.DestinationLng);

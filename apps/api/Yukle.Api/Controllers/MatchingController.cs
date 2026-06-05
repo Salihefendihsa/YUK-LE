@@ -263,7 +263,7 @@ public sealed class MatchingController(
         CreatedAt        = l.CreatedAt,
         Price            = l.Price,
         Currency         = l.Currency,
-        Status           = l.Status,
+        Status           = l.Status.ToString(),
         OwnerId          = l.UserId,
         OwnerFullName    = l.Owner?.FullName ?? string.Empty,
         DriverId         = l.DriverId,
