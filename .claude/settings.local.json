@@ -58,7 +58,20 @@
       "Bash(psql --version)",
       "Bash(echo \"EXIT: $?\")",
       "Bash(echo \"WEB EXIT: $?\")",
-      "Bash(echo \"MOBILE EXIT: $?\")"
+      "Bash(echo \"MOBILE EXIT: $?\")",
+      "Bash(Get-ChildItem -Path \"apps/api/Yukle.Api\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(xargs grep -l \"ChatMessage\\\\|Chat\\\\|Message\")",
+      "Bash(xargs grep -ln \"class CreateLoadDto\\\\|record CreateLoadDto\")",
+      "Bash(xargs grep -ln \"class PriceAnalysisRequestDto\\\\|record PriceAnalysisRequestDto\")",
+      "Bash(xargs cat)",
+      "Bash(sed -n '20,30p' apps/api/Yukle.Api/appsettings.Development.json)",
+      "Bash(sed -n '21,30p' apps/api/Yukle.Api/appsettings.json)",
+      "Bash(xargs grep -n \"public\\\\|string\")",
+      "Bash(grep -v \"Migrations\\\\|RequiredVehicleType =\\\\|\\\\.Type =\\\\|Type = dto\\\\|//\")",
+      "Bash(grep -n \"box-sizing\\\\|\\\\*,\\\\|^\\\\* {\\\\|page-wrap\\\\|max-width\\\\|overflow-x\" apps/web/src/styles/globals.css)",
+      "Read(//tmp/**)",
+      "Bash(curl -s -o /tmp/newload.txt -w 'HTTP %{http_code}\\\\n' -X POST http://localhost:5151/api/loads -H 'Authorization: Bearer __TRACKED_VAR__' -H 'Content-Type: application/json' -d '{\"fromCity\":\"İstanbul\",\"fromDistrict\":\"Tuzla — Aydintepe Mah. Sahil Yolu No:5\",\"toCity\":\"Kocaeli\",\"toDistrict\":\"Gebze — Sanayi Mah. 200. Sok No:8\",\"fromLatitude\":40.8161,\"fromLongitude\":29.3000,\"toLatitude\":40.8023,\"toLongitude\":29.4307,\"pickupDate\":\"2026-06-10T09:00:00.000Z\",\"deliveryDate\":\"2026-06-11T09:00:00.000Z\",\"requiredVehicleType\":8,\"loadType\":11,\"weight\":24000,\"volume\":30,\"price\":18000,\"currency\":\"TRY\",\"description\":\"Akaryakit sevkiyati tanker\"}')"
     ]
   }
 }
