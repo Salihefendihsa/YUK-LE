@@ -1,3 +1,4 @@
+import type { AccessTokenFactory } from '@navlonix/shared'
 import * as signalR from '@microsoft/signalr'
 import { apiClient } from '../api/client'
 import { getAccessTokenForHub } from '../utils/signalrToken'
@@ -12,9 +13,11 @@ export function createChatConnection() {
   // accessTokenFactory her (yeniden) bağlanışta çağrılır → token'ı depodan TAZE okur.
   // Eskiden token mount anında bir kez yakalanıyordu; REST 401'de token yenilenince
   // hub bayat token'la kalıp negotiate 401 alıyor ve kalıcı "Bağlantı kuruluyor"da takılıyordu.
+  // Ortak sözleşme: @navlonix/shared AccessTokenFactory (kanonik taze-token deseni).
+  const accessTokenFactory: AccessTokenFactory = () => getAccessTokenForHub()
   return new signalR.HubConnectionBuilder()
     .withUrl(hubUrlFromApiBase(), {
-      accessTokenFactory: () => getAccessTokenForHub(),
+      accessTokenFactory,
       transport: signalR.HttpTransportType.WebSockets,
     })
     .withAutomaticReconnect()

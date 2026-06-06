@@ -1,3 +1,4 @@
+import type { AccessTokenFactory } from '@navlonix/shared'
 import * as signalR from '@microsoft/signalr'
 import { apiClient } from '../api/client'
 
@@ -9,9 +10,11 @@ function hubUrlFromApiBase(): string {
 
 export function createNotificationConnection(accessToken: string) {
   const hubUrl = `${hubUrlFromApiBase()}?access_token=${encodeURIComponent(accessToken)}`
+  // Ortak sözleşme: @navlonix/shared AccessTokenFactory (burada yakalanmış token — legacy desen, davranış korunur).
+  const accessTokenFactory: AccessTokenFactory = () => accessToken
   return new signalR.HubConnectionBuilder()
     .withUrl(hubUrl, {
-      accessTokenFactory: () => accessToken,
+      accessTokenFactory,
       transport: signalR.HttpTransportType.WebSockets,
     })
     .withAutomaticReconnect()

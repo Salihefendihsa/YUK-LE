@@ -14,3 +14,4 @@ export {
   formatExternalEnvironmentLabel,
   formatExternalFrameworkLabel,
 } from './util/apiErrors';
+export type { AccessTokenFactory } from './realtime/signalr';

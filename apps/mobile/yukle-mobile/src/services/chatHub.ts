@@ -1,3 +1,4 @@
+import type { AccessTokenFactory } from '@navlonix/shared';
 import * as signalR from '@microsoft/signalr';
 import { API_BASE_URL } from '../constants/api';
 
@@ -8,9 +9,11 @@ export function buildChatHubUrl(accessToken: string): string {
 }
 
 export function createChatConnection(accessToken: string): signalR.HubConnection {
+  // Ortak sözleşme: @navlonix/shared AccessTokenFactory (mobil: yakalanmış token + query-string — davranış korunur).
+  const accessTokenFactory: AccessTokenFactory = () => accessToken;
   return new signalR.HubConnectionBuilder()
     .withUrl(buildChatHubUrl(accessToken), {
-      accessTokenFactory: () => accessToken,
+      accessTokenFactory,
     })
     .withAutomaticReconnect()
     .configureLogging(signalR.LogLevel.Warning)
