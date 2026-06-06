@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, Easing, Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { palette } from '../../theme/colors';
@@ -39,6 +40,21 @@ const DEFAULT_GLOW = ['rgba(255,138,51,0.22)', 'rgba(255,107,0,0.05)', 'transpar
 
 export function Card({ children, style, variant = 'glass', padding = 6, accent }: Props) {
   const isHero = variant === 'hero' && !!accent;
+
+  // Hero glow — çok yavaş, abartısız nefes (opacity 0.9 ↔ 1, ~4s).
+  const glow = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (!isHero) return;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(glow, { toValue: 0.9, duration: 2000, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(glow, { toValue: 1, duration: 2000, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [isHero, glow]);
+
   const heroShadow =
     isHero && accent
       ? Platform.select({
@@ -79,16 +95,18 @@ export function Card({ children, style, variant = 'glass', padding = 6, accent }
             style={StyleSheet.absoluteFill}
             pointerEvents="none"
           />
-          <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" pointerEvents="none">
-            <Defs>
-              <RadialGradient id="heroGlow" cx="0.9" cy="0.02" r="0.85">
-                <Stop offset="0" stopColor={accent.hero.glowColor} stopOpacity={accent.hero.glowPeak} />
-                <Stop offset="0.55" stopColor={accent.hero.glowColor} stopOpacity={accent.hero.glowPeak * 0.3} />
-                <Stop offset="1" stopColor={accent.hero.glowColor} stopOpacity={0} />
-              </RadialGradient>
-            </Defs>
-            <Rect x="0" y="0" width="100%" height="100%" fill="url(#heroGlow)" />
-          </Svg>
+          <Animated.View style={[StyleSheet.absoluteFill, { opacity: glow }]} pointerEvents="none">
+            <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
+              <Defs>
+                <RadialGradient id="heroGlow" cx="0.9" cy="0.02" r="0.85">
+                  <Stop offset="0" stopColor={accent.hero.glowColor} stopOpacity={accent.hero.glowPeak} />
+                  <Stop offset="0.55" stopColor={accent.hero.glowColor} stopOpacity={accent.hero.glowPeak * 0.3} />
+                  <Stop offset="1" stopColor={accent.hero.glowColor} stopOpacity={0} />
+                </RadialGradient>
+              </Defs>
+              <Rect x="0" y="0" width="100%" height="100%" fill="url(#heroGlow)" />
+            </Svg>
+          </Animated.View>
         </>
       ) : null}
       {variant === 'gradient' && (
@@ -101,6 +119,8 @@ export function Card({ children, style, variant = 'glass', padding = 6, accent }
           pointerEvents="none"
         />
       )}
+      {/* Üst kenar ince iç highlight — cam/premium his. */}
+      <View style={styles.topHighlight} pointerEvents="none" />
       {children}
     </View>
   );
@@ -131,5 +151,13 @@ const styles = StyleSheet.create({
   hero: {
     backgroundColor: '#121620',
     borderColor: palette.brandBorder,
+  },
+  topHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
 });

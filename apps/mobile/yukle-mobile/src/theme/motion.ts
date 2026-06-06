@@ -10,9 +10,11 @@ export const motion = {
     opacity: 0.92,
   },
   fade: {
-    enter: 200,
+    enter: 260,
     exit: 150,
   },
+  /** Liste öğeleri arası kademeli giriş gecikmesi. */
+  stagger: 40,
   shimmer: {
     duration: 1200,
   },

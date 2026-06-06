@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useEffect, useRef } from 'react';
-import { Animated, type StyleProp, type ViewStyle } from 'react-native';
+import { Animated, Easing, type StyleProp, type ViewStyle } from 'react-native';
 import { motion } from '../../theme/motion';
 
 type Props = {
@@ -9,7 +9,7 @@ type Props = {
   delay?: number;
 };
 
-/** Sayfa / liste girisi — kisa fade + hafif yukari kayma. */
+/** Sayfa / liste girisi — kisa ease-out fade + hafif yukari kayma. */
 export function FadeInView({ children, style, delay = 0 }: Props) {
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(8)).current;
@@ -20,12 +20,14 @@ export function FadeInView({ children, style, delay = 0 }: Props) {
         toValue: 1,
         duration: motion.fade.enter,
         delay,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
       Animated.timing(translateY, {
         toValue: 0,
         duration: motion.fade.enter,
         delay,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
     ]).start();
