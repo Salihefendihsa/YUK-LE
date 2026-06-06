@@ -832,12 +832,24 @@ public sealed class GeminiServiceClient : IGeminiService
                 generationConfig = new
                 {
                     temperature     = 0.4,
-                    maxOutputTokens = 600
+                    maxOutputTokens = 1024
                 }
             };
 
             var response = await _httpClient.PostAsJsonAsync(BuildUrl(_flashModel), requestBody, ct);
-            response.EnsureSuccessStatusCode();
+
+            // Başarısızsa Gemini'nin GERÇEK hata gövdesini logla (ör. "API key expired").
+            // Fiyat/matching çağrıları da aynı hatayla sessizce fallback'e düşer; bu log
+            // kök nedeni (geçersiz/expired anahtar, kota, model) görünür kılar.
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync(ct);
+                _logger.LogWarning(
+                    "Destek botu: Gemini {Status} döndü — fallback kullanılacak. Yanıt: {Body}",
+                    (int)response.StatusCode,
+                    errorBody.Length > 500 ? errorBody[..500] : errorBody);
+                return null;
+            }
 
             var text = await ExtractGeminiTextAsync(response);
 

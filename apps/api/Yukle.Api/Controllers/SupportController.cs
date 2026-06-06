@@ -36,10 +36,6 @@ public class SupportController : ControllerBase
         _logger        = logger;
     }
 
-    private const string AiFallbackReply =
-        "Şu anda yapay zeka asistanımıza ulaşamıyorum. Sorun devam ederse \"İnsan operatöre aktar\" " +
-        "diyerek destek ekibimize bağlanabilirsiniz; en kısa sürede dönüş yapacağız.";
-
     private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
     private bool IsAdmin => User.IsInRole("Admin");
 
@@ -405,13 +401,15 @@ public class SupportController : ControllerBase
     {
         try
         {
+            // Gerçek Gemini cevabı varsa onu kullan; yoksa (anahtar geçersiz/expired,
+            // timeout, hata) curated Türkçe SSS yanıtlayıcısına düş.
             var reply = await _gemini.GetSupportAssistantReplyAsync(message, history);
-            return string.IsNullOrWhiteSpace(reply) ? AiFallbackReply : reply!;
+            return string.IsNullOrWhiteSpace(reply) ? SupportFaqResponder.Answer(message) : reply!;
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Destek AI cevabı alınamadı — fallback kullanıldı.");
-            return AiFallbackReply;
+            _logger.LogWarning(ex, "Destek AI cevabı alınamadı — curated SSS yanıtına düşüldü.");
+            return SupportFaqResponder.Answer(message);
         }
     }
 
