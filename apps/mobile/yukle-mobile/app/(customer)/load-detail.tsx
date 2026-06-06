@@ -37,6 +37,7 @@ import {
   getLoadStatusPill,
 } from '../../src/utils/statusPills';
 import { SettlementBreakdown } from '../../src/components/settlement/SettlementBreakdown';
+import { EscrowCard } from '../../src/components/payment/EscrowCard';
 import { previewSettlement } from '../../src/services/settlement.service';
 import type { SettlementPreview } from '../../src/types/settlement';
 
@@ -337,6 +338,10 @@ export default function CustomerLoadDetailScreen() {
         {load.description ? <Text style={styles.desc}>{load.description}</Text> : null}
         <LoadStatusTimeline status={load.status} />
       </Card>
+      </FadeInView>
+
+      <FadeInView delay={60}>
+        <EscrowCard loadId={loadId} loadStatus={load.status} view="customer" />
       </FadeInView>
 
       {driverTracking.shouldShow ? (

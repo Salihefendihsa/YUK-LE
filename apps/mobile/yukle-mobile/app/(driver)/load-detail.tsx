@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { DetailRow } from '../../src/components/driver/DetailRow';
+import { EscrowCard } from '../../src/components/payment/EscrowCard';
 import { AlertBanner } from '../../src/components/ui/AlertBanner';
 import { Card } from '../../src/components/ui/Card';
 import { FadeInView } from '../../src/components/ui/FadeInView';
@@ -227,6 +228,10 @@ export default function DriverLoadDetailScreen() {
           <DetailRow label="Müşteri" value={load.ownerFullName || '-'} />
           <DetailRow label="Teklif sayısı" value={String(load.bidCount)} />
         </Card>
+        </FadeInView>
+
+        <FadeInView delay={70}>
+          <EscrowCard loadId={loadId} loadStatus={load.status} view="driver" />
         </FadeInView>
 
         {load.aiSuggestedPrice != null && load.aiSuggestedPrice > 0 ? (
