@@ -142,7 +142,7 @@ export default function AdminReviewsTab() {
               ))}
             </View>
 
-            <Card variant="glass" padding={4} style={styles.kpiCard}>
+            <Card variant="elevated" padding={4} style={styles.kpiCard}>
               <Text style={styles.kpiLabel}>Bekleyen</Text>
               <Text style={styles.kpiValue}>{reviews.length}</Text>
             </Card>

@@ -128,7 +128,7 @@ export default function AdminSettingsScreen() {
       {profileStatus ? <AlertBanner message={profileStatus} tone="success" /> : null}
 
       <FadeInView>
-        <Card variant="glass" padding={4}>
+        <Card variant="elevated" padding={4}>
           <Text style={styles.sectionTitle}>Hesap bilgileri</Text>
           <TextField label="Ad Soyad" icon="person-outline" value={fullName} onChangeText={setFullName} />
           <TextField

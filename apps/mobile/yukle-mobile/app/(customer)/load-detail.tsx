@@ -27,6 +27,7 @@ import { palette } from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 import { space, spacing } from '../../src/theme/spacing';
 import { radius } from '../../src/theme/radius';
+import { useRoleAccent } from '../../src/theme/useRoleAccent';
 import { formatCurrencyTRY, formatLoadTypeLabel, formatWeightKg } from '../../src/utils/format';
 import { canCustomerOpenChat } from '../../src/utils/loadChat';
 import { LoadStatusTimeline } from '../../src/components/load/LoadStatusTimeline';
@@ -126,6 +127,7 @@ function BidCard({
 
 export default function CustomerLoadDetailScreen() {
   const router = useRouter();
+  const accent = useRoleAccent();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const loadId = typeof id === 'string' ? id : Array.isArray(id) ? id[0] : '';
 
@@ -309,15 +311,16 @@ export default function CustomerLoadDetailScreen() {
       <GhostButton title="← Geri" onPress={() => router.back()} style={styles.backBtn} />
 
       <FadeInView>
-      <View style={styles.titleRow}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.pageTitle}>İlan Detayı</Text>
-          <Text style={styles.route}>
-            {load.fromCity} → {load.toCity}
-          </Text>
-        </View>
-        <StatusPill label={statusPill.label} tone={statusPill.tone} />
-      </View>
+        <Card variant="hero" padding={5} accent={accent}>
+          <View style={styles.heroTopRow}>
+            <Text style={styles.heroRoute} numberOfLines={2}>
+              {load.fromCity} → {load.toCity}
+            </Text>
+            <StatusPill label={statusPill.label} tone={statusPill.tone} />
+          </View>
+          <Text style={styles.heroPriceLabel}>İlan fiyatı</Text>
+          <Text style={[styles.heroPrice, { color: accent.hero.value }]}>{formatCurrencyTRY(load.price)}</Text>
+        </Card>
       </FadeInView>
 
       {actionError ? <AlertBanner message={actionError} tone="error" /> : null}
@@ -345,7 +348,7 @@ export default function CustomerLoadDetailScreen() {
       </FadeInView>
 
       {driverTracking.shouldShow ? (
-        <Card variant="glass" padding={4}>
+        <Card variant="elevated" padding={4}>
           <Text style={styles.cardTitle}>Şoför konumu</Text>
           <LiveMapPanel
             markers={trackingMarkers}
@@ -391,7 +394,7 @@ export default function CustomerLoadDetailScreen() {
       ) : null}
 
       {showQr ? (
-        <Card variant="glass" padding={4}>
+        <Card variant="elevated" padding={4}>
           <Text style={styles.cardTitle}>Teslimat QR</Text>
           <DeliveryQrSection loadId={loadId} />
         </Card>
@@ -428,7 +431,7 @@ export default function CustomerLoadDetailScreen() {
         )
       ) : null}
 
-      <Card variant="glass" padding={4}>
+      <Card variant="elevated" padding={4}>
         <Text style={styles.cardTitle}>Gelen teklifler ({bids.length})</Text>
         {bids.length === 0 ? (
           <EmptyState
@@ -471,6 +474,17 @@ const styles = StyleSheet.create({
   },
   pageTitle: { ...typography.h1 },
   route: { ...typography.h2, fontSize: 18, color: palette.gold, marginTop: space.xs },
+  heroTopRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing[3] },
+  heroRoute: { ...typography.h2, fontSize: 19, color: '#F6F8FB', flex: 1 },
+  heroPriceLabel: {
+    fontFamily: typography.label.fontFamily,
+    fontSize: 11,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: palette.textSecondary,
+    marginTop: space.md,
+  },
+  heroPrice: { fontFamily: typography.h1.fontFamily, fontSize: 28, marginTop: 2 },
   cardTitle: { ...typography.h3, marginBottom: spacing[3] },
   paymentTitle: {
     ...typography.bodySmall,

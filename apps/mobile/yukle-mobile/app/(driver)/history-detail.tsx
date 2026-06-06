@@ -107,7 +107,7 @@ export default function DriverHistoryDetailScreen() {
       </FadeInView>
 
       <FadeInView delay={50}>
-      <Card variant="glass" padding={4}>
+      <Card variant="elevated" padding={4}>
         <DetailRow label="Net kazanç" value={kazanc != null ? formatCurrencyTRY(kazanc) : '—'} />
         <DetailRow label="Liste fiyatı" value={formatCurrencyTRY(load.price)} />
         <DetailRow

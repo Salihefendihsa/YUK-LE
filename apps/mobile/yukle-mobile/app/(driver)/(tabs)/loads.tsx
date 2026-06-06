@@ -200,7 +200,7 @@ export default function DriverLoadsScreen() {
                   })
                 }
               >
-                <Card variant="glass" padding={4} style={styles.loadCard}>
+                <Card variant="elevated" padding={4} style={styles.loadCard}>
                   <View style={styles.cardTop}>
                     <View style={styles.routeCol}>
                       <Text style={styles.route}>

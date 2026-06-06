@@ -1,10 +1,9 @@
-import { ActivityIndicator, StyleSheet, Text, type ViewStyle } from 'react-native';
-import { palette } from '../../theme/colors';
+import { ActivityIndicator, Platform, StyleSheet, Text, type ViewStyle } from 'react-native';
 import { typography } from '../../theme/typography';
 import { sizes } from '../../theme/sizes';
 import { space } from '../../theme/spacing';
-import { shadows } from '../../theme/shadows';
 import { radius } from '../../theme/radius';
+import { useRoleAccent } from '../../theme/useRoleAccent';
 import { PressableScale } from './PressableScale';
 
 type Props = {
@@ -16,18 +15,24 @@ type Props = {
 };
 
 export function PrimaryButton({ title, onPress, loading, disabled, style }: Props) {
+  const accent = useRoleAccent();
   const off = disabled || loading;
+  const btnShadow = Platform.select({
+    ios: { shadowColor: accent.accent, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 16 },
+    android: { elevation: 8 },
+    default: {},
+  });
   return (
     <PressableScale
       onPress={onPress}
       disabled={off}
-      style={[styles.btn, shadows.brand, off && styles.disabled, style]}
+      style={[styles.btn, { backgroundColor: accent.accent }, btnShadow, off && styles.disabled, style]}
     >
       {loading ? (
-        <ActivityIndicator color={palette.onBrand} size="small" />
+        <ActivityIndicator color={accent.onAccent} size="small" />
       ) : (
         <Text
-          style={styles.text}
+          style={[styles.text, { color: accent.onAccent }]}
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={sizes.button.labelMinScale}
@@ -43,7 +48,6 @@ const styles = StyleSheet.create({
   btn: {
     minHeight: sizes.button.primary,
     borderRadius: radius.md,
-    backgroundColor: palette.brand,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: sizes.button.paddingHorizontal,
@@ -55,7 +59,6 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.5 },
   text: {
     ...typography.bodyMedium,
-    color: palette.onBrand,
     textAlign: 'center',
     maxWidth: '100%',
   },

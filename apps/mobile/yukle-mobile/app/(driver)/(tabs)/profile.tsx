@@ -162,7 +162,7 @@ export default function DriverProfileScreen() {
       {status ? <AlertBanner message={status} tone="success" /> : null}
 
       <FadeInView>
-      <Card variant="glass" padding={4}>
+      <Card variant="elevated" padding={4}>
         <Text style={styles.sectionTitle}>Hesap bilgileri</Text>
         <View style={styles.approvalRow}>
           <Text style={styles.fieldHint}>Onay durumu</Text>

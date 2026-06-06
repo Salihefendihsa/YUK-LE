@@ -195,16 +195,17 @@ export default function CustomerLoadsScreen() {
                   router.push({ pathname: '/(customer)/load-detail', params: { id: item.id } })
                 }
               >
-                <Card variant="glass" padding={4} style={styles.card}>
+                <Card variant="elevated" padding={4} style={styles.card}>
                   <View style={styles.cardTop}>
                     <Text style={styles.route}>
                       {item.fromCity} → {item.toCity}
                     </Text>
                     <StatusPill label={pill.label} tone={pill.tone} />
                   </View>
-                  <Text style={styles.meta}>
-                    {item.loadType ?? item.type ?? '-'} · {formatCurrencyTRY(item.price)}
-                  </Text>
+                  <View style={styles.priceRow}>
+                    <Text style={styles.price}>{formatCurrencyTRY(item.price)}</Text>
+                    <Text style={styles.meta}>{item.loadType ?? item.type ?? '-'}</Text>
+                  </View>
                   <View style={styles.bidRow}>
                     <Text style={styles.bidLabel}>Gelen teklif</Text>
                     <View style={[styles.bidBadge, bidCount > 0 && styles.bidBadgeHot]}>
@@ -247,6 +248,8 @@ const styles = StyleSheet.create({
     marginBottom: space.sm,
   },
   route: { ...typography.bodyMedium, fontSize: 16, flex: 1 },
+  priceRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space.sm },
+  price: { fontFamily: typography.h2.fontFamily, fontSize: 18, color: palette.text },
   meta: { ...typography.caption, textTransform: 'none' },
   bidRow: {
     flexDirection: 'row',

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
@@ -21,6 +22,7 @@ import { palette } from '../../../src/theme/colors';
 import { radius } from '../../../src/theme/radius';
 import { space, spacing } from '../../../src/theme/spacing';
 import { typography } from '../../../src/theme/typography';
+import { useRoleAccent } from '../../../src/theme/useRoleAccent';
 import { formatCurrencyTRY } from '../../../src/utils/format';
 
 const MONTHS_TR = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
@@ -70,6 +72,7 @@ function computeTopRoutes(rows: CustomerHistoryRow[]): TopRoute[] {
  */
 export default function CustomerAnalyticsScreen() {
   const userId = useAuthStore((s) => s.user?.userId);
+  const accent = useRoleAccent();
 
   const [rows, setRows] = useState<CustomerHistoryRow[]>([]);
   const [totalSpend, setTotalSpend] = useState(0);
@@ -125,18 +128,25 @@ export default function CustomerAnalyticsScreen() {
       {error ? <AlertBanner message={error} tone="error" /> : null}
 
       <FadeInView>
-        <Card variant="glass" padding={4}>
-          <View style={styles.spendHead}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.cardTitle}>Toplam harcama</Text>
-              <Text style={styles.cardSub}>Son 6 ay aylık trend</Text>
-            </View>
-            <Text style={styles.totalSpend}>{formatCurrencyTRY(totalSpend)}</Text>
-          </View>
+        <Card variant="hero" padding={5} accent={accent}>
+          <Text style={styles.heroLabel}>Toplam harcama</Text>
+          <Text style={[styles.heroValue, { color: accent.hero.value }]}>{formatCurrencyTRY(totalSpend)}</Text>
+          <Text style={styles.cardSub}>{rows.length} tamamlanan sefer · son 6 ay</Text>
+        </Card>
+      </FadeInView>
+
+      <FadeInView delay={50}>
+        <Card variant="elevated" padding={4}>
+          <Text style={styles.cardTitle}>Aylık harcama trendi</Text>
           <View style={styles.barChart}>
             {monthlySpend.map((m, i) => (
               <View key={`${m.label}-${i}`} style={styles.barWrap}>
-                <View style={[styles.bar, { height: Math.max(6, (m.value / maxSpend) * 130) }]} />
+                <LinearGradient
+                  colors={accent.bar}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0, y: 1 }}
+                  style={[styles.bar, { height: Math.max(6, (m.value / maxSpend) * 130) }]}
+                />
                 <Text style={styles.barLabel}>{m.label}</Text>
               </View>
             ))}
@@ -192,7 +202,7 @@ export default function CustomerAnalyticsScreen() {
       </FadeInView>
 
       <FadeInView delay={240}>
-        <Card variant="glass" padding={4} style={styles.savingsCard}>
+        <Card variant="elevated" padding={4} style={styles.savingsCard}>
           <View style={styles.demoTitleRow}>
             <Text style={styles.cardTitle}>Bu ay tasarruf</Text>
             <StatusPill label="DEMO" tone="neutral" />
@@ -209,6 +219,14 @@ const styles = StyleSheet.create({
   scroll: { padding: space.md, paddingBottom: spacing[10], gap: space.md },
   spendHead: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
   totalSpend: { ...typography.h2, color: palette.brand },
+  heroLabel: {
+    fontFamily: typography.label.fontFamily,
+    fontSize: 11,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: palette.textSecondary,
+  },
+  heroValue: { fontFamily: typography.h1.fontFamily, fontSize: 30, marginTop: space.xs, marginBottom: space.xs },
   cardTitle: { ...typography.h3 },
   cardSub: { ...typography.caption, textTransform: 'none', marginTop: space.xs },
   barChart: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm, height: 150, marginTop: space.md },

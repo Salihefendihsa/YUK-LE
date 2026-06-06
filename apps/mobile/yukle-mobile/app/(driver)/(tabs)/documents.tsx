@@ -243,7 +243,7 @@ export default function DriverDocumentsScreen() {
         subtitle={`Ehliyet, SRC ve psikoteknik belgelerinizi yükleyin. ${Platform.OS === 'web' ? 'Dosya seçici' : 'Galeriden seçim veya kamera'} kullanılır.`}
       />
 
-      <Card variant="glass" padding={4}>
+      <Card variant="elevated" padding={4}>
         <Text style={styles.accountLabel}>Hesap onay durumu</Text>
         <View style={styles.accountRow}>
           <Text style={styles.accountHint}>Onay durumu</Text>

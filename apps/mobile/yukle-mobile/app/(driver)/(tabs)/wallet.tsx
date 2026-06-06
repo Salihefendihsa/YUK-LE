@@ -76,7 +76,7 @@ export default function DriverWalletScreen() {
               {error ? <AlertBanner message={error} tone="error" /> : null}
             </View>
 
-            <Card variant="glass" padding={5} style={styles.hero}>
+            <Card variant="elevated" padding={5} style={styles.hero}>
               <Text style={styles.heroLabel}>Çekilebilir bakiye</Text>
               <Text style={styles.heroAmount}>
                 {formatCurrencyTRY(summary?.walletBalance ?? 0)}

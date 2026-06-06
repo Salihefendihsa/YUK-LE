@@ -196,7 +196,7 @@ export default function CustomerAddressesScreen() {
 
         {error ? <AlertBanner message={error} tone="error" /> : null}
 
-        <Card variant="glass" padding={4}>
+        <Card variant="elevated" padding={4}>
           <Text style={styles.formTitle}>{editingId ? 'Adresi düzenle' : 'Yeni adres'}</Text>
           <TextField label="Başlık" value={form.title} onChangeText={(v) => setForm((s) => ({ ...s, title: v }))} />
           <TextField label="Şirket adı" value={form.companyName} onChangeText={(v) => setForm((s) => ({ ...s, companyName: v }))} />

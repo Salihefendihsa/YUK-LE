@@ -725,7 +725,7 @@ export default function CustomerCreateLoadScreen() {
       <Modal visible={success} transparent animationType="fade">
         <View style={styles.overlay}>
           <FadeInView>
-          <Card variant="glass" padding={5} style={styles.successCard}>
+          <Card variant="elevated" padding={5} style={styles.successCard}>
             <Text style={styles.successTitle}>
               {isEdit ? 'İlanınız güncellendi' : 'İlanınız oluşturuldu'}
             </Text>

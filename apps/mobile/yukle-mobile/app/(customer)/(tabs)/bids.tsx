@@ -151,7 +151,7 @@ export default function CustomerBidsHubScreen() {
         ) : (
           groups.map((group, i) => (
             <FadeInView key={group.load.id} delay={i * 40}>
-              <Card variant="glass" padding={4} style={styles.groupCard}>
+              <Card variant="elevated" padding={4} style={styles.groupCard}>
                 <View style={styles.groupHead}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.groupRoute} numberOfLines={1}>

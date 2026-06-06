@@ -216,7 +216,7 @@ export default function DriverActiveLoadScreen() {
       <ScreenHeader title="Aktif Sefer" subtitle={`${trip.fromCity} → ${trip.toCity}`} />
 
       <FadeInView>
-      <Card variant="glass" padding={4}>
+      <Card variant="elevated" padding={4}>
         <View style={styles.routeHeader}>
           <View style={{ flex: 1 }}>
             <Text style={styles.route}>
@@ -320,7 +320,7 @@ export default function DriverActiveLoadScreen() {
         </View>
       ) : (
         <>
-          <Card variant="glass" padding={5}>
+          <Card variant="elevated" padding={5}>
             <Text style={styles.doneTitle}>Sefer tamamlandı</Text>
             <Text style={styles.qrSub}>Yeni işler için Yük Panosu’na gidebilirsiniz.</Text>
           </Card>

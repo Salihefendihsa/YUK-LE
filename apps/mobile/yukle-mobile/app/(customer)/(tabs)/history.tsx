@@ -126,7 +126,7 @@ export default function CustomerHistoryScreen() {
           <>
             <ScreenHeader title="Geçmiş" subtitle="Tamamlanan teslimatlar ve ödeme özeti" />
             {error ? <AlertBanner message={error} tone="error" /> : null}
-            <Card variant="glass" padding={4} style={styles.summaryCard}>
+            <Card variant="elevated" padding={4} style={styles.summaryCard}>
               <Text style={styles.summaryLabel}>Toplam harcama (ödeme kayıtları)</Text>
               <Text style={styles.summaryValue}>{formatCurrencyTRY(totalSpend)}</Text>
               <Text style={styles.summaryHint}>Kabul edilen teklif / ödenen tutar</Text>

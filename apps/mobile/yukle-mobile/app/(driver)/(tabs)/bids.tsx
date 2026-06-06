@@ -89,7 +89,7 @@ export default function DriverBidsScreen() {
                   router.push({ pathname: '/(driver)/load-detail', params: { id: item.loadId } })
                 }
               >
-                <Card variant="glass" padding={4} style={styles.card}>
+                <Card variant="elevated" padding={4} style={styles.card}>
                   <View style={styles.cardTop}>
                     <Text style={styles.route}>
                       {item.fromCity} → {item.toCity}

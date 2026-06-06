@@ -88,7 +88,7 @@ export default function DriverDashboardScreen() {
       {error ? <AlertBanner message={error} tone="error" /> : null}
 
       <FadeInView>
-      <Card variant="glass" padding={5} style={styles.hero}>
+      <Card variant="elevated" padding={5} style={styles.hero}>
         <View style={styles.heroTop}>
           <View style={styles.heroIcon}>
             <Ionicons name="person-circle-outline" size={28} color={palette.brand} />

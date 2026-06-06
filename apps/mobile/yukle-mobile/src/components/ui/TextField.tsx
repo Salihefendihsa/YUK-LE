@@ -7,6 +7,7 @@ import { typography } from '../../theme/typography';
 import { radius } from '../../theme/radius';
 import { space } from '../../theme/spacing';
 import { sizes } from '../../theme/sizes';
+import { useRoleAccent } from '../../theme/useRoleAccent';
 
 type Props = TextInputProps & {
   label?: string;
@@ -17,6 +18,7 @@ type Props = TextInputProps & {
 
 export function TextField({ label, error, icon, right, style, onFocus, onBlur, ...inputProps }: Props) {
   const [focused, setFocused] = useState(false);
+  const accent = useRoleAccent();
   const hasError = Boolean(error);
 
   return (
@@ -25,7 +27,7 @@ export function TextField({ label, error, icon, right, style, onFocus, onBlur, .
       <View
         style={[
           styles.field,
-          focused && !hasError && styles.fieldFocused,
+          focused && !hasError && { borderColor: accent.accentBorder, backgroundColor: accent.accentMuted },
           hasError && styles.fieldError,
         ]}
       >

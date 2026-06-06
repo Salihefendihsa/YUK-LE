@@ -210,7 +210,7 @@ export default function DriverLoadDetailScreen() {
         </FadeInView>
 
         <FadeInView delay={40}>
-        <Card variant="glass" padding={4}>
+        <Card variant="elevated" padding={4}>
           <Text style={styles.sectionLabel}>Güzergah</Text>
           <Text style={styles.routeBody}>
             {load.fromCity} ({load.fromDistrict}) → {load.toCity} ({load.toDistrict})
