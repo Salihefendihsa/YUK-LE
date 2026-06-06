@@ -27,6 +27,7 @@ import { cancelAdminLoad, getAdminLoads } from '../../../src/services/admin.serv
 import { previewSettlement } from '../../../src/services/settlement.service';
 import type { AdminLoadRow } from '../../../src/types/admin';
 import { palette } from '../../../src/theme/colors';
+import { roleAccents } from '../../../src/theme/roleAccent';
 import { typography } from '../../../src/theme/typography';
 import { radius } from '../../../src/theme/radius';
 import { space, spacing } from '../../../src/theme/spacing';
@@ -142,7 +143,7 @@ export default function AdminLoadsScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={[styles.list, contentInset]}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={roleAccents.admin.accent} />
         }
         ListHeaderComponent={
           <>
@@ -230,7 +231,7 @@ const styles = StyleSheet.create({
   },
   route: { ...typography.h3, flex: 1 },
   muted: { ...typography.caption, textTransform: 'none' },
-  detailLink: { ...typography.bodyMedium, fontSize: 13, color: palette.brand, marginTop: space.xs },
+  detailLink: { ...typography.bodyMedium, fontSize: 13, color: roleAccents.admin.accent, marginTop: space.xs },
   cancelBtn: {
     backgroundColor: palette.error,
     borderRadius: radius.md,

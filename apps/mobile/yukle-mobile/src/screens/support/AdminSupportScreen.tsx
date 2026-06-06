@@ -99,7 +99,7 @@ export function AdminSupportScreen() {
         tickets.map((t) => (
           <PressableScale key={t.id} onPress={() => setSelectedId(t.id)}>
             <Card
-              variant="glass"
+              variant="elevated"
               padding={4}
               style={[styles.item, t.status === 'Open' && t.isOverdue ? styles.itemOverdue : null]}
             >

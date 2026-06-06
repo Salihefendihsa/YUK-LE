@@ -24,6 +24,7 @@ import type { AdminPaymentRow } from '../../../src/types/admin';
 import { palette } from '../../../src/theme/colors';
 import { typography } from '../../../src/theme/typography';
 import { space, spacing } from '../../../src/theme/spacing';
+import { useRoleAccent } from '../../../src/theme/useRoleAccent';
 import { formatCurrencyTRY, formatDateTR, formatPaymentTransactionId } from '../../../src/utils/format';
 import { getPaymentStatusPill } from '../../../src/utils/statusPills';
 
@@ -33,6 +34,7 @@ function canRelease(status: string): boolean {
 
 export default function AdminPaymentsTab() {
   const { contentInset } = useScreenInsets();
+  const accent = useRoleAccent();
   const [payments, setPayments] = useState<AdminPaymentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -111,7 +113,7 @@ export default function AdminPaymentsTab() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={[styles.list, contentInset]}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accent.accent} />
         }
         ListHeaderComponent={
           <>
@@ -119,6 +121,18 @@ export default function AdminPaymentsTab() {
               title="Ödemeler"
               subtitle="Ödeme kayıtları ve serbest bırakma işlemleri"
             />
+
+            <FadeInView>
+              <Card variant="hero" padding={5} accent={accent} style={styles.hero}>
+                <Text style={styles.heroLabel}>Toplam işlem hacmi</Text>
+                <Text style={[styles.heroValue, { color: accent.hero.value }]}>
+                  {formatCurrencyTRY(summary.totalAmount)}
+                </Text>
+                <Text style={styles.heroMeta}>
+                  {summary.count} kayıt · {summary.blockedCount} havuzda · {summary.releasedCount} serbest
+                </Text>
+              </Card>
+            </FadeInView>
 
             <View style={styles.kpiRow}>
               <Card variant="elevated" padding={3} style={styles.kpi}>
@@ -176,7 +190,7 @@ export default function AdminPaymentsTab() {
                 {canRelease(item.status) ? (
                   busyId === item.id ? (
                     <View style={styles.releaseLoading}>
-                      <ActivityIndicator color={palette.brand} size="small" />
+                      <ActivityIndicator color={accent.accent} size="small" />
                     </View>
                   ) : (
                     <PrimaryButton
@@ -197,11 +211,21 @@ export default function AdminPaymentsTab() {
 
 const styles = StyleSheet.create({
   list: { padding: space.md, paddingBottom: spacing[10], gap: space.sm },
+  hero: { marginBottom: space.md },
+  heroLabel: {
+    fontFamily: typography.label.fontFamily,
+    fontSize: 11,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: palette.textSecondary,
+  },
+  heroValue: { fontFamily: typography.h1.fontFamily, fontSize: 30, marginTop: space.xs, marginBottom: space.xs },
+  heroMeta: { ...typography.caption, textTransform: 'none', color: palette.textSecondary },
   kpiRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginBottom: space.md },
   kpi: { flex: 1, minWidth: '45%', gap: space.xs },
   kpiLabel: { ...typography.caption, textTransform: 'none' },
-  kpiValue: { ...typography.h2, color: palette.gold },
-  kpiValueSmall: { ...typography.bodyMedium, color: palette.gold },
+  kpiValue: { ...typography.h2, color: palette.text },
+  kpiValueSmall: { ...typography.bodyMedium, color: palette.text },
   filterBtn: { marginBottom: space.md },
   payCard: { marginBottom: space.sm, gap: space.xs },
   payHead: {

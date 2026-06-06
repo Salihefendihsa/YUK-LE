@@ -12,6 +12,7 @@ import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getAdminBlockedMessages } from '../../../src/services/admin.service';
 import type { AdminBlockedMessageRow } from '../../../src/types/admin';
 import { palette } from '../../../src/theme/colors';
+import { roleAccents } from '../../../src/theme/roleAccent';
 import { typography } from '../../../src/theme/typography';
 import { space, spacing } from '../../../src/theme/spacing';
 import { formatDateTimeTR } from '../../../src/utils/format';
@@ -59,7 +60,7 @@ export default function AdminBlockedMessagesScreen() {
               await fetchData();
               setRefreshing(false);
             }}
-            tintColor={palette.brand}
+            tintColor={roleAccents.admin.accent}
           />
         }
         ListHeaderComponent={

@@ -25,6 +25,7 @@ import { radius } from '../../theme/radius';
 import { sizes } from '../../theme/sizes';
 import { space, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
+import { useRoleAccent } from '../../theme/useRoleAccent';
 import { formatDateTR, formatTimeTR } from '../../utils/format';
 import { AlertBanner } from '../ui/AlertBanner';
 import { GhostButton } from '../ui/GhostButton';
@@ -49,6 +50,7 @@ type Props = {
  * 5sn polling (admin yanıtı / yeni mesaj), composer, operatöre aktar / çözüldü işaretle.
  */
 export function SupportThread({ ticketId, mode, onUpdated, onBack }: Props) {
+  const accent = useRoleAccent();
   const [detail, setDetail] = useState<SupportTicketDetail | null>(null);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
@@ -134,7 +136,7 @@ export function SupportThread({ ticketId, mode, onUpdated, onBack }: Props) {
     return (
       <View style={styles.loading}>
         {onBack ? <GhostButton title="← Geri" onPress={onBack} /> : null}
-        <ActivityIndicator color={palette.brand} />
+        <ActivityIndicator color={accent.accent} />
         <Text style={styles.loadingText}>Yükleniyor…</Text>
       </View>
     );
@@ -175,7 +177,7 @@ export function SupportThread({ ticketId, mode, onUpdated, onBack }: Props) {
               <View
                 style={[
                   styles.bubble,
-                  mine ? styles.bubbleMine : isAi ? styles.bubbleAi : isAdmin ? styles.bubbleAdmin : styles.bubbleOther,
+                  mine ? [styles.bubbleMine, { backgroundColor: accent.accent, borderColor: accent.accent }] : isAi ? styles.bubbleAi : isAdmin ? styles.bubbleAdmin : styles.bubbleOther,
                 ]}
               >
                 {!mine ? (
@@ -221,11 +223,11 @@ export function SupportThread({ ticketId, mode, onUpdated, onBack }: Props) {
             multiline
           />
           <PressableScale
-            style={[styles.sendBtn, (sending || !draft.trim()) && styles.sendBtnDisabled]}
+            style={[styles.sendBtn, { backgroundColor: accent.accent }, (sending || !draft.trim()) && styles.sendBtnDisabled]}
             onPress={() => void send()}
             disabled={sending || !draft.trim()}
           >
-            <Text style={styles.sendBtnText}>{sending ? '…' : 'Gönder'}</Text>
+            <Text style={[styles.sendBtnText, { color: accent.onAccent }]}>{sending ? '…' : 'Gönder'}</Text>
           </PressableScale>
         </View>
       ) : (

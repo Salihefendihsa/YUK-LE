@@ -17,6 +17,7 @@ import { palette } from '../../../src/theme/colors';
 import { typography } from '../../../src/theme/typography';
 import { radius } from '../../../src/theme/radius';
 import { space, spacing } from '../../../src/theme/spacing';
+import { useRoleAccent } from '../../../src/theme/useRoleAccent';
 import {
   formatExternalEnvironmentLabel,
   formatExternalFrameworkLabel,
@@ -42,6 +43,7 @@ const MENU: { title: string; sub: string; href: string; icon: keyof typeof Ionic
 
 export default function AdminSystemTab() {
   const router = useRouter();
+  const accent = useRoleAccent();
   const [system, setSystem] = useState<AdminSystemInfo | null>(null);
   const [external, setExternal] = useState<SystemExternalStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -85,7 +87,7 @@ export default function AdminSystemTab() {
     <ScreenScroll
       contentContainerStyle={styles.scroll}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accent.accent} />
       }
     >
       <ScreenHeader title="Sistem" subtitle="Sistem durumu ve yönetim modülleri" />
@@ -134,8 +136,8 @@ export default function AdminSystemTab() {
       {MENU.map((item) => (
         <PressableScale key={item.href} style={s.linkBtn} onPress={() => router.push(item.href as never)}>
           <View style={styles.linkRow}>
-            <View style={styles.linkIcon}>
-              <Ionicons name={item.icon} size={20} color={palette.brand} />
+            <View style={[styles.linkIcon, { backgroundColor: accent.accentMuted, borderColor: accent.accentBorder }]}>
+              <Ionicons name={item.icon} size={20} color={accent.accent} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={s.linkTitle}>{item.title}</Text>

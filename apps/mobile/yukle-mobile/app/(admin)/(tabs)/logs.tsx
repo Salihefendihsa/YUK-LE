@@ -11,6 +11,7 @@ import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getAdminLogs } from '../../../src/services/admin.service';
 import type { AdminLogRow } from '../../../src/types/admin';
 import { palette } from '../../../src/theme/colors';
+import { roleAccents } from '../../../src/theme/roleAccent';
 import { typography } from '../../../src/theme/typography';
 import { space, spacing } from '../../../src/theme/spacing';
 import { formatAdminLogAction, formatDateTimeTR } from '../../../src/utils/format';
@@ -58,7 +59,7 @@ export default function AdminLogsScreen() {
               await fetchData();
               setRefreshing(false);
             }}
-            tintColor={palette.brand}
+            tintColor={roleAccents.admin.accent}
           />
         }
         ListHeaderComponent={

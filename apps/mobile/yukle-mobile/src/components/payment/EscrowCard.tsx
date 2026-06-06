@@ -73,7 +73,7 @@ export function EscrowCard({ loadId, loadStatus, view = 'customer' }: Props) {
   if (!payment) {
     if (loadStatus === 'Active') {
       return (
-        <Card variant="glass" padding={4} style={styles.card}>
+        <Card variant="elevated" padding={4} style={styles.card}>
           <Text style={styles.title}>💳 Güvenli Ödeme (Emanet)</Text>
           <Text style={styles.hint}>
             Bir teklifi kabul ettiğinizde ödeme emanete alınır ve teslimat onaylanana kadar güvende tutulur.
@@ -97,7 +97,7 @@ export function EscrowCard({ loadId, loadStatus, view = 'customer' }: Props) {
       : { label: 'İade edildi', tone: 'neutral' as const };
 
   return (
-    <Card variant="glass" padding={4} style={styles.card}>
+    <Card variant="elevated" padding={4} style={styles.card}>
       <View style={styles.head}>
         <Text style={styles.title}>💳 Güvenli Ödeme (Emanet)</Text>
         <StatusPill label={badge.label} tone={badge.tone} />

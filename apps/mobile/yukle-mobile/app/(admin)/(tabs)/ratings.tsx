@@ -22,6 +22,7 @@ import { getApiErrorMessage } from '../../../src/services/api.client';
 import { deleteRating, getAllRatings } from '../../../src/services/admin.service';
 import type { AdminRatingRow } from '../../../src/types/admin';
 import { palette } from '../../../src/theme/colors';
+import { roleAccents } from '../../../src/theme/roleAccent';
 import { typography } from '../../../src/theme/typography';
 import { radius } from '../../../src/theme/radius';
 import { space, spacing } from '../../../src/theme/spacing';
@@ -119,7 +120,7 @@ export default function AdminRatingsScreen() {
               await fetchData();
               setRefreshing(false);
             }}
-            tintColor={palette.brand}
+            tintColor={roleAccents.admin.accent}
           />
         }
         ListHeaderComponent={

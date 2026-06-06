@@ -22,6 +22,7 @@ import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getAdminChatMessages, getAdminChats } from '../../../src/services/admin.service';
 import type { AdminChatMessageRow, AdminChatSummaryRow } from '../../../src/types/admin';
 import { palette } from '../../../src/theme/colors';
+import { roleAccents } from '../../../src/theme/roleAccent';
 import { typography } from '../../../src/theme/typography';
 import { space, spacing } from '../../../src/theme/spacing';
 import { formatDateTimeTR } from '../../../src/utils/format';
@@ -85,7 +86,7 @@ export default function AdminChatsScreen() {
               await fetchChats();
               setRefreshing(false);
             }}
-            tintColor={palette.brand}
+            tintColor={roleAccents.admin.accent}
           />
         }
         ListHeaderComponent={
@@ -131,7 +132,7 @@ export default function AdminChatsScreen() {
             </Text>
           ) : null}
           {msgLoading ? (
-            <ActivityIndicator color={palette.brand} style={{ marginTop: spacing[6] }} />
+            <ActivityIndicator color={roleAccents.admin.accent} style={{ marginTop: spacing[6] }} />
           ) : (
             <ScrollView contentContainerStyle={[styles.msgScroll, contentInset]}>
               {messages.map((m) => (

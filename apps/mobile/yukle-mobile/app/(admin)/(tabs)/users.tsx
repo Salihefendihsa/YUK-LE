@@ -34,8 +34,11 @@ import { palette } from '../../../src/theme/colors';
 import { typography } from '../../../src/theme/typography';
 import { radius } from '../../../src/theme/radius';
 import { space, spacing } from '../../../src/theme/spacing';
+import { roleAccents } from '../../../src/theme/roleAccent';
 import { formatCurrencyTRY } from '../../../src/utils/format';
 import { getApprovalStatusPill } from '../../../src/utils/statusPills';
+
+const ADMIN = roleAccents.admin;
 
 type UserTab = 'Driver' | 'Customer';
 
@@ -134,7 +137,7 @@ export default function AdminUsersTab() {
         keyExtractor={(item) => `${item.role}-${item.id}`}
         contentContainerStyle={[styles.list, contentInset]}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={ADMIN.accent} />
         }
         ListHeaderComponent={
           <>
@@ -224,7 +227,7 @@ export default function AdminUsersTab() {
 
               {togglingId === item.id ? (
                 <View style={styles.toggleLoading}>
-                  <ActivityIndicator color={palette.brand} size="small" />
+                  <ActivityIndicator color={ADMIN.accent} size="small" />
                 </View>
               ) : (
                 <PrimaryButton
@@ -264,18 +267,18 @@ const styles = StyleSheet.create({
     backgroundColor: palette.surface,
   },
   tabBtnActive: {
-    borderColor: palette.brandBorder,
-    backgroundColor: palette.brandMuted,
+    borderColor: ADMIN.accentBorder,
+    backgroundColor: ADMIN.accentMuted,
   },
   tabText: { ...typography.bodyMedium, fontSize: 13, color: palette.textMuted },
-  tabTextActive: { color: palette.brand },
+  tabTextActive: { color: ADMIN.accent },
   searchBtn: { marginBottom: space.md },
   userCard: { marginBottom: space.sm, gap: space.sm },
   cardHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
   cardName: { ...typography.h3, flex: 1 },
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.xs },
   muted: { ...typography.caption, textTransform: 'none' },
-  detailLink: { ...typography.bodyMedium, fontSize: 13, color: palette.brand, marginTop: space.sm },
+  detailLink: { ...typography.bodyMedium, fontSize: 13, color: ADMIN.accent, marginTop: space.sm },
   toggleBtn: { marginTop: space.xs },
   toggleLoading: { paddingVertical: space.md, alignItems: 'center' },
 });

@@ -108,7 +108,7 @@ export function MySupportScreen() {
       {error ? <AlertBanner message={error} tone="error" /> : null}
 
       {showNew ? (
-        <Card variant="glass" padding={4} style={styles.newCard}>
+        <Card variant="elevated" padding={4} style={styles.newCard}>
           <TextInput
             style={styles.newInput}
             placeholder="Sorununuzu veya sorunuzu yazın…"
@@ -138,7 +138,7 @@ export function MySupportScreen() {
       ) : (
         tickets.map((t) => (
           <PressableScale key={t.id} onPress={() => setSelectedId(t.id)}>
-            <Card variant="glass" padding={4} style={styles.item}>
+            <Card variant="elevated" padding={4} style={styles.item}>
               <View style={styles.itemRow}>
                 <Text style={styles.itemSubject} numberOfLines={1}>
                   {t.subject}

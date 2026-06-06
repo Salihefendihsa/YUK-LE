@@ -22,8 +22,11 @@ import { palette } from '../../../src/theme/colors';
 import { typography } from '../../../src/theme/typography';
 import { radius } from '../../../src/theme/radius';
 import { space, spacing } from '../../../src/theme/spacing';
+import { roleAccents } from '../../../src/theme/roleAccent';
 import { formatDateTR } from '../../../src/utils/format';
 import { getAiConfidencePill, getApprovalStatusPill } from '../../../src/utils/statusPills';
+
+const ADMIN = roleAccents.admin;
 
 type QueueFilter = 'all' | 'PendingReview' | 'Pending' | 'ManualApprovalRequired';
 
@@ -114,7 +117,7 @@ export default function AdminReviewsTab() {
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={[styles.list, contentInset]}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={ADMIN.accent} />
         }
         ListHeaderComponent={
           <>
@@ -218,16 +221,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.borderLight,
   },
-  filterBtnActive: { borderColor: palette.brandBorder, backgroundColor: palette.brandMuted },
+  filterBtnActive: { borderColor: ADMIN.accentBorder, backgroundColor: ADMIN.accentMuted },
   filterText: { ...typography.bodyMedium, fontSize: 12, color: palette.textMuted },
-  filterTextActive: { color: palette.brand },
+  filterTextActive: { color: ADMIN.accent },
   kpiCard: { marginBottom: space.sm, gap: space.xs },
   kpiLabel: { ...typography.caption, textTransform: 'none' },
-  kpiValue: { ...typography.h1, fontSize: 28, color: palette.gold, letterSpacing: -0.5 },
+  kpiValue: { ...typography.h1, fontSize: 28, color: palette.text, letterSpacing: -0.5 },
   queueCard: { marginBottom: space.sm },
   cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
   cardName: { ...typography.h3, flex: 1 },
   muted: { ...typography.caption, textTransform: 'none' },
   pillRow: { flexDirection: 'row', marginTop: space.xs },
-  detailLink: { ...typography.bodyMedium, fontSize: 13, color: palette.brand, marginTop: space.sm },
+  detailLink: { ...typography.bodyMedium, fontSize: 13, color: ADMIN.accent, marginTop: space.sm },
 });
