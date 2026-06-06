@@ -28,7 +28,7 @@ export default function DriverLoadDetailPage() {
         setLoad(loadData)
         setMatch(matchData)
       })
-      .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'Yük detayi yüklenemedi.'))
+      .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'Yük detayı yüklenemedi.'))
       .finally(() => setLoading(false))
   }, [id])
 
@@ -41,10 +41,10 @@ export default function DriverLoadDetailPage() {
     }
     try {
       await submitBid({ loadId: id, amount: numericAmount })
-      setMessage('Teklifiniz basariyla gonderildi.')
+      setMessage('Teklifiniz başarıyla gönderildi.')
       setAmount('')
     } catch (e: unknown) {
-      setError((e as { uiMessage?: string }).uiMessage ?? 'Teklif gonderilemedi.')
+      setError((e as { uiMessage?: string }).uiMessage ?? 'Teklif gönderilemedi.')
     }
   }
 

@@ -145,7 +145,7 @@ export default function Register() {
       const details = (err as { uiDetails?: string[] })?.uiDetails
       const msg = (err as { uiMessage?: string; response?: { data?: { message?: string } } })?.uiMessage
         ?? (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      setError(details && details.length > 0 ? details.join('\n') : (msg || 'Kayit basarisiz. Bilgilerinizi kontrol edin.'))
+      setError(details && details.length > 0 ? details.join('\n') : (msg || 'Kayıt başarısız. Bilgilerinizi kontrol edin.'))
     } finally {
       setLoading(false)
     }
