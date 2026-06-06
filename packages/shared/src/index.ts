@@ -6,3 +6,5 @@
 export type { PaymentStatus } from './domain/payment';
 export type { SupportStatus, SupportSenderRole } from './domain/support';
 export { supportStatusLabel, slaRemainingLabel } from './domain/support';
+export type { LoadStatus, VehicleTypeValue, LoadTypeValue } from './domain/load';
+export type { CustomerDashboard } from './domain/dashboard';
