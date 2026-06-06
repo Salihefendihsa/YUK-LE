@@ -234,6 +234,54 @@ export async function getAdminCustomers(params?: {
   return data.map(normalizeCustomerRow);
 }
 
+export type CustomerStats = {
+  totalLoads: number;
+  delivered: number;
+  cancelled: number;
+  totalSpend: number;
+};
+
+export type DriverStats = {
+  totalTrips: number;
+  totalWeight: number;
+  totalEarnings: number;
+  topRoutes: { route: string; count: number }[];
+};
+
+/** GET /Admin/customers/{id}/stats — web getCustomerStats karşılığı. */
+export async function getCustomerStats(id: number): Promise<CustomerStats> {
+  const res = await apiClient.get(`/Admin/customers/${id}/stats`);
+  const r = (res.data ?? {}) as Record<string, unknown>;
+  return {
+    totalLoads: Number(r.totalLoads ?? r.TotalLoads ?? 0),
+    delivered: Number(r.delivered ?? r.Delivered ?? 0),
+    cancelled: Number(r.cancelled ?? r.Cancelled ?? 0),
+    totalSpend: Number(r.totalSpend ?? r.TotalSpend ?? 0),
+  };
+}
+
+/** GET /Admin/drivers/{id}/stats — web getDriverStats karşılığı. */
+export async function getDriverStats(id: number): Promise<DriverStats> {
+  const res = await apiClient.get(`/Admin/drivers/${id}/stats`);
+  const r = (res.data ?? {}) as Record<string, unknown>;
+  const topRaw = r.topRoutes ?? r.TopRoutes;
+  const topRoutes = Array.isArray(topRaw)
+    ? topRaw.map((x) => {
+        const item = x as Record<string, unknown>;
+        return {
+          route: String(item.route ?? item.Route ?? ''),
+          count: Number(item.count ?? item.Count ?? 0),
+        };
+      })
+    : [];
+  return {
+    totalTrips: Number(r.totalTrips ?? r.TotalTrips ?? 0),
+    totalWeight: Number(r.totalWeight ?? r.TotalWeight ?? 0),
+    totalEarnings: Number(r.totalEarnings ?? r.TotalEarnings ?? 0),
+    topRoutes,
+  };
+}
+
 /** POST /Admin/users/{userId}/toggle-active */
 export async function toggleUserActive(userId: number): Promise<{ id: number; isActive: boolean }> {
   const res = await apiClient.post(`/Admin/users/${userId}/toggle-active`);

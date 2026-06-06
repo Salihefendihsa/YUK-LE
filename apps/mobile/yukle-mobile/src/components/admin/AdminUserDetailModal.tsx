@@ -13,8 +13,12 @@ import { getApiErrorMessage } from '../../services/api.client';
 import {
   activateUser,
   addUserNote,
+  getCustomerStats,
+  getDriverStats,
   suspendUser,
   warnUser,
+  type CustomerStats,
+  type DriverStats,
 } from '../../services/admin.service';
 import { getUserProfile } from '../../services/user.service';
 import type { AdminUserListItem } from '../../types/admin';
@@ -39,6 +43,8 @@ type Props = {
 
 export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Props) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [driverStats, setDriverStats] = useState<DriverStats | null>(null);
+  const [customerStats, setCustomerStats] = useState<CustomerStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
   const [error, setError] = useState('');
@@ -54,6 +60,8 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
     setError('');
     setStatusMsg('');
     setProfile(null);
+    setDriverStats(null);
+    setCustomerStats(null);
     setSuspendReason('');
     setAdminNote('');
     setWarnReason('');
@@ -67,6 +75,18 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
+
+    // Sefer & finansal özet (web admin DriverDetail/CustomerDetail karşılığı) —
+    // best-effort: stats hatası ana akışı bozmasın, kart gizli kalır.
+    if (item.role === 'Driver') {
+      void getDriverStats(item.id)
+        .then((s) => !cancelled && setDriverStats(s))
+        .catch(() => {});
+    } else {
+      void getCustomerStats(item.id)
+        .then((s) => !cancelled && setCustomerStats(s))
+        .catch(() => {});
+    }
     return () => {
       cancelled = true;
     };
@@ -165,6 +185,62 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
               </>
             ) : null}
           </Card>
+
+          {item.role === 'Driver' && driverStats ? (
+            <Card variant="elevated" padding={4}>
+              <Text style={styles.sectionTitle}>Sefer & finansal özet</Text>
+              <View style={styles.statGrid}>
+                <View style={styles.statChip}>
+                  <Text style={styles.statValue}>{driverStats.totalTrips}</Text>
+                  <Text style={styles.statLabel}>Sefer</Text>
+                </View>
+                <View style={styles.statChip}>
+                  <Text style={styles.statValue}>{formatCurrencyTRY(driverStats.totalEarnings)}</Text>
+                  <Text style={styles.statLabel}>Kazanç</Text>
+                </View>
+                <View style={styles.statChip}>
+                  <Text style={styles.statValue}>{driverStats.totalWeight.toLocaleString('tr-TR')} kg</Text>
+                  <Text style={styles.statLabel}>Taşınan yük</Text>
+                </View>
+              </View>
+              {driverStats.topRoutes.length ? (
+                <View style={styles.routeBlock}>
+                  <Text style={styles.routeHead}>En çok kullanılan güzergahlar</Text>
+                  {driverStats.topRoutes.map((r, i) => (
+                    <View key={r.route} style={styles.routeRow}>
+                      <Text style={styles.routeIndex}>{i + 1}</Text>
+                      <Text style={styles.routeLine}>{r.route.replace('->', ' → ')}</Text>
+                      <Text style={styles.routeCount}>{r.count} sefer</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+            </Card>
+          ) : null}
+
+          {item.role === 'Customer' && customerStats ? (
+            <Card variant="elevated" padding={4}>
+              <Text style={styles.sectionTitle}>Sefer & finansal özet</Text>
+              <View style={styles.statGrid}>
+                <View style={styles.statChip}>
+                  <Text style={styles.statValue}>{customerStats.totalLoads}</Text>
+                  <Text style={styles.statLabel}>Toplam ilan</Text>
+                </View>
+                <View style={styles.statChip}>
+                  <Text style={styles.statValue}>{customerStats.delivered}</Text>
+                  <Text style={styles.statLabel}>Teslim edilen</Text>
+                </View>
+                <View style={styles.statChip}>
+                  <Text style={styles.statValue}>{customerStats.cancelled}</Text>
+                  <Text style={styles.statLabel}>İptal</Text>
+                </View>
+                <View style={styles.statChip}>
+                  <Text style={styles.statValue}>{formatCurrencyTRY(customerStats.totalSpend)}</Text>
+                  <Text style={styles.statLabel}>Toplam harcama</Text>
+                </View>
+              </View>
+            </Card>
+          ) : null}
 
           <Card variant="elevated" padding={4}>
             <Text style={styles.sectionTitle}>Hesap işlemleri</Text>
@@ -293,4 +369,24 @@ const styles = StyleSheet.create({
   actionBtn: { marginTop: space.xs },
   success: { ...typography.bodySmall, color: palette.success },
   error: { ...typography.bodySmall, color: palette.error },
+  statGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  statChip: {
+    flexGrow: 1,
+    flexBasis: '30%',
+    paddingVertical: space.sm,
+    paddingHorizontal: space.md,
+    borderRadius: space.sm,
+    borderWidth: 1,
+    borderColor: palette.borderLight,
+    backgroundColor: palette.surface,
+    gap: 2,
+  },
+  statValue: { ...typography.h3, color: palette.brand },
+  statLabel: { ...typography.caption, textTransform: 'none', color: palette.textMuted },
+  routeBlock: { marginTop: space.md, gap: space.xs },
+  routeHead: { ...typography.bodyMedium, fontSize: 13, color: palette.textSecondary, marginBottom: space.xs },
+  routeRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  routeIndex: { ...typography.bodySmall, color: palette.brand, width: 18 },
+  routeLine: { ...typography.bodySmall, color: palette.text, flex: 1 },
+  routeCount: { ...typography.caption, textTransform: 'none', color: palette.textMuted },
 });
