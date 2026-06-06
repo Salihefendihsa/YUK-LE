@@ -16,11 +16,13 @@ import type { WalletSummary, WalletTransaction } from '../../../src/types/wallet
 import { palette } from '../../../src/theme/colors';
 import { typography } from '../../../src/theme/typography';
 import { space, spacing } from '../../../src/theme/spacing';
+import { useRoleAccent } from '../../../src/theme/useRoleAccent';
 import { formatCurrencyTRY, formatDateTR } from '../../../src/utils/format';
 import { getWalletTxStatusPill } from '../../../src/utils/statusPills';
 
 export default function DriverWalletScreen() {
   const { contentInset } = useScreenInsets();
+  const accent = useRoleAccent();
   const [summary, setSummary] = useState<WalletSummary | null>(null);
   const [tx, setTx] = useState<WalletTransaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,9 +78,9 @@ export default function DriverWalletScreen() {
               {error ? <AlertBanner message={error} tone="error" /> : null}
             </View>
 
-            <Card variant="elevated" padding={5} style={styles.hero}>
+            <Card variant="hero" padding={5} accent={accent} style={styles.hero}>
               <Text style={styles.heroLabel}>Çekilebilir bakiye</Text>
-              <Text style={styles.heroAmount}>
+              <Text style={[styles.heroAmount, { color: accent.hero.value }]}>
                 {formatCurrencyTRY(summary?.walletBalance ?? 0)}
               </Text>
             </Card>
@@ -175,9 +177,9 @@ export default function DriverWalletScreen() {
 const styles = StyleSheet.create({
   list: { paddingHorizontal: space.md, paddingBottom: space.xl },
   headerPad: { paddingTop: space.md },
-  hero: { marginBottom: space.md, borderColor: palette.brandBorder },
-  heroLabel: { ...typography.label, color: palette.textMuted },
-  heroAmount: { ...typography.h1, fontSize: 32, color: palette.gold, marginTop: space.sm },
+  hero: { marginBottom: space.md },
+  heroLabel: { ...typography.label, color: palette.textSecondary },
+  heroAmount: { ...typography.h1, fontSize: 32, marginTop: space.sm },
   statsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginBottom: spacing[5] },
   stat: { flex: 1, flexShrink: 1, minWidth: 0, maxWidth: '50%' },
   statLabel: { ...typography.caption, textTransform: 'none', color: palette.textMuted },

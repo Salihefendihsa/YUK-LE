@@ -17,12 +17,20 @@ import { useAuthStore } from '../../../src/store/auth.store';
 import { palette } from '../../../src/theme/colors';
 import { typography } from '../../../src/theme/typography';
 import { space, spacing } from '../../../src/theme/spacing';
+import { radius } from '../../../src/theme/radius';
+import { useRoleAccent } from '../../../src/theme/useRoleAccent';
 import { getApprovalStatusPill } from '../../../src/utils/statusPills';
+
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return parts.slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || 'Ş';
+}
 
 export default function DriverProfileScreen() {
   const router = useRouter();
   const authUser = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const accent = useRoleAccent();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -162,13 +170,36 @@ export default function DriverProfileScreen() {
       {status ? <AlertBanner message={status} tone="success" /> : null}
 
       <FadeInView>
+        <Card variant="hero" padding={5} accent={accent}>
+          <View style={styles.heroRow}>
+            <View style={[styles.avatar, { backgroundColor: accent.hero.iconBg, borderColor: accent.hero.iconColor }]}>
+              <Text style={[styles.avatarText, { color: accent.hero.iconColor }]}>
+                {initialsOf(fullName || authUser?.fullName || 'Şoför')}
+              </Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.heroName} numberOfLines={1}>
+                {fullName || authUser?.fullName || 'Şoför'}
+              </Text>
+              <Text style={styles.heroVehicle} numberOfLines={1}>
+                {[vehiclePlate, vehicleType].filter(Boolean).join(' · ') || 'Araç bilgisi yok'}
+              </Text>
+              <View style={styles.heroBadges}>
+                <View style={[styles.ratingPill, { backgroundColor: accent.accentMuted, borderColor: accent.accentBorder }]}>
+                  <Text style={[styles.ratingText, { color: accent.accentHover }]}>
+                    ★ {averageRating.toFixed(1)} ({totalRatingCount})
+                  </Text>
+                </View>
+                <StatusPill label={approvalPill.label} tone={approvalPill.tone} />
+              </View>
+            </View>
+          </View>
+        </Card>
+      </FadeInView>
+
+      <FadeInView delay={50}>
       <Card variant="elevated" padding={4}>
         <Text style={styles.sectionTitle}>Hesap bilgileri</Text>
-        <View style={styles.approvalRow}>
-          <Text style={styles.fieldHint}>Onay durumu</Text>
-          <StatusPill label={approvalPill.label} tone={approvalPill.tone} />
-        </View>
-
         <TextField label="Ad Soyad" value={fullName} onChangeText={setFullName} />
         <TextField label="Telefon" value={phone} editable={false} />
         <TextField label="E-posta" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
@@ -184,7 +215,7 @@ export default function DriverProfileScreen() {
       </Card>
       </FadeInView>
 
-      <FadeInView delay={50}>
+      <FadeInView delay={100}>
       <Card variant="default" padding={4}>
         <Text style={styles.sectionTitle}>Şifre Değiştir</Text>
         <TextField
@@ -211,7 +242,7 @@ export default function DriverProfileScreen() {
       </Card>
       </FadeInView>
 
-      <FadeInView delay={100} style={styles.links}>
+      <FadeInView delay={150} style={styles.links}>
         <SecondaryButton title="Belgelerim" onPress={() => router.push('/(driver)/(tabs)/documents')} />
         <SecondaryButton title="Geçmiş Seferlerim" onPress={() => router.push('/(driver)/(tabs)/history')} />
         <SecondaryButton title="Tekliflerim" onPress={() => router.push('/(driver)/(tabs)/bids')} />
@@ -223,6 +254,21 @@ export default function DriverProfileScreen() {
 
 const styles = StyleSheet.create({
   scroll: { padding: space.md, paddingBottom: spacing[10], gap: space.md },
+  heroRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: { fontFamily: typography.h2.fontFamily, fontSize: 22 },
+  heroName: { ...typography.h2, fontSize: 19, color: '#F6F8FB' },
+  heroVehicle: { ...typography.caption, textTransform: 'none', color: palette.textSecondary, marginTop: 2 },
+  heroBadges: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm, flexWrap: 'wrap' },
+  ratingPill: { borderWidth: 1, borderRadius: radius.full, paddingHorizontal: space.sm + 2, paddingVertical: 3 },
+  ratingText: { fontFamily: typography.label.fontFamily, fontSize: 11, letterSpacing: 0.4 },
   sectionTitle: { ...typography.h3, color: palette.gold, marginBottom: spacing[3] },
   approvalRow: {
     flexDirection: 'row',

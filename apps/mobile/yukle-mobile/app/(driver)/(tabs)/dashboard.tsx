@@ -21,11 +21,20 @@ import { palette } from '../../../src/theme/colors';
 import { typography } from '../../../src/theme/typography';
 import { space, spacing } from '../../../src/theme/spacing';
 import { radius } from '../../../src/theme/radius';
+import { useRoleAccent } from '../../../src/theme/useRoleAccent';
 import { formatCurrencyTRY } from '../../../src/utils/format';
+
+/** Stat ikon kutucukları — metriğe göre renk-kodlu (sabit). */
+const STAT_COLORS = {
+  orange: { fg: '#FF8A33', bg: 'rgba(255, 107, 0, 0.14)' },
+  green: { fg: '#4ADE80', bg: 'rgba(74, 222, 128, 0.14)' },
+  yellow: { fg: '#FBBF24', bg: 'rgba(251, 191, 36, 0.14)' },
+} as const;
 
 export default function DriverDashboardScreen() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const accent = useRoleAccent();
   const hubError = useNotificationsStore((s) => s.hubError);
   const [displayName, setDisplayName] = useState(user?.fullName?.trim() || '');
   const [stats, setStats] = useState<DriverDashboard | null>(null);
@@ -88,10 +97,10 @@ export default function DriverDashboardScreen() {
       {error ? <AlertBanner message={error} tone="error" /> : null}
 
       <FadeInView>
-      <Card variant="elevated" padding={5} style={styles.hero}>
+      <Card variant="hero" padding={5} accent={accent} style={styles.hero}>
         <View style={styles.heroTop}>
-          <View style={styles.heroIcon}>
-            <Ionicons name="person-circle-outline" size={28} color={palette.brand} />
+          <View style={[styles.heroIcon, { backgroundColor: accent.hero.iconBg, borderColor: 'transparent' }]}>
+            <Ionicons name="person-circle-outline" size={28} color={accent.hero.iconColor} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.heroHello}>Merhaba, {firstName}</Text>
@@ -100,7 +109,9 @@ export default function DriverDashboardScreen() {
         </View>
         <View style={styles.heroEarnRow}>
           <Text style={styles.heroEarnLabel}>Toplam kazanç</Text>
-          <Text style={styles.heroEarn}>{formatCurrencyTRY(Number(stats?.totalEarnings ?? 0))}</Text>
+          <Text style={[styles.heroEarn, { color: accent.hero.value }]}>
+            {formatCurrencyTRY(Number(stats?.totalEarnings ?? 0))}
+          </Text>
           <Text style={styles.heroMeta}>Aktif teklif: {stats?.activeBidCount ?? 0}</Text>
         </View>
       </Card>
@@ -108,16 +119,26 @@ export default function DriverDashboardScreen() {
 
       <FadeInView delay={50}>
       <View style={styles.grid}>
-        <StatCard label="Aktif Teklif" value={String(stats?.activeBidCount ?? 0)} icon="pricetag-outline" />
+        <StatCard
+          label="Aktif Teklif"
+          value={String(stats?.activeBidCount ?? 0)}
+          icon="pricetag-outline"
+          iconColor={STAT_COLORS.orange.fg}
+          iconBg={STAT_COLORS.orange.bg}
+        />
         <StatCard
           label="Tamamlanan Sefer"
           value={String(stats?.completedJobCount ?? 0)}
           icon="checkmark-done-outline"
+          iconColor={STAT_COLORS.green.fg}
+          iconBg={STAT_COLORS.green.bg}
         />
         <StatCard
           label="Toplam Kazanç"
           value={formatCurrencyTRY(Number(stats?.totalEarnings ?? 0))}
           icon="wallet-outline"
+          iconColor={STAT_COLORS.yellow.fg}
+          iconBg={STAT_COLORS.yellow.bg}
           wide
         />
       </View>
@@ -186,16 +207,22 @@ function StatCard({
   label,
   value,
   icon,
+  iconColor,
+  iconBg,
   wide,
 }: {
   label: string;
   value: string;
   icon: keyof typeof Ionicons.glyphMap;
+  iconColor: string;
+  iconBg: string;
   wide?: boolean;
 }) {
   return (
-    <Card variant="default" padding={4} style={wide ? styles.statWide : styles.stat}>
-      <Ionicons name={icon} size={18} color={palette.gold} style={{ marginBottom: space.sm }} />
+    <Card variant="elevated" padding={4} style={wide ? styles.statWide : styles.stat}>
+      <View style={[styles.statIconTile, { backgroundColor: iconBg }]}>
+        <Ionicons name={icon} size={18} color={iconColor} />
+      </View>
       <Text style={styles.statValue} numberOfLines={1}>
         {value}
       </Text>
@@ -218,23 +245,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroHello: { ...typography.h2, fontSize: 18 },
+  heroHello: { ...typography.h2, fontSize: 18, color: '#F6F8FB' },
   heroSub: { ...typography.caption, textTransform: 'none', marginTop: space.xs },
   heroEarnRow: {
     borderTopWidth: 1,
-    borderTopColor: palette.borderSubtle,
+    borderTopColor: 'rgba(255,255,255,0.07)',
     paddingTop: space.md,
     gap: space.xs,
   },
-  heroEarnLabel: { ...typography.label, color: palette.textMuted },
-  heroEarn: { ...typography.h1, fontSize: 26, color: palette.gold },
+  heroEarnLabel: { ...typography.label, color: palette.textSecondary },
+  heroEarn: { ...typography.h1, fontSize: 30 },
   heroMeta: { ...typography.caption, textTransform: 'none' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] },
   stat: { width: '47%', flexGrow: 1, flexShrink: 1, minWidth: 0, maxWidth: '48%' },
   statWide: { width: '100%' },
-  statValue: { ...typography.bodyMedium, fontSize: 17, marginBottom: space.xs },
+  statIconTile: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: space.sm,
+  },
+  statValue: { ...typography.h2, fontSize: 22, color: palette.text, marginBottom: space.xs },
   statLabel: { ...typography.caption, textTransform: 'none', color: palette.textMuted },
-  recCard: { gap: spacing[3], borderColor: palette.goldBorder },
+  recCard: { gap: spacing[3] },
   recTitle: { ...typography.bodyMedium, color: palette.gold },
   recSub: { ...typography.caption, textTransform: 'none', marginBottom: space.sm },
   recRow: {
