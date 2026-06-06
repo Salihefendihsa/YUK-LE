@@ -1,102 +1,205 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
+import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
 import { FadeInView } from '../../../src/components/ui/FadeInView';
+import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
 import {
-  DEMO_ANALYTICS_MONTHS,
   DEMO_CARBON_REDUCTION_PCT,
   DEMO_CARBON_TONNES,
-  DEMO_CUSTOMER_SATISFACTION,
   DEMO_MONTHLY_SAVINGS_TRY,
-  DEMO_MONTHLY_SPEND,
-  DEMO_SPEND_CHART_MAX,
-  DEMO_TOP_ROUTES,
 } from '../../../src/constants/customer-analytics-demo';
-import { ScreenContainer, ScreenScroll, useScreenInsets } from '../../../src/constants/layout';
+import { ScreenContainer, ScreenScroll } from '../../../src/constants/layout';
+import { getApiErrorMessage } from '../../../src/services/api.client';
+import { getCustomerLoadHistory } from '../../../src/services/history.service';
+import { getUserRatings } from '../../../src/services/ratings.service';
+import { useAuthStore } from '../../../src/store/auth.store';
+import type { CustomerHistoryRow } from '../../../src/types/history';
 import { palette } from '../../../src/theme/colors';
-import { typography } from '../../../src/theme/typography';
 import { radius } from '../../../src/theme/radius';
 import { space, spacing } from '../../../src/theme/spacing';
+import { typography } from '../../../src/theme/typography';
 import { formatCurrencyTRY } from '../../../src/utils/format';
 
-// TODO Faz 4+: Gerçek analitik API'sı bağlanınca DEMO_* constants'lerini kaldır
-// ve veriyi backend'den fetch et. Web ve mobil senkron olarak demo'dan canlıya
-// geçmeli. Şu an /api/Analytics endpoint'i yok (web Analytics.tsx hard-coded).
+const MONTHS_TR = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+
+type MonthSpend = { label: string; value: number };
+type TopRoute = { route: string; count: number };
+
+/** Son 6 ay harcama (teslim edilen ilan price toplamı, deliveryDate ayına göre). */
+function computeMonthlySpend(rows: CustomerHistoryRow[]): MonthSpend[] {
+  const now = new Date();
+  const buckets = Array.from({ length: 6 }, (_, k) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (5 - k), 1);
+    return { key: `${d.getFullYear()}-${d.getMonth()}`, label: MONTHS_TR[d.getMonth()], value: 0 };
+  });
+  const indexByKey = new Map(buckets.map((b, i) => [b.key, i]));
+  for (const r of rows) {
+    if (!r.deliveryDate) continue;
+    const d = new Date(r.deliveryDate);
+    if (Number.isNaN(d.getTime())) continue;
+    const idx = indexByKey.get(`${d.getFullYear()}-${d.getMonth()}`);
+    if (idx !== undefined) buckets[idx].value += r.price ?? 0;
+  }
+  return buckets.map((b) => ({ label: b.label, value: b.value }));
+}
+
+/** En çok kullanılan güzergahlar: fromCity→toCity gruplama, sefer sayısına göre ilk 3. */
+function computeTopRoutes(rows: CustomerHistoryRow[]): TopRoute[] {
+  const counts = new Map<string, number>();
+  for (const r of rows) {
+    const from = r.fromCity?.trim();
+    const to = r.toCity?.trim();
+    if (!from || !to) continue;
+    const key = `${from} → ${to}`;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([route, count]) => ({ route, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3);
+}
+
+/**
+ * Müşteri Analitik — web customer/Analytics.tsx parity, GERÇEK veri.
+ * Kaynaklar (web ile aynı): memnuniyet = Ratings; harcama trendi + güzergahlar +
+ * toplam harcama = müşteri history (dashboard ile aynı kaynak). Karbon ve tasarruf
+ * henüz türetilebilir veri olmadığından "(demo)" etiketli kalır.
+ */
 export default function CustomerAnalyticsScreen() {
+  const userId = useAuthStore((s) => s.user?.userId);
+
+  const [rows, setRows] = useState<CustomerHistoryRow[]>([]);
+  const [totalSpend, setTotalSpend] = useState(0);
+  const [rating, setRating] = useState<{ average: number; count: number } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState('');
+
+  const fetchData = useCallback(async () => {
+    setError('');
+    try {
+      const [history, ratings] = await Promise.all([
+        getCustomerLoadHistory(1, 200),
+        userId ? getUserRatings(userId) : Promise.resolve(null),
+      ]);
+      setRows(history.items);
+      setTotalSpend(history.totalSpend);
+      setRating(ratings && ratings.count > 0 ? ratings : null);
+    } catch (e) {
+      setError(getApiErrorMessage(e));
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    void fetchData().finally(() => setLoading(false));
+  }, [fetchData]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  };
+
+  if (loading) {
+    return (
+      <ScreenContainer>
+        <LoadingState message="Analitik yükleniyor…" variant="skeleton" />
+      </ScreenContainer>
+    );
+  }
+
+  const monthlySpend = computeMonthlySpend(rows);
+  const topRoutes = computeTopRoutes(rows);
+  const maxSpend = Math.max(...monthlySpend.map((m) => m.value), 1);
+
   return (
-    <ScreenScroll contentContainerStyle={styles.scroll}>
-      <ScreenHeader
-        title="Analitik (Yakında)"
-        subtitle="Canlı veri yakında bağlanacak — şu an örnek görünüm"
-      />
+    <ScreenScroll
+      contentContainerStyle={styles.scroll}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />}
+    >
+      <ScreenHeader title="Analitik" subtitle="Harcama, güzergah ve memnuniyet özeti" />
+
+      {error ? <AlertBanner message={error} tone="error" /> : null}
 
       <FadeInView>
-      <Card variant="elevated" padding={3} style={styles.demoBanner}>
-        <StatusPill label="YAKINDA — ÖRNEK GÖRÜNÜM" tone="warning" />
-        <Text style={styles.demoBannerText}>
-          Harcama, güzergah ve sürdürülebilirlik raporları hesabınıza yakında bağlanacak.
-          Bu ekrandaki rakamlar yalnızca tasarım önizlemesidir.
-        </Text>
-      </Card>
-      </FadeInView>
-
-      <FadeInView delay={40}>
-      <Card variant="glass" padding={4}>
-        <Text style={styles.cardTitle}>Toplam harcama</Text>
-        <Text style={styles.cardSub}>Aylık trend (örnek)</Text>
-        <View style={styles.barChart}>
-          {DEMO_MONTHLY_SPEND.map((v, i) => (
-            <View key={DEMO_ANALYTICS_MONTHS[i]} style={styles.barWrap}>
-              <View
-                style={[
-                  styles.bar,
-                  { height: Math.max(8, (v / DEMO_SPEND_CHART_MAX) * 140) },
-                ]}
-              />
-              <Text style={styles.barLabel}>{DEMO_ANALYTICS_MONTHS[i]}</Text>
+        <Card variant="glass" padding={4}>
+          <View style={styles.spendHead}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.cardTitle}>Toplam harcama</Text>
+              <Text style={styles.cardSub}>Son 6 ay aylık trend</Text>
             </View>
-          ))}
-        </View>
-      </Card>
+            <Text style={styles.totalSpend}>{formatCurrencyTRY(totalSpend)}</Text>
+          </View>
+          <View style={styles.barChart}>
+            {monthlySpend.map((m, i) => (
+              <View key={`${m.label}-${i}`} style={styles.barWrap}>
+                <View style={[styles.bar, { height: Math.max(6, (m.value / maxSpend) * 130) }]} />
+                <Text style={styles.barLabel}>{m.label}</Text>
+              </View>
+            ))}
+          </View>
+        </Card>
       </FadeInView>
 
-      <FadeInView delay={80}>
-      <Card variant="default" padding={4}>
-        <Text style={styles.cardTitle}>En çok kullanılan güzergahlar</Text>
-        {DEMO_TOP_ROUTES.map((route, i) => (
-          <View key={route} style={styles.routeRow}>
-            <Text style={styles.routeIndex}>{i + 1}</Text>
-            <Text style={styles.routeLine}>{route}</Text>
-          </View>
-        ))}
-      </Card>
+      <FadeInView delay={60}>
+        <Card variant="default" padding={4}>
+          <Text style={styles.cardTitle}>En çok kullanılan güzergahlar</Text>
+          {topRoutes.length === 0 ? (
+            <Text style={styles.emptyLine}>Henüz tamamlanmış sefer yok.</Text>
+          ) : (
+            topRoutes.map((r, i) => (
+              <View key={r.route} style={styles.routeRow}>
+                <Text style={styles.routeIndex}>{i + 1}</Text>
+                <Text style={styles.routeLine}>{r.route}</Text>
+                <Text style={styles.routeCount}>{r.count} sefer</Text>
+              </View>
+            ))
+          )}
+        </Card>
       </FadeInView>
 
       <FadeInView delay={120}>
-      <Card variant="default" padding={4}>
-        <Text style={styles.cardTitle}>Memnuniyet puanınız</Text>
-        <Text style={styles.bigStat}>{DEMO_CUSTOMER_SATISFACTION.toFixed(1)}</Text>
-        <Text style={styles.cardSub}>Şoförlerin size verdiği ortalama (son 90 gün, örnek)</Text>
-      </Card>
+        <Card variant="default" padding={4}>
+          <Text style={styles.cardTitle}>Memnuniyet puanınız</Text>
+          {rating ? (
+            <>
+              <Text style={styles.bigStat}>{rating.average.toFixed(1)}</Text>
+              <Text style={styles.cardSub}>{rating.count} değerlendirme ortalaması</Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.bigStatMuted}>—</Text>
+              <Text style={styles.cardSub}>Henüz değerlendirme yok</Text>
+            </>
+          )}
+        </Card>
       </FadeInView>
 
-      <FadeInView delay={160}>
-      <Card variant="default" padding={4}>
-        <Text style={styles.cardTitle}>Karbon ayak izi</Text>
-        <Text style={styles.bodyText}>
-          Tahmini emisyon: <Text style={styles.strong}>{DEMO_CARBON_TONNES} t CO₂e</Text> bu ay. Yeşil
-          araç tercihi ile <Text style={styles.strong}>%{DEMO_CARBON_REDUCTION_PCT}</Text> azaltılabilir.
-        </Text>
-      </Card>
+      <FadeInView delay={180}>
+        <Card variant="default" padding={4}>
+          <View style={styles.demoTitleRow}>
+            <Text style={styles.cardTitle}>Karbon ayak izi</Text>
+            <StatusPill label="DEMO" tone="neutral" />
+          </View>
+          <Text style={styles.bodyText}>
+            Tahmini emisyon: <Text style={styles.strong}>{DEMO_CARBON_TONNES} t CO₂e</Text> bu ay. Yeşil araç
+            tercihi ile <Text style={styles.strong}>%{DEMO_CARBON_REDUCTION_PCT}</Text> azaltılabilir.
+          </Text>
+        </Card>
       </FadeInView>
 
-      <FadeInView delay={200}>
-      <Card variant="glass" padding={4} style={styles.savingsCard}>
-        <Text style={styles.cardTitle}>Bu ay tasarruf</Text>
-        <Text style={styles.bigStatGold}>{formatCurrencyTRY(DEMO_MONTHLY_SAVINGS_TRY)}</Text>
-        <Text style={styles.cardSub}>Akıllı eşleştirme ve güzergah optimizasyonu ile (örnek).</Text>
-      </Card>
+      <FadeInView delay={240}>
+        <Card variant="glass" padding={4} style={styles.savingsCard}>
+          <View style={styles.demoTitleRow}>
+            <Text style={styles.cardTitle}>Bu ay tasarruf</Text>
+            <StatusPill label="DEMO" tone="neutral" />
+          </View>
+          <Text style={styles.bigStatGold}>{formatCurrencyTRY(DEMO_MONTHLY_SAVINGS_TRY)}</Text>
+          <Text style={styles.cardSub}>Akıllı eşleştirme ve güzergah optimizasyonu ile.</Text>
+        </Card>
       </FadeInView>
     </ScreenScroll>
   );
@@ -104,27 +207,11 @@ export default function CustomerAnalyticsScreen() {
 
 const styles = StyleSheet.create({
   scroll: { padding: space.md, paddingBottom: spacing[10], gap: space.md },
-  demoBanner: {
-    borderColor: palette.goldBorder,
-    backgroundColor: palette.goldMuted,
-    gap: space.sm,
-    alignItems: 'center',
-  },
-  demoBannerText: {
-    ...typography.caption,
-    textTransform: 'none',
-    color: palette.gold,
-    textAlign: 'center',
-  },
+  spendHead: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
+  totalSpend: { ...typography.h2, color: palette.brand },
   cardTitle: { ...typography.h3 },
   cardSub: { ...typography.caption, textTransform: 'none', marginTop: space.xs },
-  barChart: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: space.sm,
-    height: 160,
-    marginTop: space.md,
-  },
+  barChart: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm, height: 150, marginTop: space.md },
   barWrap: { flex: 1, alignItems: 'center', height: '100%', justifyContent: 'flex-end', gap: space.sm },
   bar: {
     width: '100%',
@@ -132,15 +219,19 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radius.sm,
     borderTopRightRadius: radius.sm,
     backgroundColor: palette.brand,
-    minHeight: 8,
+    minHeight: 6,
   },
   barLabel: { ...typography.caption, textTransform: 'none', fontSize: 10 },
-  routeRow: { flexDirection: 'row', gap: spacing[3], marginTop: space.sm },
+  routeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], marginTop: space.sm },
   routeIndex: { ...typography.bodySmall, color: palette.brand, width: 20, fontFamily: typography.bodyMedium.fontFamily },
   routeLine: { ...typography.body, flex: 1 },
+  routeCount: { ...typography.caption, textTransform: 'none', color: palette.textMuted },
   bigStat: { ...typography.h1, fontSize: 42, color: palette.brand, marginVertical: space.sm },
+  bigStatMuted: { ...typography.h1, fontSize: 42, color: palette.textMuted, marginVertical: space.sm },
   bigStatGold: { ...typography.h2, fontSize: 32, color: palette.gold, marginVertical: space.sm },
-  bodyText: { ...typography.body, color: palette.textSecondary },
+  bodyText: { ...typography.body, color: palette.textSecondary, marginTop: space.sm },
   strong: { color: palette.text, fontFamily: typography.bodyMedium.fontFamily },
   savingsCard: { borderColor: palette.goldBorder },
+  demoTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
+  emptyLine: { ...typography.bodySmall, color: palette.textMuted, marginTop: space.sm },
 });
