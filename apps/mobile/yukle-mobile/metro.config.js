@@ -35,7 +35,37 @@ const signalrBrowser = path.join(
 
 const originalResolveRequest = config.resolver.resolveRequest;
 
+// '@navlonix/shared' (ve alt yollari) -> packages/shared/src dosyalarina ELLE map.
+// Dev server (expo start) resolution'i extraNodeModules'u export kadar guvenilir
+// cozmuyor; bare specifier'i acikca dosyaya baglamak hem dev hem export'ta calisir.
+function resolveSharedFile(moduleName) {
+  const sub =
+    moduleName === '@navlonix/shared'
+      ? 'index'
+      : moduleName.slice('@navlonix/shared/'.length);
+  const base = path.join(sharedRoot, sub);
+  const candidates = [
+    `${base}.ts`,
+    `${base}.tsx`,
+    `${base}.js`,
+    path.join(base, 'index.ts'),
+    path.join(base, 'index.tsx'),
+    path.join(base, 'index.js'),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return null;
+}
+
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName === '@navlonix/shared' || moduleName.startsWith('@navlonix/shared/')) {
+    const filePath = resolveSharedFile(moduleName);
+    if (filePath) {
+      return { type: 'sourceFile', filePath };
+    }
+  }
+
   if (platform === 'web' && moduleName === '@microsoft/signalr') {
     return { type: 'sourceFile', filePath: signalrBrowser };
   }
