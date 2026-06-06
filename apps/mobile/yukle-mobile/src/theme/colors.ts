@@ -5,50 +5,50 @@
  */
 export const palette = {
   brand: '#FF6B00',
-  brandHover: '#FF8C38',
+  brandHover: '#FF8A33',
   brandPress: '#CC5500',
   brandMuted: 'rgba(255, 107, 0, 0.16)',
   brandBorder: 'rgba(255, 107, 0, 0.45)',
 
-  gold: '#FFB627',
-  goldMuted: 'rgba(255, 182, 39, 0.16)',
-  goldBorder: 'rgba(255, 182, 39, 0.48)',
+  gold: '#FBBF24',
+  goldMuted: 'rgba(251, 191, 36, 0.16)',
+  goldBorder: 'rgba(251, 191, 36, 0.40)',
 
-  bg: '#080B10',
+  bg: '#0A0E14',
   bgElevated: '#0D1119',
-  surface: '#161B26',
-  card: '#1E2536',
-  cardHover: '#252E44',
-  input: '#141925',
+  surface: '#131923',
+  card: '#161C26',
+  cardHover: '#1B2230',
+  input: '#131923',
 
   border: '#3A4252',
-  borderLight: '#2E384A',
-  borderSubtle: '#242C3C',
+  borderLight: 'rgba(255, 255, 255, 0.07)',
+  borderSubtle: '#222A36',
 
-  text: '#F3F4F6',
-  textSecondary: '#9CA3AF',
-  textMuted: '#6B7280',
+  text: '#F4F6F9',
+  textSecondary: '#9AA4B2',
+  textMuted: '#7C8696',
   textFaint: '#4A4D5E',
 
-  success: '#22C55E',
-  successBg: 'rgba(34, 197, 94, 0.18)',
-  successBorder: 'rgba(34, 197, 94, 0.50)',
+  success: '#4ADE80',
+  successBg: 'rgba(74, 222, 128, 0.16)',
+  successBorder: 'rgba(74, 222, 128, 0.40)',
 
-  warning: '#F59E0B',
-  warningBg: 'rgba(245, 158, 11, 0.18)',
+  warning: '#FBBF24',
+  warningBg: 'rgba(251, 191, 36, 0.16)',
 
   error: '#EF4444',
-  errorBg: 'rgba(239, 68, 68, 0.18)',
-  errorBorder: 'rgba(239, 68, 68, 0.50)',
+  errorBg: 'rgba(239, 68, 68, 0.16)',
+  errorBorder: 'rgba(239, 68, 68, 0.45)',
 
-  info: '#3B82F6',
-  infoBg: 'rgba(59, 130, 246, 0.18)',
-  infoBorder: 'rgba(59, 130, 246, 0.50)',
+  info: '#60A5FA',
+  infoBg: 'rgba(96, 165, 250, 0.16)',
+  infoBorder: 'rgba(96, 165, 250, 0.40)',
 
-  glass: 'rgba(30, 37, 54, 0.80)',
-  glassBorder: 'rgba(255, 255, 255, 0.10)',
+  glass: 'rgba(22, 28, 38, 0.80)',
+  glassBorder: 'rgba(255, 255, 255, 0.07)',
 
-  overlay: 'rgba(8, 11, 16, 0.85)',
+  overlay: 'rgba(10, 14, 20, 0.85)',
   onBrand: '#0A0D12',
 
   /** Notr gri skala (50 acik .. 900 koyu arka plan) */

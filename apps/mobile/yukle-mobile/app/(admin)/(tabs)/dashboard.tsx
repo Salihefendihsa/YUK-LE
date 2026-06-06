@@ -105,10 +105,10 @@ export default function AdminDashboardScreen() {
       {stats ? (
         <>
           <FadeInView>
-          <Card variant="gradient" padding={5} accent={accent} style={styles.hero}>
+          <Card variant="hero" padding={5} accent={accent} style={styles.hero}>
             <View style={styles.heroTop}>
-              <View style={[styles.heroIcon, { backgroundColor: accent.accentMuted, borderColor: accent.accentBorder }]}>
-                <Ionicons name="shield-checkmark" size={26} color={accent.accent} />
+              <View style={[styles.heroIcon, { backgroundColor: accent.hero.iconBg, borderColor: 'transparent' }]}>
+                <Ionicons name="shield-checkmark" size={26} color={accent.hero.iconColor} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.heroTitle}>Operasyon özeti</Text>

@@ -25,9 +25,16 @@ import { palette } from '../../../src/theme/colors';
 import { fontFamily, typography } from '../../../src/theme/typography';
 import { spacing } from '../../../src/theme/spacing';
 import { useRoleAccent } from '../../../src/theme/useRoleAccent';
-import type { RoleAccent } from '../../../src/theme/roleAccent';
 import { formatCurrencyTRY, formatDateTR } from '../../../src/utils/format';
 import { getLoadStatusPill } from '../../../src/utils/statusPills';
+
+/** Stat ikon kutucukları — metriğe göre RENK-KODLU (rol aksanı DEĞİL, sabit). */
+const STAT_COLORS = {
+  orange: { fg: '#FF8A33', bg: 'rgba(255, 107, 0, 0.14)' },
+  blue: { fg: '#60A5FA', bg: 'rgba(96, 165, 250, 0.14)' },
+  green: { fg: '#4ADE80', bg: 'rgba(74, 222, 128, 0.14)' },
+  yellow: { fg: '#FBBF24', bg: 'rgba(251, 191, 36, 0.14)' },
+} as const;
 
 export default function CustomerDashboardScreen() {
   const router = useRouter();
@@ -110,79 +117,81 @@ export default function CustomerDashboardScreen() {
       {error ? <AlertBanner message={error} tone="error" /> : null}
 
       <FadeInView>
-        <Card variant="gradient" padding={5} accent={accent} style={styles.hero}>
+        <Card variant="hero" padding={5} accent={accent} style={styles.hero}>
         <View style={styles.heroTop}>
-          <View style={styles.heroIcon}>
-            <Ionicons name="business-outline" size={26} color={accent.accent} />
+          <View style={[styles.heroIcon, { backgroundColor: accent.hero.iconBg, borderColor: 'transparent' }]}>
+            <Ionicons name="business-outline" size={26} color={accent.hero.iconColor} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.heroHello}>Merhaba, {firstName}</Text>
             <Text style={styles.heroSub}>Lojistik operasyonlarınızın özeti</Text>
           </View>
         </View>
-        <Text style={styles.heroSpend}>
-          Toplam harcama: {formatCurrencyTRY(stats?.totalSpent ?? 0)}
-        </Text>
+        <View style={styles.heroSpendBlock}>
+          <Text style={styles.heroSpendLabel}>Toplam harcama</Text>
+          <Text style={[styles.heroSpendValue, { color: accent.hero.value }]}>
+            {formatCurrencyTRY(stats?.totalSpent ?? 0)}
+          </Text>
+        </View>
       </Card>
       </FadeInView>
 
       <FadeInView delay={60}>
       <View style={styles.grid}>
-        <StatCard label="Aktif İlanlar" value={String(stats?.activeLoadCount ?? 0)} icon="cube-outline" accent={accent} />
-        <StatCard label="Yolda Yükler" value={String(stats?.onWayLoadCount ?? 0)} icon="navigate-outline" accent={accent} />
-        <StatCard label="Teslim Edilen" value={String(stats?.deliveredLoadCount ?? 0)} icon="checkmark-done-outline" accent={accent} />
         <StatCard
-          label="Toplam Harcama"
-          value={formatCurrencyTRY(stats?.totalSpent ?? 0)}
-          icon="wallet-outline"
-          accent={accent}
-          wide
+          label="Aktif İlanlar"
+          value={String(stats?.activeLoadCount ?? 0)}
+          icon="cube-outline"
+          iconColor={STAT_COLORS.orange.fg}
+          iconBg={STAT_COLORS.orange.bg}
+        />
+        <StatCard
+          label="Yolda Yükler"
+          value={String(stats?.onWayLoadCount ?? 0)}
+          icon="navigate-outline"
+          iconColor={STAT_COLORS.blue.fg}
+          iconBg={STAT_COLORS.blue.bg}
+        />
+        <StatCard
+          label="Teslim Edilen"
+          value={String(stats?.deliveredLoadCount ?? 0)}
+          icon="checkmark-done-outline"
+          iconColor={STAT_COLORS.green.fg}
+          iconBg={STAT_COLORS.green.bg}
+        />
+        <StatCard
+          label="Performans"
+          value={rating && rating.count > 0 ? rating.average.toFixed(1) : '—'}
+          icon="star"
+          iconColor={STAT_COLORS.yellow.fg}
+          iconBg={STAT_COLORS.yellow.bg}
         />
       </View>
       </FadeInView>
 
       <FadeInView delay={100}>
-        <View style={styles.showcaseRow}>
-          <Card variant="gradient" padding={4} accent={accent} style={styles.showcaseCard}>
-            <View style={styles.showcaseHead}>
-              <Ionicons name="star" size={16} color={accent.accent} />
-              <Text style={styles.showcaseTitle}>Performans skorum</Text>
-            </View>
-            {rating && rating.count > 0 ? (
-              <>
-                <Text style={[styles.scoreBig, { color: accent.accent }]}>{rating.average.toFixed(1)}</Text>
-                <Text style={styles.showcaseMeta}>{rating.count} değerlendirme</Text>
-              </>
-            ) : (
-              <Text style={styles.emptyNote}>Henüz değerlendirme yok</Text>
-            )}
-          </Card>
-
-          <Card variant="gradient" padding={4} accent={accent} style={styles.showcaseCard}>
-            <View style={styles.showcaseHead}>
-              <Ionicons name="calendar-outline" size={16} color={accent.accent} />
-              <Text style={styles.showcaseTitle}>Bu hafta</Text>
-            </View>
-            <View style={styles.weekGrid}>
-              <WeekMetric value={String(weekStats.newLoads)} label="Yeni ilan" />
-              <WeekMetric value={String(weekStats.completed)} label="Tamamlanan" />
-            </View>
-            <Text style={styles.weekSpend}>
-              Harcama: {formatCurrencyTRY(weekStats.spend)}
-            </Text>
-          </Card>
-        </View>
+        <Card variant="elevated" padding={4}>
+          <View style={styles.showcaseHead}>
+            <Ionicons name="calendar-outline" size={16} color={accent.accent} />
+            <Text style={styles.showcaseTitle}>Bu hafta</Text>
+          </View>
+          <View style={styles.weekGrid}>
+            <WeekMetric value={String(weekStats.newLoads)} label="Yeni ilan" />
+            <WeekMetric value={String(weekStats.completed)} label="Tamamlanan" />
+            <WeekMetric value={formatCurrencyTRY(weekStats.spend)} label="Harcama" />
+          </View>
+        </Card>
       </FadeInView>
 
       <FadeInView delay={140}>
-        <Card variant="gradient" padding={4} accent={accent} style={styles.chartCard}>
+        <Card variant="elevated" padding={4} style={styles.chartCard}>
           <View style={styles.showcaseHead}>
             <Ionicons name="bar-chart-outline" size={16} color={accent.accent} />
             <Text style={styles.showcaseTitle}>Aylık aktivite</Text>
           </View>
           {monthly.some((m) => m.value > 0) ? (
             <>
-              <MiniBarChart data={monthly} colorTop={accent.accentHover} colorBottom={accent.accent} />
+              <MiniBarChart data={monthly} colorTop={accent.bar[0]} colorBottom={accent.bar[1]} />
               <Text style={styles.chartNote}>Son 6 ayda teslim edilen ilan sayısı</Text>
             </>
           ) : (
@@ -192,7 +201,7 @@ export default function CustomerDashboardScreen() {
       </FadeInView>
 
       <FadeInView delay={180}>
-        <Card variant="gradient" padding={4} accent={accent} style={styles.driversCard}>
+        <Card variant="elevated" padding={4} style={styles.driversCard}>
           <View style={styles.showcaseHead}>
             <Ionicons name="people-outline" size={16} color={accent.accent} />
             <Text style={styles.showcaseTitle}>Sık çalıştığın şoförler</Text>
@@ -216,7 +225,7 @@ export default function CustomerDashboardScreen() {
       </FadeInView>
 
       <FadeInView delay={220}>
-        <Card variant="gradient" padding={4} accent={accent} style={styles.chartCard}>
+        <Card variant="elevated" padding={4} style={styles.chartCard}>
           <View style={styles.showcaseHead}>
             <Ionicons name="bulb-outline" size={16} color={accent.accent} />
             <Text style={styles.showcaseTitle}>Akıllı öneriler</Text>
@@ -355,21 +364,21 @@ function StatCard({
   label,
   value,
   icon,
-  accent,
-  wide,
+  iconColor,
+  iconBg,
 }: {
   label: string;
   value: string;
   icon: keyof typeof Ionicons.glyphMap;
-  accent: RoleAccent;
-  wide?: boolean;
+  iconColor: string;
+  iconBg: string;
 }) {
   return (
-    <Card variant="gradient" padding={4} accent={accent} style={wide ? styles.statWide : styles.stat}>
-      <View style={[styles.statIconTile, { backgroundColor: accent.accentMuted, borderColor: accent.accentBorder }]}>
-        <Ionicons name={icon} size={18} color={accent.accent} />
+    <Card variant="elevated" padding={4} style={styles.stat}>
+      <View style={[styles.statIconTile, { backgroundColor: iconBg }]}>
+        <Ionicons name={icon} size={18} color={iconColor} />
       </View>
-      <Text style={[styles.statValue, { color: accent.accent }]} numberOfLines={1}>
+      <Text style={styles.statValue} numberOfLines={1}>
         {value}
       </Text>
       <Text style={styles.statLabel}>{label}</Text>
@@ -403,15 +412,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroHello: { ...typography.h2, fontSize: 18 },
+  heroHello: { ...typography.h2, fontSize: 18, color: '#F6F8FB' },
   heroSub: { ...typography.caption, textTransform: 'none', marginTop: spacing[1] },
-  heroSpend: {
-    fontFamily: fontFamily.bold,
-    fontSize: 16,
-    color: palette.gold,
+  heroSpendBlock: {
     borderTopWidth: 1,
-    borderTopColor: palette.borderSubtle,
+    borderTopColor: 'rgba(255,255,255,0.07)',
     paddingTop: spacing[3],
+  },
+  heroSpendLabel: {
+    fontFamily: fontFamily.medium,
+    fontSize: 11,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: palette.textSecondary,
+  },
+  heroSpendValue: {
+    fontFamily: fontFamily.bold,
+    fontSize: 30,
+    marginTop: spacing[1],
   },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] },
   stat: { width: '47%', flexGrow: 1, flexShrink: 1, minWidth: 0, maxWidth: '48%' },
@@ -420,15 +438,14 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 10,
-    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing[2],
   },
   statValue: {
     fontFamily: fontFamily.bold,
-    fontSize: 20,
-    color: palette.brand,
+    fontSize: 22,
+    color: palette.text,
     marginBottom: spacing[1],
   },
   statLabel: { ...typography.caption, textTransform: 'none', color: palette.textMuted },
@@ -451,7 +468,7 @@ const styles = StyleSheet.create({
   },
   weekGrid: { flexDirection: 'row', gap: spacing[3] },
   weekMetric: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
-  weekValue: { fontFamily: fontFamily.bold, fontSize: 20, color: palette.brand },
+  weekValue: { fontFamily: fontFamily.bold, fontSize: 18, color: palette.text },
   weekLabel: {
     ...typography.caption,
     textTransform: 'none',

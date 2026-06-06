@@ -1,39 +1,57 @@
 import type { UserRole } from '../types/auth';
 
 /**
- * Rol-aksan tek kaynağı (cafcaf revizyon).
+ * Rol-aksan tek kaynağı — onaylanan müşteri dashboard MOCKUP'ına birebir.
  *
- * Tüm ekranlar bu token'ı tüketir → birincil butonlar, önemli sayılar, ikon
- * kutucukları, aktif öğeler ve hero ışıması role göre renk alır.
- *   • MÜŞTERİ + ŞOFÖR → turuncu  (#FF6B00 / #FF8A33)
- *   • ADMIN           → kırmızı  (web admin temasının accent'i: #EF4444 / #F59E0B)
+ * İLKE: kartlar NÖTR (palette.card #161C26) kalır; turuncu/kırmızı yalnızca
+ * ACCENT (ikon kutucuğu, sayı vurgusu, buton, aktif öğe) + TEK parlayan HERO
+ * kartında kullanılır. Hiçbir içerik/stat kartında renk wash YOK.
+ *   • MÜŞTERİ + ŞOFÖR → turuncu
+ *   • ADMIN           → kırmızı (web admin temasıyla aynı)
  *
- * NOT: Semantik durum rozetleri (Atandı/Aktif/Yolda/Teslim/İptal) role göre
- * DEĞİŞMEZ — onlar palette'teki sabit semantik renkleri kullanır.
+ * Semantik durum rozetleri (Atandı/Aktif/Yolda/Teslim/İptal) role göre DEĞİŞMEZ;
+ * onlar palette'teki sabit semantik renkleri kullanır.
  */
+export interface RoleAccentHero {
+  /** Hero kart diyagonal (135°) zemin degradesi — [başlangıç, orta, bitiş]. */
+  gradient: readonly [string, string, string];
+  /** Hero kenarlığı (yarı saydam accent). */
+  border: string;
+  /** Sağ üst radial glow rengi. */
+  glowColor: string;
+  /** Radial glow tepe opaklığı (0–1). */
+  glowPeak: number;
+  /** Hero ikon kutucuğu zemini. */
+  iconBg: string;
+  /** Hero ikon rengi. */
+  iconColor: string;
+  /** Hero büyük değer metni rengi. */
+  value: string;
+  /** Hero yumuşak renkli gölge rengi. */
+  shadowColor: string;
+}
+
 export interface RoleAccent {
-  /** Birincil aksan (butonlar, vurgu sayıları, aktif öğe). */
+  /** Birincil aksan (butonlar, aktif öğe). */
   accent: string;
-  /** Hover/parlak ton. */
+  /** Parlak/açık ton (vurgu sayı, ikon). */
   accentHover: string;
   /** Basılı/koyu ton. */
   accentPress: string;
-  /** Koyu zemin üstünde okunur açık ton (vurgu metin). */
+  /** Koyu zeminde okunur açık ton. */
   accentLight: string;
   /** İkon kutucuğu / çip dolgusu (yarı saydam). */
   accentMuted: string;
-  /** Çok hafif zemin ışıması. */
+  /** Çok hafif zemin. */
   accentSoft: string;
   /** İnce kenarlık (yarı saydam). */
   accentBorder: string;
-  /** Buton/aksan degrade — [açık, koyu]. */
-  gradient: readonly [string, string];
-  /** Hero kart degrade örtüsü — [tepe, orta, şeffaf]. */
-  gradientSoft: readonly [string, string, string];
-  /** Yumuşak glow rengi (gölge/ışıma). */
-  glow: string;
   /** Aksan dolgu üstündeki metin rengi. */
   onAccent: string;
+  /** Grafik çubuğu degradesi — [üst, alt]. */
+  bar: readonly [string, string];
+  /** Hero kart spesifikasyonu. */
+  hero: RoleAccentHero;
   /** ScreenBackground rol anahtarı (ambient spotlight). */
   bgRole: 'customer' | 'driver' | 'admin';
 }
@@ -46,10 +64,18 @@ const ORANGE: RoleAccent = {
   accentMuted: 'rgba(255, 107, 0, 0.16)',
   accentSoft: 'rgba(255, 107, 0, 0.08)',
   accentBorder: 'rgba(255, 107, 0, 0.45)',
-  gradient: ['#FF8A33', '#FF6B00'],
-  gradientSoft: ['rgba(255, 138, 51, 0.22)', 'rgba(255, 107, 0, 0.05)', 'transparent'],
-  glow: 'rgba(255, 107, 0, 0.45)',
   onAccent: '#0A0D12',
+  bar: ['#FF8A33', '#B34A00'],
+  hero: {
+    gradient: ['#2A1808', '#16110C', '#121620'],
+    border: 'rgba(255, 138, 51, 0.22)',
+    glowColor: '#FF6B00',
+    glowPeak: 0.30,
+    iconBg: 'rgba(255, 107, 0, 0.18)',
+    iconColor: '#FF8A33',
+    value: '#FF8A33',
+    shadowColor: '#FF6B00',
+  },
   bgRole: 'customer',
 };
 
@@ -63,10 +89,18 @@ const RED: RoleAccent = {
   accentMuted: 'rgba(239, 68, 68, 0.16)',
   accentSoft: 'rgba(239, 68, 68, 0.08)',
   accentBorder: 'rgba(239, 68, 68, 0.45)',
-  gradient: ['#F87171', '#DC2626'],
-  gradientSoft: ['rgba(248, 113, 113, 0.22)', 'rgba(239, 68, 68, 0.05)', 'transparent'],
-  glow: 'rgba(239, 68, 68, 0.45)',
   onAccent: '#FFFFFF',
+  bar: ['#F87171', '#991B1B'],
+  hero: {
+    gradient: ['#2A0C0C', '#160C0C', '#121620'],
+    border: 'rgba(248, 113, 113, 0.22)',
+    glowColor: '#EF4444',
+    glowPeak: 0.30,
+    iconBg: 'rgba(239, 68, 68, 0.18)',
+    iconColor: '#F87171',
+    value: '#F87171',
+    shadowColor: '#EF4444',
+  },
   bgRole: 'admin',
 };
 

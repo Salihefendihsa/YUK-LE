@@ -13,7 +13,7 @@ const toneStyles: Record<Tone, { bg: string; border: string; text: string }> = {
   warning: { bg: palette.warningBg, border: palette.goldBorder, text: palette.gold },
   error: { bg: palette.errorBg, border: palette.errorBorder, text: palette.error },
   info: { bg: palette.infoBg, border: palette.infoBorder, text: palette.info },
-  brand: { bg: palette.brandMuted, border: palette.brandBorder, text: palette.brand },
+  brand: { bg: palette.brandMuted, border: palette.brandBorder, text: palette.brandHover },
   neutral: { bg: palette.surface, border: palette.borderLight, text: palette.textSecondary },
 };
 

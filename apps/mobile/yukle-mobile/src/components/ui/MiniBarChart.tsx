@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import { palette } from '../../theme/colors';
 import { fontFamily, typography } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
@@ -11,14 +11,20 @@ type Props = {
   data: BarDatum[];
   /** Bar alani yuksekligi (etiketler haric). */
   height?: number;
-  /** Çubuk degrade üst rengi (rol aksanı). Varsayılan: marka turuncusu. */
+  /** Çubuk degrade üst rengi (rol aksanı). Varsayılan: mockup turuncusu. */
   colorTop?: string;
-  /** Çubuk degrade alt rengi (rol aksanı). Varsayılan: marka turuncusu. */
+  /** Çubuk degrade alt rengi (rol aksanı). Varsayılan: mockup koyu turuncu. */
   colorBottom?: string;
 };
 
-/** Hafif dikey bar grafik — react-native-svg ile, rol-renkli degrade dolgu, responsive genislik. */
-export function MiniBarChart({ data, height = 120, colorTop = palette.brandHover, colorBottom = palette.brand }: Props) {
+/** Yalnız ÜST köşeleri yuvarlatılmış dikdörtgen path'i (taban düz, eksene oturur). */
+function topRoundedBar(x: number, y: number, w: number, h: number, r: number): string {
+  const rad = Math.max(0, Math.min(r, w / 2, h));
+  return `M${x},${y + h} L${x},${y + rad} Q${x},${y} ${x + rad},${y} L${x + w - rad},${y} Q${x + w},${y} ${x + w},${y + rad} L${x + w},${y + h} Z`;
+}
+
+/** Hafif dikey bar grafik — react-native-svg ile, rol-renkli degrade dolgu, üst köşe yuvarlak. */
+export function MiniBarChart({ data, height = 120, colorTop = '#FF8A33', colorBottom = '#B34A00' }: Props) {
   const [width, setWidth] = useState(0);
 
   if (data.length === 0) {
@@ -39,7 +45,7 @@ export function MiniBarChart({ data, height = 120, colorTop = palette.brandHover
             <Defs>
               <LinearGradient id="barFill" x1="0" y1="0" x2="0" y2="1">
                 <Stop offset="0" stopColor={colorTop} stopOpacity={1} />
-                <Stop offset="1" stopColor={colorBottom} stopOpacity={0.85} />
+                <Stop offset="1" stopColor={colorBottom} stopOpacity={1} />
               </LinearGradient>
             </Defs>
             {data.map((d, i) => {
@@ -47,18 +53,8 @@ export function MiniBarChart({ data, height = 120, colorTop = palette.brandHover
               const barH = d.value > 0 ? Math.max(h, 3) : 0;
               const x = i * slot + (slot - barW) / 2;
               const y = height - barH;
-              return (
-                <Rect
-                  key={i}
-                  x={x}
-                  y={y}
-                  width={barW}
-                  height={barH}
-                  rx={4}
-                  fill="url(#barFill)"
-                  opacity={d.value > 0 ? 1 : 0}
-                />
-              );
+              if (barH <= 0) return null;
+              return <Path key={i} d={topRoundedBar(x, y, barW, barH, 5)} fill="url(#barFill)" />;
             })}
           </Svg>
         ) : null}
@@ -85,7 +81,7 @@ const styles = StyleSheet.create({
   value: {
     fontFamily: fontFamily.bold,
     fontSize: 12,
-    color: palette.brand,
+    color: palette.text,
   },
   label: {
     ...typography.caption,
