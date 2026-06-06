@@ -2,8 +2,6 @@ import { useState } from 'react'
 import { openConfirm } from '../../components/common/ConfirmModal'
 import '../shared/Page.css'
 
-const THEME_KEY = 'yukle-theme'
-
 export default function CustomerSettingsPage() {
   const [email, setEmail] = useState(true)
   const [sms, setSms] = useState(false)
@@ -13,15 +11,6 @@ export default function CustomerSettingsPage() {
   const [pwdCur, setPwdCur] = useState('')
   const [pwdNew, setPwdNew] = useState('')
   const [pwd2, setPwd2] = useState('')
-
-  function syncTheme(next: 'dark' | 'light') {
-    document.documentElement.dataset.theme = next
-    try {
-      localStorage.setItem(THEME_KEY, next)
-    } catch {
-      /* ignore */
-    }
-  }
 
   return (
     <div className="page-wrap">
@@ -45,21 +34,6 @@ export default function CustomerSettingsPage() {
           </label>
           <p className="muted" style={{ fontSize: 13, marginTop: 12 }}>
             Hangi olaylarda bildirim alacağınız ve sessiz saatler yakında hesabınıza bağlanacak.
-          </p>
-        </section>
-
-        <section className="card settings-card">
-          <h2>Tema</h2>
-          <div className="settings-actions">
-            <button type="button" className="btn btn-primary btn-sm" onClick={() => syncTheme('light')}>
-              Açık
-            </button>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => syncTheme('dark')}>
-              Koyu
-            </button>
-          </div>
-          <p className="muted" style={{ fontSize: 13, marginTop: 8 }}>
-            Üst çubuktaki güneş/ay ile de değiştirebilirsiniz. Tercih tarayıcıda saklanır.
           </p>
         </section>
 

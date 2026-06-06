@@ -4,8 +4,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { getNotifications, getUnreadCount, markNotificationRead, readAllNotifications } from '../../api/notifications'
 import './TopBar.css'
 
-const THEME_KEY = 'yukle-theme'
-
 interface TopBarProps {
   onMenuToggle: () => void
   pageTitle: string
@@ -30,26 +28,12 @@ export default function TopBar({ onMenuToggle, pageTitle }: TopBarProps) {
   const [q, setQ] = useState('')
   const [cat, setCat] = useState<'all' | 'loads' | 'payments' | 'messages' | 'alerts'>('all')
   const [profileOpen, setProfileOpen] = useState(false)
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    try {
-      const v = localStorage.getItem(THEME_KEY) as 'dark' | 'light' | null
-      if (v === 'light' || v === 'dark') return v
-    } catch {
-      /* ignore */
-    }
-    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: light)').matches) return 'light'
-    return 'dark'
-  })
   const profileRef = useRef<HTMLDivElement>(null)
 
+  // Tema tek koyu görünüme sabit — tema değiştirme kaldırıldı.
   useEffect(() => {
-    document.documentElement.dataset.theme = theme
-    try {
-      localStorage.setItem(THEME_KEY, theme)
-    } catch {
-      /* ignore */
-    }
-  }, [theme])
+    document.documentElement.dataset.theme = 'dark'
+  }, [])
 
   useEffect(() => {
     const load = async () => {
@@ -134,15 +118,6 @@ export default function TopBar({ onMenuToggle, pageTitle }: TopBarProps) {
       </div>
 
       <div className="topbar-right">
-        <button
-          type="button"
-          className="icon-btn theme-toggle"
-          aria-label={theme === 'dark' ? 'Açık tema' : 'Koyu tema'}
-          title={theme === 'dark' ? 'Açık tema' : 'Koyu tema'}
-          onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-        >
-          {theme === 'dark' ? '☀️' : '🌙'}
-        </button>
         <button className="icon-btn" aria-label="Bildirimler" title="Bildirimler" onClick={() => setOpen(true)} style={{ position: 'relative' }}>
           🔔
           {unread > 0 ? (
