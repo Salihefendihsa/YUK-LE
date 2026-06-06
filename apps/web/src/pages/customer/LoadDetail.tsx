@@ -8,6 +8,7 @@ import type { Bid, Load, LoadStatus } from '../../api/types'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
 import LoadChatPanel from '../../components/chat/LoadChatPanel'
 import DeliveryQrSection from '../../components/delivery/DeliveryQrSection'
+import EscrowCard from '../../components/payment/EscrowCard'
 import { formatCurrencyTRY, normalizeArray } from '../../utils/format'
 import '../shared/Page.css'
 
@@ -233,6 +234,11 @@ export default function CustomerLoadDetailPage() {
           </div>
         </div>
       ) : null}
+
+      {load && load.status !== 'Cancelled' ? (
+        <EscrowCard loadId={id} loadStatus={load.status} view="customer" />
+      ) : null}
+
       {showChat ? <LoadChatPanel loadId={id} /> : null}
 
       {showRating ? (

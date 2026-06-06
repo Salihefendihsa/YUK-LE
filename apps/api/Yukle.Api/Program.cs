@@ -168,6 +168,10 @@ builder.Services.AddHostedService<Yukle.Api.BackgroundServices.FuelPriceUpdateWo
 builder.Services.AddHostedService<Yukle.Api.BackgroundServices.AdminSeederJob>();
 builder.Services.AddHostedService<Yukle.Api.BackgroundServices.DemoProvaSeederJob>();
 
+// ── Emanet Backfill ───────────────────────────────────────────────────────
+// Bu özellik öncesi atanmış/yolda yüklere idempotent şekilde emanet üretir.
+builder.Services.AddHostedService<Yukle.Api.BackgroundServices.PaymentBackfillJob>();
+
 // ── Phase 4.3 · U-ETDS Background Worker ─────────────────────────────────
 // Outbox tablosundaki gönderilmeyi bekleyen bakanlık loglarını asenkron temizler.
 builder.Services.AddHostedService<Yukle.Api.BackgroundServices.UetdsBackgroundWorker>();

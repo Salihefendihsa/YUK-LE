@@ -1,0 +1,83 @@
+.escrow-card {
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.escrow-card.status-held {
+  border-color: rgba(255, 154, 72, 0.35);
+}
+.escrow-card.status-released {
+  border-color: rgba(95, 208, 164, 0.35);
+}
+
+.escrow-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.escrow-title {
+  font-size: 15px;
+  margin: 0;
+}
+
+.escrow-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.escrow-badge.held {
+  color: #ffb454;
+  border-color: rgba(255, 154, 72, 0.4);
+  background: rgba(255, 154, 72, 0.12);
+}
+.escrow-badge.released {
+  color: #5fd0a4;
+  border-color: rgba(95, 208, 164, 0.35);
+  background: rgba(95, 208, 164, 0.12);
+}
+.escrow-badge.refunded {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.escrow-lead {
+  font-size: 13px;
+  margin: 6px 0 12px;
+  line-height: 1.5;
+}
+.escrow-hint {
+  font-size: 13px;
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+
+.escrow-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(9, 11, 14, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.escrow-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+.escrow-row.total {
+  border-top: 1px dashed rgba(255, 255, 255, 0.12);
+  padding-top: 6px;
+  margin-top: 2px;
+  font-weight: 700;
+}
+.escrow-row.total.customer {
+  color: #ffb454;
+}
+
+.escrow-foot {
+  font-size: 11px;
+  margin: 10px 0 0;
+}

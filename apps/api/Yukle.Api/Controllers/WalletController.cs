@@ -16,6 +16,10 @@ public class WalletController(YukleDbContext context) : ControllerBase
         => context.PaymentTransactions.AsNoTracking()
             .Where(p => context.Loads.Any(l => l.Id == p.LoadId && l.UserId == userId));
 
+    // Alias: bazı istemciler /Wallet/me bekliyor — özet ile aynı yanıtı döner.
+    [HttpGet("me")]
+    public Task<IActionResult> GetMe() => GetSummary();
+
     [HttpGet]
     public async Task<IActionResult> GetSummary()
     {

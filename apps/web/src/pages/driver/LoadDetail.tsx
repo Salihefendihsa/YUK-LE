@@ -5,6 +5,7 @@ import { getLoadMatch } from '../../api/matching'
 import { submitBid } from '../../api/bids'
 import type { Load, MatchedLoad } from '../../api/types'
 import LoadChatPanel from '../../components/chat/LoadChatPanel'
+import EscrowCard from '../../components/payment/EscrowCard'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
 import { formatCurrencyTRY } from '../../utils/format'
 import { formatLoadTypeLabel } from '../../utils/displayLabels'
@@ -91,6 +92,10 @@ export default function DriverLoadDetailPage() {
             </div>
           </div>
         </>
+      ) : null}
+
+      {load && (load.status === 'Assigned' || load.status === 'OnWay' || load.status === 'Arrived' || load.status === 'Delivered') ? (
+        <EscrowCard loadId={id} loadStatus={load.status} view="driver" />
       ) : null}
 
       {match ? (
