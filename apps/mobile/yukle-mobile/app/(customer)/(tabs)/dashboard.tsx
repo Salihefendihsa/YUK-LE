@@ -24,12 +24,15 @@ import { useNotificationsStore } from '../../../src/store/notifications.store';
 import { palette } from '../../../src/theme/colors';
 import { fontFamily, typography } from '../../../src/theme/typography';
 import { spacing } from '../../../src/theme/spacing';
+import { useRoleAccent } from '../../../src/theme/useRoleAccent';
+import type { RoleAccent } from '../../../src/theme/roleAccent';
 import { formatCurrencyTRY, formatDateTR } from '../../../src/utils/format';
 import { getLoadStatusPill } from '../../../src/utils/statusPills';
 
 export default function CustomerDashboardScreen() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const accent = useRoleAccent();
   const hubError = useNotificationsStore((s) => s.hubError);
   const firstName = user?.fullName?.trim().split(/\s+/)[0] ?? 'Müşteri';
 
@@ -87,7 +90,7 @@ export default function CustomerDashboardScreen() {
       style={styles.transparent}
       contentContainerStyle={styles.scroll}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accent.accent} />
       }
     >
       <ScreenHeader
@@ -95,7 +98,7 @@ export default function CustomerDashboardScreen() {
         subtitle="Canli istatistikler ve son ilanlar"
               right={
                 <PressableScale
-                  style={styles.createBtn}
+                  style={[styles.createBtn, { backgroundColor: accent.accent }]}
                   onPress={() => router.push('/(customer)/(tabs)/create-load')}
                 >
                   <Text style={styles.createBtnText}>+ İlan</Text>
@@ -107,10 +110,10 @@ export default function CustomerDashboardScreen() {
       {error ? <AlertBanner message={error} tone="error" /> : null}
 
       <FadeInView>
-        <Card variant="gradient" padding={5} style={styles.hero}>
+        <Card variant="gradient" padding={5} accent={accent} style={styles.hero}>
         <View style={styles.heroTop}>
           <View style={styles.heroIcon}>
-            <Ionicons name="business-outline" size={26} color={palette.brand} />
+            <Ionicons name="business-outline" size={26} color={accent.accent} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.heroHello}>Merhaba, {firstName}</Text>
@@ -125,13 +128,14 @@ export default function CustomerDashboardScreen() {
 
       <FadeInView delay={60}>
       <View style={styles.grid}>
-        <StatCard label="Aktif İlanlar" value={String(stats?.activeLoadCount ?? 0)} icon="cube-outline" />
-        <StatCard label="Yolda Yükler" value={String(stats?.onWayLoadCount ?? 0)} icon="navigate-outline" />
-        <StatCard label="Teslim Edilen" value={String(stats?.deliveredLoadCount ?? 0)} icon="checkmark-done-outline" />
+        <StatCard label="Aktif İlanlar" value={String(stats?.activeLoadCount ?? 0)} icon="cube-outline" accent={accent} />
+        <StatCard label="Yolda Yükler" value={String(stats?.onWayLoadCount ?? 0)} icon="navigate-outline" accent={accent} />
+        <StatCard label="Teslim Edilen" value={String(stats?.deliveredLoadCount ?? 0)} icon="checkmark-done-outline" accent={accent} />
         <StatCard
           label="Toplam Harcama"
           value={formatCurrencyTRY(stats?.totalSpent ?? 0)}
           icon="wallet-outline"
+          accent={accent}
           wide
         />
       </View>
@@ -139,14 +143,14 @@ export default function CustomerDashboardScreen() {
 
       <FadeInView delay={100}>
         <View style={styles.showcaseRow}>
-          <Card variant="gradient" padding={4} style={styles.showcaseCard}>
+          <Card variant="gradient" padding={4} accent={accent} style={styles.showcaseCard}>
             <View style={styles.showcaseHead}>
-              <Ionicons name="star" size={16} color={palette.brand} />
+              <Ionicons name="star" size={16} color={accent.accent} />
               <Text style={styles.showcaseTitle}>Performans skorum</Text>
             </View>
             {rating && rating.count > 0 ? (
               <>
-                <Text style={styles.scoreBig}>{rating.average.toFixed(1)}</Text>
+                <Text style={[styles.scoreBig, { color: accent.accent }]}>{rating.average.toFixed(1)}</Text>
                 <Text style={styles.showcaseMeta}>{rating.count} değerlendirme</Text>
               </>
             ) : (
@@ -154,9 +158,9 @@ export default function CustomerDashboardScreen() {
             )}
           </Card>
 
-          <Card variant="gradient" padding={4} style={styles.showcaseCard}>
+          <Card variant="gradient" padding={4} accent={accent} style={styles.showcaseCard}>
             <View style={styles.showcaseHead}>
-              <Ionicons name="calendar-outline" size={16} color={palette.brand} />
+              <Ionicons name="calendar-outline" size={16} color={accent.accent} />
               <Text style={styles.showcaseTitle}>Bu hafta</Text>
             </View>
             <View style={styles.weekGrid}>
@@ -171,14 +175,14 @@ export default function CustomerDashboardScreen() {
       </FadeInView>
 
       <FadeInView delay={140}>
-        <Card variant="gradient" padding={4} style={styles.chartCard}>
+        <Card variant="gradient" padding={4} accent={accent} style={styles.chartCard}>
           <View style={styles.showcaseHead}>
-            <Ionicons name="bar-chart-outline" size={16} color={palette.brand} />
+            <Ionicons name="bar-chart-outline" size={16} color={accent.accent} />
             <Text style={styles.showcaseTitle}>Aylık aktivite</Text>
           </View>
           {monthly.some((m) => m.value > 0) ? (
             <>
-              <MiniBarChart data={monthly} />
+              <MiniBarChart data={monthly} colorTop={accent.accentHover} colorBottom={accent.accent} />
               <Text style={styles.chartNote}>Son 6 ayda teslim edilen ilan sayısı</Text>
             </>
           ) : (
@@ -188,9 +192,9 @@ export default function CustomerDashboardScreen() {
       </FadeInView>
 
       <FadeInView delay={180}>
-        <Card variant="gradient" padding={4} style={styles.driversCard}>
+        <Card variant="gradient" padding={4} accent={accent} style={styles.driversCard}>
           <View style={styles.showcaseHead}>
-            <Ionicons name="people-outline" size={16} color={palette.brand} />
+            <Ionicons name="people-outline" size={16} color={accent.accent} />
             <Text style={styles.showcaseTitle}>Sık çalıştığın şoförler</Text>
           </View>
           {topDrivers.length === 0 ? (
@@ -212,9 +216,9 @@ export default function CustomerDashboardScreen() {
       </FadeInView>
 
       <FadeInView delay={220}>
-        <Card variant="gradient" padding={4} style={styles.chartCard}>
+        <Card variant="gradient" padding={4} accent={accent} style={styles.chartCard}>
           <View style={styles.showcaseHead}>
-            <Ionicons name="bulb-outline" size={16} color={palette.brand} />
+            <Ionicons name="bulb-outline" size={16} color={accent.accent} />
             <Text style={styles.showcaseTitle}>Akıllı öneriler</Text>
             <View style={styles.soonBadge}>
               <Text style={styles.soonBadgeText}>Yakında</Text>
@@ -351,17 +355,21 @@ function StatCard({
   label,
   value,
   icon,
+  accent,
   wide,
 }: {
   label: string;
   value: string;
   icon: keyof typeof Ionicons.glyphMap;
+  accent: RoleAccent;
   wide?: boolean;
 }) {
   return (
-    <Card variant="gradient" padding={4} style={wide ? styles.statWide : styles.stat}>
-      <Ionicons name={icon} size={18} color={palette.brand} style={{ marginBottom: spacing[2] }} />
-      <Text style={styles.statValue} numberOfLines={1}>
+    <Card variant="gradient" padding={4} accent={accent} style={wide ? styles.statWide : styles.stat}>
+      <View style={[styles.statIconTile, { backgroundColor: accent.accentMuted, borderColor: accent.accentBorder }]}>
+        <Ionicons name={icon} size={18} color={accent.accent} />
+      </View>
+      <Text style={[styles.statValue, { color: accent.accent }]} numberOfLines={1}>
         {value}
       </Text>
       <Text style={styles.statLabel}>{label}</Text>
@@ -408,9 +416,18 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] },
   stat: { width: '47%', flexGrow: 1, flexShrink: 1, minWidth: 0, maxWidth: '48%' },
   statWide: { width: '100%' },
+  statIconTile: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing[2],
+  },
   statValue: {
     fontFamily: fontFamily.bold,
-    fontSize: 17,
+    fontSize: 20,
     color: palette.brand,
     marginBottom: spacing[1],
   },

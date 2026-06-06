@@ -16,17 +16,21 @@ import { palette } from '../../../src/theme/colors';
 import { typography } from '../../../src/theme/typography';
 import { space, spacing } from '../../../src/theme/spacing';
 import { radius } from '../../../src/theme/radius';
+import { useRoleAccent } from '../../../src/theme/useRoleAccent';
+import type { RoleAccent } from '../../../src/theme/roleAccent';
 import { formatCurrencyTRY } from '../../../src/utils/format';
 import { formatSystemServiceLabel, getSystemServicePill } from '../../../src/utils/statusPills';
 
 function KpiCard({
   label,
   value,
+  accent,
   danger,
   badge,
 }: {
   label: string;
   value: string;
+  accent: RoleAccent;
   danger?: boolean;
   badge?: string;
 }) {
@@ -35,8 +39,8 @@ function KpiCard({
       <View style={styles.kpiHead}>
         <Text style={styles.kpiLabel}>{label}</Text>
         {badge ? (
-          <View style={styles.kpiBadge}>
-            <Text style={styles.kpiBadgeText}>{badge}</Text>
+          <View style={[styles.kpiBadge, { backgroundColor: accent.accentMuted, borderColor: accent.accentBorder }]}>
+            <Text style={[styles.kpiBadgeText, { color: accent.accent }]}>{badge}</Text>
           </View>
         ) : null}
       </View>
@@ -47,6 +51,7 @@ function KpiCard({
 
 export default function AdminDashboardScreen() {
   const user = useAuthStore((s) => s.user);
+  const accent = useRoleAccent();
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -87,7 +92,7 @@ export default function AdminDashboardScreen() {
     <ScreenScroll
       contentContainerStyle={styles.scroll}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.brand} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accent.accent} />
       }
     >
       <ScreenHeader
@@ -100,10 +105,10 @@ export default function AdminDashboardScreen() {
       {stats ? (
         <>
           <FadeInView>
-          <Card variant="glass" padding={5} style={styles.hero}>
+          <Card variant="gradient" padding={5} accent={accent} style={styles.hero}>
             <View style={styles.heroTop}>
-              <View style={styles.heroIcon}>
-                <Ionicons name="shield-checkmark" size={26} color={palette.gold} />
+              <View style={[styles.heroIcon, { backgroundColor: accent.accentMuted, borderColor: accent.accentBorder }]}>
+                <Ionicons name="shield-checkmark" size={26} color={accent.accent} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.heroTitle}>Operasyon özeti</Text>
@@ -129,17 +134,19 @@ export default function AdminDashboardScreen() {
           </View>
 
           <View style={styles.kpiGrid}>
-            <KpiCard label="Toplam kullanıcı" value={String(stats.totalUsers)} />
-            <KpiCard label="Aktif ilan" value={String(stats.activeLoadCount)} badge="Yayında" />
+            <KpiCard label="Toplam kullanıcı" value={String(stats.totalUsers)} accent={accent} />
+            <KpiCard label="Aktif ilan" value={String(stats.activeLoadCount)} accent={accent} badge="Yayında" />
             <KpiCard
               label="Bekleyen belge onayı"
               value={String(stats.pendingReviewCount)}
+              accent={accent}
               danger={stats.pendingReviewCount > 0}
               badge="Kritik"
             />
             <KpiCard
               label="Toplam islem hacmi"
               value={formatCurrencyTRY(stats.totalTransactionVolume)}
+              accent={accent}
             />
           </View>
 
