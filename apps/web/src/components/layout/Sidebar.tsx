@@ -38,19 +38,19 @@ const DRIVER_NAV: NavItem[] = [
 ]
 
 const ADMIN_NAV: NavItem[] = [
-  { label: '📊 Genel Bakış', path: '/admin/dashboard', icon: '📊' },
-  { label: '📄 Belge Kuyruğu', path: '/admin/reviews', icon: '📄' },
-  { label: '🚛 Şoförler', path: '/admin/drivers', icon: '🚛' },
-  { label: '🏢 Müşteriler', path: '/admin/customers', icon: '🏢' },
-  { label: '📦 İlanlar', path: '/admin/loads', icon: '📦' },
-  { label: '💬 Tüm Sohbetler', path: '/admin/chats', icon: '💬' },
-  { label: '🎧 Destek Talepleri', path: '/admin/support', icon: '🎧' },
-  { label: '💳 Ödemeler', path: '/admin/payments', icon: '💳' },
-  { label: '👥 Tüm Kullanıcılar', path: '/admin/users', icon: '👥' },
-  { label: '🔧 Sistem Durumu', path: '/admin/system', icon: '🔧' },
-  { label: '📋 Loglar', path: '/admin/logs', icon: '📋' },
-  { label: '📡 Canlı Takip', path: '/admin/tracking', icon: '📡' },
-  { label: '⭐ Puanlar', path: '/admin/ratings', icon: '⭐' },
+  { label: 'Genel Bakış', path: '/admin/dashboard', icon: '📊' },
+  { label: 'Belge Kuyruğu', path: '/admin/reviews', icon: '📄' },
+  { label: 'Şoförler', path: '/admin/drivers', icon: '🚛' },
+  { label: 'Müşteriler', path: '/admin/customers', icon: '🏢' },
+  { label: 'İlanlar', path: '/admin/loads', icon: '📦' },
+  { label: 'Tüm Sohbetler', path: '/admin/chats', icon: '💬' },
+  { label: 'Destek Talepleri', path: '/admin/support', icon: '🎧' },
+  { label: 'Ödemeler', path: '/admin/payments', icon: '💳' },
+  { label: 'Tüm Kullanıcılar', path: '/admin/users', icon: '👥' },
+  { label: 'Sistem Durumu', path: '/admin/system', icon: '🔧' },
+  { label: 'Loglar', path: '/admin/logs', icon: '📋' },
+  { label: 'Canlı Takip', path: '/admin/tracking', icon: '📡' },
+  { label: 'Puanlar', path: '/admin/ratings', icon: '⭐' },
 ]
 
 function settingsPath(role: string | undefined) {
