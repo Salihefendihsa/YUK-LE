@@ -51,6 +51,12 @@ export const CUSTOMER_DRAWER_ITEMS: DrawerMenuItem[] = [
     activeMatch: 'analytics',
   },
   {
+    href: '/(customer)/(tabs)/support',
+    label: 'Destek',
+    icon: 'headset-outline',
+    activeMatch: 'support',
+  },
+  {
     href: '/notifications',
     label: 'Bildirimler',
     icon: 'notifications-outline',
@@ -83,6 +89,12 @@ export const DRIVER_DRAWER_ITEMS: DrawerMenuItem[] = [
   },
   { href: '/(driver)/(tabs)/bids', label: 'Tekliflerim', icon: 'pricetag-outline', activeMatch: 'bids' },
   { href: '/(driver)/(tabs)/history', label: 'Geçmiş', icon: 'time-outline', activeMatch: 'history' },
+  {
+    href: '/(driver)/(tabs)/support',
+    label: 'Destek',
+    icon: 'headset-outline',
+    activeMatch: 'support',
+  },
   {
     href: '/notifications',
     label: 'Bildirimler',
@@ -117,6 +129,12 @@ export const ADMIN_DRAWER_ITEMS: DrawerMenuItem[] = [
     activeMatch: 'blocked-messages',
   },
   { href: '/(admin)/(tabs)/chats', label: 'Sohbetler', icon: 'chatbubbles-outline', activeMatch: 'chats' },
+  {
+    href: '/(admin)/(tabs)/support',
+    label: 'Destek Talepleri',
+    icon: 'headset-outline',
+    activeMatch: 'support',
+  },
   { href: '/(admin)/(tabs)/ratings', label: 'Puanlar', icon: 'star-outline', activeMatch: 'ratings' },
   {
     href: '/(admin)/(tabs)/tracking',
