@@ -1,3 +1,6 @@
+import { useEffect, useState } from 'react'
+import { getUserRatings } from '../../api/ratings'
+import { useAuthStore } from '../../store/auth.store'
 import '../shared/Page.css'
 
 function downloadCsv(name: string, rows: string[][]) {
@@ -15,6 +18,20 @@ function downloadCsv(name: string, rows: string[][]) {
 export default function CustomerAnalyticsPage() {
   const months = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz']
   const spend = [8200, 9100, 7800, 12450, 9900, 11200]
+
+  // Memnuniyet puanı: Dashboard ile AYNI gerçek kaynaktan (Ratings) — sabit/demo değil.
+  const userId = useAuthStore((s) => s.user?.userId)
+  const [rating, setRating] = useState<{ average: number; count: number } | null>(null)
+
+  useEffect(() => {
+    if (!userId) return
+    getUserRatings(userId)
+      .then((r) => {
+        const data = r as { average?: number; count?: number } | null
+        setRating(data ? { average: Number(data.average ?? 0), count: Number(data.count ?? 0) } : null)
+      })
+      .catch(() => setRating(null))
+  }, [userId])
 
   return (
     <div className="page-wrap">
@@ -66,10 +83,23 @@ export default function CustomerAnalyticsPage() {
 
         <section className="card">
           <h2>Memnuniyet puanınız</h2>
-          <p style={{ fontSize: 42, fontWeight: 800, margin: '8px 0', color: 'var(--color-brand)' }}>4.8</p>
-          <p className="muted" style={{ fontSize: 13 }}>
-            Son 90 gün ortalaması (demo)
-          </p>
+          {rating && rating.count > 0 ? (
+            <>
+              <p style={{ fontSize: 42, fontWeight: 800, margin: '8px 0', color: 'var(--color-brand)' }}>
+                {rating.average.toFixed(1)}
+              </p>
+              <p className="muted" style={{ fontSize: 13 }}>
+                {rating.count} değerlendirme ortalaması
+              </p>
+            </>
+          ) : (
+            <>
+              <p style={{ fontSize: 42, fontWeight: 800, margin: '8px 0', color: 'var(--color-text-muted)' }}>—</p>
+              <p className="muted" style={{ fontSize: 13 }}>
+                Henüz değerlendirme yok
+              </p>
+            </>
+          )}
         </section>
 
         <section className="card">
