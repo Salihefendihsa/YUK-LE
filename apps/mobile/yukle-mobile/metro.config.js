@@ -5,6 +5,24 @@ const { getDefaultConfig } = require('expo/metro-config');
 const projectRoot = __dirname;
 const config = getDefaultConfig(projectRoot);
 
+// ── Monorepo: @navlonix/shared kaynagini (packages/shared/src) coz ──────────
+// Metro symlink workspace paketlerini varsayilan cozmez; watchFolders ile
+// shared kaynagini izle, extraNodeModules ile bare import'u dizine esle,
+// nodeModulesPaths ile cozumleme yollarini acikca belirt.
+const workspaceRoot = path.resolve(projectRoot, '../../..');
+const sharedPkg = path.resolve(workspaceRoot, 'packages', 'shared');
+const sharedRoot = path.join(sharedPkg, 'src');
+
+config.watchFolders = [...(config.watchFolders ?? []), sharedPkg];
+config.resolver.nodeModulesPaths = [
+  path.resolve(projectRoot, 'node_modules'),
+  path.resolve(workspaceRoot, 'node_modules'),
+];
+config.resolver.extraNodeModules = {
+  ...(config.resolver.extraNodeModules ?? {}),
+  '@navlonix/shared': sharedRoot,
+};
+
 const signalrBrowser = path.join(
   projectRoot,
   'node_modules',

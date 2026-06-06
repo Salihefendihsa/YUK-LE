@@ -1,6 +1,7 @@
+import type { PaymentStatus } from '@navlonix/shared'
 import { apiClient } from './client'
 
-export type PaymentStatus = 'Held' | 'Released' | 'Refunded'
+export type { PaymentStatus }
 
 export interface PaymentInfo {
   loadId: string

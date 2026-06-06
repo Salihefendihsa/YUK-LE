@@ -1,0 +1,9 @@
+{
+  "name": "@navlonix/shared",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Navlonix web ↔ mobil ortak sözleşme: domain tipleri, status/label mantığı, format util, SignalR auth deseni. Kaynak (TS) doğrudan tüketilir; build adımı yok.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "sideEffects": false
+}

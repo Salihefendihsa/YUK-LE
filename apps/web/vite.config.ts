@@ -10,6 +10,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
+      // Daha spesifik alias önce: '@navlonix/shared' '@' alias'ından önce eşleşir.
+      '@navlonix/shared': path.resolve(__dirname, '../../packages/shared/src'),
       '@': path.resolve(__dirname, 'src'),
     },
   },
