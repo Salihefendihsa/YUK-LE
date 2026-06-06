@@ -1,7 +1,11 @@
+import type { SupportSenderRole, SupportStatus } from '@navlonix/shared'
+import { slaRemainingLabel, supportStatusLabel } from '@navlonix/shared'
 import { apiClient } from './client'
 
-export type SupportStatus = 'Open' | 'Answered' | 'Resolved' | 'Closed'
-export type SupportSenderRole = 'User' | 'Admin' | 'AI'
+export type { SupportSenderRole, SupportStatus }
+// Durum etiketi + SLA metni tek kaynaktan (platform-bağımsız). Mevcut çağrı
+// yolları (../api/support) korunsun diye buradan re-export edilir.
+export { slaRemainingLabel, supportStatusLabel }
 
 export interface SupportMessage {
   id: string
@@ -79,25 +83,3 @@ export async function getSupportTicket(id: string): Promise<SupportTicketDetail>
   return res.data
 }
 
-const STATUS_LABELS: Record<SupportStatus, string> = {
-  Open: 'Operatör Bekliyor',
-  Answered: 'Yanıtlandı',
-  Resolved: 'Çözüldü',
-  Closed: 'Kapatıldı',
-}
-
-export function supportStatusLabel(status: SupportStatus): string {
-  return STATUS_LABELS[status] ?? status
-}
-
-/** SLA için kalan süreyi insan-okur biçimde verir. Geçmişse "gecikmiş" döner. */
-export function slaRemainingLabel(slaDeadline: string, status: SupportStatus): string {
-  if (status === 'Resolved' || status === 'Closed') return 'Tamamlandı'
-  const ms = new Date(slaDeadline).getTime() - Date.now()
-  if (Number.isNaN(ms)) return ''
-  if (ms <= 0) return 'SLA gecikmiş'
-  const hours = Math.floor(ms / 3_600_000)
-  const mins = Math.floor((ms % 3_600_000) / 60_000)
-  if (hours >= 1) return `SLA: ~${hours} sa ${mins} dk kaldı`
-  return `SLA: ~${mins} dk kaldı`
-}

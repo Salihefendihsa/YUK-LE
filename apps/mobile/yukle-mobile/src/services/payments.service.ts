@@ -1,10 +1,11 @@
+import type { PaymentStatus } from '@navlonix/shared';
 import { apiClient } from './api.client';
 
 /**
  * Emanet (escrow) ödeme servisi — web api/payments.ts ile birebir sözleşme.
  * Mock ödeme; gerçek tahsilat yok. Mevcut /Payments/* endpoint'leri, yeni API yok.
  */
-export type PaymentStatus = 'Held' | 'Released' | 'Refunded';
+export type { PaymentStatus };
 
 export interface PaymentInfo {
   loadId: string;

@@ -30,6 +30,11 @@ build/
 project.lock.json
 project.fragment.lock.json
 
+# Navlonix monorepo ortak paketi — NuGet 'packages' yoksay kuralından muaf tut.
+!/packages/
+!/packages/shared/
+!/packages/shared/**
+
 # Visual Studio
 .vs/
 *.sln.ide/

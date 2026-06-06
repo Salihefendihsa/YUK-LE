@@ -1,3 +1,14 @@
+// Ortak (web ↔ mobil birebir) tipler @navlonix/shared'den; mevcut çağrı yolları
+// (../api/types) korunsun diye buradan re-export edilir.
+import type {
+  CustomerDashboard,
+  LoadStatus,
+  LoadTypeValue,
+  VehicleTypeValue,
+} from '@navlonix/shared'
+
+export type { CustomerDashboard, LoadStatus, LoadTypeValue, VehicleTypeValue }
+
 // ── Auth ──────────────────────────────────────────────────────────────
 export interface LoginRequest {
   phone: string
@@ -51,13 +62,7 @@ export interface LoginResponse {
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────
-export interface CustomerDashboard {
-  activeLoadCount: number
-  onWayLoadCount: number
-  deliveredLoadCount: number
-  totalSpent: number
-}
-
+// CustomerDashboard @navlonix/shared'dan (üstte re-export).
 export interface DriverDashboard {
   activeOffersCount: number
   completedLoadsCount: number
@@ -66,7 +71,7 @@ export interface DriverDashboard {
 }
 
 // ── Loads ─────────────────────────────────────────────────────────────
-export type LoadStatus = 'Active' | 'Assigned' | 'OnWay' | 'Arrived' | 'Delivered' | 'Cancelled'
+// LoadStatus @navlonix/shared'dan (üstte re-export).
 // Backend enum üye adlarıyla birebir hizalı (Yukle.Api/Models/Enums.cs).
 export type VehicleType =
   | 'TIR'
@@ -100,8 +105,7 @@ export type LoadType =
   | 'Kimyasal'
 
 // Backend System.Text.Json enum'ları integer index bekler (mobil paritesi).
-export type VehicleTypeValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11
-export type LoadTypeValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15
+// VehicleTypeValue / LoadTypeValue @navlonix/shared'dan (üstte re-export).
 
 export interface Load {
   id: string

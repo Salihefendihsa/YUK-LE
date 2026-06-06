@@ -1,10 +1,7 @@
-export type LoadStatus =
-  | 'Active'
-  | 'Assigned'
-  | 'OnWay'
-  | 'Arrived'
-  | 'Delivered'
-  | 'Cancelled';
+import type { LoadStatus } from '@navlonix/shared';
+
+// Ortak (web ↔ mobil birebir) tip; mevcut çağrı yolları korunsun diye re-export.
+export type { LoadStatus };
 
 export interface Load {
   id: string;

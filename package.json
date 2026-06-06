@@ -1,0 +1,6 @@
+{
+  "name": "navlonix-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Navlonix monorepo kök işareti. Ortak kod packages/shared altında; app'ler kaynak-alias ile tüketir (Vite resolve.alias · Metro extraNodeModules + watchFolders · tsconfig paths). App'ler bağımsız kurulur (kendi node_modules). NOT: npm 'workspaces' alanı bilerek EKLENMEDİ — eklenince npx, tsc'yi monorepo köküne çözümleyip yerel typescript'i bulamıyor (npx tsc iş akışı bozuluyor). Alias yaklaşımı workspaces'e ihtiyaç duymaz."
+}

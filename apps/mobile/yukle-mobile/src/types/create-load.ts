@@ -1,10 +1,8 @@
+import type { LoadTypeValue, VehicleTypeValue } from '@navlonix/shared';
 import type { Load } from './load';
 
-/** API enum: VehicleType (0..11 — Yukle.Api/Models/Enums.cs, sona eklemeli) */
-export type VehicleTypeValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
-
-/** API enum: LoadType (0..15 — Yukle.Api/Models/Enums.cs, sona eklemeli) */
-export type LoadTypeValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
+// Ortak (web ↔ mobil birebir) tipler; mevcut çağrı yolları korunsun diye re-export.
+export type { LoadTypeValue, VehicleTypeValue };
 
 export interface CreateLoadPayload {
   fromCity: string;

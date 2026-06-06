@@ -17,6 +17,8 @@
     "jsx": "react-jsx",
     "ignoreDeprecations": "5.0",
     "paths": {
+      "@navlonix/shared": ["../../packages/shared/src/index.ts"],
+      "@navlonix/shared/*": ["../../packages/shared/src/*"],
       "@/*": ["./src/*"]
     },
 
