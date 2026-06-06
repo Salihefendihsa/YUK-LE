@@ -10,6 +10,10 @@ export interface PaymentInfo {
   customerTotal: number
   commissionRate: number
   commissionAmount: number
+  customerCommission: number
+  customerCommissionRate: number
+  driverCommission: number
+  driverCommissionRate: number
   withholding: number
   netAmount: number
   status: PaymentStatus

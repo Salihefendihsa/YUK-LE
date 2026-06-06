@@ -68,13 +68,30 @@
   font-size: 13px;
 }
 .escrow-row.total {
-  border-top: 1px dashed rgba(255, 255, 255, 0.12);
-  padding-top: 6px;
-  margin-top: 2px;
+  padding-top: 4px;
   font-weight: 700;
 }
 .escrow-row.total.customer {
   color: #ffb454;
+}
+.escrow-row.total.driver {
+  color: #5fd0a4;
+}
+.escrow-row .plus {
+  color: #ffb454;
+}
+.escrow-row .minus {
+  color: #ff8a8a;
+}
+.escrow-row.platform {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.escrow-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 4px 0;
 }
 
 .escrow-foot {

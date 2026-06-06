@@ -20,8 +20,16 @@ public class PaymentInfoDto
     /// <summary>Toplam platform komisyon oranı (şoför + müşteri), ör. 0.04 = %4.</summary>
     public decimal  CommissionRate   { get; set; }
 
-    /// <summary>Toplam platform komisyon tutarı (platform geliri).</summary>
+    /// <summary>Toplam platform komisyon tutarı (platform geliri = müşteri payı + şoför payı).</summary>
     public decimal  CommissionAmount { get; set; }
+
+    /// <summary>Müşteri hizmet bedeli (brüt üzerine eklenen pay).</summary>
+    public decimal  CustomerCommission { get; set; }
+    public decimal  CustomerCommissionRate { get; set; }
+
+    /// <summary>Şoför komisyonu (brütten kesilen pay).</summary>
+    public decimal  DriverCommission { get; set; }
+    public decimal  DriverCommissionRate { get; set; }
 
     /// <summary>Stopaj/vergi kesintisi (varsa).</summary>
     public decimal  Withholding      { get; set; }
