@@ -88,7 +88,18 @@
       "Bash('/c/Program Files/PostgreSQL/17/bin/psql.exe' -h localhost -U postgres -d yukledb -c 'SELECT \"Id\",\"Email\",\"LastKnownLatitude\",\"LastKnownLongitude\",\"LastLocationUpdate\" FROM \"Users\" WHERE \"Id\"=25;')",
       "Bash(echo \"API_EXIT=$?\")",
       "Bash(grep -rn \"{load.type\\\\|{l.type\\\\|{r.type\\\\|\\\\.type}\\\\|Tip:\\\\|Yük türü\\\\|Yük Türü\\\\|formatLoadTypeLabel\" pages/customer/LoadDetail.tsx pages/driver/Loads.tsx pages/customer/Loads.tsx pages/driver/LoadDetail.tsx pages/customer/Dashboard.tsx)",
-      "Bash(grep -rln \"formatLoadTypeLabel\" pages/customer/Loads.tsx pages/driver/LoadDetail.tsx)"
+      "Bash(grep -rln \"formatLoadTypeLabel\" pages/customer/Loads.tsx pages/driver/LoadDetail.tsx)",
+      "Bash(xargs grep -l \"class Load\\\\|class User\\\\|class Bid\")",
+      "Bash(xargs grep -l \"PostgresRowLock\")",
+      "Bash(dotnet ef *)",
+      "Bash(grep -iE \"hata$| error |Hata$|başarılı|succeeded\")",
+      "Bash(dotnet new *)",
+      "Bash(dotnet tool *)",
+      "Bash(dotnet dotnet-ef *)",
+      "Bash(grep -iE \"Hata$|error\")",
+      "PowerShell($paths = Get-ChildItem -Path \"C:\\\\Program Files\\\\PostgreSQL\",\"C:\\\\Program Files \\(x86\\)\\\\PostgreSQL\" -Filter psql.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; if \\($paths\\) { Write-Output \"PSQL: $paths\" } else { Write-Output \"no psql found in PostgreSQL dirs\" }; Write-Output \"--- python? ---\"; \\(Get-Command python -ErrorAction SilentlyContinue\\).Source)",
+      "PowerShell($env:PGPASSWORD = \"adb16adb\"; & \"C:\\\\Program Files\\\\PostgreSQL\\\\17\\\\bin\\\\psql.exe\" -h localhost -p 5432 -U postgres -d yukledb -v ON_ERROR_STOP=1 -f \"C:\\\\Users\\\\SALİH\\\\OneDrive\\\\Desktop\\\\YÜK-LE\\\\apps\\\\api\\\\Yukle.Api\\\\support_migration.sql\")",
+      "PowerShell($env:PGPASSWORD = \"adb16adb\"; & \"C:\\\\Program Files\\\\PostgreSQL\\\\17\\\\bin\\\\psql.exe\" -h localhost -p 5432 -U postgres -d yukledb -t -c 'SELECT \"MigrationId\" FROM \"__EFMigrationsHistory\" ORDER BY \"MigrationId\" DESC LIMIT 2;')"
     ]
   }
 }

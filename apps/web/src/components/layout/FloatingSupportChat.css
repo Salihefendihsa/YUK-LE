@@ -66,6 +66,13 @@
   margin-bottom: 8px;
 }
 
+.fab-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+}
+
 .fab-faq {
   display: flex;
   flex-direction: column;

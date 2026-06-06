@@ -36,6 +36,10 @@ public class YukleDbContext : DbContext
     public DbSet<WalletAuditLog>     WalletAuditLogs     { get; set; }
     public DbSet<UetdsOutbox>        UetdsOutboxes       { get; set; }
 
+    // Destek talepleri (AI chatbot + insan operatör)
+    public DbSet<SupportTicket>  SupportTickets  { get; set; }
+    public DbSet<SupportMessage> SupportMessages { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -303,6 +307,31 @@ public class YukleDbContext : DbContext
                 .IsUnique()
                 .HasDatabaseName("IX_WalletAuditLogs_CustomerRefund_Unique")
                 .HasFilter("\"Type\" = 5 AND \"Reason\" LIKE 'Iptal/Iade REFUND load=%'");
+        });
+
+        // ── Destek Talepleri (SupportTicket / SupportMessage) ─────────────────
+        modelBuilder.Entity<SupportTicket>(entity =>
+        {
+            entity.HasKey(t => t.Id);
+            entity.Property(t => t.Subject).HasMaxLength(200).IsRequired();
+
+            // Admin listesi: açık talepleri SLA'ya göre sıralı getirmek için indeks.
+            entity.HasIndex(t => new { t.Status, t.SlaDeadline });
+            // Kullanıcının kendi talepleri, en yeni mesaj üstte.
+            entity.HasIndex(t => new { t.UserId, t.LastMessageAt });
+        });
+
+        modelBuilder.Entity<SupportMessage>(entity =>
+        {
+            entity.HasKey(m => m.Id);
+            entity.Property(m => m.Content).HasMaxLength(4000).IsRequired();
+
+            entity.HasOne(m => m.Ticket)
+                  .WithMany(t => t.Messages)
+                  .HasForeignKey(m => m.TicketId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(m => new { m.TicketId, m.CreatedAt });
         });
 
         // ── Phase 4.3 UetdsOutbox ─────────────────────────────────────────────

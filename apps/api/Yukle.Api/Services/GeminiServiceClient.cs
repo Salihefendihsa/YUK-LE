@@ -795,6 +795,105 @@ public sealed class GeminiServiceClient : IGeminiService
         string? PersonalizedReason);
 
     // =========================================================================
+    // Destek Asistanı — GetSupportAssistantReplyAsync (Chatbot · Flash)
+    // =========================================================================
+
+    /// <summary>
+    /// Navlonix destek botu cevabı. Best-effort: her hata <c>null</c> ile karşılanır,
+    /// çağıran fallback metni gösterir. Çekirdek talep akışı asla bu çağrıya bağlı çökmez.
+    /// </summary>
+    public async Task<string?> GetSupportAssistantReplyAsync(
+        string                         userMessage,
+        IReadOnlyList<SupportChatTurn> history,
+        CancellationToken              ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(userMessage))
+            return null;
+
+        try
+        {
+            // Konuşma geçmişi + son kullanıcı mesajı → Gemini "contents" dizisi.
+            // Geçmişi makul bir pencereyle sınırla (token tasarrufu + alaka).
+            var turns = new List<object>();
+            foreach (var t in history.TakeLast(12))
+            {
+                var role = t.Role == "model" ? "model" : "user";
+                turns.Add(new { role, parts = new[] { new { text = t.Content } } });
+            }
+            turns.Add(new { role = "user", parts = new[] { new { text = userMessage } } });
+
+            var requestBody = new
+            {
+                system_instruction = new
+                {
+                    parts = new[] { new { text = SupportAssistantSystemInstruction } }
+                },
+                contents = turns,
+                generationConfig = new
+                {
+                    temperature     = 0.4,
+                    maxOutputTokens = 600
+                }
+            };
+
+            var response = await _httpClient.PostAsJsonAsync(BuildUrl(_flashModel), requestBody, ct);
+            response.EnsureSuccessStatusCode();
+
+            var text = await ExtractGeminiTextAsync(response);
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                _logger.LogWarning("Destek botu: Gemini boş yanıt döndü — fallback kullanılacak.");
+                return null;
+            }
+
+            return text.Trim();
+        }
+        catch (Polly.CircuitBreaker.BrokenCircuitException ex)
+        {
+            _logger.LogWarning("Destek botu: Circuit breaker AÇIK — fallback. {R}", ex.Message);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Destek botu: Gemini çağrısı başarısız — fallback kullanılacak.");
+            return null;
+        }
+    }
+
+    // ── Destek Asistanı System Instruction (Flash) ───────────────────────────
+    private const string SupportAssistantSystemInstruction =
+        "Sen Navlonix dijital yük/lojistik pazaryerinin Türkçe destek asistanısın.\n" +
+        "Görevin: Kullanıcıların (müşteri veya şoför) platform sorularını kısa, net ve\n" +
+        "samimi-profesyonel bir dille yanıtlamak.\n\n" +
+
+        "═══ PLATFORM GERÇEK DAVRANIŞI (yalnızca bunlara dayan) ═══════════════\n" +
+        "• Roller: Müşteri (yük ilanı verir), Şoför (teklif verir ve taşır), Yönetici (admin).\n" +
+        "• Akış: Müşteri ilan oluşturur → şoförler teklif verir → müşteri bir teklifi KABUL eder\n" +
+        "  → yük o şoföre ATANIR → şoför yola çıkar → varış → QR KOD ile TESLİM onayı verilir.\n" +
+        "• İlan durumları: İlanda (Active) → Atandı (Assigned) → Yolda (OnWay) → Ulaştı (Arrived)\n" +
+        "  → Teslim Edildi (Delivered) → İptal (Cancelled).\n" +
+        "• Yapay Zeka Adil Fiyat: İlan verirken sistem güzergah/araç/yük'e göre adil navlun fiyatı önerir.\n" +
+        "• Canlı Takip: Harita üzerinden şoförün konumu izlenir.\n" +
+        "• Teslimat: Şoför, alıcıdaki/QR ekranındaki kodu okutarak teslimi onaylar.\n" +
+        "• Sohbet: Müşteri ve şoför yük üzerinden mesajlaşır.\n" +
+        "• Cüzdan: Şoför kazançlarını Cüzdanım ekranından görür.\n" +
+        "• Ödeme EMANET (escrow) mantığıyla çalışır: teklif kabul edilince tutar emanete alınır,\n" +
+        "  teslim onaylanınca komisyon düşülüp net tutar şoföre aktarılır.\n\n" +
+
+        "═══ ÖDEME UYARISI ═══════════════════════════════════════════════════\n" +
+        "Ödeme altyapısı şu an DEMO/mock'tur (gerçek kart/banka entegrasyonu yok).\n" +
+        "Kart, IBAN, para çekme, gerçek tahsilat gibi sorularda kesin taahhüt VERME;\n" +
+        "emanet/komisyon mantığını genel hatlarıyla açıkla ve gerekiyorsa operatöre yönlendir.\n\n" +
+
+        "═══ KURALLAR ════════════════════════════════════════════════════════\n" +
+        "• SADECE Türkçe yanıt ver. Kısa tut (genelde 1-4 cümle veya kısa madde listesi).\n" +
+        "• Emin olmadığın, hesap/işlem-özel veya politika gerektiren konularda uydurMA;\n" +
+        "  kullanıcıya 'İnsan operatöre aktar' seçeneğiyle destek ekibine bağlanabileceğini söyle.\n" +
+        "• Platform dışı konulara (kişisel tavsiye, alakasız sorular) kibarca sınır koy.\n" +
+        "• Profesyonel, yardımsever ve net ol; gereksiz uzun açıklamalardan kaçın.";
+
+    // =========================================================================
     // Fallback: Araç Tipine Özel Deterministik Model
     // =========================================================================
 

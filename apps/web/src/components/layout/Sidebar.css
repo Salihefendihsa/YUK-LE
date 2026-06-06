@@ -130,6 +130,21 @@
 
 .nav-label { overflow: hidden; }
 
+.nav-badge {
+  margin-left: auto;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #ff6b00;
+  color: #0a0a0a;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
 .sidebar-divider {
   height: 1px;
   background: var(--color-border-light);

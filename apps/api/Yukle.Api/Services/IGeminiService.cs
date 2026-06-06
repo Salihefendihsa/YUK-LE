@@ -70,4 +70,27 @@ public interface IGeminiService
     Task<List<DriverMatchResultDto>> AnalyzeDriverMatchAsync(
         DriverMatchContextDto context,
         CancellationToken     ct = default);
+
+    // ── Destek Asistanı (Chatbot) ─────────────────────────────────────────────
+
+    /// <summary>
+    /// Navlonix destek chatbot'u için Gemini'den serbest-metin Türkçe cevap üretir.
+    /// Sistem promptu platformun gerçek davranışına dayanır (ilan/teklif/teslim/escrow vb.).
+    /// <para>
+    /// Best-effort: Gemini erişilemez/timeout/hata durumunda <c>null</c> döner — çağıran
+    /// taraf nazik bir fallback mesajı kullanmalıdır. ASLA exception fırlatmaz.
+    /// </para>
+    /// </summary>
+    /// <param name="userMessage">Kullanıcının son mesajı.</param>
+    /// <param name="history">Önceki konuşma turları (en eskiden yeniye).</param>
+    Task<string?> GetSupportAssistantReplyAsync(
+        string                          userMessage,
+        IReadOnlyList<SupportChatTurn>  history,
+        CancellationToken               ct = default);
 }
+
+/// <summary>
+/// Destek sohbetinde tek bir konuşma turu. <paramref name="Role"/> Gemini şemasına uygun
+/// olmalıdır: kullanıcı için "user", asistan/operatör için "model".
+/// </summary>
+public sealed record SupportChatTurn(string Role, string Content);

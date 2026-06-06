@@ -57,6 +57,9 @@ const AdminTrackingPage = lazy(() => import('../pages/admin/Tracking'))
 const AdminRatingsPage = lazy(() => import('../pages/admin/Ratings'))
 const AdminLoginPage = lazy(() => import('../pages/admin/AdminLogin'))
 
+const MySupportPage = lazy(() => import('../pages/support/MySupport'))
+const AdminSupportPage = lazy(() => import('../pages/admin/Support'))
+
 const MarketingDocumentPage = lazy(() => import('../pages/marketing/MarketingDocumentPage'))
 const DemoRequestPage = lazy(() => import('../pages/marketing/DemoRequestPage'))
 
@@ -187,6 +190,7 @@ const router = createBrowserRouter([
               { path: 'addresses', element: <CustomerAddressesPage /> },
               { path: 'profile', element: <CustomerProfilePage /> },
               { path: 'chats', element: <CustomerChatsPage /> },
+              { path: 'support', element: <MySupportPage /> },
               { path: 'settings', element: <CustomerSettingsPage /> },
               { path: 'analytics', element: <CustomerAnalyticsPage /> },
             ],
@@ -210,6 +214,7 @@ const router = createBrowserRouter([
               { path: 'active-load', element: <DriverActiveLoadPage /> },
               { path: 'profile', element: <DriverProfilePage /> },
               { path: 'chats', element: <DriverChatsPage /> },
+              { path: 'support', element: <MySupportPage /> },
               { path: 'settings', element: <DriverSettingsPage /> },
             ],
           },
@@ -232,6 +237,7 @@ const router = createBrowserRouter([
               { path: 'loads/:id', element: <AdminLoadDetailPage /> },
               { path: 'documents', element: <AdminDocumentsPage /> },
               { path: 'chats', element: <AdminChatsPage /> },
+              { path: 'support', element: <AdminSupportPage /> },
               { path: 'payments', element: <AdminPaymentsPage /> },
               { path: 'users', element: <AdminUsersPage /> },
               { path: 'system', element: <AdminSystemPage /> },

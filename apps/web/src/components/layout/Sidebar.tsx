@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth.store'
+import { getSupportOpenCount } from '../../api/support'
 import { Logo } from '../brand/Logo'
 import './Sidebar.css'
 
@@ -7,6 +9,7 @@ interface NavItem {
   label: string
   path: string
   icon: string
+  badge?: number
 }
 
 const CUSTOMER_NAV: NavItem[] = [
@@ -15,6 +18,7 @@ const CUSTOMER_NAV: NavItem[] = [
   { label: 'İlanlarım', path: '/customer/loads', icon: '📦' },
   { label: 'Teklifler', path: '/customer/bids', icon: '💼' },
   { label: 'Sohbetlerim', path: '/customer/chats', icon: '💬' },
+  { label: 'Destek', path: '/customer/support', icon: '🎧' },
   { label: 'Canlı Harita', path: '/customer/track', icon: '🗺️' },
   { label: 'Geçmiş', path: '/customer/history', icon: '📋' },
   { label: 'Adreslerim', path: '/customer/addresses', icon: '📍' },
@@ -27,6 +31,7 @@ const DRIVER_NAV: NavItem[] = [
   { label: 'Tekliflerim', path: '/driver/bids', icon: '💼' },
   { label: 'Aktif Seferim', path: '/driver/active-load', icon: '🚛' },
   { label: 'Sohbetlerim', path: '/driver/chats', icon: '💬' },
+  { label: 'Destek', path: '/driver/support', icon: '🎧' },
   { label: 'Cüzdanım', path: '/driver/wallet', icon: '💰' },
   { label: 'Belgelerim', path: '/driver/documents', icon: '📄' },
   { label: 'Profilim', path: '/driver/profile', icon: '👤' },
@@ -39,6 +44,7 @@ const ADMIN_NAV: NavItem[] = [
   { label: '🏢 Müşteriler', path: '/admin/customers', icon: '🏢' },
   { label: '📦 İlanlar', path: '/admin/loads', icon: '📦' },
   { label: '💬 Tüm Sohbetler', path: '/admin/chats', icon: '💬' },
+  { label: '🎧 Destek Talepleri', path: '/admin/support', icon: '🎧' },
   { label: '💳 Ödemeler', path: '/admin/payments', icon: '💳' },
   { label: '👥 Tüm Kullanıcılar', path: '/admin/users', icon: '👥' },
   { label: '🔧 Sistem Durumu', path: '/admin/system', icon: '🔧' },
@@ -61,9 +67,32 @@ interface SidebarProps {
 export default function Sidebar({ collapsed, mobileOpen }: SidebarProps) {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
+  const [openSupport, setOpenSupport] = useState(0)
 
-  const navItems =
+  // Admin: açık destek talebi sayısını rozet olarak göster (periyodik tazele).
+  useEffect(() => {
+    if (user?.role !== 'Admin') return
+    let alive = true
+    const fetchCount = () =>
+      getSupportOpenCount()
+        .then((c) => alive && setOpenSupport(c))
+        .catch(() => {
+          /* sessiz */
+        })
+    void fetchCount()
+    const timer = setInterval(fetchCount, 20000)
+    return () => {
+      alive = false
+      clearInterval(timer)
+    }
+  }, [user?.role])
+
+  const baseNav =
     user?.role === 'Driver' ? DRIVER_NAV : user?.role === 'Admin' ? ADMIN_NAV : CUSTOMER_NAV
+
+  const navItems = baseNav.map((item) =>
+    item.path === '/admin/support' && openSupport > 0 ? { ...item, badge: openSupport } : item,
+  )
 
   const roleLabel =
     user?.role === 'Customer' ? 'Müşteri' : user?.role === 'Driver' ? 'Şoför' : 'Yönetici'
@@ -99,6 +128,7 @@ export default function Sidebar({ collapsed, mobileOpen }: SidebarProps) {
               >
                 <span className="nav-icon">{item.icon}</span>
                 {!collapsed && <span className="nav-label">{item.label}</span>}
+                {item.badge ? <span className="nav-badge">{item.badge}</span> : null}
               </NavLink>
             </li>
           ))}

@@ -43,6 +43,7 @@ export default function AppLayout() {
     '/customer/history': 'Geçmiş | Navlonix',
     '/customer/profile': 'Profil | Navlonix',
     '/customer/chats': 'Sohbetlerim | Navlonix',
+    '/customer/support': 'Taleplerim | Navlonix',
     '/customer/settings': 'Ayarlar | Navlonix',
     '/customer/analytics': 'Analitik | Navlonix',
     '/customer/bids': 'Teklifler | Navlonix',
@@ -52,11 +53,13 @@ export default function AppLayout() {
     '/driver/history': 'Geçmiş | Navlonix',
     '/driver/profile': 'Profil | Navlonix',
     '/driver/chats': 'Sohbetlerim | Navlonix',
+    '/driver/support': 'Taleplerim | Navlonix',
     '/driver/settings': 'Ayarlar | Navlonix',
     '/admin/dashboard': 'Admin Paneli | Navlonix',
     '/admin/tracking': 'Canlı Takip | Navlonix',
     '/admin/ratings': 'Puanlama Yönetimi | Navlonix',
     '/admin/chats': 'Tüm Sohbetler | Navlonix',
+    '/admin/support': 'Destek Talepleri | Navlonix',
     '/admin/settings': 'Ayarlar | Navlonix',
   }
 
