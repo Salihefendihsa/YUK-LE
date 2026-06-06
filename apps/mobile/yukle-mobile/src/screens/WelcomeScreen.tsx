@@ -23,9 +23,9 @@ import { logoFontFamily } from '../theme/typography';
 const USE_VIDEO = true; // false → statik poster + hafif fade fallback
 const SLIDE_MS = 4200; // her slayt süresi
 const FADE_MS = 700; // içerik cross-fade süresi
-const ORANGE = '#FF7A1A';
-const ORANGE_HI = '#FF8A2A'; // vurgu / parlak turuncu
-const BG = '#0A0A0A';
+const ORANGE = '#FF6B00';
+const ORANGE_HI = '#FF8C38'; // vurgu / parlak turuncu (web brand-hover)
+const BG = '#0A0D12';
 const MAX_W = 480; // web/geniş ekran ortalama
 
 const VIDEO_SRC = require('../../assets/hero-trucks.mp4');
@@ -311,7 +311,7 @@ export function WelcomeScreen() {
           <View style={styles.ctas}>
             <Pressable onPress={() => router.push('/(auth)/register')}>
               <LinearGradient
-                colors={['#FF7A1A', '#FF9A4A']}
+                colors={['#FF6B00', '#FF8C38']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.primaryBtn}

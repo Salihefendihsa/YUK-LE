@@ -10,7 +10,6 @@ import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { MiniBarChart, type BarDatum } from '../../../src/components/ui/MiniBarChart';
-import { ScreenBackground } from '../../../src/components/ui/ScreenBackground';
 import { StatusPill } from '../../../src/components/ui/StatusPill';
 import { ScreenContainer, ScreenScroll } from '../../../src/constants/layout';
 import { getApiErrorMessage } from '../../../src/services/api.client';
@@ -77,16 +76,13 @@ export default function CustomerDashboardScreen() {
 
   if (loading) {
     return (
-      <ScreenBackground>
-        <ScreenContainer style={styles.transparent}>
-          <LoadingState message="Panel yükleniyor..." variant="skeleton" />
-        </ScreenContainer>
-      </ScreenBackground>
+      <ScreenContainer style={styles.transparent}>
+        <LoadingState message="Panel yükleniyor..." variant="skeleton" />
+      </ScreenContainer>
     );
   }
 
   return (
-    <ScreenBackground>
     <ScreenScroll
       style={styles.transparent}
       contentContainerStyle={styles.scroll}
@@ -270,7 +266,6 @@ export default function CustomerDashboardScreen() {
         })
       )}
     </ScreenScroll>
-    </ScreenBackground>
   );
 }
 

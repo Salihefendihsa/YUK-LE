@@ -1,21 +1,21 @@
 /** Web tokens.css + landing — tek kaynak */
 export const palette = {
-  brand: '#FF7A1A',
-  brandHover: '#FF9444',
-  brandPress: '#E56E15',
-  brandMuted: 'rgba(255, 122, 26, 0.12)',
-  brandBorder: 'rgba(255, 122, 26, 0.35)',
+  brand: '#FF6B00',
+  brandHover: '#FF8C38',
+  brandPress: '#CC5500',
+  brandMuted: 'rgba(255, 107, 0, 0.12)',
+  brandBorder: 'rgba(255, 107, 0, 0.35)',
 
   gold: '#FFB627',
   goldMuted: 'rgba(255, 182, 39, 0.12)',
   goldBorder: 'rgba(255, 182, 39, 0.35)',
 
-  bg: '#050608',
-  bgElevated: '#090B0E',
-  surface: '#111318',
-  card: '#1C2029',
-  cardHover: '#272D3A',
-  input: '#111318',
+  bg: '#0A0D12',
+  bgElevated: '#0D1018',
+  surface: '#12161D',
+  card: '#1A2030',
+  cardHover: '#1F2738',
+  input: '#12161D',
 
   border: '#3A4252',
   borderLight: '#272D3A',
@@ -44,8 +44,8 @@ export const palette = {
   glass: 'rgba(28, 32, 41, 0.72)',
   glassBorder: 'rgba(255, 255, 255, 0.08)',
 
-  overlay: 'rgba(5, 6, 8, 0.85)',
-  onBrand: '#050608',
+  overlay: 'rgba(10, 13, 18, 0.85)',
+  onBrand: '#0A0D12',
 
   /** Notr gri skala (50 acik .. 900 koyu arka plan) */
   gray50: '#F9FAFB',
@@ -57,7 +57,7 @@ export const palette = {
   gray600: '#4B5563',
   gray700: '#374151',
   gray800: '#1F2937',
-  gray900: '#050608',
+  gray900: '#0A0D12',
 } as const;
 
 export const gray = {
