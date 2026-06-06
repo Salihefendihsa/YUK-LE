@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Svg, { Rect } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { palette } from '../../theme/colors';
 import { fontFamily, typography } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
@@ -11,10 +11,14 @@ type Props = {
   data: BarDatum[];
   /** Bar alani yuksekligi (etiketler haric). */
   height?: number;
+  /** Çubuk degrade üst rengi (rol aksanı). Varsayılan: marka turuncusu. */
+  colorTop?: string;
+  /** Çubuk degrade alt rengi (rol aksanı). Varsayılan: marka turuncusu. */
+  colorBottom?: string;
 };
 
-/** Hafif dikey bar grafik — react-native-svg ile, turuncu dolgu, responsive genislik. */
-export function MiniBarChart({ data, height = 120 }: Props) {
+/** Hafif dikey bar grafik — react-native-svg ile, rol-renkli degrade dolgu, responsive genislik. */
+export function MiniBarChart({ data, height = 120, colorTop = palette.brandHover, colorBottom = palette.brand }: Props) {
   const [width, setWidth] = useState(0);
 
   if (data.length === 0) {
@@ -32,6 +36,12 @@ export function MiniBarChart({ data, height = 120 }: Props) {
       <View style={{ height }} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
         {width > 0 ? (
           <Svg width={width} height={height}>
+            <Defs>
+              <LinearGradient id="barFill" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor={colorTop} stopOpacity={1} />
+                <Stop offset="1" stopColor={colorBottom} stopOpacity={0.85} />
+              </LinearGradient>
+            </Defs>
             {data.map((d, i) => {
               const h = (d.value / max) * usableH;
               const barH = d.value > 0 ? Math.max(h, 3) : 0;
@@ -45,8 +55,8 @@ export function MiniBarChart({ data, height = 120 }: Props) {
                   width={barW}
                   height={barH}
                   rx={4}
-                  fill={palette.brand}
-                  opacity={d.value > 0 ? 0.92 : 0}
+                  fill="url(#barFill)"
+                  opacity={d.value > 0 ? 1 : 0}
                 />
               );
             })}

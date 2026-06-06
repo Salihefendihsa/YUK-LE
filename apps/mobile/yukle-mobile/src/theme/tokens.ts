@@ -9,6 +9,8 @@ export { shadows } from './shadows';
 export { fontFamily, typography } from './typography';
 export { motion } from './motion';
 export { sizes } from './sizes';
+export { roleAccentFor, roleAccents, type RoleAccent } from './roleAccent';
+export { useRoleAccent } from './useRoleAccent';
 
 import { palette } from './colors';
 import { space } from './spacing';

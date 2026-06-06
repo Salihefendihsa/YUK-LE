@@ -1,25 +1,29 @@
-/** Web tokens.css + landing — tek kaynak */
+/**
+ * Web tokens.css + landing — tek kaynak.
+ * Canlı/cafcaf revizyon: kartlar tabandan belirgin açık + ince kenarlık + yumuşak gölge
+ * ("yüzen kart" hissi), durum rozetleri daha doygun. Rol aksanı için bkz. roleAccent.ts.
+ */
 export const palette = {
   brand: '#FF6B00',
   brandHover: '#FF8C38',
   brandPress: '#CC5500',
-  brandMuted: 'rgba(255, 107, 0, 0.12)',
-  brandBorder: 'rgba(255, 107, 0, 0.35)',
+  brandMuted: 'rgba(255, 107, 0, 0.16)',
+  brandBorder: 'rgba(255, 107, 0, 0.45)',
 
   gold: '#FFB627',
-  goldMuted: 'rgba(255, 182, 39, 0.12)',
-  goldBorder: 'rgba(255, 182, 39, 0.35)',
+  goldMuted: 'rgba(255, 182, 39, 0.16)',
+  goldBorder: 'rgba(255, 182, 39, 0.48)',
 
-  bg: '#0A0D12',
-  bgElevated: '#0D1018',
-  surface: '#12161D',
-  card: '#1A2030',
-  cardHover: '#1F2738',
-  input: '#12161D',
+  bg: '#080B10',
+  bgElevated: '#0D1119',
+  surface: '#161B26',
+  card: '#1E2536',
+  cardHover: '#252E44',
+  input: '#141925',
 
   border: '#3A4252',
-  borderLight: '#272D3A',
-  borderSubtle: '#1E2030',
+  borderLight: '#2E384A',
+  borderSubtle: '#242C3C',
 
   text: '#F3F4F6',
   textSecondary: '#9CA3AF',
@@ -27,24 +31,24 @@ export const palette = {
   textFaint: '#4A4D5E',
 
   success: '#22C55E',
-  successBg: 'rgba(34, 197, 94, 0.12)',
-  successBorder: 'rgba(34, 197, 94, 0.35)',
+  successBg: 'rgba(34, 197, 94, 0.18)',
+  successBorder: 'rgba(34, 197, 94, 0.50)',
 
   warning: '#F59E0B',
-  warningBg: 'rgba(245, 158, 11, 0.12)',
+  warningBg: 'rgba(245, 158, 11, 0.18)',
 
   error: '#EF4444',
-  errorBg: 'rgba(239, 68, 68, 0.12)',
-  errorBorder: 'rgba(239, 68, 68, 0.35)',
+  errorBg: 'rgba(239, 68, 68, 0.18)',
+  errorBorder: 'rgba(239, 68, 68, 0.50)',
 
   info: '#3B82F6',
-  infoBg: 'rgba(59, 130, 246, 0.12)',
-  infoBorder: 'rgba(59, 130, 246, 0.35)',
+  infoBg: 'rgba(59, 130, 246, 0.18)',
+  infoBorder: 'rgba(59, 130, 246, 0.50)',
 
-  glass: 'rgba(28, 32, 41, 0.72)',
-  glassBorder: 'rgba(255, 255, 255, 0.08)',
+  glass: 'rgba(30, 37, 54, 0.80)',
+  glassBorder: 'rgba(255, 255, 255, 0.10)',
 
-  overlay: 'rgba(10, 13, 18, 0.85)',
+  overlay: 'rgba(8, 11, 16, 0.85)',
   onBrand: '#0A0D12',
 
   /** Notr gri skala (50 acik .. 900 koyu arka plan) */
