@@ -84,22 +84,59 @@ export function formatPaymentTransactionId(raw: string | null | undefined): stri
   return `İşlem No: …${suffix}`;
 }
 
-/** Yönetim logu işlem türü */
+/**
+ * Yönetim logu işlem türü → Türkçe etiket.
+ * "PaymentRelease" / "Payment Release" / "RELEASE_PAYMENT" gibi tüm yazımları
+ * normalize edip (boşluk/alt çizgi at, küçük harfe çevir) tek tabloya bağlar.
+ */
+const ADMIN_LOG_ACTION_LABELS: Record<string, string> = {
+  suspenduser: 'Kullanıcı askıya alındı',
+  activateuser: 'Kullanıcı etkinleştirildi',
+  deactivateuser: 'Kullanıcı pasifleştirildi',
+  warnuser: 'Kullanıcı uyarıldı',
+  updateuser: 'Kullanıcı güncellendi',
+  deleteuser: 'Kullanıcı silindi',
+  createuser: 'Kullanıcı oluşturuldu',
+  approvedriver: 'Şoför onaylandı',
+  rejectdriver: 'Şoför reddedildi',
+  approvereview: 'Belge incelemesi onaylandı',
+  rejectreview: 'Belge incelemesi reddedildi',
+  releasepayment: 'Ödeme serbest bırakıldı',
+  paymentrelease: 'Ödeme serbest bırakıldı',
+  blockpayment: 'Ödeme blokeye alındı',
+  paymentblock: 'Ödeme blokeye alındı',
+  refundpayment: 'Ödeme iade edildi',
+  paymentrefund: 'Ödeme iade edildi',
+  deleterating: 'Puan silindi',
+  deletemessage: 'Mesaj silindi',
+  blockmessage: 'Mesaj engellendi',
+  cancelload: 'İlan iptal edildi',
+  deleteload: 'İlan silindi',
+};
+
 export function formatAdminLogAction(action?: string | null): string {
   if (!action?.trim()) return 'İşlem';
-  const known: Record<string, string> = {
-    SuspendUser: 'Kullanıcı askıya alındı',
-    ActivateUser: 'Kullanıcı etkinleştirildi',
-    WarnUser: 'Kullanıcı uyarıldı',
-    ApproveDriver: 'Şoför onaylandı',
-    RejectDriver: 'Şoför reddedildi',
-    ReleasePayment: 'Ödeme serbest bırakıldı',
-    UpdateUser: 'Kullanıcı güncellendi',
-    DeleteRating: 'Puan silindi',
-  };
   const trimmed = action.trim();
-  if (known[trimmed]) return known[trimmed];
-  return trimmed.replace(/([a-z])([A-Z])/g, '$1 $2');
+  const key = trimmed.toLowerCase().replace(/[\s_-]+/g, '');
+  if (ADMIN_LOG_ACTION_LABELS[key]) return ADMIN_LOG_ACTION_LABELS[key];
+  // Bilinmeyen aksiyon: Türkçe ise dokunma, ASCII PascalCase ise kelimelere böl.
+  if (/[ğıüşöçİĞÜŞÖÇ]/.test(trimmed)) return trimmed;
+  return trimmed.replace(/[_-]+/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2');
+}
+
+/** Ham GUID → "#ilk8…" (insancıl, kısa). Önekteki '#' tekrarlanmaz. */
+const GUID_RE = /#?\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b/g;
+
+/**
+ * Yönetim logu notunu insancıllaştırır: içindeki ham GUID'leri "#ilk8…"
+ * biçimine kısaltır. Diğer metin aynı kalır.
+ */
+export function formatAdminLogNote(note?: string | null): string {
+  if (!note?.trim()) return '';
+  return note.trim().replace(GUID_RE, (m) => {
+    const hex = m.replace(/^#/, '');
+    return `#${hex.slice(0, 8)}…`;
+  });
 }
 
 export function formatCurrencyTRY(value: number): string {

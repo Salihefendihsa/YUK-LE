@@ -14,7 +14,7 @@ import { palette } from '../../../src/theme/colors';
 import { roleAccents } from '../../../src/theme/roleAccent';
 import { typography } from '../../../src/theme/typography';
 import { space, spacing } from '../../../src/theme/spacing';
-import { formatAdminLogAction, formatDateTimeTR } from '../../../src/utils/format';
+import { formatAdminLogAction, formatAdminLogNote, formatDateTimeTR } from '../../../src/utils/format';
 
 export default function AdminLogsScreen() {
   const { contentInset } = useScreenInsets();
@@ -79,9 +79,11 @@ export default function AdminLogsScreen() {
             <Card variant="elevated" padding={4} style={styles.logCard}>
               <Text style={styles.cardTitle}>{formatAdminLogAction(item.action)}</Text>
               <Text style={styles.muted}>{formatDateTimeTR(item.timestampUtc)}</Text>
-              <Text style={styles.muted}>Admin: #{item.adminId ?? '-'}</Text>
-              <Text style={styles.muted}>Hedef kullanıcı: {item.targetUserId ?? '-'}</Text>
-              {item.note ? <Text style={styles.muted}>Not: {item.note}</Text> : null}
+              <Text style={styles.muted}>İşlemi yapan: Admin #{item.adminId ?? '-'}</Text>
+              <Text style={styles.muted}>
+                Etkilenen kullanıcı: {item.targetUserId != null ? `#${item.targetUserId}` : '-'}
+              </Text>
+              {item.note ? <Text style={styles.muted}>{formatAdminLogNote(item.note)}</Text> : null}
             </Card>
           </FadeInView>
         )}
