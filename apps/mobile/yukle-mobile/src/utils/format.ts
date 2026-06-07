@@ -112,6 +112,14 @@ const ADMIN_LOG_ACTION_LABELS: Record<string, string> = {
   blockmessage: 'Mesaj engellendi',
   cancelload: 'İlan iptal edildi',
   deleteload: 'İlan silindi',
+  // AdminActionLog'un ham (kısa) aksiyon adları — AdminController WriteAdminActionLogAsync.
+  suspend: 'Kullanıcı askıya alındı',
+  activate: 'Kullanıcı etkinleştirildi',
+  toggleactive: 'Kullanıcı durumu değiştirildi',
+  warn: 'Kullanıcı uyarıldı',
+  note: 'Not eklendi',
+  approve: 'Belge incelemesi onaylandı',
+  reject: 'Belge incelemesi reddedildi',
 };
 
 export function formatAdminLogAction(action?: string | null): string {
@@ -137,6 +145,35 @@ export function formatAdminLogNote(note?: string | null): string {
     const hex = m.replace(/^#/, '');
     return `#${hex.slice(0, 8)}…`;
   });
+}
+
+/**
+ * Komuta Merkezi "Canlı aktivite" tek-satır metni: ham (çoğu İngilizce + GUID'li)
+ * AdminActionLog kaydını okunaklı Türkçeye çevirir.
+ * Örn. action="PaymentRelease", note="Payment ... released for load 3ed7dc5d-..."
+ *   → "Ödeme serbest bırakıldı · yük #3ed7dc5d".
+ * Bilinmeyen aksiyon → PascalCase ayrılır; bağlam bulunamazsa yalnız etiket döner.
+ */
+export function formatAdminActivity(
+  action?: string | null,
+  note?: string | null,
+  targetUserId?: number | null,
+): string {
+  const base = formatAdminLogAction(action);
+  const raw = note?.trim() ?? '';
+
+  // 1) Yük bağlamı: "... for load <guid>" veya "load <guid>".
+  const loadMatch = raw.match(/load\s+#?([0-9a-fA-F]{8})[0-9a-fA-F-]*/i);
+  if (loadMatch) return `${base} · yük #${loadMatch[1]}`;
+
+  // 2) Nottaki ilk GUID (yük/kullanıcı belirsizse) → genel kısa referans.
+  const guidMatch = raw.match(/([0-9a-fA-F]{8})-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-/);
+  if (guidMatch) return `${base} · #${guidMatch[1]}`;
+
+  // 3) Kullanıcı hedefi varsa.
+  if (targetUserId != null) return `${base} · kullanıcı #${targetUserId}`;
+
+  return base;
 }
 
 export function formatCurrencyTRY(value: number): string {

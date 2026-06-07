@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
@@ -10,7 +10,11 @@ import { LoadingState } from '../../../src/components/ui/LoadingState';
 import { PressableScale } from '../../../src/components/ui/PressableScale';
 import { StatusPill, type StatusTone } from '../../../src/components/ui/StatusPill';
 import { ScreenContainer, ScreenScroll } from '../../../src/constants/layout';
-import { ADMIN_DASHBOARD_DEMO } from '../../../src/constants/admin-dashboard-demo';
+import {
+  ADMIN_DASHBOARD_DEMO,
+  ADMIN_DEMO_DETAILS,
+  type AdminDemoKey,
+} from '../../../src/constants/admin-dashboard-demo';
 import { getApiErrorMessage } from '../../../src/services/api.client';
 import { getAdminDashboard } from '../../../src/services/admin.service';
 import { getSupportOpenCount } from '../../../src/services/support.service';
@@ -22,11 +26,7 @@ import { space, spacing } from '../../../src/theme/spacing';
 import { radius } from '../../../src/theme/radius';
 import { useRoleAccent } from '../../../src/theme/useRoleAccent';
 import type { RoleAccent } from '../../../src/theme/roleAccent';
-import {
-  formatAdminLogAction,
-  formatAdminLogNote,
-  formatCurrencyTRY,
-} from '../../../src/utils/format';
+import { formatAdminActivity, formatCurrencyTRY } from '../../../src/utils/format';
 import { formatSystemServiceLabel, getSystemServicePill } from '../../../src/utils/statusPills';
 
 type IconName = keyof typeof Ionicons.glyphMap;
@@ -64,22 +64,20 @@ function KpiTile({
 }) {
   return (
     <PressableScale style={styles.tile} onPress={onPress} accessibilityRole="button">
-      <Card variant="elevated" padding={4} style={danger ? styles.tileDanger : undefined}>
+      <Card variant="elevated" padding={4} style={[styles.kpiCard, danger && styles.tileDanger]}>
         <View style={styles.tileHead}>
           <IconChip name={icon} accent={accent} />
           <Ionicons name="chevron-forward" size={16} color={palette.textMuted} />
         </View>
         <Text style={[styles.tileValue, danger && styles.tileValueDanger]}>{value}</Text>
-        <View style={styles.tileLabelRow}>
-          <Text style={styles.tileLabel} numberOfLines={2}>
-            {label}
-          </Text>
+        {/* Sabit yükseklik etiket alanı — 1 vs 2 satır kartı uzatıp grid'i bozmasın. */}
+        <Text style={styles.tileLabel} numberOfLines={2}>
+          {label}
+        </Text>
+        {/* Her karta sabit rozet yuvası ayrılır; etiketli/etiketsiz kartlar eşit yükseklikte. */}
+        <View style={styles.badgeSlot}>
+          {badge ? <StatusPill label={badge} tone={badgeTone ?? 'neutral'} /> : null}
         </View>
-        {badge ? (
-          <View style={styles.tileBadge}>
-            <StatusPill label={badge} tone={badgeTone ?? 'neutral'} />
-          </View>
-        ) : null}
       </Card>
     </PressableScale>
   );
@@ -103,33 +101,106 @@ function QuickAction({
     <PressableScale style={styles.tile} onPress={onPress} accessibilityRole="button">
       <Card variant="elevated" padding={3} style={styles.quickCard}>
         <IconChip name={icon} accent={accent} />
-        <View style={styles.quickTextCol}>
-          <Text style={styles.quickLabel} numberOfLines={1}>
-            {label}
-          </Text>
-          {count != null ? <Text style={styles.quickCount}>{count}</Text> : null}
-        </View>
+        <Text style={styles.quickLabel} numberOfLines={1}>
+          {label}
+        </Text>
+        {count != null && count > 0 ? (
+          <View style={[styles.countBadge, { backgroundColor: accent.accentMuted, borderColor: accent.accentBorder }]}>
+            <Text style={[styles.countBadgeText, { color: accent.accent }]}>{count}</Text>
+          </View>
+        ) : null}
         <Ionicons name="chevron-forward" size={15} color={palette.textMuted} />
       </Card>
     </PressableScale>
   );
 }
 
-/** Demo metrik mini kartı — her zaman amber "DEMO" rozetli, nötr (kırmızı yok). */
-function DemoTile({ icon, label, value }: { icon: IconName; label: string; value: string }) {
+/** Demo metrik mini kartı — amber "DEMO" rozetli, nötr (kırmızı yok), tıklanınca detay. */
+function DemoTile({
+  icon,
+  label,
+  value,
+  onPress,
+}: {
+  icon: IconName;
+  label: string;
+  value: string;
+  onPress: () => void;
+}) {
   return (
-    <Card variant="elevated" padding={3} style={styles.tile}>
-      <View style={styles.tileHead}>
-        <View style={styles.demoChip}>
-          <Ionicons name={icon} size={17} color={palette.textSecondary} />
+    <PressableScale style={styles.tile} onPress={onPress} accessibilityRole="button">
+      <Card variant="elevated" padding={3} style={styles.demoCard}>
+        <View style={styles.tileHead}>
+          <View style={styles.demoChip}>
+            <Ionicons name={icon} size={17} color={palette.textSecondary} />
+          </View>
+          <StatusPill label="DEMO" tone="warning" />
         </View>
-        <StatusPill label="DEMO" tone="warning" />
-      </View>
-      <Text style={styles.demoValue}>{value}</Text>
-      <Text style={styles.tileLabel} numberOfLines={2}>
-        {label}
-      </Text>
-    </Card>
+        <Text style={styles.demoValue}>{value}</Text>
+        <View style={styles.demoLabelRow}>
+          <Text style={[styles.tileLabel, { flex: 1 }]} numberOfLines={2}>
+            {label}
+          </Text>
+          <Ionicons name="chevron-forward" size={15} color={palette.textMuted} />
+        </View>
+      </Card>
+    </PressableScale>
+  );
+}
+
+/** DEMO metrik detay sheet'i — sahte kırılım/trend + net "DEMO" uyarısı. */
+function DemoDetailModal({
+  demoKey,
+  accent,
+  onClose,
+}: {
+  demoKey: AdminDemoKey | null;
+  accent: RoleAccent;
+  onClose: () => void;
+}) {
+  const detail = demoKey ? ADMIN_DEMO_DETAILS[demoKey] : null;
+  return (
+    <Modal
+      visible={detail != null}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      statusBarTranslucent
+    >
+      <Pressable style={styles.modalOverlay} onPress={onClose}>
+        <Pressable style={styles.modalSheet} onPress={(e) => e.stopPropagation()}>
+          {detail ? (
+            <>
+              <View style={styles.modalHead}>
+                <Text style={styles.modalTitle}>{detail.title}</Text>
+                <StatusPill label="DEMO" tone="warning" />
+              </View>
+              <Text style={[styles.modalHeadline, { color: accent.accent }]}>{detail.headline}</Text>
+
+              <View style={styles.modalBreakdown}>
+                {detail.breakdown.map((row) => (
+                  <View key={row.label} style={styles.modalRow}>
+                    <Text style={styles.modalRowLabel}>{row.label}</Text>
+                    <Text style={styles.modalRowValue}>{row.value}</Text>
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.modalNote}>
+                <Ionicons name="information-circle-outline" size={16} color={palette.gold} />
+                <Text style={styles.modalNoteText}>
+                  DEMO — bu kırılım sahtedir; canlı sürümde gerçek veri gösterilecek.
+                </Text>
+              </View>
+
+              <PressableScale style={styles.modalClose} onPress={onClose} accessibilityRole="button">
+                <Text style={styles.modalCloseText}>Kapat</Text>
+              </PressableScale>
+            </>
+          ) : null}
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 }
 
@@ -142,6 +213,7 @@ export default function AdminDashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+  const [demoKey, setDemoKey] = useState<AdminDemoKey | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -341,7 +413,7 @@ export default function AdminDashboardScreen() {
                         : '-'}
                     </Text>
                     <Text style={styles.actionNote} numberOfLines={2}>
-                      {a.note ? formatAdminLogNote(a.note) : formatAdminLogAction(a.action)}
+                      {formatAdminActivity(a.action, a.note, a.targetUserId)}
                     </Text>
                   </View>
                 </FadeInView>
@@ -358,11 +430,13 @@ export default function AdminDashboardScreen() {
                   icon="checkmark-done-outline"
                   label="Tamamlanan sefer"
                   value={String(demo.completedTrips)}
+                  onPress={() => setDemoKey('completedTrips')}
                 />
                 <DemoTile
                   icon="navigate-outline"
                   label="Aktif sefer"
                   value={String(demo.activeTrips)}
+                  onPress={() => setDemoKey('activeTrips')}
                 />
               </View>
               <View style={styles.row2}>
@@ -370,15 +444,19 @@ export default function AdminDashboardScreen() {
                   icon="cash-outline"
                   label="Bu ay komisyon"
                   value={formatCurrencyTRY(demo.monthlyCommissionTRY)}
+                  onPress={() => setDemoKey('monthlyCommission')}
                 />
                 <DemoTile
                   icon="time-outline"
                   label="Ort. teslimat"
                   value={`${demo.avgDeliveryHours} sa`}
+                  onPress={() => setDemoKey('avgDelivery')}
                 />
               </View>
             </View>
           </FadeInView>
+
+          <DemoDetailModal demoKey={demoKey} accent={accent} onClose={() => setDemoKey(null)} />
         </>
       ) : null}
     </ScreenScroll>
@@ -421,22 +499,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // KPI tile
+  // KPI tile — eşit yükseklik: kart minHeight + 2-satır etiket alanı + sabit rozet yuvası
+  kpiCard: { minHeight: 150 },
   tileHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   tileValue: { ...typography.h2, fontSize: 24, letterSpacing: -0.5, marginTop: space.sm },
   tileValueDanger: { color: palette.error },
-  tileLabelRow: { marginTop: space.xs },
-  tileLabel: { ...typography.caption, textTransform: 'none' },
-  tileBadge: { marginTop: space.sm },
+  tileLabel: { ...typography.caption, textTransform: 'none', marginTop: space.xs, minHeight: 34 },
+  badgeSlot: { height: 26, marginTop: space.sm, justifyContent: 'center' },
   tileDanger: { borderColor: palette.errorBorder },
 
-  // Quick action
-  quickCard: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  quickTextCol: { flex: 1, minWidth: 0 },
-  quickLabel: { ...typography.bodyMedium, fontSize: 14 },
-  quickCount: { ...typography.caption, textTransform: 'none', color: palette.textMuted, marginTop: 1 },
+  // Quick action — tek satır, sayı sağda küçük rozet
+  quickCard: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 56 },
+  quickLabel: { ...typography.bodyMedium, fontSize: 14, flex: 1, minWidth: 0 },
+  countBadge: {
+    minWidth: 22,
+    paddingHorizontal: space.xs + 1,
+    paddingVertical: 1,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  countBadgeText: { ...typography.caption, fontSize: 11, fontWeight: '700' },
 
   // Demo tile
+  demoCard: { minHeight: 116 },
   demoChip: {
     width: 36,
     height: 36,
@@ -448,6 +535,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   demoValue: { ...typography.h3, fontSize: 19, letterSpacing: -0.3, marginTop: space.sm },
+  demoLabelRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs, marginTop: space.xs },
 
   // Sections / activity
   sectionTitle: { ...typography.h3, marginBottom: space.sm, marginTop: space.xs },
@@ -462,4 +550,53 @@ const styles = StyleSheet.create({
   },
   actionTime: { ...typography.caption, fontSize: 11, color: palette.textMuted, width: 48 },
   actionNote: { ...typography.bodySmall, color: palette.textSecondary, flex: 1 },
+
+  // Demo detay modal
+  modalOverlay: { flex: 1, backgroundColor: palette.overlay, justifyContent: 'flex-end' },
+  modalSheet: {
+    backgroundColor: palette.surface,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: palette.borderSubtle,
+    padding: space.lg,
+    paddingBottom: spacing[8],
+    gap: space.sm,
+  },
+  modalHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  modalTitle: { ...typography.h3, color: palette.text },
+  modalHeadline: { ...typography.h2, fontSize: 24, letterSpacing: -0.5, marginTop: space.xs },
+  modalBreakdown: { marginTop: space.sm, gap: 2 },
+  modalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: space.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: palette.borderSubtle,
+  },
+  modalRowLabel: { ...typography.bodySmall, color: palette.textSecondary },
+  modalRowValue: { ...typography.bodyMedium, fontSize: 14, color: palette.text },
+  modalNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    marginTop: space.sm,
+    padding: space.sm,
+    borderRadius: radius.md,
+    backgroundColor: palette.warningBg,
+    borderWidth: 1,
+    borderColor: palette.goldBorder,
+  },
+  modalNoteText: { ...typography.caption, textTransform: 'none', color: palette.gold, flex: 1 },
+  modalClose: {
+    marginTop: space.md,
+    paddingVertical: space.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: palette.borderLight,
+    backgroundColor: palette.card,
+    alignItems: 'center',
+  },
+  modalCloseText: { ...typography.bodyMedium, color: palette.text },
 });
