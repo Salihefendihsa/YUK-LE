@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { verifyOtp } from '../../api/auth'
+import { resendOtp, verifyOtp } from '../../api/auth'
 import './VerifyPhone.css'
 
 const OTP_LENGTH = 6
@@ -12,6 +12,7 @@ export default function VerifyPhone() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [secondsLeft, setSecondsLeft] = useState(60)
+  const [resending, setResending] = useState(false)
   const refs = useRef<(HTMLInputElement | null)[]>([])
   const navigate = useNavigate()
 
@@ -65,6 +66,24 @@ export default function VerifyPhone() {
     }
   }
 
+  async function handleResend() {
+    if (!phone || resending) return
+    setResending(true)
+    setError('')
+    try {
+      await resendOtp(phone)
+      setSecondsLeft(60)
+      setDigits(Array(OTP_LENGTH).fill(''))
+      refs.current[0]?.focus()
+    } catch (err: unknown) {
+      const msg = (err as { uiMessage?: string; response?: { data?: { message?: string } } })?.uiMessage
+        ?? (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      setError(msg || 'Kod yeniden gönderilemedi. Lütfen tekrar deneyin.')
+    } finally {
+      setResending(false)
+    }
+  }
+
   return (
     <div className="verify-page">
       <div className="verify-box">
@@ -110,9 +129,10 @@ export default function VerifyPhone() {
           ) : (
             <button
               className="btn btn-ghost btn-sm"
-              onClick={() => setSecondsLeft(60)}
+              onClick={() => void handleResend()}
+              disabled={resending}
             >
-              Kodu Tekrar Gönder
+              {resending ? 'Gönderiliyor...' : 'Kodu Tekrar Gönder'}
             </button>
           )}
         </div>

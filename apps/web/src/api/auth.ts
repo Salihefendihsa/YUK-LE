@@ -16,6 +16,11 @@ export async function verifyOtp(data: VerifyOtpRequest) {
   return res.data
 }
 
+export async function resendOtp(phone: string) {
+  const res = await apiClient.post('/Auth/resend-otp', { phone })
+  return res.data
+}
+
 export async function refreshToken(token: string, refreshToken: string) {
   const res = await apiClient.post('/Auth/refresh-token', { accessToken: token, refreshToken })
   return res.data
