@@ -7,6 +7,13 @@ type Status = 'Bekleniyor' | 'İnceleniyor' | 'Onaylı' | 'Reddedildi'
 type DocType = 'license' | 'src' | 'psychotechnic'
 type DocState = { status: Status; file: File | null; resultText: string; loading: boolean }
 
+/** Yerel kart tipi → backend DocumentType enum adi. */
+const DOC_TYPE_MAP: Record<DocType, string> = {
+  license: 'DriverLicense',
+  src: 'SrcCertificate',
+  psychotechnic: 'Psychotechnical',
+}
+
 export default function DriverDocumentsPage() {
   const [bootLoading, setBootLoading] = useState(true)
   useEffect(() => {
@@ -23,10 +30,12 @@ export default function DriverDocumentsPage() {
   async function handleAnalyzeAndUpload(type: DocType) {
     const selectedFile = docs[type].file
     if (!selectedFile) return
+    // Yerel kart tipini backend DocumentType enum adina esle (yoksa hep DriverLicense gider).
+    const docType = DOC_TYPE_MAP[type]
     setDocs((prev) => ({ ...prev, [type]: { ...prev[type], loading: true, status: 'İnceleniyor' } }))
     setError('')
     try {
-      const result = await uploadDocumentForAi(selectedFile)
+      const result = await uploadDocumentForAi(selectedFile, docType)
       const isValid = Boolean(result?.isValid ?? result?.IsValid)
       if (!isValid) {
         setDocs((prev) => ({
@@ -41,7 +50,7 @@ export default function DriverDocumentsPage() {
         return
       }
 
-      const uploadResult = await uploadDriverDocument(selectedFile)
+      const uploadResult = await uploadDriverDocument(selectedFile, docType)
       const serverMessage = uploadResult?.message ?? uploadResult?.Message
       setDocs((prev) => ({
         ...prev,
