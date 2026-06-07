@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { API_URL } from '../constants/api';
 import { useAuthStore } from '../store/auth.store';
 import { translateUserFacingError } from '../utils/apiErrors';
@@ -96,3 +96,69 @@ apiClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// ── 401 → refresh-token akışı ────────────────────────────────────────────────
+// Access token (7 gün) dolduğunda istek 401 döner. Saklı refresh token ile
+// /Auth/refresh-token çağrılır, yeni token'lar store'a yazılır ve orijinal istek
+// bir kez tekrarlanır. Refresh başarısızsa oturum kapatılır.
+//
+// Döngü guard'ları:
+//   • original._retry → bir istek en fazla bir kez yeniden denenir.
+//   • refresh çağrısı çıplak `axios` ile yapılır (apiClient değil) → interceptor özyinelemesi yok.
+//   • anonim uçlar (login/register/...) ve /Auth/refresh-token'ın kendisi atlanır.
+//   • refreshPromise tek-uçuş: eşzamanlı 401'ler aynı refresh'i paylaşır.
+let refreshPromise: Promise<string> | null = null;
+
+async function performTokenRefresh(): Promise<string> {
+  const { token, refreshToken } = useAuthStore.getState();
+  if (!token || !refreshToken) throw new Error('no-refresh-token');
+
+  const res = await axios.post(`${API_URL}/Auth/refresh-token`, {
+    accessToken: token,
+    refreshToken,
+  });
+  const data = res.data as { token?: string; refreshToken?: string };
+  if (!data?.token || !data?.refreshToken) throw new Error('bad-refresh-response');
+
+  useAuthStore.getState().updateTokens(data.token, data.refreshToken);
+  return data.token;
+}
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const original = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+    const status = error.response?.status;
+
+    const refreshable =
+      status === 401 &&
+      original != null &&
+      !original._retry &&
+      !isAnonymousRequest(original.url) &&
+      !original.url?.includes('/Auth/refresh-token');
+
+    if (!refreshable || !original) {
+      return Promise.reject(error);
+    }
+
+    // Refresh token yoksa yenilenemez → oturumu kapat.
+    if (!useAuthStore.getState().refreshToken) {
+      useAuthStore.getState().logout();
+      return Promise.reject(error);
+    }
+
+    original._retry = true;
+    try {
+      refreshPromise = refreshPromise ?? performTokenRefresh();
+      const newToken = await refreshPromise;
+      refreshPromise = null;
+      // Yeni token ile orijinal isteği tekrarla (request interceptor da güncel token'ı ekler).
+      original.headers.Authorization = `Bearer ${newToken}`;
+      return apiClient(original);
+    } catch {
+      refreshPromise = null;
+      useAuthStore.getState().logout();
+      return Promise.reject(error);
+    }
+  },
+);
