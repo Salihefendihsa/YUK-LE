@@ -23,6 +23,9 @@ public class LoadListDto
     public double Volume          { get; set; }
     public LoadType Type          { get; set; }
 
+    /// <summary>Gerekli araç türü (enum adı, ör. "Kamyon"). Null = belirtilmemiş.</summary>
+    public string? RequiredVehicleType { get; set; }
+
     // Zamanlama
     public DateTime PickupDate    { get; set; }
     public DateTime DeliveryDate  { get; set; }

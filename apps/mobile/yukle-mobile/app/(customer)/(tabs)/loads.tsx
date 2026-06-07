@@ -204,7 +204,10 @@ export default function CustomerLoadsScreen() {
                   </View>
                   <View style={styles.priceRow}>
                     <Text style={styles.price}>{formatCurrencyTRY(item.price)}</Text>
-                    <Text style={styles.meta}>{item.loadType ?? item.type ?? '-'}</Text>
+                    <Text style={styles.meta}>
+                      {item.loadType ?? item.type ?? '-'}
+                      {item.requiredVehicleType ? ` · ${item.requiredVehicleType}` : ''}
+                    </Text>
                   </View>
                   <View style={styles.bidRow}>
                     <Text style={styles.bidLabel}>Gelen teklif</Text>

@@ -74,7 +74,10 @@ export default function CustomerLoadsPage() {
               </div>
             ) : null}
             <div className="item-row" style={{ marginTop: 10 }}>
-              <span className="muted">{formatLoadTypeLabel(load.type)}</span>
+              <span className="muted">
+                {formatLoadTypeLabel(load.type)}
+                {load.requiredVehicleType ? ` · ${load.requiredVehicleType}` : ''}
+              </span>
               <strong>₺{load.price.toLocaleString('tr-TR')}</strong>
             </div>
             <div className="item-row" style={{ marginTop: 6 }}>
