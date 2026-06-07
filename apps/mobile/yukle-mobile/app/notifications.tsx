@@ -25,7 +25,8 @@ import { useAuthStore } from '../src/store/auth.store';
 import { useNotificationsStore } from '../src/store/notifications.store';
 import type { NotificationRow } from '../src/types/notification';
 import { palette } from '../src/theme/colors';
-import { typography } from '../src/theme/typography';
+import { fontFamily, typography } from '../src/theme/typography';
+import { shadows } from '../src/theme/shadows';
 import { space, spacing } from '../src/theme/spacing';
 import { radius } from '../src/theme/radius';
 import { formatDateTimeTR } from '../src/utils/format';
@@ -146,7 +147,7 @@ export default function NotificationsScreen() {
         renderItem={({ item, index }) => (
           <FadeInView delay={Math.min(index * 35, 175)}>
             <PressableScale
-              style={[styles.card, !item.isRead && styles.cardUnread]}
+              style={styles.card}
               onPress={() => void onMarkRead(item)}
             >
               <View style={styles.cardHead}>
@@ -190,16 +191,13 @@ const styles = StyleSheet.create({
     padding: spacing[3] + 2,
     gap: spacing[3] - 2,
     marginBottom: spacing[3],
+    ...shadows.card,
   },
-  cardUnread: {
-    borderColor: palette.brandBorder,
-    backgroundColor: palette.brandMuted,
-  },
-  cardHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardTitle: { ...typography.bodyMedium, flex: 1 },
+  cardHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
+  cardTitle: { ...typography.bodyMedium, fontFamily: fontFamily.bold, color: palette.text, flex: 1 },
   dot: {
-    width: 8,
-    height: 8,
+    width: 9,
+    height: 9,
     borderRadius: radius.full,
     backgroundColor: palette.brand,
   },
