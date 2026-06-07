@@ -88,10 +88,28 @@ public sealed class DocumentCleanupJob(
                 ApprovalStatus.Rejected
             };
 
+            // ── Güvenli alt küme ───────────────────────────────────────────────
+            // ExecuteDeleteAsync ham DELETE atar (EF cascade'i ATLAR) ve DB-seviyesi FK
+            // kurallarına tabidir. Şu FK'ler Restrict'tir ve böyle bir bağımlısı olan
+            // kullanıcının ham DELETE'i patlatır → tüm batch başarısız olur:
+            //   • Bid.DriverId        (Bid → User Restrict)
+            //   • Load.DriverId       (Load → Driver Restrict)
+            //   • Rating.GivenBy/To   (Rating → User Restrict)
+            // Ayrıca (b) en az bir belgesi Onaylı olan şoför MEŞRU (eksik onboarding);
+            // PendingReview'da takılı olsa bile silinmemeli. Bu yüzden aşağıdaki
+            // koşullarla yalnızca güvenle silinebilecek kayıtlar seçilir.
             var expiredUsers = await db.Users
                 .Where(u =>
                     statuses.Contains(u.ApprovalStatus) &&
-                    u.CreatedAt < cutoffDate)
+                    u.CreatedAt < cutoffDate &&
+                    // (b) hiçbir zorunlu belgesi onaylı değil
+                    !u.IsDriverLicenseApproved &&
+                    !u.IsSrcApproved &&
+                    !u.IsPsychotechnicalApproved &&
+                    // (a) Restrict FK bağımlısı olan kullanıcıyı kapsam dışı bırak
+                    !db.Bids.Any(b => b.DriverId == u.Id) &&
+                    !db.Loads.Any(l => l.DriverId == u.Id) &&
+                    !db.Ratings.Any(r => r.GivenByUserId == u.Id || r.GivenToUserId == u.Id))
                 .Select(u => new
                 {
                     u.Id,
@@ -124,9 +142,10 @@ public sealed class DocumentCleanupJob(
 
                 var batch = expiredIds.Skip(i).Take(batchSize).ToList();
 
-                // EF Core Cascade Delete: User silinince ilişkili Load (sahip olduğu),
-                // Vehicle, Bid ve Notification kayıtları da otomatik silinir.
-                // (DeleteBehavior.Cascade DbContext'te yapılandırılmış — bkz. YukleDbContext)
+                // Ham DELETE — yalnızca yukarıda güvenli alt kümeye indirilmiş Id'ler.
+                // DB-seviyesi Cascade FK'ler (Vehicle, Notification, DeliveryAddress,
+                // sahip olunan Load) otomatik temizlenir; Restrict bağımlısı olanlar zaten
+                // sorguda elenmiş olduğundan FK ihlali oluşmaz.
                 var batchCount = await db.Users
                     .Where(u => batch.Contains(u.Id))
                     .ExecuteDeleteAsync(ct);
