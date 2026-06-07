@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   muted: { ...typography.caption, textTransform: 'none' },
   detailLink: { ...typography.bodyMedium, fontSize: 13, color: roleAccents.admin.accent, marginTop: space.xs },
   cancelBtn: {
-    backgroundColor: palette.error,
+    backgroundColor: palette.errorSolid,
     borderRadius: radius.md,
     paddingVertical: space.md,
     alignItems: 'center',

@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
     paddingVertical: space.md,
     alignItems: 'center',
     borderRadius: radius.md,
-    backgroundColor: palette.error,
+    backgroundColor: palette.errorSolid,
   },
   dangerText: { ...typography.bodyMedium, color: palette.text },
   approveBtn: {

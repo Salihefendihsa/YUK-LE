@@ -48,6 +48,13 @@ export interface RoleAccent {
   accentBorder: string;
   /** Aksan dolgu üstündeki metin rengi. */
   onAccent: string;
+  /**
+   * Geniş dolu birincil buton yüzeyi için degrade [açık, koyu].
+   * Tanımlıysa düz `accent` yerine bu kullanılır — parlak accent'i korurken
+   * buton yüzeyini daha derin/az doygun tona çeker (web admin btn-primary ile aynı).
+   * Tanımsızsa buton düz `accent` ile dolar.
+   */
+  buttonFill?: readonly [string, string];
   /** Grafik çubuğu degradesi — [üst, alt]. */
   bar: readonly [string, string];
   /** Hero kart spesifikasyonu. */
@@ -90,6 +97,8 @@ const RED: RoleAccent = {
   accentSoft: 'rgba(239, 68, 68, 0.08)',
   accentBorder: 'rgba(239, 68, 68, 0.45)',
   onAccent: '#FFFFFF',
+  // Dolu buton yüzeyi: parlak #EF4444 yerine derin/az doygun degrade (web admin btn-primary birebir).
+  buttonFill: ['#F87171', '#DC2626'],
   bar: ['#F87171', '#991B1B'],
   hero: {
     gradient: ['#2A0C0C', '#160C0C', '#121620'],

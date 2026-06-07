@@ -126,6 +126,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dangerBtn: {
-    backgroundColor: palette.error,
+    backgroundColor: palette.errorSolid,
   },
 });

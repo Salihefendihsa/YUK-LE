@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   muted: { ...typography.caption, textTransform: 'none' },
   mono: { ...typography.caption, fontSize: 11, color: palette.textMuted, textTransform: 'none' },
   deleteBtn: {
-    backgroundColor: palette.error,
+    backgroundColor: palette.errorSolid,
     borderRadius: radius.md,
     paddingVertical: space.md,
     alignItems: 'center',

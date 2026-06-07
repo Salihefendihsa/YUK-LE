@@ -104,7 +104,7 @@ export const adminScreenStyles = StyleSheet.create({
   },
   danger: { color: palette.error },
   btnDanger: {
-    backgroundColor: palette.error,
+    backgroundColor: palette.errorSolid,
     borderRadius: radius.md,
     paddingVertical: spacing[2],
     paddingHorizontal: spacing[3],

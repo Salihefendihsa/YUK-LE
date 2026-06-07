@@ -38,6 +38,8 @@ export const palette = {
   warningBg: 'rgba(251, 191, 36, 0.16)',
 
   error: '#EF4444',
+  /** Geniş dolu kırmızı buton yüzeyi — semantik #EF4444 metin/rozet/kenarlıkta parlak kalır. */
+  errorSolid: '#DC2626',
   errorBg: 'rgba(239, 68, 68, 0.16)',
   errorBorder: 'rgba(239, 68, 68, 0.45)',
 
