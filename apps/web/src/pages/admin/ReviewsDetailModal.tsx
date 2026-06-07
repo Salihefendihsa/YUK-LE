@@ -34,14 +34,6 @@ export function ReviewsDetailModal({ review, onClose, onApprove, onReject, onMan
     (typeof ai.ImageUrl === 'string' && ai.ImageUrl) ||
     ''
 
-  const confidence = Number(ai.ConfidenceScore ?? 72)
-  const docType = String(ai.DocumentType ?? 'Sürücü Belgesi')
-  const validUntil = String(ai.ValidUntil ?? '12.05.2027')
-  const licenseClass = String(ai.LicenseClass ?? 'CE')
-  const nameMatch = ai.NameMatch === false ? 'Uyuşmuyor' : 'Eşleşiyor'
-  const tcMatch = ai.TcMatch === false ? 'Uyuşmuyor' : 'Eşleşiyor'
-  const suspicious = String(ai.SuspiciousNotes ?? 'Tarih bölümü bulanık')
-
   const tcMaskedDisplay = useMemo(() => {
     const raw = ai.TcMasked ?? ai.NationalIdMasked
     if (typeof raw === 'string' && raw.length > 4) return raw
@@ -178,37 +170,9 @@ export function ReviewsDetailModal({ review, onClose, onApprove, onReject, onMan
 
         <div className="review-ai-card">
           <h3 style={{ fontSize: 14, marginBottom: 10 }}>AI analiz sonucu</h3>
-          <div className="review-ai-row">
-            <span>Belge tipi</span>
-            <span>✅ {docType}</span>
-          </div>
-          <div className="review-ai-row">
-            <span>Geçerlilik</span>
-            <span>✅ {validUntil}</span>
-          </div>
-          <div className="review-ai-row">
-            <span>Sınıf</span>
-            <span>✅ {licenseClass}</span>
-          </div>
-          <div className="review-ai-row">
-            <span>Ad soyad eşleşmesi</span>
-            <span>✅ {nameMatch}</span>
-          </div>
-          <div className="review-ai-row">
-            <span>TC eşleşmesi</span>
-            <span>✅ {tcMatch}</span>
-          </div>
-          <div className="review-ai-row" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
-            <span>Güven skoru</span>
-            <div className="review-score-bar">
-              <span style={{ width: `${Math.min(100, Math.max(0, confidence))}%` }} />
-            </div>
-            <span className="muted" style={{ fontSize: 12 }}>
-              %{confidence}
-            </span>
-          </div>
-          <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
-            Şüpheli noktalar: ⚠️ {suspicious}
+          <p className="muted" style={{ fontSize: 13 }}>
+            AI belge analiz göstergesi şu an devre dışı. Lütfen belge görselini
+            inceleyip kararı manuel verin.
           </p>
         </div>
 
