@@ -52,6 +52,8 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
   const [suspendReason, setSuspendReason] = useState('');
   const [adminNote, setAdminNote] = useState('');
   const [warnReason, setWarnReason] = useState('');
+  // Aksiyon sonrası modal içi durum güncellensin (item prop'u değişmez).
+  const [activeOverride, setActiveOverride] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!visible || !item.id) return;
@@ -65,6 +67,7 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
     setSuspendReason('');
     setAdminNote('');
     setWarnReason('');
+    setActiveOverride(null);
     void getUserProfile(item.id)
       .then((p) => {
         if (!cancelled) setProfile(p);
@@ -92,7 +95,8 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
     };
   }, [item.id, visible]);
 
-  const activePill = item.isActive
+  const effectiveActive = activeOverride ?? item.isActive;
+  const activePill = effectiveActive
     ? { label: 'Aktif', tone: 'success' as const }
     : { label: 'Pasif', tone: 'error' as const };
   const approvalPill =
@@ -100,13 +104,18 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
       ? getApprovalStatusPill(item.approvalStatus)
       : null;
 
-  const runAction = async (fn: () => Promise<void>, success: string) => {
+  const runAction = async (
+    fn: () => Promise<void>,
+    success: string,
+    onSuccess?: () => void,
+  ) => {
     setActionBusy(true);
     setError('');
     setStatusMsg('');
     try {
       await fn();
       setStatusMsg(success);
+      onSuccess?.();
       onUpdated?.();
     } catch (e) {
       setError(getApiErrorMessage(e));
@@ -126,7 +135,12 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
       {
         text: 'Askıya Al',
         style: 'destructive',
-        onPress: () => void runAction(() => suspendUser(item.id, reason), 'Kullanıcı askıya alındı.'),
+        onPress: () =>
+          void runAction(
+            () => suspendUser(item.id, reason),
+            'Kullanıcı askıya alındı.',
+            () => setActiveOverride(false),
+          ),
       },
     ]);
   };
@@ -244,7 +258,7 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
 
           <Card variant="elevated" padding={4}>
             <Text style={styles.sectionTitle}>Hesap işlemleri</Text>
-            {item.isActive ? (
+            {effectiveActive ? (
               <>
                 <TextField
                   placeholder="Askıya alma sebebi (zorunlu)"
@@ -264,7 +278,9 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
               <PrimaryButton
                 title="Hesabı Aktif Et"
                 onPress={() =>
-                  void runAction(() => activateUser(item.id), 'Kullanıcı aktif edildi.')
+                  void runAction(() => activateUser(item.id), 'Kullanıcı aktif edildi.', () =>
+                    setActiveOverride(true),
+                  )
                 }
                 loading={actionBusy}
                 style={styles.actionBtn}

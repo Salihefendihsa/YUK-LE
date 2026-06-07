@@ -4,6 +4,7 @@ import { PageError, PageSkeleton } from '../../components/common/PageStates'
 import './AdminPanel.css'
 import { Link } from 'react-router-dom'
 import { formatCurrencyTRY, normalizeArray } from '../../utils/format'
+import { toast } from '@/components/common/Toast'
 
 export default function AdminCustomersPage() {
   const [customers, setCustomers] = useState<Array<Record<string, string | number | boolean>>>([])
@@ -22,9 +23,14 @@ export default function AdminCustomersPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  async function toggleUser(userId: number) {
-    await toggleUserActive(userId)
-    await fetchCustomers()
+  async function toggleUser(userId: number, currentlyActive: boolean) {
+    try {
+      await toggleUserActive(userId)
+      toast.success(currentlyActive ? 'Hesap askıya alındı.' : 'Hesap aktifleştirildi.')
+      await fetchCustomers()
+    } catch (e) {
+      toast.error((e as { uiMessage?: string }).uiMessage ?? 'İşlem başarısız.')
+    }
   }
 
   if (loading) return <PageSkeleton rows={8} />
@@ -57,7 +63,7 @@ export default function AdminCustomersPage() {
                 <td>{Boolean(customer.isActive) ? 'Aktif' : 'Askıda'}</td>
                 <td>
                   <Link to={`/admin/customers/${String(customer.id)}`} className="btn btn-ghost btn-sm">Detay</Link>{' '}
-                  <button className="btn btn-primary btn-sm" onClick={() => toggleUser(Number(customer.id))}>
+                  <button className="btn btn-primary btn-sm" onClick={() => void toggleUser(Number(customer.id), Boolean(customer.isActive))}>
                     {Boolean(customer.isActive) ? 'Askıya Al' : 'Aktif Et'}
                   </button>
                 </td>

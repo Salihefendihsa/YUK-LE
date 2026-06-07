@@ -299,7 +299,7 @@ public class AdminController : ControllerBase
         {
             u.Id,
             u.FullName,
-            Phone = PiiMasking.MaskPhone(u.Phone),
+            Phone = u.Phone, // admin-only endpoint: tam telefon
             u.Email,
             u.IsActive,
             u.ApprovalStatus,
@@ -350,7 +350,7 @@ public class AdminController : ControllerBase
         {
             u.Id,
             u.FullName,
-            Phone = PiiMasking.MaskPhone(u.Phone),
+            Phone = u.Phone, // admin-only endpoint: tam telefon
             u.Email,
             u.IsActive,
             u.totalLoadCount,

@@ -4,6 +4,7 @@ import { PageError, PageSkeleton } from '../../components/common/PageStates'
 import './AdminPanel.css'
 import { Link } from 'react-router-dom'
 import { normalizeArray } from '../../utils/format'
+import { toast } from '@/components/common/Toast'
 
 export default function AdminDriversPage() {
   const [drivers, setDrivers] = useState<Array<Record<string, string | number | boolean>>>([])
@@ -26,9 +27,14 @@ export default function AdminDriversPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  async function toggleUser(userId: number) {
-    await toggleUserActive(userId)
-    await fetchDrivers()
+  async function toggleUser(userId: number, currentlyActive: boolean) {
+    try {
+      await toggleUserActive(userId)
+      toast.success(currentlyActive ? 'Hesap askıya alındı.' : 'Hesap aktifleştirildi.')
+      await fetchDrivers()
+    } catch (e) {
+      toast.error((e as { uiMessage?: string }).uiMessage ?? 'İşlem başarısız.')
+    }
   }
 
   if (loading) return <PageSkeleton rows={8} />
@@ -84,7 +90,7 @@ export default function AdminDriversPage() {
                 <td>
                   <div className="item-row">
                     <Link to={`/admin/drivers/${String(driver.id)}`} className="btn btn-ghost btn-sm">Detay</Link>
-                    <button className="btn btn-primary btn-sm" onClick={() => toggleUser(Number(driver.id))}>
+                    <button className="btn btn-primary btn-sm" onClick={() => void toggleUser(Number(driver.id), Boolean(driver.isActive))}>
                       {Boolean(driver.isActive) ? 'Askıya Al' : 'Aktif Et'}
                     </button>
                   </div>

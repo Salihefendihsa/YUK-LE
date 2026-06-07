@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { getAdminUsers, toggleUserActive } from '../../api/admin'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
+import { toast } from '@/components/common/Toast'
 import './AdminPanel.css'
 
 export default function AdminUsersPage() {
@@ -10,12 +12,32 @@ export default function AdminUsersPage() {
   const [query, setQuery] = useState('')
   const [role, setRole] = useState('All')
 
+  const fetchUsers = useCallback(async () => {
+    setUsers(await getAdminUsers())
+  }, [])
+
   useEffect(() => {
-    getAdminUsers()
-      .then(setUsers)
+    fetchUsers()
       .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'Kullanıcı listesi alınamadı.'))
       .finally(() => setLoading(false))
-  }, [])
+  }, [fetchUsers])
+
+  async function toggleUser(userId: number, currentlyActive: boolean) {
+    try {
+      await toggleUserActive(userId)
+      toast.success(currentlyActive ? 'Hesap askıya alındı.' : 'Hesap aktifleştirildi.')
+      await fetchUsers()
+    } catch (e) {
+      toast.error((e as { uiMessage?: string }).uiMessage ?? 'İşlem başarısız.')
+    }
+  }
+
+  function detailPath(u: Record<string, unknown>): string | null {
+    const r = String(u.role)
+    if (r === 'Driver') return `/admin/drivers/${String(u.id)}`
+    if (r === 'Customer') return `/admin/customers/${String(u.id)}`
+    return null
+  }
 
   if (loading) return <PageSkeleton rows={8} />
   const filtered = users.filter((u) => {
@@ -46,7 +68,12 @@ export default function AdminUsersPage() {
                 <td>{String(u.isActive ? 'Aktif' : 'Askıda')}</td>
                 <td>{String(u.createdAt ?? '-')}</td>
                 <td>
-                  <button className="btn btn-primary btn-sm" onClick={() => void toggleUserActive(Number(u.id))}>Aktif Et/Askıya Al</button>
+                  {detailPath(u) ? (
+                    <Link to={detailPath(u)!} className="btn btn-ghost btn-sm">Detay</Link>
+                  ) : null}{' '}
+                  <button className="btn btn-primary btn-sm" onClick={() => void toggleUser(Number(u.id), Boolean(u.isActive))}>
+                    {Boolean(u.isActive) ? 'Askıya Al' : 'Aktif Et'}
+                  </button>
                 </td>
               </tr>
             ))}
