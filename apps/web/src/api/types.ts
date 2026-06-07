@@ -63,11 +63,11 @@ export interface LoginResponse {
 
 // ── Dashboard ─────────────────────────────────────────────────────────
 // CustomerDashboard @navlonix/shared'dan (üstte re-export).
+// Backend DriverDashboardDto ile birebir (camelCase JSON).
 export interface DriverDashboard {
-  activeOffersCount: number
-  completedLoadsCount: number
-  totalEarned: number
-  rating: number
+  activeBidCount: number
+  completedJobCount: number
+  totalEarnings: number
 }
 
 // ── Loads ─────────────────────────────────────────────────────────────

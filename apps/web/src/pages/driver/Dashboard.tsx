@@ -52,19 +52,18 @@ export default function DriverDashboard() {
           <p className="muted" style={{ fontSize: 12, marginBottom: 4 }}>
             Toplam kazanç
           </p>
-          <div className="hero-earn">{formatCurrencyTRY(stats?.totalEarned ?? 0)}</div>
+          <div className="hero-earn">{formatCurrencyTRY(stats?.totalEarnings ?? 0)}</div>
           <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-            Aktif teklif: {stats?.activeOffersCount ?? 0}
+            Aktif teklif: {stats?.activeBidCount ?? 0}
           </p>
         </div>
       </div>
 
       <div className="stat-grid">
         {[
-          { label: 'Aktif Teklif', value: stats?.activeOffersCount ?? 0, icon: '💼', color: 'var(--color-brand)' },
-          { label: 'Tamamlanan Sefer', value: stats?.completedLoadsCount ?? 0, icon: '✅', color: 'var(--color-success)' },
-          { label: 'Toplam Kazanç', value: formatCurrencyTRY(stats?.totalEarned ?? 0), icon: '💰', color: 'var(--color-warning)' },
-          { label: 'Degerlendirme', value: `⭐ ${stats?.rating?.toFixed(1) ?? '0.0'}`, icon: '⭐', color: 'var(--color-ai)' },
+          { label: 'Aktif Teklif', value: stats?.activeBidCount ?? 0, icon: '💼', color: 'var(--color-brand)' },
+          { label: 'Tamamlanan Sefer', value: stats?.completedJobCount ?? 0, icon: '✅', color: 'var(--color-success)' },
+          { label: 'Toplam Kazanç', value: formatCurrencyTRY(stats?.totalEarnings ?? 0), icon: '💰', color: 'var(--color-warning)' },
         ].map((s) => (
           <div key={s.label} className="stat-card card">
             <div className="stat-icon panel-stat-icon-glow" style={{ background: `${s.color}15`, color: s.color }}>
