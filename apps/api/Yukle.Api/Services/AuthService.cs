@@ -385,6 +385,16 @@ public class AuthService : IAuthService
                 user.Phone);
         }
 
+        // Ban kapısı: onboarding'i tamamlanmış (ApprovalStatus.Active) ama IsActive=false olan
+        // hesaplar yalnızca admin tarafından askıya alınmış olabilir (SuspendUser sadece IsActive'i
+        // false yapar, ApprovalStatus'a dokunmaz). Onay-bekleyen/reddedilmiş şoförler (Pending /
+        // PendingReview / ManualApprovalRequired / Rejected) burada ASLA engellenmez — yoksa belge
+        // yüklemek için login olamaz, onboarding kilitlenirdi.
+        if (!user.IsActive && user.ApprovalStatus == ApprovalStatus.Active)
+        {
+            throw new ApplicationException("Hesabınız askıya alınmış. Lütfen destek ile iletişime geçin.");
+        }
+
         return await IssueTokensAsync(user);
     }
 
