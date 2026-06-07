@@ -67,17 +67,16 @@ function KpiTile({
       <Card variant="elevated" padding={4} style={[styles.kpiCard, danger && styles.tileDanger]}>
         <View style={styles.tileHead}>
           <IconChip name={icon} accent={accent} />
-          <Ionicons name="chevron-forward" size={16} color={palette.textMuted} />
+          <View style={styles.tileHeadRight}>
+            {badge ? <StatusPill label={badge} tone={badgeTone ?? 'neutral'} /> : null}
+            <Ionicons name="chevron-forward" size={16} color={palette.textMuted} />
+          </View>
         </View>
         <Text style={[styles.tileValue, danger && styles.tileValueDanger]}>{value}</Text>
         {/* Sabit yükseklik etiket alanı — 1 vs 2 satır kartı uzatıp grid'i bozmasın. */}
         <Text style={styles.tileLabel} numberOfLines={2}>
           {label}
         </Text>
-        {/* Her karta sabit rozet yuvası ayrılır; etiketli/etiketsiz kartlar eşit yükseklikte. */}
-        <View style={styles.badgeSlot}>
-          {badge ? <StatusPill label={badge} tone={badgeTone ?? 'neutral'} /> : null}
-        </View>
       </Card>
     </PressableScale>
   );
@@ -109,7 +108,7 @@ function QuickAction({
             <Text style={[styles.countBadgeText, { color: accent.accent }]}>{count}</Text>
           </View>
         ) : null}
-        <Ionicons name="chevron-forward" size={15} color={palette.textMuted} />
+        <Ionicons name="chevron-forward" size={16} color={palette.textMuted} />
       </Card>
     </PressableScale>
   );
@@ -129,10 +128,10 @@ function DemoTile({
 }) {
   return (
     <PressableScale style={styles.tile} onPress={onPress} accessibilityRole="button">
-      <Card variant="elevated" padding={3} style={styles.demoCard}>
+      <Card variant="elevated" padding={4} style={styles.demoCard}>
         <View style={styles.tileHead}>
           <View style={styles.demoChip}>
-            <Ionicons name={icon} size={17} color={palette.textSecondary} />
+            <Ionicons name={icon} size={18} color={palette.textSecondary} />
           </View>
           <StatusPill label="DEMO" tone="warning" />
         </View>
@@ -141,7 +140,7 @@ function DemoTile({
           <Text style={[styles.tileLabel, { flex: 1 }]} numberOfLines={2}>
             {label}
           </Text>
-          <Ionicons name="chevron-forward" size={15} color={palette.textMuted} />
+          <Ionicons name="chevron-forward" size={16} color={palette.textMuted} />
         </View>
       </Card>
     </PressableScale>
@@ -275,10 +274,10 @@ export default function AdminDashboardScreen() {
               onPress={() => router.push('/(admin)/(tabs)/payments')}
               accessibilityRole="button"
             >
-              <Card variant="hero" padding={5} accent={accent} style={styles.hero}>
+              <Card variant="hero" padding={4} accent={accent}>
                 <View style={styles.heroTop}>
                   <View style={[styles.heroIcon, { backgroundColor: accent.hero.iconBg }]}>
-                    <Ionicons name="shield-checkmark" size={26} color={accent.hero.iconColor} />
+                    <Ionicons name="shield-checkmark" size={24} color={accent.hero.iconColor} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.heroTitle}>Operasyon özeti</Text>
@@ -466,30 +465,29 @@ export default function AdminDashboardScreen() {
 const styles = StyleSheet.create({
   scroll: { padding: space.md, paddingBottom: spacing[10], gap: spacing[3] },
 
-  // Hero
-  hero: { marginBottom: space.xs },
-  heroTop: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
+  // Hero — odak kart; KPI'ları ezmeyecek ölçüde (ikon 44, değer 26)
+  heroTop: { flexDirection: 'row', alignItems: 'center', gap: space.sm + 4 },
   heroIcon: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   heroTitle: { ...typography.h3, color: palette.text },
   heroSub: { ...typography.caption, textTransform: 'none', marginTop: space.xs },
-  heroLabel: { ...typography.caption, textTransform: 'none', marginTop: space.md },
-  heroValue: { ...typography.display, fontSize: 30, letterSpacing: -0.8, marginTop: space.xs },
+  heroLabel: { ...typography.caption, textTransform: 'none', marginTop: space.sm },
+  heroValue: { ...typography.display, fontSize: 26, letterSpacing: -0.6, marginTop: space.xs },
 
   // Status pills
   statusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 
-  // Grid
+  // Grid — kartlar arası eşit gap (space.sm = 8); bölüm ritmi scroll gap (12) ile ayrı
   grid: { gap: space.sm },
   row2: { flexDirection: 'row', gap: space.sm },
   tile: { flex: 1 },
 
-  // Icon chip
+  // İkon çip — TÜM kartlarda aynı (36×36, glyph 18)
   iconChip: {
     width: 36,
     height: 36,
@@ -499,17 +497,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // KPI tile — eşit yükseklik: kart minHeight + 2-satır etiket alanı + sabit rozet yuvası
-  kpiCard: { minHeight: 150 },
+  // KPI tile — kompakt + 4 kart birebir aynı (minHeight + 2-satır etiket alanı)
+  kpiCard: { minHeight: 132 },
   tileHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  tileValue: { ...typography.h2, fontSize: 24, letterSpacing: -0.5, marginTop: space.sm },
+  tileHeadRight: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  tileValue: { ...typography.h2, fontSize: 22, letterSpacing: -0.5, marginTop: space.sm },
   tileValueDanger: { color: palette.error },
   tileLabel: { ...typography.caption, textTransform: 'none', marginTop: space.xs, minHeight: 34 },
-  badgeSlot: { height: 26, marginTop: space.sm, justifyContent: 'center' },
   tileDanger: { borderColor: palette.errorBorder },
 
   // Quick action — tek satır, sayı sağda küçük rozet
-  quickCard: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 56 },
+  quickCard: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 60 },
   quickLabel: { ...typography.bodyMedium, fontSize: 14, flex: 1, minWidth: 0 },
   countBadge: {
     minWidth: 22,
@@ -522,8 +520,8 @@ const styles = StyleSheet.create({
   },
   countBadgeText: { ...typography.caption, fontSize: 11, fontWeight: '700' },
 
-  // Demo tile
-  demoCard: { minHeight: 116 },
+  // Demo tile — KPI ile aynı tipografi/çip ölçeği
+  demoCard: { minHeight: 132 },
   demoChip: {
     width: 36,
     height: 36,
@@ -534,11 +532,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  demoValue: { ...typography.h3, fontSize: 19, letterSpacing: -0.3, marginTop: space.sm },
+  demoValue: { ...typography.h2, fontSize: 22, letterSpacing: -0.5, marginTop: space.sm },
   demoLabelRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs, marginTop: space.xs },
 
   // Sections / activity
-  sectionTitle: { ...typography.h3, marginBottom: space.sm, marginTop: space.xs },
+  sectionTitle: { ...typography.h3, marginBottom: space.sm },
   cardTitle: { ...typography.h3, marginBottom: space.sm },
   muted: { ...typography.caption, textTransform: 'none' },
   actionRow: {
