@@ -7,8 +7,6 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
 }
 
 export async function register(data: RegisterRequest) {
-  // Register payload'ini troubleshooting icin konsolda gor.
-  console.log('[register payload]', data)
   const res = await apiClient.post('/Auth/register', data)
   return res.data
 }
