@@ -11,6 +11,7 @@ const APPROVAL_STATUS_BY_INDEX: Record<number, string> = {
   2: 'Rejected',
   3: 'Active',
   4: 'ManualApprovalRequired',
+  5: 'PendingReview',
 };
 
 export function normalizeStatusKey(value: unknown): string {

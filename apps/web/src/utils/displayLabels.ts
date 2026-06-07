@@ -12,6 +12,7 @@ function normalizeKey(raw: unknown): string {
       2: 'Rejected',
       3: 'Active',
       4: 'ManualApprovalRequired',
+      5: 'PendingReview',
     }
     return approvalByIndex[raw] ?? String(raw)
   }
