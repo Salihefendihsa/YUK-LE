@@ -316,7 +316,7 @@ export default function AdminDashboardScreen() {
             {sys?.redis ? (
               <StatusPill
                 {...getSystemServicePill(sys.redis)}
-                label={`Önbellek: ${formatSystemServiceLabel(sys.redis)}`}
+                label={`Önbellek (bellek-içi): ${formatSystemServiceLabel(sys.redis)}`}
               />
             ) : null}
           </View>

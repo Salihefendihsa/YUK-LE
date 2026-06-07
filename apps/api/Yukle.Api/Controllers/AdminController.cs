@@ -113,7 +113,10 @@ public class AdminController : ControllerBase
             .ToListAsync();
 
         var dbHealthy = await _context.Database.CanConnectAsync();
-        bool redisHealthy;
+        // NOT: _cache şu an bellek-içi (Program.cs AddDistributedMemoryCache) — gerçek bir
+        // Redis bağlı değil. Bu kontrol yalnızca önbellek katmanının çalıştığını doğrular.
+        // (systemStatus.redis anahtarı FE sözleşmesi gereği korunur; değer önbellek sağlığıdır.)
+        bool cacheHealthy;
         try
         {
             var key = "admin:healthcheck";
@@ -121,11 +124,11 @@ public class AdminController : ControllerBase
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30)
             });
-            redisHealthy = await _cache.GetStringAsync(key) is not null;
+            cacheHealthy = await _cache.GetStringAsync(key) is not null;
         }
         catch
         {
-            redisHealthy = false;
+            cacheHealthy = false;
         }
 
         return Ok(new
@@ -138,7 +141,8 @@ public class AdminController : ControllerBase
             {
                 api = "Online",
                 db = dbHealthy ? "Online" : "Offline",
-                redis = redisHealthy ? "Online" : "Offline"
+                // Anahtar adı FE sözleşmesi için "redis" kalır; değer bellek-içi önbellek sağlığıdır.
+                redis = cacheHealthy ? "Online" : "Offline"
             },
             recentActions
         });
