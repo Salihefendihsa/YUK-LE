@@ -65,7 +65,7 @@ export default function AdminDriversPage() {
         <table className="admin-table">
           <thead>
             <tr>
-              {['id', 'fullName', 'phone', 'vehicle', 'approvalStatus', 'rating'].map((h) => (
+              {['id', 'fullName', 'phone', 'email', 'vehicle', 'approvalStatus', 'rating'].map((h) => (
                 <th key={h} onClick={() => { setSortKey(h); setSortDir(sortDir === 'asc' ? 'desc' : 'asc') }}>{h}</th>
               ))}
               <th>İşlemler</th>
@@ -77,6 +77,7 @@ export default function AdminDriversPage() {
                 <td className="mono">{String(driver.id)}</td>
                 <td>{String(driver.fullName)}</td>
                 <td>{String(driver.phone)}</td>
+                <td>{String(driver.email ?? '-')}</td>
                 <td className="mono">{String(driver.vehicle ?? '-')}</td>
                 <td>{String(driver.approvalStatus)}</td>
                 <td>⭐ {String(driver.rating)}</td>

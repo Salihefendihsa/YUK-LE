@@ -3,12 +3,6 @@ import type { PendingReview } from '../../api/admin'
 import { openConfirm } from '@/components/common/ConfirmModal'
 import { toast } from '@/components/common/Toast'
 
-function maskPhone(phone: string) {
-  const d = phone.replace(/\D/g, '')
-  if (d.length < 4) return phone
-  return `*** *** ** ${d.slice(-2)}`
-}
-
 function parseAi(raw?: string) {
   if (!raw) return {} as Record<string, unknown>
   try {
@@ -153,7 +147,7 @@ export function ReviewsDetailModal({ review, onClose, onApprove, onReject, onMan
             <div>
               <strong style={{ fontSize: 17 }}>{review.fullName}</strong>
               <p className="muted" style={{ fontSize: 13, marginTop: 4 }}>
-                Telefon: {maskPhone(review.phone)}
+                Telefon: {review.phone}
               </p>
               <p className="muted" style={{ fontSize: 13 }}>
                 T.C.: {tcMaskedDisplay}

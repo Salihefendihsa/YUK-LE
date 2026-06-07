@@ -165,7 +165,8 @@ public sealed class UsersController : ControllerBase
             Id                 = user.Id,
             FullName           = user.FullName,
             Email              = user.Email,
-            Phone              = PiiMasking.MaskPhone(user.Phone),
+            // Telefon: yalnız çağıran ADMIN ise ham; non-admin (kendi profili dahil) maskeli kalır (KVKK).
+            Phone              = User.IsInRole(nameof(UserRole.Admin)) ? user.Phone : PiiMasking.MaskPhone(user.Phone),
             CompanyName        = addr?.CompanyName,
             TaxNumber          = user.Role == UserRole.Customer ? PiiMasking.MaskTax(user.TaxNumberOrTCKN) : null,
             CompanyAddress     = addr?.Address,

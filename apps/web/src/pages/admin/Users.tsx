@@ -35,12 +35,14 @@ export default function AdminUsersPage() {
       </div>
       <div className="admin-table-wrap">
         <table className="admin-table">
-          <thead><tr><th>Ad</th><th>Rol</th><th>Durum</th><th>Kayıt</th><th>İşlem</th></tr></thead>
+          <thead><tr><th>Ad</th><th>Rol</th><th>E-posta</th><th>Telefon</th><th>Durum</th><th>Kayıt</th><th>İşlem</th></tr></thead>
           <tbody>
             {filtered.map((u) => (
               <tr key={String(u.id)}>
                 <td>{String(u.fullName)}</td>
                 <td>{String(u.role)}</td>
+                <td>{String(u.email ?? '-')}</td>
+                <td>{String(u.phone ?? '-')}</td>
                 <td>{String(u.isActive ? 'Aktif' : 'Askıda')}</td>
                 <td>{String(u.createdAt ?? '-')}</td>
                 <td>

@@ -20,7 +20,7 @@ import { toast } from '@/components/common/Toast'
 import { formatPaymentStatusLabel, formatLoadStatusLabel } from '../../utils/displayLabels'
 import { formatCurrencyTRY, formatDateTR } from '../../utils/format'
 import { formatDateTime } from '../../utils/formatters'
-import { maskEmail, maskPhone, maskTax, safeInitial } from '../../utils/pii'
+import { maskTax, safeInitial } from '../../utils/pii'
 import './AdminPanel.css'
 import '../../styles/overlays.css'
 
@@ -166,7 +166,7 @@ export default function AdminCustomerDetailPage() {
             Müşteri #{userId}
           </p>
           <p className="muted" style={{ fontSize: 14 }}>
-            {maskPhone(listRow?.phone || profile.phone)} · {maskEmail(profile.email)}
+            {listRow?.phone || profile.phone} · {profile.email}
           </p>
           {profile.companyName ? (
             <p className="muted" style={{ fontSize: 14 }}>

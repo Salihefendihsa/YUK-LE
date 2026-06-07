@@ -17,7 +17,7 @@ import { openConfirm } from '@/components/common/ConfirmModal'
 import { toast } from '@/components/common/Toast'
 import { formatApprovalStatusLabel, formatLoadStatusLabel } from '../../utils/displayLabels'
 import { formatCurrencyTRY, formatDateTR } from '../../utils/format'
-import { maskEmail, maskIban, maskPhone, safeInitial } from '../../utils/pii'
+import { maskIban, safeInitial } from '../../utils/pii'
 import './AdminPanel.css'
 import '../../styles/overlays.css'
 
@@ -160,7 +160,7 @@ export default function AdminDriverDetailPage() {
             Şoför #{userId}
           </p>
           <p className="muted" style={{ fontSize: 14 }}>
-            {maskPhone(listRow?.phone || profile.phone)} · {maskEmail(profile.email)}
+            {listRow?.phone || profile.phone} · {profile.email}
           </p>
           <div style={{ marginTop: 12 }}>
             <span className="ad-badge-pulse">{approvalLabel}</span>

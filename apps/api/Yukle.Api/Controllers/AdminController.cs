@@ -220,7 +220,7 @@ public class AdminController : ControllerBase
             {
                 x.User.Id,
                 x.User.FullName,
-                Phone = PiiMasking.MaskPhone(x.User.Phone),
+                Phone = x.User.Phone, // admin-only endpoint: tam telefon
                 TaxNumberOrTCKN = PiiMasking.MaskTc(x.User.TaxNumberOrTCKN),
                 x.User.Email,
                 x.User.CreatedAt,
@@ -681,7 +681,7 @@ public class AdminController : ControllerBase
                 u.Id,
                 u.FullName,
                 u.Email,
-                Phone = PiiMasking.MaskPhone(u.Phone),
+                Phone = u.Phone, // admin-only endpoint: tam telefon
                 u.Role,
                 u.IsActive,
                 u.CreatedAt
