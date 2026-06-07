@@ -41,8 +41,9 @@ export default function AdminDashboard() {
         <div>
           <h1 className="page-title admin-command-title">Komuta Merkezi</h1>
           <p className="admin-sub">Canlı operasyon özeti — veriler 30 saniyede bir yenilenir.</p>
-          <div className="admin-health-row" aria-hidden>
-            <span className="admin-health-pill">
+          <div className="admin-health-row">
+            <span className="badge badge-warning">DEMO</span>
+            <span className="admin-health-pill" aria-hidden>
               <span className="admin-health-dot" /> API
             </span>
             <span className="admin-health-pill">
@@ -77,7 +78,10 @@ export default function AdminDashboard() {
       <div className="kpi-grid">
         {kpis2.map((s) => (
           <div key={s.label} className="admin-card">
-            <div className="kpi-label">{s.label}</div>
+            <div className="item-row">
+              <span className="kpi-label">{s.label}</span>
+              <span className="badge badge-warning">DEMO</span>
+            </div>
             <div className="kpi-value">{s.value}</div>
           </div>
         ))}
@@ -85,13 +89,13 @@ export default function AdminDashboard() {
 
       <div className="admin-grid-2">
         <div className="admin-card">
-          <h3>Son 7 Günlük İlan Grafiği</h3>
+          <h3>Son 7 Günlük İlan Grafiği <span className="badge badge-warning">DEMO</span></h3>
           <div className="admin-chart">
             {bars.map((h, i) => <div key={i} className="admin-bar" style={{ height: `${h * 2}px` }} />)}
           </div>
         </div>
         <div className="admin-card">
-          <h3>Rol Dağılımı & Güzergahlar</h3>
+          <h3>Rol Dağılımı & Güzergahlar <span className="badge badge-warning">DEMO</span></h3>
           <p className="muted">Müşteri: {Number(stats.customerCount ?? 0)} | Şoför: {Number(stats.driverCount ?? 0)}</p>
           <p className="muted" style={{ marginTop: 8 }}>İzmir → İstanbul: 42</p>
           <p className="muted">Ankara → Bursa: 31</p>

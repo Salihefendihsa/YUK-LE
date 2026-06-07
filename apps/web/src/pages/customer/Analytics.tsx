@@ -58,7 +58,7 @@ export default function CustomerAnalyticsPage() {
 
       <div className="analytics-grid">
         <section className="card">
-          <h2>Toplam harcama</h2>
+          <h2>Toplam harcama <span className="badge badge-warning">DEMO</span></h2>
           <p className="muted" style={{ fontSize: 13 }}>
             Aylık trend (demo)
           </p>
