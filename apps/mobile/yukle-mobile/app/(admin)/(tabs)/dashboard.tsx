@@ -63,22 +63,24 @@ function KpiTile({
   danger?: boolean;
 }) {
   return (
-    <PressableScale style={styles.tile} onPress={onPress} accessibilityRole="button">
-      <Card variant="elevated" padding={4} style={[styles.kpiCard, danger && styles.tileDanger]}>
-        <View style={styles.tileHead}>
-          <IconChip name={icon} accent={accent} />
-          <View style={styles.tileHeadRight}>
-            {badge ? <StatusPill label={badge} tone={badgeTone ?? 'neutral'} /> : null}
-            <Ionicons name="chevron-forward" size={16} color={palette.textMuted} />
+    <View style={styles.tile}>
+      <PressableScale onPress={onPress} accessibilityRole="button">
+        <Card variant="elevated" padding={4} style={[styles.kpiCard, danger && styles.tileDanger]}>
+          <View style={styles.tileHead}>
+            <IconChip name={icon} accent={accent} />
+            <View style={styles.tileHeadRight}>
+              {badge ? <StatusPill label={badge} tone={badgeTone ?? 'neutral'} /> : null}
+              <Ionicons name="chevron-forward" size={16} color={palette.textMuted} />
+            </View>
           </View>
-        </View>
-        <Text style={[styles.tileValue, danger && styles.tileValueDanger]}>{value}</Text>
-        {/* Sabit yükseklik etiket alanı — 1 vs 2 satır kartı uzatıp grid'i bozmasın. */}
-        <Text style={styles.tileLabel} numberOfLines={2}>
-          {label}
-        </Text>
-      </Card>
-    </PressableScale>
+          <Text style={[styles.tileValue, danger && styles.tileValueDanger]}>{value}</Text>
+          {/* Sabit yükseklik etiket alanı — 1 vs 2 satır kartı uzatıp grid'i bozmasın. */}
+          <Text style={styles.tileLabel} numberOfLines={2}>
+            {label}
+          </Text>
+        </Card>
+      </PressableScale>
+    </View>
   );
 }
 
@@ -97,20 +99,22 @@ function QuickAction({
   onPress: () => void;
 }) {
   return (
-    <PressableScale style={styles.tile} onPress={onPress} accessibilityRole="button">
-      <Card variant="elevated" padding={3} style={styles.quickCard}>
-        <IconChip name={icon} accent={accent} />
-        <Text style={styles.quickLabel} numberOfLines={1}>
-          {label}
-        </Text>
-        {count != null && count > 0 ? (
-          <View style={[styles.countBadge, { backgroundColor: accent.accentMuted, borderColor: accent.accentBorder }]}>
-            <Text style={[styles.countBadgeText, { color: accent.accent }]}>{count}</Text>
-          </View>
-        ) : null}
-        <Ionicons name="chevron-forward" size={16} color={palette.textMuted} />
-      </Card>
-    </PressableScale>
+    <View style={styles.tile}>
+      <PressableScale onPress={onPress} accessibilityRole="button">
+        <Card variant="elevated" padding={3} style={styles.quickCard}>
+          <IconChip name={icon} accent={accent} />
+          <Text style={styles.quickLabel} numberOfLines={1}>
+            {label}
+          </Text>
+          {count != null && count > 0 ? (
+            <View style={[styles.countBadge, { backgroundColor: accent.accentMuted, borderColor: accent.accentBorder }]}>
+              <Text style={[styles.countBadgeText, { color: accent.accent }]}>{count}</Text>
+            </View>
+          ) : null}
+          <Ionicons name="chevron-forward" size={16} color={palette.textMuted} />
+        </Card>
+      </PressableScale>
+    </View>
   );
 }
 
@@ -127,23 +131,25 @@ function DemoTile({
   onPress: () => void;
 }) {
   return (
-    <PressableScale style={styles.tile} onPress={onPress} accessibilityRole="button">
-      <Card variant="elevated" padding={4} style={styles.demoCard}>
-        <View style={styles.tileHead}>
-          <View style={styles.demoChip}>
-            <Ionicons name={icon} size={18} color={palette.textSecondary} />
+    <View style={styles.tile}>
+      <PressableScale onPress={onPress} accessibilityRole="button">
+        <Card variant="elevated" padding={4} style={styles.demoCard}>
+          <View style={styles.tileHead}>
+            <View style={styles.demoChip}>
+              <Ionicons name={icon} size={18} color={palette.textSecondary} />
+            </View>
+            <StatusPill label="DEMO" tone="warning" />
           </View>
-          <StatusPill label="DEMO" tone="warning" />
-        </View>
-        <Text style={styles.demoValue}>{value}</Text>
-        <View style={styles.demoLabelRow}>
-          <Text style={[styles.tileLabel, { flex: 1 }]} numberOfLines={2}>
-            {label}
-          </Text>
-          <Ionicons name="chevron-forward" size={16} color={palette.textMuted} />
-        </View>
-      </Card>
-    </PressableScale>
+          <Text style={styles.demoValue}>{value}</Text>
+          <View style={styles.demoLabelRow}>
+            <Text style={[styles.tileLabel, { flex: 1 }]} numberOfLines={2}>
+              {label}
+            </Text>
+            <Ionicons name="chevron-forward" size={16} color={palette.textMuted} />
+          </View>
+        </Card>
+      </PressableScale>
+    </View>
   );
 }
 
@@ -484,7 +490,9 @@ const styles = StyleSheet.create({
 
   // Grid — kartlar arası eşit gap (space.sm = 8); bölüm ritmi scroll gap (12) ile ayrı
   grid: { gap: space.sm },
-  row2: { flexDirection: 'row', gap: space.sm },
+  // alignItems:stretch → her sütundaki dış sarmalayıcı en uzun karta eşit yükseklik alır
+  row2: { flexDirection: 'row', gap: space.sm, alignItems: 'stretch' },
+  // Eşit GENİŞLİK: tile dış View satırın flex çocuğudur (her biri %50); PressableScale/Card içini doldurur
   tile: { flex: 1 },
 
   // İkon çip — TÜM kartlarda aynı (36×36, glyph 18)
