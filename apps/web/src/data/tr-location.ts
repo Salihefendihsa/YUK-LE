@@ -139,14 +139,6 @@ function normalizeCityKey(city: string): string {
   return fuzzyAscii ?? trimmed
 }
 
-function districtOffset(district: string): { dLat: number; dLng: number } {
-  const hash = district.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
-  return {
-    dLat: ((hash % 100) - 50) * 0.0008,
-    dLng: ((hash % 73) - 36) * 0.0008,
-  }
-}
-
 export function getDistrictsByCity(city: string): string[] {
   const key = normalizeCityKey(city)
   return DISTRICT_MAP[key] ?? ['Merkez']
@@ -158,14 +150,15 @@ export function getNeighborhoodsByDistrict(district: string): string[] {
 
 export function resolveCoordinates(
   city: string,
-  district: string
+  _district: string
 ): { latitude: number; longitude: number } {
   const key = normalizeCityKey(city)
   const base = CITY_COORDINATES[key] ?? CITY_COORDINATES.Ankara
-  const { dLat, dLng } = districtOffset(district || 'Merkez')
+  // İlçe için ayrı koordinat yok; il merkezini kullan. (Eski hash tabanlı "jitter"
+  // kıyı illerinde noktayı denize taşıyordu; kaldırıldı — nokta hep merkezde, karada.)
   return {
-    latitude: Math.round((base.lat + dLat) * 1e6) / 1e6,
-    longitude: Math.round((base.lng + dLng) * 1e6) / 1e6,
+    latitude: base.lat,
+    longitude: base.lng,
   }
 }
 
