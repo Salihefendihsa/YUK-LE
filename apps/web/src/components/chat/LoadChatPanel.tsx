@@ -25,6 +25,7 @@ export default function LoadChatPanel({ loadId }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [text, setText] = useState('')
   const [connected, setConnected] = useState(false)
+  const [sendError, setSendError] = useState('')
 
   useEffect(() => {
     const connection = createChatConnection()
@@ -101,8 +102,14 @@ export default function LoadChatPanel({ loadId }: Props) {
 
   const send = async () => {
     if (!conn || !canSend) return
-    await conn.invoke('SendMessage', loadId, text.trim())
-    setText('')
+    setSendError('')
+    try {
+      await conn.invoke('SendMessage', loadId, text.trim())
+      setText('')
+    } catch (e) {
+      // HubException mesajı (örn. "Uygunsuz içerik tespit edildi…") client'a verbatim gelir.
+      setSendError(e instanceof Error && e.message ? e.message : 'Mesaj gönderilemedi.')
+    }
   }
 
   return (
@@ -128,6 +135,7 @@ export default function LoadChatPanel({ loadId }: Props) {
         <input className="form-input" placeholder="Mesajınızı yazın..." value={text} onChange={(e) => setText(e.target.value)} />
         <button className="btn btn-primary btn-sm" disabled={!canSend} onClick={() => void send()}>Gönder</button>
       </div>
+      {sendError ? <p className="danger" style={{ marginTop: 6, fontSize: 13 }}>{sendError}</p> : null}
     </div>
   )
 }
