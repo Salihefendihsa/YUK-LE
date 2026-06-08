@@ -40,6 +40,9 @@ public class YukleDbContext : DbContext
     public DbSet<SupportTicket>  SupportTickets  { get; set; }
     public DbSet<SupportMessage> SupportMessages { get; set; }
 
+    // Şoför "Boş Araç" ilanları
+    public DbSet<DriverListing> DriverListings { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -332,6 +335,41 @@ public class YukleDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(m => new { m.TicketId, m.CreatedAt });
+        });
+
+        // ── DriverListing (Şoför Boş Araç İlanı) ──────────────────────────────
+        // Coğrafi alanlar Load ile BİREBİR aynı: geometry(Point, 4326).
+        modelBuilder.Entity<DriverListing>(entity =>
+        {
+            entity.HasKey(d => d.Id);
+
+            // Şoför: zorunlu sahip; şoför silinirse ilanları da silinir.
+            entity.HasOne(d => d.Driver)
+                  .WithMany()
+                  .HasForeignKey(d => d.DriverId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // Rota metin alanları (Load ile aynı kısıt)
+            entity.Property(d => d.OriginCity).HasMaxLength(100).IsRequired();
+            entity.Property(d => d.OriginDistrict).HasMaxLength(100).IsRequired();
+            entity.Property(d => d.DestinationCity).HasMaxLength(100).IsRequired();
+            entity.Property(d => d.DestinationDistrict).HasMaxLength(100).IsRequired();
+
+            entity.Property(d => d.CapacityNote).HasMaxLength(200);
+            entity.Property(d => d.Notes).HasMaxLength(1000);
+
+            // PostGIS coğrafi noktalar — Load ile aynı tip ve SRID
+            entity.Property(d => d.Origin)
+                  .HasColumnType("geometry(Point, 4326)")
+                  .IsRequired();
+            entity.Property(d => d.Destination)
+                  .HasColumnType("geometry(Point, 4326)")
+                  .IsRequired();
+
+            // Aktif ilanları müsaitliğe göre sıralı getirmek için index
+            entity.HasIndex(d => new { d.Status, d.AvailableFrom });
+            // Şoförün kendi ilanları
+            entity.HasIndex(d => d.DriverId);
         });
 
         // ── Phase 4.3 UetdsOutbox ─────────────────────────────────────────────

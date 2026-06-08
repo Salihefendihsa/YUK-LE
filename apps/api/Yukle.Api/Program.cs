@@ -131,6 +131,7 @@ builder.Services.AddSingleton<Yukle.Api.Services.IDriverReviewDocumentStore, Yuk
 builder.Services.AddScoped<Yukle.Api.Services.IAuthService,         Yukle.Api.Services.AuthService>();
 builder.Services.AddYukleSms(builder.Configuration);
 builder.Services.AddScoped<Yukle.Api.Services.IBidService,          Yukle.Api.Services.BidService>();
+builder.Services.AddScoped<Yukle.Api.Services.IDriverListingService, Yukle.Api.Services.DriverListingService>();
 builder.Services.AddScoped<Yukle.Api.Services.INotificationService, Yukle.Api.Services.NotificationService>();
 builder.Services.AddScoped<Yukle.Api.Services.IDashboardService,    Yukle.Api.Services.DashboardService>();
 builder.Services.AddScoped<Yukle.Api.Services.AiPricingService>();

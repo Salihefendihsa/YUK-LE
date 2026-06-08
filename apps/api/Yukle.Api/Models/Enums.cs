@@ -57,6 +57,15 @@ public enum LoadStatus
     Cancelled   // İptal
 }
 
+/// <summary>Şoför "Boş Araç" ilanının yaşam döngüsü.</summary>
+public enum DriverListingStatus
+{
+    Active,    // 0 — Yayında
+    Matched,   // 1 — Eşleşti
+    Cancelled, // 2 — İptal
+    Expired    // 3 — Süresi doldu
+}
+
 /// <summary>Teklif durumları.</summary>
 public enum BidStatus
 {
