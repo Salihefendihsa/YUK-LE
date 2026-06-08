@@ -199,7 +199,7 @@ export default function CustomerLoadDetailPage() {
                 </button>
               ) : null}
               {load.status === 'Delivered' ? (
-                <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowRating(true)}>
+                <button type="button" className="btn btn-primary btn-sm" onClick={() => { setError(''); setShowRating(true) }}>
                   Teslimatı Puanla
                 </button>
               ) : null}
@@ -256,14 +256,20 @@ export default function CustomerLoadDetailPage() {
                 className="btn btn-primary btn-sm"
                 onClick={async () => {
                   if (!load?.driverId) return
-                  await submitRating({ loadId: id, givenToUserId: load.driverId, score, comment })
-                  setShowRating(false)
-                  setActionMsg('Puanınız kaydedildi.')
+                  setError('')
+                  try {
+                    await submitRating({ loadId: id, givenToUserId: load.driverId, score, comment })
+                    setShowRating(false)
+                    setActionMsg('Puanınız kaydedildi.')
+                  } catch (e: unknown) {
+                    setError((e as { uiMessage?: string }).uiMessage ?? 'Puan kaydedilemedi.')
+                  }
                 }}
               >
                 Kaydet
               </button>
             </div>
+            {error ? <p className="danger" style={{ marginTop: 8, fontSize: 13 }}>{error}</p> : null}
           </div>
         </div>
       ) : null}
