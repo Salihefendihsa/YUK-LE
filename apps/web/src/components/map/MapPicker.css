@@ -1,0 +1,35 @@
+.map-picker {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #0b0f14;
+  cursor: crosshair;
+}
+
+/* DivIcon kabı — şeffaf; renkli daireyi içteki .map-pin verir. */
+.map-pin-icon {
+  background: transparent;
+  border: none;
+}
+
+.map-pin {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #050608;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+.map-picker-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 720px) {
+  .map-picker-grid {
+    grid-template-columns: 1fr;
+  }
+}

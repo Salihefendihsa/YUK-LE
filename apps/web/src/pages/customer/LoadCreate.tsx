@@ -9,6 +9,7 @@ import type { CreateLoadRequest, VehicleTypeValue, LoadTypeValue } from '../../a
 import TurkishDateTimePicker from '../../components/common/TurkishDateTimePicker'
 import { PageError } from '../../components/common/PageStates'
 import { TR_CITIES, getDistrictsByCity, resolveCoordinates } from '../../data/tr-location'
+import MapPicker from '../../components/map/MapPicker'
 import { formatCurrencyTRY } from '../../utils/format'
 import { formatCurrency } from '../../utils/validators'
 import '../shared/Page.css'
@@ -502,8 +503,42 @@ export default function CustomerLoadCreatePage() {
                 </label>
               ) : null}
 
-              <div className="panel-map-placeholder" style={{ gridColumn: '1 / -1' }}>
-                Harita önizlemesi — kayıtlı / seçilen konumlar
+              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                <span className="form-label">Haritadan tam konum seçin</span>
+                <p className="muted" style={{ fontSize: 12, margin: '0 0 8px' }}>
+                  Şehir/ilçe seçtiğinizde harita oraya ortalanır. Pin'e tıklayarak veya sürükleyerek
+                  tam kalkış ve varış noktasını işaretleyin. İşaretlemezseniz şehir merkezi kullanılır.
+                </p>
+                <div className="map-picker-grid">
+                  <div>
+                    <span className="form-label" style={{ display: 'block', marginBottom: 6 }}>
+                      Kalkış noktası
+                    </span>
+                    <MapPicker
+                      kind="origin"
+                      ariaLabel="Kalkış noktası seçici"
+                      value={{ latitude: form.fromLatitude, longitude: form.fromLongitude }}
+                      center={fromCoords ?? { latitude: form.fromLatitude, longitude: form.fromLongitude }}
+                      onChange={(c) =>
+                        setForm((prev) => ({ ...prev, fromLatitude: c.latitude, fromLongitude: c.longitude }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <span className="form-label" style={{ display: 'block', marginBottom: 6 }}>
+                      Varış noktası
+                    </span>
+                    <MapPicker
+                      kind="destination"
+                      ariaLabel="Varış noktası seçici"
+                      value={{ latitude: form.toLatitude, longitude: form.toLongitude }}
+                      center={toCoords ?? { latitude: form.toLatitude, longitude: form.toLongitude }}
+                      onChange={(c) =>
+                        setForm((prev) => ({ ...prev, toLatitude: c.latitude, toLongitude: c.longitude }))
+                      }
+                    />
+                  </div>
+                </div>
               </div>
               <datalist id="city-list">
                 {TR_CITIES.map((city) => (
