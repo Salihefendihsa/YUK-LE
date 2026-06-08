@@ -353,6 +353,8 @@ function normalizeAdminPayment(raw: unknown): AdminPaymentRow {
 export async function getAdminLoads(params?: {
   status?: string;
   q?: string;
+  customerId?: number;
+  driverId?: number;
 }): Promise<AdminLoadRow[]> {
   const res = await apiClient.get('/Admin/loads', { params });
   const data = res.data;
@@ -377,7 +379,10 @@ export async function cancelAdminLoad(loadId: string, reason?: string): Promise<
 }
 
 /** GET /Admin/payments */
-export async function getAdminPayments(params?: { status?: string }): Promise<AdminPaymentRow[]> {
+export async function getAdminPayments(params?: {
+  status?: string;
+  customerId?: number;
+}): Promise<AdminPaymentRow[]> {
   const res = await apiClient.get('/Admin/payments', { params });
   const data = res.data;
   if (!Array.isArray(data)) return [];

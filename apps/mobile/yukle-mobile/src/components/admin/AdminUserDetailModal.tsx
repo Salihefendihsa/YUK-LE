@@ -13,6 +13,8 @@ import { getApiErrorMessage } from '../../services/api.client';
 import {
   activateUser,
   addUserNote,
+  getAdminLoads,
+  getAdminPayments,
   getCustomerStats,
   getDriverStats,
   suspendUser,
@@ -21,14 +23,21 @@ import {
   type DriverStats,
 } from '../../services/admin.service';
 import { getUserProfile } from '../../services/user.service';
-import type { AdminUserListItem } from '../../types/admin';
+import type { AdminLoadRow, AdminPaymentRow, AdminUserListItem } from '../../types/admin';
 import type { UserProfile } from '../../types/user';
 import { palette } from '../../theme/colors';
 import { typography } from '../../theme/typography';
+import { radius } from '../../theme/radius';
 import { space, spacing } from '../../theme/spacing';
-import { formatCurrencyTRY } from '../../utils/format';
-import { getApprovalStatusPill } from '../../utils/statusPills';
+import { roleAccents } from '../../theme/roleAccent';
+import { formatCurrencyTRY, formatDateTR } from '../../utils/format';
+import {
+  getApprovalStatusPill,
+  getLoadStatusPill,
+  getPaymentStatusPill,
+} from '../../utils/statusPills';
 import { Card } from '../ui/Card';
+import { PressableScale } from '../ui/PressableScale';
 import { PrimaryButton } from '../ui/PrimaryButton';
 import { StatusPill } from '../ui/StatusPill';
 import { TextField } from '../ui/TextField';
@@ -40,6 +49,30 @@ type Props = {
   onClose: () => void;
   onUpdated?: () => void;
 };
+
+const ADMIN = roleAccents.admin;
+
+type DetailTab = 'genel' | 'ilanlar' | 'odemeler';
+
+function TabBtn({
+  label,
+  active,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <PressableScale
+      style={[styles.tabBtn, active && styles.tabBtnActive]}
+      onPress={onPress}
+      accessibilityRole="button"
+    >
+      <Text style={[styles.tabText, active && styles.tabTextActive]}>{label}</Text>
+    </PressableScale>
+  );
+}
 
 export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Props) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -54,6 +87,11 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
   const [warnReason, setWarnReason] = useState('');
   // Aksiyon sonrası modal içi durum güncellensin (item prop'u değişmez).
   const [activeOverride, setActiveOverride] = useState<boolean | null>(null);
+  // Geçmiş sekmeleri (web CustomerDetail/DriverDetail paritesi).
+  const [tab, setTab] = useState<DetailTab>('genel');
+  const [loads, setLoads] = useState<AdminLoadRow[]>([]);
+  const [payments, setPayments] = useState<AdminPaymentRow[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   useEffect(() => {
     if (!visible || !item.id) return;
@@ -68,6 +106,9 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
     setAdminNote('');
     setWarnReason('');
     setActiveOverride(null);
+    setTab('genel');
+    setLoads([]);
+    setPayments([]);
     void getUserProfile(item.id)
       .then((p) => {
         if (!cancelled) setProfile(p);
@@ -90,6 +131,25 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
         .then((s) => !cancelled && setCustomerStats(s))
         .catch(() => {});
     }
+
+    // İlan/ödeme geçmişi — best-effort; hata ana akışı bozmasın, sekme boş kalır.
+    setHistoryLoading(true);
+    const historyTasks: Promise<unknown>[] = [
+      getAdminLoads(item.role === 'Driver' ? { driverId: item.id } : { customerId: item.id })
+        .then((rows) => !cancelled && setLoads(rows))
+        .catch(() => {}),
+    ];
+    if (item.role === 'Customer') {
+      historyTasks.push(
+        getAdminPayments({ customerId: item.id })
+          .then((rows) => !cancelled && setPayments(rows))
+          .catch(() => {}),
+      );
+    }
+    void Promise.all(historyTasks).finally(() => {
+      if (!cancelled) setHistoryLoading(false);
+    });
+
     return () => {
       cancelled = true;
     };
@@ -200,6 +260,24 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
             ) : null}
           </Card>
 
+          <View style={styles.tabRow}>
+            <TabBtn label="Genel" active={tab === 'genel'} onPress={() => setTab('genel')} />
+            <TabBtn
+              label={item.role === 'Driver' ? 'Seferler' : 'İlanlar'}
+              active={tab === 'ilanlar'}
+              onPress={() => setTab('ilanlar')}
+            />
+            {item.role === 'Customer' ? (
+              <TabBtn
+                label="Ödemeler"
+                active={tab === 'odemeler'}
+                onPress={() => setTab('odemeler')}
+              />
+            ) : null}
+          </View>
+
+          {tab === 'genel' ? (
+          <>
           {item.role === 'Driver' && driverStats ? (
             <Card variant="elevated" padding={4}>
               <Text style={styles.sectionTitle}>Sefer & finansal özet</Text>
@@ -356,6 +434,69 @@ export function AdminUserDetailModal({ item, visible, onClose, onUpdated }: Prop
               ) : null}
             </Card>
           ) : null}
+          </>
+          ) : null}
+
+          {tab === 'ilanlar' ? (
+            <Card variant="elevated" padding={4}>
+              <Text style={styles.sectionTitle}>
+                {item.role === 'Driver' ? 'Sefer geçmişi' : 'İlan geçmişi'}
+              </Text>
+              {historyLoading && loads.length === 0 ? (
+                <ActivityIndicator color={ADMIN.accent} style={{ marginTop: space.sm }} />
+              ) : loads.length === 0 ? (
+                <Text style={styles.muted}>Kayıt bulunamadı.</Text>
+              ) : (
+                loads.map((l) => {
+                  const pill = getLoadStatusPill(l.status);
+                  return (
+                    <View key={l.id} style={styles.histRow}>
+                      <View style={styles.histHead}>
+                        <Text style={styles.histTitle} numberOfLines={1}>
+                          {l.fromCity} → {l.toCity}
+                        </Text>
+                        <StatusPill {...pill} />
+                      </View>
+                      <Text style={styles.muted}>
+                        {formatCurrencyTRY(l.price)} · {formatDateTR(l.createdAt)}
+                      </Text>
+                      {item.role === 'Driver' && l.customerName ? (
+                        <Text style={styles.muted}>Müşteri: {l.customerName}</Text>
+                      ) : null}
+                      {item.role === 'Customer' && l.driverName ? (
+                        <Text style={styles.muted}>Şoför: {l.driverName}</Text>
+                      ) : null}
+                    </View>
+                  );
+                })
+              )}
+            </Card>
+          ) : null}
+
+          {tab === 'odemeler' ? (
+            <Card variant="elevated" padding={4}>
+              <Text style={styles.sectionTitle}>Ödeme geçmişi</Text>
+              {historyLoading && payments.length === 0 ? (
+                <ActivityIndicator color={ADMIN.accent} style={{ marginTop: space.sm }} />
+              ) : payments.length === 0 ? (
+                <Text style={styles.muted}>Ödeme kaydı bulunamadı.</Text>
+              ) : (
+                payments.map((p) => {
+                  const pill = getPaymentStatusPill(p.status);
+                  return (
+                    <View key={p.id} style={styles.histRow}>
+                      <View style={styles.histHead}>
+                        <Text style={styles.histTitle}>{formatCurrencyTRY(p.amount)}</Text>
+                        <StatusPill {...pill} />
+                      </View>
+                      <Text style={styles.muted}>İlan: {p.loadId.slice(0, 8)}...</Text>
+                      <Text style={styles.muted}>{formatDateTR(p.createdAt)}</Text>
+                    </View>
+                  );
+                })
+              )}
+            </Card>
+          ) : null}
         </ScrollView>
       </View>
     </Modal>
@@ -379,6 +520,32 @@ const styles = StyleSheet.create({
   scroll: { padding: space.md, paddingBottom: spacing[10], gap: space.md },
   name: { ...typography.h2, marginBottom: space.sm },
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginBottom: space.sm },
+  tabRow: { flexDirection: 'row', gap: space.sm },
+  tabBtn: {
+    flex: 1,
+    paddingVertical: space.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: palette.borderLight,
+    alignItems: 'center',
+    backgroundColor: palette.surface,
+  },
+  tabBtnActive: { borderColor: ADMIN.accentBorder, backgroundColor: ADMIN.accentMuted },
+  tabText: { ...typography.bodyMedium, fontSize: 13, color: palette.textMuted },
+  tabTextActive: { color: ADMIN.accent },
+  histRow: {
+    paddingVertical: space.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: palette.borderSubtle,
+    gap: 2,
+  },
+  histHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: space.sm,
+  },
+  histTitle: { ...typography.bodyMedium, fontSize: 14, color: palette.text, flex: 1 },
   sectionTitle: { ...typography.h3, color: palette.gold, marginBottom: space.sm },
   muted: { ...typography.caption, textTransform: 'none' },
   field: { minHeight: 72, marginBottom: space.sm },
