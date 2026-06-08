@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom'
 import { getLoads } from '../../api/loads'
 import type { Load, LoadStatus } from '../../api/types'
 import LiveMap from '../../components/map/LiveMap'
-import type { MapMarker } from '../../components/map/mapTypes'
+import type { MapCoordinate, MapMarker } from '../../components/map/mapTypes'
 import { isValidCoordinate } from '../../components/map/mapUtils'
 import { PageEmpty, PageError, PageSkeleton } from '../../components/common/PageStates'
+import { fetchDrivingRoute } from '../../lib/osrm'
 import { resolveCoordinates } from '../../data/tr-location'
 import { normalizeArray } from '../../utils/format'
 import '../shared/Page.css'
@@ -31,6 +32,7 @@ export default function DriverTrackPage() {
   const [loads, setLoads] = useState<Load[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [routeLine, setRouteLine] = useState<MapCoordinate[] | null>(null)
 
   const loadAll = useCallback(async () => {
     setError('')
@@ -53,6 +55,33 @@ export default function DriverTrackPage() {
     if (!activeLoad) return null
     return resolveCoordinates(activeLoad.fromCity, activeLoad.fromDistrict)
   }, [activeLoad])
+
+  // Güzergah (kalkış → varış): OSRM gerçek yol rotası; erişilemezse düz çizgi fallback.
+  useEffect(() => {
+    if (
+      !activeLoad ||
+      !origin ||
+      !isValidCoordinate(origin.latitude, origin.longitude) ||
+      !isValidCoordinate(activeLoad.destinationLat, activeLoad.destinationLng)
+    ) {
+      setRouteLine(null)
+      return
+    }
+    const start: MapCoordinate = { latitude: origin.latitude, longitude: origin.longitude }
+    const dest: MapCoordinate = {
+      latitude: activeLoad.destinationLat,
+      longitude: activeLoad.destinationLng,
+    }
+    let cancelled = false
+    const controller = new AbortController()
+    void fetchDrivingRoute(start, dest, controller.signal).then((line) => {
+      if (!cancelled) setRouteLine(line ?? [start, dest])
+    })
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
+  }, [activeLoad, origin])
 
   // Şoför kendi canlı konum noktasını mevcut uçlardan okuyamaz
   // (GET /Location/driver/{loadId} yalnız Customer,Admin). Bu yüzden aktif
@@ -122,7 +151,7 @@ export default function DriverTrackPage() {
           </div>
 
           {markers.length > 0 ? (
-            <LiveMap markers={markers} height={400} />
+            <LiveMap markers={markers} route={routeLine ?? undefined} height={400} />
           ) : (
             <div className="card muted" style={{ padding: 24, textAlign: 'center' }}>
               Güzergah için konum bilgisi bekleniyor.

@@ -40,9 +40,18 @@ function drawMarkers(
   markers: MapMarker[],
   center: MapCoordinate | undefined,
   focus: MapCoordinate | null | undefined,
+  route: MapCoordinate[] | undefined,
 ) {
   layer.clearLayers()
   const valid = filterValidMarkers(markers)
+
+  // Güzergah çizgisi (kalkış → varış) — marker'ların ALTINA çizilir ki marker'lar üstte kalsın.
+  if (route && route.length >= 2) {
+    L.polyline(
+      route.map((p) => [p.latitude, p.longitude] as [number, number]),
+      { color: '#3b82f6', weight: 4, opacity: 0.7 },
+    ).addTo(layer)
+  }
 
   for (const m of valid) {
     const cm = L.circleMarker([m.latitude, m.longitude], {
@@ -79,11 +88,13 @@ type LiveMapProps = {
   center?: MapCoordinate
   /** Belirli bir koordinata odakla (örn. listede şoföre tıklanınca). */
   focus?: MapCoordinate | null
+  /** Güzergah çizgisi (kalkış → varış). Verilmezse çizilmez (geriye uyumlu). */
+  route?: MapCoordinate[]
   height?: number
   className?: string
 }
 
-export default function LiveMap({ markers, center, focus, height = 360, className }: LiveMapProps) {
+export default function LiveMap({ markers, center, focus, route, height = 360, className }: LiveMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<LeafletMap | null>(null)
   const layerRef = useRef<LayerGroup | null>(null)
@@ -110,7 +121,7 @@ export default function LiveMap({ markers, center, focus, height = 360, classNam
       layerRef.current = layer
 
       // İlk marker'ları HEMEN çiz — ayrı update effect'inin async yarışına bağlı kalma.
-      drawMarkers(L, map, layer, markers, center, focus)
+      drawMarkers(L, map, layer, markers, center, focus, route)
     }
 
     void init()
@@ -132,11 +143,11 @@ export default function LiveMap({ markers, center, focus, height = 360, classNam
       const map = mapRef.current
       const layer = layerRef.current
       if (!map || !layer) return
-      drawMarkers(L, map, layer, markers, center, focus)
+      drawMarkers(L, map, layer, markers, center, focus, route)
     }
 
     void update()
-  }, [markers, center, focus])
+  }, [markers, center, focus, route])
 
   return (
     <div
