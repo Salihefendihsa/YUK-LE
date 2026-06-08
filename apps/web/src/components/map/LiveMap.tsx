@@ -41,14 +41,19 @@ function drawMarkers(
   center: MapCoordinate | undefined,
   focus: MapCoordinate | null | undefined,
   route: MapCoordinate[] | undefined,
+  routes: MapCoordinate[][] | undefined,
 ) {
   layer.clearLayers()
   const valid = filterValidMarkers(markers)
 
-  // Güzergah çizgisi (kalkış → varış) — marker'ların ALTINA çizilir ki marker'lar üstte kalsın.
-  if (route && route.length >= 2) {
+  // Güzergah çizgileri (kalkış → varış) — marker'ların ALTINA çizilir ki marker'lar üstte kalsın.
+  // Tekil `route` (müşteri/şoför tek sefer) + çoklu `routes` (admin çok şoför) desteklenir.
+  const lines: MapCoordinate[][] = []
+  if (route && route.length >= 2) lines.push(route)
+  if (routes) for (const r of routes) if (r && r.length >= 2) lines.push(r)
+  for (const line of lines) {
     L.polyline(
-      route.map((p) => [p.latitude, p.longitude] as [number, number]),
+      line.map((p) => [p.latitude, p.longitude] as [number, number]),
       { color: '#3b82f6', weight: 4, opacity: 0.7 },
     ).addTo(layer)
   }
@@ -88,13 +93,15 @@ type LiveMapProps = {
   center?: MapCoordinate
   /** Belirli bir koordinata odakla (örn. listede şoföre tıklanınca). */
   focus?: MapCoordinate | null
-  /** Güzergah çizgisi (kalkış → varış). Verilmezse çizilmez (geriye uyumlu). */
+  /** Tek güzergah çizgisi (kalkış → varış). Verilmezse çizilmez (geriye uyumlu). */
   route?: MapCoordinate[]
+  /** Birden çok güzergah çizgisi (örn. admin'de çok şoför). */
+  routes?: MapCoordinate[][]
   height?: number
   className?: string
 }
 
-export default function LiveMap({ markers, center, focus, route, height = 360, className }: LiveMapProps) {
+export default function LiveMap({ markers, center, focus, route, routes, height = 360, className }: LiveMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<LeafletMap | null>(null)
   const layerRef = useRef<LayerGroup | null>(null)
@@ -121,7 +128,7 @@ export default function LiveMap({ markers, center, focus, route, height = 360, c
       layerRef.current = layer
 
       // İlk marker'ları HEMEN çiz — ayrı update effect'inin async yarışına bağlı kalma.
-      drawMarkers(L, map, layer, markers, center, focus, route)
+      drawMarkers(L, map, layer, markers, center, focus, route, routes)
     }
 
     void init()
@@ -143,11 +150,11 @@ export default function LiveMap({ markers, center, focus, route, height = 360, c
       const map = mapRef.current
       const layer = layerRef.current
       if (!map || !layer) return
-      drawMarkers(L, map, layer, markers, center, focus, route)
+      drawMarkers(L, map, layer, markers, center, focus, route, routes)
     }
 
     void update()
-  }, [markers, center, focus, route])
+  }, [markers, center, focus, route, routes])
 
   return (
     <div

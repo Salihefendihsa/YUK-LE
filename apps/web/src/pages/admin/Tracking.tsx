@@ -5,6 +5,8 @@ import LiveMap from '../../components/map/LiveMap'
 import type { MapCoordinate, MapMarker } from '../../components/map/mapTypes'
 import { isValidCoordinate } from '../../components/map/mapUtils'
 import { PageEmpty, PageError, PageSkeleton } from '../../components/common/PageStates'
+import { fetchDrivingRoute } from '../../lib/osrm'
+import { resolveCoordinates } from '../../data/tr-location'
 import { formatDateTime } from '../../utils/formatters'
 import './AdminPanel.css'
 
@@ -19,6 +21,7 @@ export default function AdminTrackingPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [focus, setFocus] = useState<MapCoordinate | null>(null)
+  const [routes, setRoutes] = useState<MapCoordinate[][]>([])
   const mounted = useRef(true)
 
   const fetchData = useCallback(async () => {
@@ -69,6 +72,39 @@ export default function AdminTrackingPage() {
     setFocus({ latitude: row.lastKnownLat!, longitude: row.lastKnownLng! })
   }, [])
 
+  // Güzergah çizgileri (yaklaşık): active-drivers koordinat vermez; "Şehir → Şehir"
+  // route string'i şehir-merkezi koordinatına çevrilir, OSRM ile çizilir (erişilemezse
+  // düz çizgi). Aynı güzergah tekillenir; veri kaynağı değişmez (mevcut alan okunur).
+  useEffect(() => {
+    let cancelled = false
+    const controller = new AbortController()
+    const uniq = new Map<string, { o: MapCoordinate; d: MapCoordinate }>()
+    for (const r of rows) {
+      const parts = r.route.split('→').map((s) => s.trim())
+      if (parts.length < 2 || !parts[0] || !parts[1]) continue
+      const key = `${parts[0]}|${parts[1]}`
+      if (uniq.has(key)) continue
+      const o = resolveCoordinates(parts[0], '')
+      const d = resolveCoordinates(parts[1], '')
+      if (!isValidCoordinate(o.latitude, o.longitude) || !isValidCoordinate(d.latitude, d.longitude)) continue
+      uniq.set(key, { o, d })
+    }
+    const pairs = [...uniq.values()]
+    if (pairs.length === 0) {
+      setRoutes([])
+      return
+    }
+    void Promise.all(
+      pairs.map(({ o, d }) => fetchDrivingRoute(o, d, controller.signal).then((line) => line ?? [o, d])),
+    ).then((lines) => {
+      if (!cancelled) setRoutes(lines)
+    })
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
+  }, [rows])
+
   if (loading) return <PageSkeleton rows={5} variant="card" />
 
   return (
@@ -98,7 +134,7 @@ export default function AdminTrackingPage() {
           <div className="admin-card">
             <h3 style={{ marginBottom: 12 }}>Harita</h3>
             {mapMarkers.length > 0 ? (
-              <LiveMap markers={mapMarkers} focus={focus} height={320} />
+              <LiveMap markers={mapMarkers} focus={focus} routes={routes} height={320} />
             ) : (
               <p className="muted" style={{ padding: '12px 0' }}>
                 Aktif sefer var ancak haritada gösterilecek konum henüz yok. Şoför konum paylaşımı
