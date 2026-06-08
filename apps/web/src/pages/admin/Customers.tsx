@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { getCustomers, toggleUserActive } from '../../api/admin'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
 import './AdminPanel.css'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { formatCurrencyTRY, normalizeArray } from '../../utils/format'
 import { toast } from '@/components/common/Toast'
 
@@ -11,6 +11,7 @@ export default function AdminCustomersPage() {
   const [error, setError] = useState('')
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
 
   async function fetchCustomers() {
     const data = await getCustomers()
@@ -54,7 +55,13 @@ export default function AdminCustomersPage() {
           </thead>
           <tbody>
             {filtered.map((customer) => (
-              <tr key={String(customer.id)}>
+              <tr
+                key={String(customer.id)}
+                onClick={() => navigate(`/admin/customers/${String(customer.id)}`)}
+                role="button"
+                title="Müşteri detayına git"
+                style={{ cursor: 'pointer' }}
+              >
                 <td className="mono">{String(customer.id)}</td>
                 <td>{String(customer.fullName)}</td>
                 <td>{String(customer.email)} / {String(customer.phone)}</td>
@@ -62,8 +69,8 @@ export default function AdminCustomersPage() {
                 <td>{formatCurrencyTRY(Number(customer.totalSpent ?? 0))}</td>
                 <td>{Boolean(customer.isActive) ? 'Aktif' : 'Askıda'}</td>
                 <td>
-                  <Link to={`/admin/customers/${String(customer.id)}`} className="btn btn-ghost btn-sm">Detay</Link>{' '}
-                  <button className="btn btn-primary btn-sm" onClick={() => void toggleUser(Number(customer.id), Boolean(customer.isActive))}>
+                  <Link to={`/admin/customers/${String(customer.id)}`} className="btn btn-ghost btn-sm" onClick={(e) => e.stopPropagation()}>Detay</Link>{' '}
+                  <button className="btn btn-primary btn-sm" onClick={(e) => { e.stopPropagation(); void toggleUser(Number(customer.id), Boolean(customer.isActive)) }}>
                     {Boolean(customer.isActive) ? 'Askıya Al' : 'Aktif Et'}
                   </button>
                 </td>

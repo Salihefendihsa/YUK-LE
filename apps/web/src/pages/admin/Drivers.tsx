@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { getDrivers, toggleUserActive } from '../../api/admin'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
 import './AdminPanel.css'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { normalizeArray } from '../../utils/format'
 import { formatApprovalStatusLabel } from '../../utils/displayLabels'
 import { toast } from '@/components/common/Toast'
@@ -27,6 +27,7 @@ export default function AdminDriversPage() {
   const [page, setPage] = useState(1)
   const [sortKey, setSortKey] = useState('fullName')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+  const navigate = useNavigate()
 
   async function fetchDrivers() {
     const data = await getDrivers(status === 'all' ? undefined : status)
@@ -91,7 +92,13 @@ export default function AdminDriversPage() {
           </thead>
           <tbody>
             {pageItems.map((driver) => (
-              <tr key={String(driver.id)}>
+              <tr
+                key={String(driver.id)}
+                onClick={() => navigate(`/admin/drivers/${String(driver.id)}`)}
+                role="button"
+                title="Şoför detayına git"
+                style={{ cursor: 'pointer' }}
+              >
                 <td className="mono">{String(driver.id)}</td>
                 <td>{String(driver.fullName)}</td>
                 <td>{String(driver.phone)}</td>
@@ -101,8 +108,8 @@ export default function AdminDriversPage() {
                 <td>⭐ {String(driver.rating)}</td>
                 <td>
                   <div className="item-row">
-                    <Link to={`/admin/drivers/${String(driver.id)}`} className="btn btn-ghost btn-sm">Detay</Link>
-                    <button className="btn btn-primary btn-sm" onClick={() => void toggleUser(Number(driver.id), Boolean(driver.isActive))}>
+                    <Link to={`/admin/drivers/${String(driver.id)}`} className="btn btn-ghost btn-sm" onClick={(e) => e.stopPropagation()}>Detay</Link>
+                    <button className="btn btn-primary btn-sm" onClick={(e) => { e.stopPropagation(); void toggleUser(Number(driver.id), Boolean(driver.isActive)) }}>
                       {Boolean(driver.isActive) ? 'Askıya Al' : 'Aktif Et'}
                     </button>
                   </div>
