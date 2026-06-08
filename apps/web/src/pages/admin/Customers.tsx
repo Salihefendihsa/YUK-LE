@@ -50,7 +50,7 @@ export default function AdminCustomersPage() {
       <div className="admin-table-wrap">
         <table className="admin-table">
           <thead>
-            <tr><th>ID</th><th>Ad Soyad</th><th>Email + Telefon</th><th>Toplam İlan</th><th>Harcama</th><th>Durum</th><th>İşlem</th></tr>
+            <tr><th>ID</th><th>Ad Soyad</th><th>E-posta + Telefon</th><th>Toplam İlan</th><th>Harcama</th><th>Durum</th><th>İşlem</th></tr>
           </thead>
           <tbody>
             {filtered.map((customer) => (

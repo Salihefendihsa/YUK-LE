@@ -4,7 +4,19 @@ import { PageError, PageSkeleton } from '../../components/common/PageStates'
 import './AdminPanel.css'
 import { Link } from 'react-router-dom'
 import { normalizeArray } from '../../utils/format'
+import { formatApprovalStatusLabel } from '../../utils/displayLabels'
 import { toast } from '@/components/common/Toast'
+
+// Görünen kolon başlığı → Türkçe; anahtar (sıralama/sortKey) İngilizce kalır.
+const COLUMN_LABELS: Record<string, string> = {
+  id: 'ID',
+  fullName: 'Ad Soyad',
+  phone: 'Telefon',
+  email: 'E-posta',
+  vehicle: 'Araç',
+  approvalStatus: 'Onay Durumu',
+  rating: 'Puan',
+}
 
 export default function AdminDriversPage() {
   const [drivers, setDrivers] = useState<Array<Record<string, string | number | boolean>>>([])
@@ -72,7 +84,7 @@ export default function AdminDriversPage() {
           <thead>
             <tr>
               {['id', 'fullName', 'phone', 'email', 'vehicle', 'approvalStatus', 'rating'].map((h) => (
-                <th key={h} onClick={() => { setSortKey(h); setSortDir(sortDir === 'asc' ? 'desc' : 'asc') }}>{h}</th>
+                <th key={h} onClick={() => { setSortKey(h); setSortDir(sortDir === 'asc' ? 'desc' : 'asc') }}>{COLUMN_LABELS[h] ?? h}</th>
               ))}
               <th>İşlemler</th>
             </tr>
@@ -85,7 +97,7 @@ export default function AdminDriversPage() {
                 <td>{String(driver.phone)}</td>
                 <td>{String(driver.email ?? '-')}</td>
                 <td className="mono">{String(driver.vehicle ?? '-')}</td>
-                <td>{String(driver.approvalStatus)}</td>
+                <td>{formatApprovalStatusLabel(driver.approvalStatus)}</td>
                 <td>⭐ {String(driver.rating)}</td>
                 <td>
                   <div className="item-row">

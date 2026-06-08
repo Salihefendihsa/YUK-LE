@@ -94,6 +94,19 @@ const APPROVAL_STATUS_LABELS: Record<string, string> = {
   PendingReview: 'İncelemede',
 }
 
+const ROLE_LABELS: Record<string, string> = {
+  driver: 'Şoför',
+  customer: 'Müşteri',
+  admin: 'Yönetici',
+}
+
+/** Rol enum'unu (Driver/Customer/Admin) Türkçe gösterime çevirir; ham değeri yeniden adlandırmaz. */
+export function formatRoleLabel(role: unknown): string {
+  if (role == null || String(role).trim() === '') return '-'
+  const key = String(role).trim().toLowerCase()
+  return ROLE_LABELS[key] ?? String(role)
+}
+
 export function formatApprovalStatusLabel(status: unknown): string {
   const key = normalizeKey(status)
   if (APPROVAL_STATUS_LABELS[key]) return APPROVAL_STATUS_LABELS[key]

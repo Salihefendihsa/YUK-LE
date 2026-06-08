@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { getAdminUsers, toggleUserActive } from '../../api/admin'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
 import { toast } from '@/components/common/Toast'
+import { formatRoleLabel } from '../../utils/displayLabels'
 import './AdminPanel.css'
 
 export default function AdminUsersPage() {
@@ -51,7 +52,7 @@ export default function AdminUsersPage() {
       {error ? <PageError message={error} /> : null}
       <div className="admin-filters">
         <select className="form-input" value={role} onChange={(e) => setRole(e.target.value)}>
-          <option>All</option><option>Customer</option><option>Driver</option><option>Admin</option>
+          <option value="All">Tümü</option><option value="Customer">Müşteri</option><option value="Driver">Şoför</option><option value="Admin">Yönetici</option>
         </select>
         <input className="form-input" placeholder="Ad, email, telefon" value={query} onChange={(e) => setQuery(e.target.value)} />
       </div>
@@ -62,7 +63,7 @@ export default function AdminUsersPage() {
             {filtered.map((u) => (
               <tr key={String(u.id)}>
                 <td>{String(u.fullName)}</td>
-                <td>{String(u.role)}</td>
+                <td>{formatRoleLabel(u.role)}</td>
                 <td>{String(u.email ?? '-')}</td>
                 <td>{String(u.phone ?? '-')}</td>
                 <td>{String(u.isActive ? 'Aktif' : 'Askıda')}</td>
