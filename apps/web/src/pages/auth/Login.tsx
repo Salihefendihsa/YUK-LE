@@ -41,7 +41,11 @@ export default function Login() {
     setLoading(true)
     setError('')
     try {
-      const data = await login({ phone: phone.replace(/\D/g, ''), password })
+      // Girdi e-posta/harf içeriyorsa olduğu gibi gönder (backend e-posta ile girişi
+      // destekler: AuthService loginInput → Phone VEYA Email). Yalnız saf-telefon
+      // girdisini rakamlara normalize et.
+      const loginId = /[@a-zA-Z]/.test(phone) ? phone.trim() : phone.replace(/\D/g, '')
+      const data = await login({ phone: loginId, password })
       if (selectedRole && data.role !== selectedRole) {
         setError(
           selectedRole === 'Customer'
