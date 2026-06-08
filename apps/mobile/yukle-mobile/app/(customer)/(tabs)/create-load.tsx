@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { DateTimePickerField } from '../../../src/components/datetime/DateTimePickerField';
 import { TrLocationFields } from '../../../src/components/location/TrLocationFields';
+import { MapPicker } from '../../../src/components/map/MapPicker';
 import { ScreenHeader } from '../../../src/components/ScreenHeader';
 import { AlertBanner } from '../../../src/components/ui/AlertBanner';
 import { Card } from '../../../src/components/ui/Card';
@@ -80,6 +81,9 @@ function parseNum(v: string): number | null {
 
 // Açık adres anlamlı olmalı ("dsa" gibi kısa girişler reddedilir).
 const MIN_ADDRESS_LEN = 10;
+
+// Şehir seçilmeden harita için varsayılan merkez (Türkiye geneli).
+const MAP_DEFAULT = { latitude: 39.92, longitude: 32.85 };
 
 /** Baştaki sıfırları temizler, virgülü noktaya çevirir, tek ondalık bırakır; boşsa boş kalır. */
 function sanitizeNumeric(raw: string): string {
@@ -210,6 +214,16 @@ export default function CustomerCreateLoadScreen() {
     if (!toCity.trim() || !toDistrict.trim()) return null;
     return resolveCoordinates(toCity, toDistrict);
   }, [toCity, toDistrict, toCoordsOverride]);
+
+  // Saf şehir merkezi (override'dan bağımsız) — harita yalnız şehir/ilçe değişince ortalanır.
+  const fromCenter = useMemo(
+    () => (fromCity.trim() && fromDistrict.trim() ? resolveCoordinates(fromCity, fromDistrict) : null),
+    [fromCity, fromDistrict],
+  );
+  const toCenter = useMemo(
+    () => (toCity.trim() && toDistrict.trim() ? resolveCoordinates(toCity, toDistrict) : null),
+    [toCity, toDistrict],
+  );
 
   const step1Valid = useMemo(() => {
     return (
@@ -548,9 +562,33 @@ export default function CustomerCreateLoadScreen() {
               minimumDate={deliveryMin}
             />
 
+            <Text style={styles.mapLabel}>Haritadan tam konum seçin</Text>
+            <Text style={styles.mapHint}>
+              Şehir/ilçe seçince harita oraya gelir. Pin'e dokunarak veya sürükleyerek tam
+              kalkış/varış noktasını işaretleyin. İşaretlemezseniz şehir merkezi kullanılır.
+            </Text>
+
+            <Text style={styles.mapSubLabel}>Kalkış noktası</Text>
+            <MapPicker
+              kind="origin"
+              value={fromCoords ?? MAP_DEFAULT}
+              center={fromCenter ?? MAP_DEFAULT}
+              initialZoom={fromCenter ? 13 : 6}
+              onChange={setFromCoordsOverride}
+            />
+
+            <Text style={styles.mapSubLabel}>Varış noktası</Text>
+            <MapPicker
+              kind="destination"
+              value={toCoords ?? MAP_DEFAULT}
+              center={toCenter ?? MAP_DEFAULT}
+              initialZoom={toCenter ? 13 : 6}
+              onChange={setToCoordsOverride}
+            />
+
             {fromCoords && toCoords ? (
               <Text style={styles.coordHint}>
-                Konum otomatik belirlendi ({fromCity}/{fromDistrict} → {toCity}/{toDistrict})
+                Seçilen konum: {fromCity}/{fromDistrict} → {toCity}/{toDistrict}
               </Text>
             ) : null}
           </Card>
@@ -780,6 +818,21 @@ const styles = StyleSheet.create({
     textTransform: 'none',
     color: palette.textMuted,
     marginTop: space.sm,
+  },
+  mapLabel: { ...typography.label, marginTop: space.md },
+  mapHint: {
+    ...typography.caption,
+    textTransform: 'none',
+    color: palette.textMuted,
+    marginTop: space.xs,
+    marginBottom: space.sm,
+  },
+  mapSubLabel: {
+    ...typography.caption,
+    textTransform: 'none',
+    color: palette.text,
+    marginTop: space.sm,
+    marginBottom: space.xs,
   },
   chipGroupLabel: { ...typography.label, marginBottom: space.sm },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginBottom: space.md },
