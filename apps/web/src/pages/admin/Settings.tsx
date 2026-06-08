@@ -9,7 +9,7 @@ export default function AdminSettingsPage() {
           <h3>Admin Bilgileri</h3>
           <div className="form-grid">
             <input className="form-input" placeholder="Ad Soyad" defaultValue="Admin Kullanıcı" />
-            <input className="form-input" placeholder="Email" defaultValue="admin@navlonix.com" />
+            <input className="form-input" placeholder="E-posta" defaultValue="admin@navlonix.com" />
           </div>
         </div>
         <div className="admin-card">
@@ -23,7 +23,7 @@ export default function AdminSettingsPage() {
       </div>
       <div className="admin-card">
         <h3>Bildirim Tercihleri</h3>
-        <label className="checkbox-row"><input type="checkbox" defaultChecked /> Yeni belge gelince email</label>
+        <label className="checkbox-row"><input type="checkbox" defaultChecked /> Yeni belge gelince e-posta</label>
         <label className="checkbox-row"><input type="checkbox" defaultChecked /> Şüpheli aktivite uyarısı</label>
         <label className="checkbox-row"><input type="checkbox" /> Günlük özet raporu</label>
         <p className="muted">2FA: yakında aktif olacak (placeholder).</p>

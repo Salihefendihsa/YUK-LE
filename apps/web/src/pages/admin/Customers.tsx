@@ -45,7 +45,7 @@ export default function AdminCustomersPage() {
         <select className="form-input"><option>Tümü</option><option>Aktif</option><option>Askıda</option></select>
         <input className="form-input" type="date" />
         <input className="form-input" type="date" />
-        <input className="form-input" placeholder="Ad, email, telefon, şirket, vergi no" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <input className="form-input" placeholder="Ad, e-posta, telefon, şirket, vergi no" value={query} onChange={(e) => setQuery(e.target.value)} />
       </div>
       <div className="admin-table-wrap">
         <table className="admin-table">

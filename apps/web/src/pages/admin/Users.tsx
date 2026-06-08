@@ -54,7 +54,7 @@ export default function AdminUsersPage() {
         <select className="form-input" value={role} onChange={(e) => setRole(e.target.value)}>
           <option value="All">Tümü</option><option value="Customer">Müşteri</option><option value="Driver">Şoför</option><option value="Admin">Yönetici</option>
         </select>
-        <input className="form-input" placeholder="Ad, email, telefon" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <input className="form-input" placeholder="Ad, e-posta, telefon" value={query} onChange={(e) => setQuery(e.target.value)} />
       </div>
       <div className="admin-table-wrap">
         <table className="admin-table">
