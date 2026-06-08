@@ -109,7 +109,11 @@ public sealed class DocumentCleanupJob(
                     // (a) Restrict FK bağımlısı olan kullanıcıyı kapsam dışı bırak
                     !db.Bids.Any(b => b.DriverId == u.Id) &&
                     !db.Loads.Any(l => l.DriverId == u.Id) &&
-                    !db.Ratings.Any(r => r.GivenByUserId == u.Id || r.GivenToUserId == u.Id))
+                    !db.Ratings.Any(r => r.GivenByUserId == u.Id || r.GivenToUserId == u.Id) &&
+                    // (c) FK'siz finansal defter / sohbet satırı olan kullanıcıyı silme —
+                    // ham DELETE bunları cascade temizleyemez, yetim kayıt kalırdı.
+                    !db.WalletAuditLogs.Any(w => w.UserId == u.Id) &&
+                    !db.ChatMessages.Any(c => c.SenderUserId == u.Id))
                 .Select(u => new
                 {
                     u.Id,
