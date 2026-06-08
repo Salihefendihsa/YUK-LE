@@ -25,6 +25,7 @@ const CustomerProfilePage = lazy(() => import('../pages/customer/Profile'))
 const CustomerChatsPage = lazy(() => import('../pages/customer/Chats'))
 const CustomerSettingsPage = lazy(() => import('../pages/customer/Settings'))
 const CustomerAnalyticsPage = lazy(() => import('../pages/customer/Analytics'))
+const CustomerDriverListingsPage = lazy(() => import('../pages/customer/DriverListings'))
 
 const DriverDashboard = lazy(() => import('../pages/driver/Dashboard'))
 const DriverLoadsPage = lazy(() => import('../pages/driver/Loads'))
@@ -188,6 +189,7 @@ const router = createBrowserRouter([
               { path: 'loads/create', element: <CustomerLoadCreatePage /> },
               { path: 'loads/:id', element: <CustomerLoadDetailPage /> },
               { path: 'bids', element: <CustomerBidsPage /> },
+              { path: 'driver-listings', element: <CustomerDriverListingsPage /> },
               { path: 'track', element: <CustomerTrackPage /> },
               { path: 'history', element: <CustomerHistoryPage /> },
               { path: 'addresses', element: <CustomerAddressesPage /> },
