@@ -47,9 +47,17 @@ public sealed class NetgsmSmsService : ISmsService
 
         if (ShouldSimulateSms())
         {
-            var masked = MaskPhone(phoneNumber);
-            _logger.LogInformation("SMS [{Phone}]: {Code} (simulated — Development or Netgsm config missing)", masked, otpCode);
+            // OTP kodu HİÇBİR log seviyesinde yazılmaz — yalnız maskeli telefon.
+            _logger.LogInformation("SMS simulated for {Phone} (Development)", MaskPhone(phoneNumber));
             return;
+        }
+
+        // Prod'da Netgsm yapılandırılmamışsa: simülasyona DÜŞMEYİZ ve OTP'yi loglamayız;
+        // açıkça hata döneriz (kod sızdırmaktansa SMS akışı sesli başarısız olur).
+        if (!NetgsmApiClient.IsConfigured(_smsOptions.Netgsm))
+        {
+            _logger.LogWarning("Netgsm yapilandirmasi eksik; SMS gonderilemiyor (Phone={Phone}).", MaskPhone(phoneNumber));
+            throw new ApplicationException("SMS gonderilemedi. Lutfen daha sonra tekrar deneyin.");
         }
 
         var message = $"Dogrulama kodunuz: {otpCode}. 5 dakika gecerlidir.";
@@ -73,10 +81,9 @@ public sealed class NetgsmSmsService : ISmsService
 
     private bool ShouldSimulateSms()
     {
-        if (_environment.IsDevelopment())
-            return true;
-
-        return !NetgsmApiClient.IsConfigured(_smsOptions.Netgsm);
+        // Simülasyon YALNIZ Development'ta. Prod'da config eksik olsa bile simüle etmeyiz
+        // (OTP asla loglanmaz; SendOtpAsync yapılandırma yoksa açıkça hata döner).
+        return _environment.IsDevelopment();
     }
 
     private static string MaskPhone(string phone)
