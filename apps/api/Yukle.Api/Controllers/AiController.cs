@@ -23,6 +23,7 @@ public sealed class AiController(
     /// belge bilgilerini (ehliyet, SRC, ruhsat) JSON olarak döner.
     /// </summary>
     [HttpPost("ocr")]
+    [Authorize(Roles = "Driver")]   // Evrak OCR yalnız şoför onboarding'i için (ücretli Gemini suistimali önlenir)
     public async Task<IActionResult> AnalyzeDocument(
         IFormFile    file,
         [FromQuery] DocumentType docType = DocumentType.DriverLicense)
@@ -58,6 +59,7 @@ public sealed class AiController(
     /// </para>
     /// </summary>
     [HttpPost("price-suggestion")]
+    [Authorize(Roles = "Customer")]   // Fiyat önerisi ilan oluşturan müşteriye özel (sibling GET load/{id}/price-suggestion ile tutarlı)
     public async Task<IActionResult> GetPriceSuggestion([FromBody] PriceAnalysisRequestDto request)
     {
         var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -125,6 +127,7 @@ public sealed class AiController(
     /// Sonuç <c>GeminiPriceResult</c> SignalR olayı ile kullanıcıya iletilir.
     /// </summary>
     [HttpPost("price-suggestion/enqueue")]
+    [Authorize(Roles = "Customer")]   // Fiyat önerisi ilan oluşturan müşteriye özel
     public async Task<IActionResult> EnqueuePriceSuggestion([FromBody] PriceAnalysisRequestDto request)
     {
         var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -178,6 +181,7 @@ public sealed class AiController(
     /// Sonuç <c>GeminiOcrResult</c> SignalR olayı ile kullanıcıya iletilir.
     /// </summary>
     [HttpPost("ocr/enqueue")]
+    [Authorize(Roles = "Driver")]   // Evrak OCR yalnız şoför onboarding'i için
     public async Task<IActionResult> EnqueueOcr(
         IFormFile    file,
         [FromQuery] DocumentType docType = DocumentType.DriverLicense)
