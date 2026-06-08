@@ -34,6 +34,7 @@ const DriverBidsPage = lazy(() => import('../pages/driver/Bids'))
 const DriverHistoryPage = lazy(() => import('../pages/driver/History'))
 const DriverWalletPage = lazy(() => import('../pages/driver/Wallet'))
 const DriverActiveLoadPage = lazy(() => import('../pages/driver/ActiveLoad'))
+const DriverTrackPage = lazy(() => import('../pages/driver/Track'))
 const DriverProfilePage = lazy(() => import('../pages/driver/Profile'))
 const DriverChatsPage = lazy(() => import('../pages/driver/Chats'))
 const DriverSettingsPage = lazy(() => import('../pages/driver/Settings'))
@@ -212,6 +213,7 @@ const router = createBrowserRouter([
               { path: 'history', element: <DriverHistoryPage /> },
               { path: 'wallet', element: <DriverWalletPage /> },
               { path: 'active-load', element: <DriverActiveLoadPage /> },
+              { path: 'track', element: <DriverTrackPage /> },
               { path: 'profile', element: <DriverProfilePage /> },
               { path: 'chats', element: <DriverChatsPage /> },
               { path: 'support', element: <MySupportPage /> },
