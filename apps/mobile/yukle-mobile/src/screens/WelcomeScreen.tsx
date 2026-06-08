@@ -123,6 +123,10 @@ export function WelcomeScreen() {
 
   // Video hazır olunca göster; hata/yükleme sırasında poster kalır (siyah flash yok).
   useEffect(() => {
+    // readyToPlay olayı listener bağlanmadan ÖNCE gerçekleşmiş olabilir (özellikle
+    // Android'de hızlı/önbellekli decode) → mevcut durumu da oku; yoksa olay kaçar
+    // ve video hiç görünmez (poster takılı kalır).
+    if (player.status === 'readyToPlay') setVideoReady(true);
     const sub = player.addListener('statusChange', (payload: { status: string }) => {
       setVideoReady(payload.status === 'readyToPlay');
     });
