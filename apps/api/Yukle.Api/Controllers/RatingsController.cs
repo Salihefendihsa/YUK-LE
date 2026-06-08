@@ -30,19 +30,39 @@ public class RatingsController(YukleDbContext context) : ControllerBase
         if (alreadyRated)
             return BadRequest(new { Message = "Aynı yük için tekrar puanlama yapılamaz." });
 
-        var role = User.IsInRole("Customer") ? RaterRole.Customer : RaterRole.Driver;
+        // Çağıran yükün gerçek tarafı mı? Hedef kullanıcı sunucuda KARŞI taraftan
+        // türetilir; body'deki GivenToUserId güvenilmez (sahte puanlama önlenir).
+        int targetUserId;
+        RaterRole role;
+        if (givenByUserId == load.UserId)
+        {
+            if (load.DriverId is not int assignedDriverId)
+                return BadRequest(new { Message = "Bu yüke atanmış şoför bulunamadı." });
+            targetUserId = assignedDriverId;   // müşteri → şoförü puanlar
+            role = RaterRole.Customer;
+        }
+        else if (load.DriverId == givenByUserId)
+        {
+            targetUserId = load.UserId;        // şoför → müşteriyi puanlar
+            role = RaterRole.Driver;
+        }
+        else
+        {
+            return StatusCode(403, new { Message = "Bu yükü yalnızca tarafları puanlayabilir." });
+        }
+
         var rating = new Rating
         {
             LoadId = request.LoadId,
             GivenByUserId = givenByUserId,
-            GivenToUserId = request.GivenToUserId,
+            GivenToUserId = targetUserId,
             Score = request.Score,
             Comment = request.Comment?.Trim() ?? string.Empty,
             RaterRole = role
         };
         await context.Ratings.AddAsync(rating);
 
-        var targetUser = await context.Users.FirstOrDefaultAsync(u => u.Id == request.GivenToUserId);
+        var targetUser = await context.Users.FirstOrDefaultAsync(u => u.Id == targetUserId);
         if (targetUser is not null)
         {
             var totalScore = targetUser.AverageRating * targetUser.TotalRatingCount + request.Score;
