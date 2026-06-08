@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getAdminDashboard } from '../../api/admin'
 import { PageEmpty, PageError, PageSkeleton } from '../../components/common/PageStates'
+import { formatAdminActivity } from '../../utils/displayLabels'
 import './AdminPanel.css'
 
 export default function AdminDashboard() {
@@ -109,7 +110,7 @@ export default function AdminDashboard() {
           {recentActions.slice(0, 20).map((a) => (
             <div key={String(a.id)} className="item-row" style={{ padding: '8px 0', borderBottom: '1px solid var(--color-border-light)' }}>
               <span className="mono muted">{new Date(String(a.timestampUtc)).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
-              <span>{String(a.note ?? a.action ?? 'Aksiyon')}</span>
+              <span>{formatAdminActivity(a.action as string | null, a.note as string | null, a.targetUserId as number | null)}</span>
             </div>
           ))}
           {recentActions.length === 0 ? (

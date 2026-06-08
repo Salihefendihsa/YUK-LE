@@ -159,8 +159,20 @@ export function formatAdminActivity(
   note?: string | null,
   targetUserId?: number | null,
 ): string {
-  const base = formatAdminLogAction(action);
   const raw = note?.trim() ?? '';
+  const actKey = (action ?? '').trim().toLowerCase().replace(/[\s_-]+/g, '');
+
+  // ToggleActive: ham not "IsActive=True/False" → spesifik etiket (web ile birebir).
+  if (actKey === 'toggleactive') {
+    const m = raw.match(/IsActive\s*=\s*(true|false)/i);
+    if (m) {
+      const specific =
+        m[1].toLowerCase() === 'true' ? 'Kullanıcı aktif edildi' : 'Kullanıcı askıya alındı';
+      return targetUserId != null ? `${specific} · kullanıcı #${targetUserId}` : specific;
+    }
+  }
+
+  const base = formatAdminLogAction(action);
 
   // 1) Yük bağlamı: "... for load <guid>" veya "load <guid>".
   const loadMatch = raw.match(/load\s+#?([0-9a-fA-F]{8})[0-9a-fA-F-]*/i);

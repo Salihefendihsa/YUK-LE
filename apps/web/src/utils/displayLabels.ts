@@ -297,27 +297,96 @@ export function estimatePlatformCommissionFromCustomerTotal(customerTotal: numbe
   return bid * (CUSTOMER_COMMISSION_RATE + DRIVER_COMMISSION_RATE)
 }
 
+// Aksiyon adını normalize edip (lowercase + boşluk/_/- sil) tek tabloya bağlar.
+// Mobil ADMIN_LOG_ACTION_LABELS (apps/mobile/.../utils/format.ts) ile birebir aynı.
 const ADMIN_LOG_ACTION_LABELS: Record<string, string> = {
-  SuspendUser: 'Kullanıcı askıya alındı',
-  ActivateUser: 'Kullanıcı etkinleştirildi',
-  WarnUser: 'Kullanıcı uyarıldı',
-  ApproveDriver: 'Şoför onaylandı',
-  RejectDriver: 'Şoför reddedildi',
-  ReleasePayment: 'Ödeme serbest bırakıldı',
-  PaymentRelease: 'Ödeme serbest bırakıldı',
-  UpdateUser: 'Kullanıcı güncellendi',
-  DeleteRating: 'Puan silindi',
+  suspenduser: 'Kullanıcı askıya alındı',
+  activateuser: 'Kullanıcı etkinleştirildi',
+  deactivateuser: 'Kullanıcı pasifleştirildi',
+  warnuser: 'Kullanıcı uyarıldı',
+  updateuser: 'Kullanıcı güncellendi',
+  deleteuser: 'Kullanıcı silindi',
+  createuser: 'Kullanıcı oluşturuldu',
+  approvedriver: 'Şoför onaylandı',
+  rejectdriver: 'Şoför reddedildi',
+  approvereview: 'Belge incelemesi onaylandı',
+  rejectreview: 'Belge incelemesi reddedildi',
+  releasepayment: 'Ödeme serbest bırakıldı',
+  paymentrelease: 'Ödeme serbest bırakıldı',
+  blockpayment: 'Ödeme blokeye alındı',
+  paymentblock: 'Ödeme blokeye alındı',
+  refundpayment: 'Ödeme iade edildi',
+  paymentrefund: 'Ödeme iade edildi',
+  deleterating: 'Puan silindi',
+  deletemessage: 'Mesaj silindi',
+  blockmessage: 'Mesaj engellendi',
+  cancelload: 'İlan iptal edildi',
+  deleteload: 'İlan silindi',
+  // AdminActionLog'un ham (kısa) aksiyon adları — AdminController WriteAdminActionLogAsync.
+  suspend: 'Kullanıcı askıya alındı',
+  activate: 'Kullanıcı etkinleştirildi',
+  toggleactive: 'Kullanıcı durumu değiştirildi',
+  warn: 'Kullanıcı uyarıldı',
+  note: 'Not eklendi',
+  approve: 'Belge incelemesi onaylandı',
+  reject: 'Belge incelemesi reddedildi',
+}
+
+function normalizeAdminActionKey(action: string): string {
+  return action.trim().toLowerCase().replace(/[\s_-]+/g, '')
 }
 
 export function formatAdminLogAction(action?: string | null): string {
   if (!action?.trim()) return 'İşlem'
   const trimmed = action.trim()
-  if (ADMIN_LOG_ACTION_LABELS[trimmed]) return ADMIN_LOG_ACTION_LABELS[trimmed]
+  const key = normalizeAdminActionKey(trimmed)
+  if (ADMIN_LOG_ACTION_LABELS[key]) return ADMIN_LOG_ACTION_LABELS[key]
   if (hasTurkishChars(trimmed)) return trimmed
   if (isMostlyAsciiEnglish(trimmed)) {
     return trimmed.replace(/([a-z])([A-Z])/g, '$1 $2')
   }
   return trimmed
+}
+
+/**
+ * Komuta Merkezi "Canlı Aktivite Akışı" tek-satır metni: ham AdminActionLog
+ * (çoğu İngilizce + GUID'li / "IsActive=True" gibi) kaydını okunaklı Türkçeye
+ * çevirir. Mobil formatAdminActivity ile birebir aynı mantık (iki tarafta tek davranış).
+ * ToggleActive notundaki IsActive=True/False değerinden spesifik etiket üretir:
+ *   IsActive=False → "Kullanıcı askıya alındı", IsActive=True → "Kullanıcı aktif edildi".
+ */
+export function formatAdminActivity(
+  action?: string | null,
+  note?: string | null,
+  targetUserId?: number | null,
+): string {
+  const raw = note?.trim() ?? ''
+  const actKey = normalizeAdminActionKey(action ?? '')
+
+  // ToggleActive: ham not "IsActive=True/False" → spesifik etiket.
+  if (actKey === 'toggleactive') {
+    const m = raw.match(/IsActive\s*=\s*(true|false)/i)
+    if (m) {
+      const base =
+        m[1].toLowerCase() === 'true' ? 'Kullanıcı aktif edildi' : 'Kullanıcı askıya alındı'
+      return targetUserId != null ? `${base} · kullanıcı #${targetUserId}` : base
+    }
+  }
+
+  const base = formatAdminLogAction(action)
+
+  // 1) Yük bağlamı: "... for load <guid>" veya "load <guid>".
+  const loadMatch = raw.match(/load\s+#?([0-9a-fA-F]{8})[0-9a-fA-F-]*/i)
+  if (loadMatch) return `${base} · yük #${loadMatch[1]}`
+
+  // 2) Nottaki ilk GUID → genel kısa referans.
+  const guidMatch = raw.match(/([0-9a-fA-F]{8})-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-/)
+  if (guidMatch) return `${base} · #${guidMatch[1]}`
+
+  // 3) Kullanıcı hedefi.
+  if (targetUserId != null) return `${base} · kullanıcı #${targetUserId}`
+
+  return base
 }
 
 function hasTurkishChars(text: string): boolean {
