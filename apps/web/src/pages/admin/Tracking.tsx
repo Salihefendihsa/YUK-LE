@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { getAdminActiveDrivers, type AdminActiveDriverRow } from '../../api/admin'
 import LiveMap from '../../components/map/LiveMap'
-import type { MapMarker } from '../../components/map/mapTypes'
+import type { MapCoordinate, MapMarker } from '../../components/map/mapTypes'
 import { isValidCoordinate } from '../../components/map/mapUtils'
 import { PageEmpty, PageError, PageSkeleton } from '../../components/common/PageStates'
 import { formatDateTime } from '../../utils/formatters'
@@ -17,6 +18,7 @@ export default function AdminTrackingPage() {
   const [rows, setRows] = useState<AdminActiveDriverRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [focus, setFocus] = useState<MapCoordinate | null>(null)
   const mounted = useRef(true)
 
   const fetchData = useCallback(async () => {
@@ -52,8 +54,20 @@ export default function AdminTrackingPage() {
         longitude: r.lastKnownLng!,
         title: r.driverName,
         kind: 'driver' as const,
+        description: [
+          r.route,
+          `Plaka: ${r.plate || '—'}`,
+          `Son güncelleme: ${r.lastLocationUpdate ? formatDateTime(r.lastLocationUpdate) : '—'}`,
+        ]
+          .filter(Boolean)
+          .join('\n'),
       }))
   }, [rows])
+
+  const focusDriver = useCallback((row: AdminActiveDriverRow) => {
+    if (!hasDriverLocation(row)) return
+    setFocus({ latitude: row.lastKnownLat!, longitude: row.lastKnownLng! })
+  }, [])
 
   if (loading) return <PageSkeleton rows={5} variant="card" />
 
@@ -84,7 +98,7 @@ export default function AdminTrackingPage() {
           <div className="admin-card">
             <h3 style={{ marginBottom: 12 }}>Harita</h3>
             {mapMarkers.length > 0 ? (
-              <LiveMap markers={mapMarkers} height={320} />
+              <LiveMap markers={mapMarkers} focus={focus} height={320} />
             ) : (
               <p className="muted" style={{ padding: '12px 0' }}>
                 Aktif sefer var ancak haritada gösterilecek konum henüz yok. Şoför konum paylaşımı
@@ -101,11 +115,15 @@ export default function AdminTrackingPage() {
                 return (
                   <div
                     key={`${item.loadId}-${item.driverId}`}
+                    onClick={() => focusDriver(item)}
+                    role={hasLoc ? 'button' : undefined}
+                    title={hasLoc ? 'Haritada bu şoföre odakla' : undefined}
                     style={{
                       padding: 12,
                       borderRadius: 10,
                       border: '1px solid var(--color-border-light)',
                       background: 'var(--color-surface-elevated, rgba(255,255,255,0.03))',
+                      cursor: hasLoc ? 'pointer' : 'default',
                     }}
                   >
                     <div className="item-row" style={{ marginBottom: 6 }}>
@@ -124,6 +142,14 @@ export default function AdminTrackingPage() {
                       Son güncelleme:{' '}
                       {item.lastLocationUpdate ? formatDateTime(item.lastLocationUpdate) : '—'}
                     </p>
+                    <Link
+                      to={`/admin/drivers/${item.driverId}`}
+                      className="btn btn-ghost btn-sm"
+                      style={{ marginTop: 8, display: 'inline-block' }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Şoför detayı →
+                    </Link>
                   </div>
                 )
               })}
