@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { getCustomerLoadHistory, type HistoryRow } from '../../api/loads'
 import { PageEmpty, PageError, PageSkeleton } from '../../components/common/PageStates'
 import { formatCurrencyTRY } from '../../utils/format'
@@ -55,14 +56,19 @@ export default function CustomerHistoryPage() {
       </div>
       <div className="loads-grid-responsive">
         {items.map((i) => (
-          <div key={String(i.id)} className="item-card">
+          <Link
+            key={String(i.id)}
+            to={`/customer/loads/${i.id}`}
+            className="item-card"
+            style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
+          >
             <strong>
               {i.fromCity} → {i.toCity}
             </strong>
             <p className="muted">Şoför: {i.driverName ?? '—'}</p>
             <p className="muted">{i.deliveryDate ? new Date(i.deliveryDate).toLocaleDateString('tr-TR') : '—'}</p>
             <p>{formatCurrencyTRY(i.price)}</p>
-          </div>
+          </Link>
         ))}
         {items.length === 0 ? (
           <PageEmpty

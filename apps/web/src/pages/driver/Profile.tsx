@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { apiClient } from '../../api/client'
 import { useAuthStore } from '../../store/auth.store'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
@@ -160,6 +161,9 @@ export default function DriverProfilePage() {
       <div className="card">
         <h3>Belgeler</h3>
         <p className="muted">Ruhsat, SRC ve ehliyet durumlarını bu alandan takip edebilirsiniz.</p>
+        <Link to="/driver/documents" className="btn btn-primary btn-sm" style={{ marginTop: 12, display: 'inline-block' }}>
+          Belgelerime Git →
+        </Link>
       </div>
     </div>
   )

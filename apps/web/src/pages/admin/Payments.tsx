@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { getPayments, releasePayment } from '../../api/admin'
 import { PageError, PageSkeleton } from '../../components/common/PageStates'
 import {
@@ -105,7 +106,11 @@ export default function AdminPaymentsPage() {
             {paymentList.map((payment) => (
               <tr key={String(payment.id)}>
                 <td>{formatPaymentTransactionId(String(payment.transactionId ?? ''))}</td>
-                <td className="mono">{String(payment.loadId).slice(0, 8)}…</td>
+                <td className="mono">
+                  <Link to={`/admin/loads/${payment.loadId}`} title="İlan detayı">
+                    {String(payment.loadId).slice(0, 8)}…
+                  </Link>
+                </td>
                 <td>{formatCurrencyTRY(payment.amount)}</td>
                 <td>{formatPaymentStatusLabel(payment.status)}</td>
                 <td>{formatDateTR(String(payment.createdAt ?? ''))}</td>
