@@ -30,6 +30,7 @@ const DRIVER_NAV: NavItem[] = [
   { label: 'Yük Panosu', path: '/driver/loads', icon: '📦' },
   { label: 'Tekliflerim', path: '/driver/bids', icon: '💼' },
   { label: 'Aktif Seferim', path: '/driver/active-load', icon: '🚛' },
+  { label: 'Boş Araç İlanlarım', path: '/driver/listings', icon: '🚚' },
   { label: 'Canlı Takip', path: '/driver/track', icon: '🗺️' },
   { label: 'Sohbetlerim', path: '/driver/chats', icon: '💬' },
   { label: 'Destek', path: '/driver/support', icon: '🎧' },
