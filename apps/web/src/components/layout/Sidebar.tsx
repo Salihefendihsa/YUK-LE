@@ -13,13 +13,13 @@ interface NavItem {
 }
 
 const CUSTOMER_NAV: NavItem[] = [
-  { label: 'Dashboard', path: '/customer/dashboard', icon: '⊞' },
+  { label: 'Panel', path: '/customer/dashboard', icon: '⊞' },
   { label: 'Analitik', path: '/customer/analytics', icon: '📈' },
   { label: 'İlanlarım', path: '/customer/loads', icon: '📦' },
   { label: 'Teklifler', path: '/customer/bids', icon: '💼' },
   { label: 'Sohbetlerim', path: '/customer/chats', icon: '💬' },
   { label: 'Destek', path: '/customer/support', icon: '🎧' },
-  { label: 'Canlı Harita', path: '/customer/track', icon: '🗺️' },
+  { label: 'Canlı Takip', path: '/customer/track', icon: '🗺️' },
   { label: 'Geçmiş', path: '/customer/history', icon: '📋' },
   { label: 'Adreslerim', path: '/customer/addresses', icon: '📍' },
   { label: 'Profil', path: '/customer/profile', icon: '👤' },
@@ -30,7 +30,7 @@ const DRIVER_NAV: NavItem[] = [
   { label: 'Yük Panosu', path: '/driver/loads', icon: '📦' },
   { label: 'Tekliflerim', path: '/driver/bids', icon: '💼' },
   { label: 'Aktif Seferim', path: '/driver/active-load', icon: '🚛' },
-  { label: 'Canlı Harita', path: '/driver/track', icon: '🗺️' },
+  { label: 'Canlı Takip', path: '/driver/track', icon: '🗺️' },
   { label: 'Sohbetlerim', path: '/driver/chats', icon: '💬' },
   { label: 'Destek', path: '/driver/support', icon: '🎧' },
   { label: 'Cüzdanım', path: '/driver/wallet', icon: '💰' },

@@ -77,7 +77,7 @@ export default function DriverDashboard() {
 
       <div className="card panel-table-card">
         <div className="card-header">
-          <h2 className="panel-ai-section-title">🤖 Sizin İçin Seçildi</h2>
+          <h2 className="panel-ai-section-title">🤖 Sana Öneriliyor</h2>
         </div>
         <div className="driver-loads">
           {recommended.map((row) => (

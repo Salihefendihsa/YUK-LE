@@ -107,7 +107,7 @@ export default function CustomerTrackPage() {
   return (
     <div className="page-wrap">
       <div>
-        <h1 className="page-title">Canlı Harita</h1>
+        <h1 className="page-title">Canlı Takip</h1>
         <p className="page-sub">Aktif seferinizde şoför konumunu takip edin.</p>
       </div>
 

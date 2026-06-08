@@ -86,7 +86,7 @@ export default function DriverTrackPage() {
   return (
     <div className="page-wrap">
       <div>
-        <h1 className="page-title">Canlı Harita</h1>
+        <h1 className="page-title">Canlı Takip</h1>
         <p className="page-sub">Aktif seferinizin güzergahını harita üzerinde görün.</p>
       </div>
 
