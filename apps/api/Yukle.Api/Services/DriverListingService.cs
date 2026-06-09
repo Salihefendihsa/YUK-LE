@@ -366,6 +366,131 @@ public class DriverListingService : IDriverListingService
         await _context.SaveChangesAsync();
     }
 
+    // ── Admin moderasyon ──────────────────────────────────────────────────────
+
+    public async Task<List<AdminDriverListingDto>> GetAllForAdminAsync(string? status)
+    {
+        var query = _context.DriverListings.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(status) &&
+            Enum.TryParse<DriverListingStatus>(status, true, out var parsed))
+        {
+            query = query.Where(d => d.Status == parsed);
+        }
+
+        return await query
+            .OrderByDescending(d => d.CreatedAt)
+            .Select(d => new AdminDriverListingDto
+            {
+                Id                  = d.Id,
+                DriverId            = d.DriverId,
+                DriverName          = d.Driver.FullName,
+                OriginCity          = d.OriginCity,
+                OriginDistrict      = d.OriginDistrict,
+                DestinationCity     = d.DestinationCity,
+                DestinationDistrict = d.DestinationDistrict,
+                VehicleType         = d.VehicleType.ToString(),
+                AvailableFrom       = d.AvailableFrom,
+                Status              = d.Status.ToString(),
+                OfferCount          = _context.ListingOffers.Count(o => o.DriverListingId == d.Id),
+                CreatedAt           = d.CreatedAt,
+            })
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    public async Task<List<ListingOfferDto>> GetOffersForAdminAsync(Guid listingId)
+    {
+        // İlan var mı? (admin için sahiplik kontrolü yok)
+        var exists = await _context.DriverListings.AnyAsync(d => d.Id == listingId);
+        if (!exists)
+            throw new KeyNotFoundException($"'{listingId}' ID'sine sahip şoför ilanı bulunamadı.");
+
+        return await _context.ListingOffers
+            .Where(o => o.DriverListingId == listingId)
+            .OrderByDescending(o => o.CreatedAt)
+            .Select(o => new ListingOfferDto
+            {
+                Id              = o.Id,
+                DriverListingId = o.DriverListingId,
+                LoadId          = o.LoadId,
+                CustomerId      = o.CustomerId,
+                CustomerName    = o.Customer.FullName,
+                FromCity        = o.Load.FromCity,
+                FromDistrict    = o.Load.FromDistrict,
+                ToCity          = o.Load.ToCity,
+                ToDistrict      = o.Load.ToDistrict,
+                LoadPrice       = o.Load.Price,
+                Amount          = o.Amount,
+                Note            = o.Note,
+                Status          = o.Status.ToString(),
+                CreatedAt       = o.CreatedAt
+            })
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    public async Task<int> AdminCancelListingAsync(Guid listingId)
+    {
+        var rejectedCustomerIds = new List<int>();
+        var driverId = 0;
+
+        var strategy = _context.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
+        {
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var listing = await _context.DriverListings
+                .FirstOrDefaultAsync(d => d.Id == listingId)
+                ?? throw new KeyNotFoundException($"'{listingId}' ID'sine sahip şoför ilanı bulunamadı.");
+
+            // Moderasyon: yalnız yayında (Active) olan ilan kaldırılabilir.
+            if (listing.Status != DriverListingStatus.Active)
+                throw new InvalidOperationException(
+                    $"Yalnızca yayında olan ilan kaldırılabilir. Mevcut durum: {listing.Status}.");
+
+            driverId = listing.DriverId;
+
+            // İlanı kaldır (Cancelled).
+            listing.Status = DriverListingStatus.Cancelled;
+
+            // Bu ilandaki Pending teklifleri reddet (önce bildirim için müşteri ID'leri).
+            rejectedCustomerIds = await _context.ListingOffers
+                .Where(o => o.DriverListingId == listingId && o.Status == ListingOfferStatus.Pending)
+                .Select(o => o.CustomerId)
+                .ToListAsync();
+
+            await _context.ListingOffers
+                .Where(o => o.DriverListingId == listingId && o.Status == ListingOfferStatus.Pending)
+                .ExecuteUpdateAsync(s => s.SetProperty(o => o.Status, ListingOfferStatus.Rejected));
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+        });
+
+        // ── Bildirimler (transaction dışında) ──
+        if (driverId > 0)
+            await _notifications.SendAsync(
+                driverId,
+                "İlanınız Kaldırıldı",
+                "Boş araç ilanınız yönetici tarafından kaldırıldı. Detay için destek ile iletişime geçebilirsiniz.");
+
+        foreach (var customerId in rejectedCustomerIds)
+            await _notifications.SendAsync(
+                customerId,
+                "Teklif Reddedildi",
+                "Teklif verdiğiniz boş araç ilanı yönetici tarafından kaldırıldı.");
+
+        return rejectedCustomerIds.Count;
+    }
+
     /// <summary>Entity → DTO projeksiyonu (EF Core'un SQL'e çevirebilmesi için Expression). NTS: Y=enlem, X=boylam.</summary>
     private static readonly Expression<Func<DriverListing, DriverListingDto>> Projection = d => new DriverListingDto
     {

@@ -31,6 +31,7 @@ public class AdminController : ControllerBase
     private readonly IPaymentService _paymentService;
     private readonly ICancellationService _cancellationService;
     private readonly IDriverReviewDocumentStore _reviewDocumentStore;
+    private readonly IDriverListingService _driverListingService;
 
     private static readonly ApprovalStatus[] DocumentQueueStatuses =
     [
@@ -46,7 +47,8 @@ public class AdminController : ControllerBase
         IChatModerationService chatModerationService,
         IPaymentService paymentService,
         ICancellationService cancellationService,
-        IDriverReviewDocumentStore reviewDocumentStore)
+        IDriverReviewDocumentStore reviewDocumentStore,
+        IDriverListingService driverListingService)
     {
         _context = context;
         _logger = logger;
@@ -55,6 +57,7 @@ public class AdminController : ControllerBase
         _paymentService = paymentService;
         _cancellationService = cancellationService;
         _reviewDocumentStore = reviewDocumentStore;
+        _driverListingService = driverListingService;
     }
 
     private static bool IsDocumentQueueStatus(ApprovalStatus status) =>
@@ -476,6 +479,68 @@ public class AdminController : ControllerBase
                 loadId: loadId);
 
             return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { Message = ex.Message });
+        }
+    }
+
+    // ── Boş Araç İlanları (DriverListing) Moderasyonu ─────────────────────────
+
+    /// <summary>Admin: TÜM boş araç ilanları (her durum, her şoför). Opsiyonel status filtresi.</summary>
+    [HttpGet("driver-listings")]
+    public async Task<IActionResult> GetDriverListings([FromQuery] string? status = null)
+    {
+        var items = await _driverListingService.GetAllForAdminAsync(status);
+        return Ok(new { Total = items.Count, Items = items });
+    }
+
+    /// <summary>Admin: belirtilen ilana gelen tüm teklifler (müşteri adı, yük rotası, tutar, durum).</summary>
+    [HttpGet("driver-listings/{id:guid}/offers")]
+    public async Task<IActionResult> GetDriverListingOffers(Guid id)
+    {
+        try
+        {
+            var items = await _driverListingService.GetOffersForAdminAsync(id);
+            return Ok(new { Total = items.Count, Items = items });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { Message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Admin moderasyon: yalnız Active ilanı kaldırır (Cancelled) + Pending teklifleri Rejected yapar
+    /// + şoföre/müşterilere bildirim. Matched/iptal/expired ilanda 400.
+    /// </summary>
+    [HttpPost("driver-listings/{id:guid}/cancel")]
+    public async Task<IActionResult> CancelDriverListing(Guid id, [FromBody] AdminNoteBody? body)
+    {
+        var adminId = RequireAdminId();
+        try
+        {
+            var rejectedCount = await _driverListingService.AdminCancelListingAsync(id);
+
+            var driverId = await _context.DriverListings.AsNoTracking()
+                .Where(d => d.Id == id)
+                .Select(d => d.DriverId)
+                .FirstOrDefaultAsync();
+
+            await WriteAdminActionLogAsync(
+                adminId,
+                driverId > 0 ? driverId : adminId,
+                "CancelDriverListing",
+                note: string.IsNullOrWhiteSpace(body?.Text)
+                    ? $"İlan kaldırıldı; {rejectedCount} bekleyen teklif reddedildi."
+                    : body!.Text);
+
+            return Ok(new { Message = "İlan kaldırıldı.", RejectedOffers = rejectedCount });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { Message = ex.Message });
         }
         catch (InvalidOperationException ex)
         {

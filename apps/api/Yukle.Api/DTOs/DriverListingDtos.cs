@@ -139,6 +139,27 @@ public sealed class ListingOfferDto
     public DateTime CreatedAt { get; set; }
 }
 
+/// <summary>Admin moderasyon: tüm ilanların (her durum, her şoför) liste görünümü.</summary>
+public sealed class AdminDriverListingDto
+{
+    public Guid Id { get; set; }
+
+    public int DriverId { get; set; }
+    public string DriverName { get; set; } = string.Empty;
+
+    public string OriginCity { get; set; }     = string.Empty;
+    public string OriginDistrict { get; set; } = string.Empty;
+    public string DestinationCity { get; set; }     = string.Empty;
+    public string DestinationDistrict { get; set; } = string.Empty;
+
+    public string VehicleType { get; set; } = string.Empty;
+    public DateTime AvailableFrom { get; set; }
+
+    public string Status { get; set; } = string.Empty;
+    public int OfferCount { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
 /// <summary>Müşterinin kendi gönderdiği teklif görünümü.</summary>
 public sealed class MyListingOfferDto
 {

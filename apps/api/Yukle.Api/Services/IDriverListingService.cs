@@ -59,4 +59,23 @@ public interface IDriverListingService
 
     /// <summary>Müşteri kendi bekleyen teklifini geri çeker (Status → Withdrawn).</summary>
     Task WithdrawOfferAsync(Guid offerId, int customerId);
+
+    // ── Admin moderasyon ──────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Admin: TÜM ilanları (her durum, her şoför) döner; şoför adı + teklif sayısı + durum.
+    /// Opsiyonel <paramref name="status"/> filtresi (Active/Matched/Cancelled/Expired).
+    /// </summary>
+    Task<List<AdminDriverListingDto>> GetAllForAdminAsync(string? status);
+
+    /// <summary>Admin: belirtilen ilana gelen tüm teklifleri döner (sahiplik kontrolü yok).</summary>
+    Task<List<ListingOfferDto>> GetOffersForAdminAsync(Guid listingId);
+
+    /// <summary>
+    /// Admin moderasyon: YALNIZ Active ilanı Cancelled yapar; o ilandaki Pending teklifleri
+    /// Rejected yapar; şoföre ve ilgili müşterilere bildirim gönderir. Matched/zaten iptal/expired
+    /// ilanda <see cref="InvalidOperationException"/> fırlatır (atama/escrow çözme bu dalgada yok).
+    /// Etkilenen teklif sayısını döner.
+    /// </summary>
+    Task<int> AdminCancelListingAsync(Guid listingId);
 }
