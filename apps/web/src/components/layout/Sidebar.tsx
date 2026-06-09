@@ -47,6 +47,7 @@ const ADMIN_NAV: NavItem[] = [
   { label: 'Şoförler', path: '/admin/drivers', icon: '🚛' },
   { label: 'Müşteriler', path: '/admin/customers', icon: '🏢' },
   { label: 'İlanlar', path: '/admin/loads', icon: '📦' },
+  { label: 'Boş Araç İlanları', path: '/admin/driver-listings', icon: '🚚' },
   { label: 'Tüm Sohbetler', path: '/admin/chats', icon: '💬' },
   { label: 'Destek Talepleri', path: '/admin/support', icon: '🎧' },
   { label: 'Ödemeler', path: '/admin/payments', icon: '💳' },

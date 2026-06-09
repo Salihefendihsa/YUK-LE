@@ -219,6 +219,75 @@ export async function cancelAdminLoad(loadId: string, reason?: string) {
   return res.data
 }
 
+// ── Boş Araç İlanları (DriverListing) Moderasyonu — backend 7ff7acc ───────────
+
+/** Backend AdminDriverListingDto karşılığı. */
+export type AdminDriverListingRow = {
+  id: string
+  driverId: number
+  driverName: string
+  originCity: string
+  originDistrict: string
+  destinationCity: string
+  destinationDistrict: string
+  vehicleType: string
+  availableFrom: string
+  status: string
+  offerCount: number
+  createdAt: string
+}
+
+/** Backend ListingOfferDto karşılığı (admin teklif görünümü). */
+export type AdminListingOfferRow = {
+  id: string
+  driverListingId: string
+  loadId: string
+  customerId: number
+  customerName: string
+  fromCity: string
+  fromDistrict: string
+  toCity: string
+  toDistrict: string
+  loadPrice: number
+  amount?: number | null
+  note?: string | null
+  status: string
+  createdAt: string
+}
+
+/** { Total, Items } veya düz dizi olabilir — her ikisini de karşıla. */
+function unwrapItems<T>(data: unknown): T[] {
+  if (Array.isArray(data)) return data as T[]
+  const items =
+    (data as { items?: unknown; Items?: unknown })?.items ??
+    (data as { Items?: unknown })?.Items
+  return Array.isArray(items) ? (items as T[]) : []
+}
+
+export async function getAdminDriverListings(status?: string): Promise<AdminDriverListingRow[]> {
+  const params: Record<string, string> = {}
+  if (status?.trim()) params.status = status.trim()
+  const res = await apiClient.get('/Admin/driver-listings', { params })
+  return unwrapItems<AdminDriverListingRow>(res.data)
+}
+
+export async function getAdminDriverListingOffers(id: string): Promise<AdminListingOfferRow[]> {
+  const res = await apiClient.get(`/Admin/driver-listings/${id}/offers`)
+  return unwrapItems<AdminListingOfferRow>(res.data)
+}
+
+export async function cancelAdminDriverListing(
+  id: string,
+  note?: string,
+): Promise<{ message: string; rejectedOffers: number }> {
+  const res = await apiClient.post(`/Admin/driver-listings/${id}/cancel`, { text: note ?? null })
+  const d = res.data as Record<string, unknown>
+  return {
+    message: String(d.message ?? d.Message ?? 'İlan kaldırıldı.'),
+    rejectedOffers: Number(d.rejectedOffers ?? d.RejectedOffers ?? 0),
+  }
+}
+
 export async function getAdminPayments(params?: {
   status?: string
   customerId?: number

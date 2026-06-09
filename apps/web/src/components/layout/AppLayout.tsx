@@ -65,6 +65,7 @@ export default function AppLayout() {
     '/admin/drivers': 'Şoförler | Navlonix',
     '/admin/customers': 'Müşteriler | Navlonix',
     '/admin/loads': 'İlanlar | Navlonix',
+    '/admin/driver-listings': 'Boş Araç İlanları | Navlonix',
     '/admin/users': 'Kullanıcılar | Navlonix',
     '/admin/payments': 'Ödemeler | Navlonix',
     '/admin/tracking': 'Canlı Takip | Navlonix',

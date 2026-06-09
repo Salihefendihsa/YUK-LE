@@ -48,6 +48,7 @@ const AdminReviewsPage = lazy(() => import('../pages/admin/Reviews'))
 const AdminDriversPage = lazy(() => import('../pages/admin/Drivers'))
 const AdminCustomersPage = lazy(() => import('../pages/admin/Customers'))
 const AdminLoadsPage = lazy(() => import('../pages/admin/Loads'))
+const AdminDriverListingsPage = lazy(() => import('../pages/admin/DriverListings'))
 const AdminPaymentsPage = lazy(() => import('../pages/admin/Payments'))
 const AdminSystemPage = lazy(() => import('../pages/admin/System'))
 const AdminLogsPage = lazy(() => import('../pages/admin/Logs'))
@@ -245,6 +246,7 @@ const router = createBrowserRouter([
               { path: 'customers/:id', element: <AdminCustomerDetailPage /> },
               { path: 'loads', element: <AdminLoadsPage /> },
               { path: 'loads/:id', element: <AdminLoadDetailPage /> },
+              { path: 'driver-listings', element: <AdminDriverListingsPage /> },
               { path: 'documents', element: <AdminDocumentsPage /> },
               { path: 'chats', element: <AdminChatsPage /> },
               { path: 'support', element: <AdminSupportPage /> },
