@@ -202,6 +202,9 @@ export async function getAdminDrivers(status?: string): Promise<AdminDriverRow[]
 export async function getAdminLoads(params?: {
   status?: string
   q?: string
+  fromCity?: string
+  dateFrom?: string
+  dateTo?: string
   customerId?: number
   driverId?: number
 }): Promise<AdminLoadRow[]> {
