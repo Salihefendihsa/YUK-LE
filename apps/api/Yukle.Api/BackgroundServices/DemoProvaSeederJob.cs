@@ -66,6 +66,12 @@ public sealed class DemoProvaSeederJob(
             var db = scope.ServiceProvider.GetRequiredService<YukleDbContext>();
             var payments = scope.ServiceProvider.GetRequiredService<IPaymentService>();
 
+            // ── Test şoföre ait örnek "Boş Araç" ilanları (yük-demo gating'inden BAĞIMSIZ,
+            //    kendi sabit-GUID idempotency'siyle). "Boş Araçlar" sayfası hep dolu görünsün. ──
+            var listingDriver = await FindFirstByEmailAsync(db, TestDriverEmails, ct);
+            if (listingDriver is not null)
+                await EnsureTestDriverListingsAsync(db, listingDriver, ct);
+
             var customer = await FindFirstByEmailAsync(db, TestCustomerEmails, ct);
             if (customer is null)
             {
@@ -368,6 +374,78 @@ public sealed class DemoProvaSeederJob(
         }
         return monthStart.AddDays(day - 1);
     }
+
+    // ── Test şoföre ait örnek Boş Araç ilanları (idempotent, SABİT GUID ile) ──────────────
+    /// <summary>
+    /// Test şoför (<c>sofor@navlonix.com</c>) için 4 örnek <see cref="DriverListing"/> ekler —
+    /// sanki şoför kendisi açmış gibi. Her ilanın Id'si SABİT; var olan Id atlanır (çoğaltma yok).
+    /// Koordinatlar gerçek il-merkezleri; <see cref="Gf"/> ile (lng, lat) sırasıyla — yük seeder kalıbı.
+    /// Şema/migration değişmez; yalnız veri.
+    /// </summary>
+    private static async Task EnsureTestDriverListingsAsync(YukleDbContext db, User driver, CancellationToken ct)
+    {
+        var now = DateTime.UtcNow;
+
+        var specs = new[]
+        {
+            new ListingSpec(
+                Guid.Parse("d0000000-0000-0000-0000-000000000001"),
+                "İstanbul", "Kadıköy", 41.0082, 28.9784,
+                "Ankara", "Çankaya", 39.9334, 32.8597,
+                VehicleType.TIR, 2, "20 ton / 90 m³ boş", "Dönüş yükü arıyorum, esnek kalkış."),
+            new ListingSpec(
+                Guid.Parse("d0000000-0000-0000-0000-000000000002"),
+                "İzmir", "Konak", 38.4237, 27.1428,
+                "Bursa", "Osmangazi", 40.1826, 29.0665,
+                VehicleType.Kamyon, 3, "10 ton / 40 m³ boş", "Paletli yük tercih edilir."),
+            new ListingSpec(
+                Guid.Parse("d0000000-0000-0000-0000-000000000003"),
+                "Adana", "Seyhan", 37.0000, 35.3213,
+                "Gaziantep", "Şahinbey", 37.0662, 37.3833,
+                VehicleType.Tenteli, 5, "15 ton / 60 m³ boş", "Aynı gün teslim mümkün."),
+            new ListingSpec(
+                Guid.Parse("d0000000-0000-0000-0000-000000000004"),
+                "Antalya", "Muratpaşa", 36.8969, 30.7133,
+                "Konya", "Selçuklu", 37.8746, 32.4932,
+                VehicleType.Frigorifik, 7, "12 ton / 45 m³ boş (soğutmalı)", "Soğuk zincir uygundur."),
+        };
+
+        var added = 0;
+        foreach (var s in specs)
+        {
+            // İdempotency: bu sabit Id zaten varsa ekleme.
+            if (await db.DriverListings.AnyAsync(d => d.Id == s.Id, ct))
+                continue;
+
+            await db.DriverListings.AddAsync(new DriverListing
+            {
+                Id                  = s.Id,
+                DriverId            = driver.Id,
+                OriginCity          = s.OriginCity,
+                OriginDistrict      = s.OriginDistrict,
+                Origin              = Gf.CreatePoint(new Coordinate(s.OriginLng, s.OriginLat)),
+                DestinationCity     = s.DestCity,
+                DestinationDistrict = s.DestDistrict,
+                Destination         = Gf.CreatePoint(new Coordinate(s.DestLng, s.DestLat)),
+                AvailableFrom       = now.AddDays(s.AvailableInDays),
+                VehicleType         = s.VehicleType,
+                CapacityNote        = s.CapacityNote,
+                Notes               = s.Notes,
+                Status              = DriverListingStatus.Active,
+                CreatedAt           = now,
+            }, ct);
+            added++;
+        }
+
+        if (added > 0)
+            await db.SaveChangesAsync(ct);
+    }
+
+    private sealed record ListingSpec(
+        Guid Id,
+        string OriginCity, string OriginDistrict, double OriginLat, double OriginLng,
+        string DestCity, string DestDistrict, double DestLat, double DestLng,
+        VehicleType VehicleType, int AvailableInDays, string CapacityNote, string Notes);
 
     private static Load NewLoad(
         string fromCity, string fromDistrict, double fromLat, double fromLng,
