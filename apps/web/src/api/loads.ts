@@ -1,14 +1,33 @@
 import { apiClient } from './client'
 import type { Load, CreateLoadRequest, CreateLoadResponse } from './types'
 
+/** Backend /Loads/active yanıtını ({ Total, Items } veya düz dizi) çöz. */
+function unwrapLoadPage(data: unknown): { items: Load[]; total: number } {
+  if (Array.isArray(data)) return { items: data as Load[], total: (data as Load[]).length }
+  const obj = data as {
+    items?: unknown; Items?: unknown; data?: unknown; result?: unknown
+    total?: unknown; Total?: unknown
+  } | null
+  const rawItems = obj?.items ?? obj?.Items ?? obj?.data ?? obj?.result
+  const items = Array.isArray(rawItems) ? (rawItems as Load[]) : []
+  const totalRaw = obj?.total ?? obj?.Total
+  const total = typeof totalRaw === 'number' ? totalRaw : items.length
+  return { items, total }
+}
+
 export async function getLoads(params?: Record<string, string | number | boolean | undefined>): Promise<Load[]> {
-  const res = await apiClient.get('/Loads/active', { params })
-  const data = res.data as { items?: unknown; data?: unknown; result?: unknown } | unknown
-  if (Array.isArray(data)) return data as Load[]
-  if (Array.isArray((data as { items?: unknown })?.items)) return (data as { items: Load[] }).items
-  if (Array.isArray((data as { data?: unknown })?.data)) return (data as { data: Load[] }).data
-  if (Array.isArray((data as { result?: unknown })?.result)) return (data as { result: Load[] }).result
-  return []
+  // Backend /Loads/active sayfalı döner ({ Total, Items }). Önceden frontend yalnız ilk 20 kaydı
+  // alıyordu (Total yok sayılıyordu) → 20+ ilan sessizce gizleniyordu. Çözüm: tüm sayfaları
+  // döngüyle çekip birleştir. (Tam sayfalama UI'ı sonraki adıma bırakıldı.)
+  const pageSize = 100
+  const all: Load[] = []
+  for (let page = 1; page <= 100; page++) {
+    const res = await apiClient.get('/Loads/active', { params: { ...params, page, pageSize } })
+    const { items, total } = unwrapLoadPage(res.data)
+    all.push(...items)
+    if (items.length === 0 || all.length >= total) break
+  }
+  return all
 }
 
 export async function getActiveLoads(): Promise<Load[]> {

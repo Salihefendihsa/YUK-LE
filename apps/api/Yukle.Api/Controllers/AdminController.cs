@@ -370,6 +370,12 @@ public class AdminController : ControllerBase
             throw new ApplicationException("Kullanıcı bulunamadı.");
 
         user.IsActive = !user.IsActive;
+        // Pasife alınıyorsa oturumu da kes (refresh token'ı geçersiz kıl).
+        if (!user.IsActive)
+        {
+            user.RefreshToken = null;
+            user.RefreshTokenExpiryTime = null;
+        }
         await _context.SaveChangesAsync();
 
         await WriteAdminActionLogAsync(
@@ -762,6 +768,10 @@ public class AdminController : ControllerBase
         if (user is null) return NotFound();
         if (string.IsNullOrWhiteSpace(request.Reason)) return BadRequest(new { Message = "Askıya alma sebebi zorunludur." });
         user.IsActive = false;
+        // Mevcut oturumu da kes: refresh token'ı geçersiz kıl → kısa ömürlü access token
+        // süresi dolunca yenileme yapılamaz, kullanıcı yeniden giriş yapamaz (IsActive=false).
+        user.RefreshToken = null;
+        user.RefreshTokenExpiryTime = null;
         await _context.SaveChangesAsync();
         await WriteAdminActionLogAsync(adminId, userId, "Suspend", request.Reason.Trim());
         return Ok(new { Message = "Kullanıcı askıya alındı." });

@@ -23,6 +23,13 @@ namespace Yukle.Api.Services
             _config = config;
         }
 
+        /// <summary>Erişim token ömrü (dakika). Config: Jwt:AccessTokenMinutes, yoksa 60 dk.</summary>
+        internal static int ResolveAccessTokenMinutes(IConfiguration config)
+        {
+            var raw = config["Jwt:AccessTokenMinutes"];
+            return int.TryParse(raw, out var m) && m > 0 ? m : 60;
+        }
+
         public string CreateToken(User user)
         {
             // v2.5.3 — JWT Yetkilendirme Bariyeri Claim'leri
@@ -52,7 +59,10 @@ namespace Yukle.Api.Services
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddDays(7), // 7 günlük geçerlilik süresi
+                // Erişim token ömrü config'ten (Jwt:AccessTokenMinutes), varsayılan 60 dk.
+                // Kısa ömür + refresh akışı (web client.ts & mobil api.client.ts doğrulandı) →
+                // askıya alma/ban en geç ~token ömrü kadar sürede etkili olur (önceden 7 gündü).
+                Expires = DateTime.UtcNow.AddMinutes(ResolveAccessTokenMinutes(_config)),
                 SigningCredentials = creds,
                 Issuer = _config["Jwt:Issuer"],
                 Audience = _config["Jwt:Audience"]

@@ -47,10 +47,13 @@ export function LoginScreen() {
     setError('');
     try {
       const response = await authService.login({ phone: normalizedPhone, password });
-      setAuth(response);
+      // setAuth YALNIZCA desteklenen rollerde çağrılır — admin gibi desteklenmeyen roller
+      // bu ekrandan oturum AÇMAZ (store'a yazılmaz). Admin için (auth)/admin-login kullanılır.
       if (response.role === 'Customer') {
+        setAuth(response);
         router.replace('/(customer)/(tabs)/dashboard');
       } else if (response.role === 'Driver') {
+        setAuth(response);
         router.replace('/(driver)/(tabs)/dashboard');
       } else {
         setError('Bu hesap mobil uygulamada desteklenmiyor');

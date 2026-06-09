@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Text;
 using System.Threading;
@@ -29,6 +30,8 @@ public sealed class AdminSeederJob(
         {
             using var scope = scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<YukleDbContext>();
+            var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+            var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
 
             const string adminEmail = "admin@navlonix.com";
             // Phone alanı User entity'de UNIQUE (YukleDbContext.HasIndex(Phone).IsUnique).
@@ -42,8 +45,10 @@ public sealed class AdminSeederJob(
             // Backend login `u.Phone == input || u.Email == input` dual-mode olduğu
             // için admin sadece email ile giriş yapar; phone'un değeri kritik değil.
             const string adminPhoneCandidate = "+900000000000";
-            const string adminPassword = "Admin123!";
-            byte[] adminPasswordHash = Encoding.UTF8.GetBytes(BCrypt.Net.BCrypt.HashPassword(adminPassword));
+            // Admin şifresi config'ten (Seed:AdminPassword) okunur; yoksa Admin123! fallback.
+            // YALNIZCA admin YOKSA (ilk kurulum) uygulanır — mevcut admin'in şifresine DOKUNULMAZ.
+            var adminPassword = config["Seed:AdminPassword"];
+            if (string.IsNullOrWhiteSpace(adminPassword)) adminPassword = "Admin123!";
 
             var adminUser = await db.Users.SingleOrDefaultAsync(u => u.Email == adminEmail, cancellationToken);
             if (adminUser is null)
@@ -60,6 +65,9 @@ public sealed class AdminSeederJob(
                     Email = adminEmail,
                     Phone = adminPhone,
                     Role = UserRole.Admin,
+                    // Şifre YALNIZ oluşturma anında set edilir; sonraki açılışlarda korunur.
+                    PasswordHash = Encoding.UTF8.GetBytes(BCrypt.Net.BCrypt.HashPassword(adminPassword)),
+                    PasswordSalt = Array.Empty<byte>(),
                     CreatedAt = DateTime.UtcNow
                 };
                 await db.Users.AddAsync(adminUser, cancellationToken);
@@ -79,11 +87,12 @@ public sealed class AdminSeederJob(
             }
             else
             {
-                logger.LogInformation("AdminSeeder: mevcut admin bulundu, kimlik bilgileri güncelleniyor.");
+                logger.LogInformation("AdminSeeder: mevcut admin bulundu — şifre KORUNUYOR, yalnız erişim bayrakları doğrulanıyor.");
             }
 
-            adminUser.PasswordHash = adminPasswordHash;
-            adminUser.PasswordSalt = Array.Empty<byte>();
+            // Şifre yalnız oluşturma anında set edildi (yukarıda). Mevcut admin'in şifresi
+            // her açılışta sıfırlanmaz. Aşağıdakiler operatörü kilitlememek için güvenlik teyidi
+            // (admin hesabı her zaman erişilebilir kalır).
             adminUser.IsActive = true;
             adminUser.IsPhoneVerified = true;
             adminUser.ApprovalStatus = ApprovalStatus.Active;
@@ -97,18 +106,28 @@ public sealed class AdminSeederJob(
             logger.LogInformation(
                 "AdminSeeder: admin ({Email}) başarıyla seed edildi.", adminEmail);
 
-            // Test users best-effort — admin başarısını riske atmadan dene.
-            try
+            // Test users best-effort — YALNIZCA Development ortamında seed edilir.
+            // Development dışında (ör. Production) seed ATLANIR; mevcut hesaplara DOKUNULMAZ (silinmez).
+            if (env.IsDevelopment())
             {
-                await UpsertTestUsersAsync(db, cancellationToken);
-                await db.SaveChangesAsync(cancellationToken);
-                logger.LogInformation("AdminSeeder: test kullanıcıları seed edildi.");
+                try
+                {
+                    await UpsertTestUsersAsync(db, cancellationToken);
+                    await db.SaveChangesAsync(cancellationToken);
+                    logger.LogInformation("AdminSeeder: test kullanıcıları seed edildi (Development).");
+                }
+                catch (Exception testEx)
+                {
+                    logger.LogWarning(testEx,
+                        "AdminSeeder: test kullanıcıları seed edilemedi (muhtemelen phone collision: " +
+                        "5000000001/5000000002 başka kayıtta). Admin login etkilenmedi.");
+                }
             }
-            catch (Exception testEx)
+            else
             {
-                logger.LogWarning(testEx,
-                    "AdminSeeder: test kullanıcıları seed edilemedi (muhtemelen phone collision: " +
-                    "5000000001/5000000002 başka kayıtta). Admin login etkilenmedi.");
+                logger.LogInformation(
+                    "AdminSeeder: Development dışı ortam ({Env}) — test kullanıcıları seed EDİLMEDİ, mevcutlara dokunulmadı.",
+                    env.EnvironmentName);
             }
         }
         catch (Exception ex)

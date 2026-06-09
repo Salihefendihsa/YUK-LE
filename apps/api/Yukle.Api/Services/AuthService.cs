@@ -75,7 +75,8 @@ public class AuthService : IAuthService
     private const string LogTagManualReview = "MANUAL_REVIEW_REQUIRED";
 
     // ── v2.5.4 · Refresh Token Parametreleri ──────────────────────────────────
-    private const int AccessTokenLifetimeDays   = 7;   // TokenService.CreateToken içindeki değer ile aynı
+    // Erişim token ömrü artık config'ten (Jwt:AccessTokenMinutes, varsayılan 60 dk) —
+    // bkz. TokenService.ResolveAccessTokenMinutes. Refresh ömrü ayrı (uzun).
     private const int RefreshTokenLifetimeDays  = 7;
 
     // Generic (kimliği sızdırmayan) hata mesajları — istemciye tam neden söylenmez,
@@ -536,7 +537,7 @@ public class AuthService : IAuthService
         string accessToken  = _tokenService.CreateToken(user);
         string refreshToken = _tokenService.GenerateRefreshToken();
 
-        DateTime accessExpires  = DateTime.UtcNow.AddDays(AccessTokenLifetimeDays);
+        DateTime accessExpires  = DateTime.UtcNow.AddMinutes(TokenService.ResolveAccessTokenMinutes(_configuration));
         DateTime refreshExpires = DateTime.UtcNow.AddDays(RefreshTokenLifetimeDays);
 
         user.RefreshToken           = refreshToken;
