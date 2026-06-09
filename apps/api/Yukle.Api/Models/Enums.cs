@@ -75,6 +75,18 @@ public enum BidStatus
     Cancelled
 }
 
+/// <summary>
+/// Müşterinin bir şoför "Boş Araç" ilanına verdiği yük teklifinin durumları.
+/// DB'de integer saklanır — mevcut üyeler SİLİNMEZ/YENİDEN SIRALANMAZ, yeni üyeler SONA eklenir.
+/// </summary>
+public enum ListingOfferStatus
+{
+    Pending,    // 0 — Beklemede
+    Accepted,   // 1 — Şoför kabul etti (yük atandı, ilan Eşleşti)
+    Rejected,   // 2 — Şoför reddetti (veya başka teklif kabul edilince)
+    Withdrawn   // 3 — Müşteri geri çekti
+}
+
 /// <summary>Yakıt türleri — <c>FuelPrice</c> tablosunda kullanılır.</summary>
 public enum FuelType
 {

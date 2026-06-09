@@ -96,3 +96,66 @@ public sealed class DriverListingDto
     public string Status { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  ListingOffer (Müşteri → Şoför İlanı Yük Teklifi) DTO'ları
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// <summary>Müşterinin bir şoför ilanına kendi açık yükünü teklif etmesi için DTO.</summary>
+public sealed class CreateListingOfferDto
+{
+    [Required(ErrorMessage = "Teklif edilecek yük zorunludur.")]
+    public Guid LoadId { get; set; }
+
+    /// <summary>Önerilen navlun (opsiyonel). Boş bırakılırsa yükün mevcut fiyatı kullanılır.</summary>
+    [Range(0.0, 9_999_999.0, ErrorMessage = "Tutar geçerli bir değer olmalıdır.")]
+    public decimal? Amount { get; set; }
+
+    [StringLength(1000, ErrorMessage = "Not en fazla 1000 karakter olabilir.")]
+    public string? Note { get; set; }
+}
+
+/// <summary>İlan sahibi şoförün gördüğü teklif görünümü.</summary>
+public sealed class ListingOfferDto
+{
+    public Guid Id { get; set; }
+    public Guid DriverListingId { get; set; }
+
+    public Guid LoadId { get; set; }
+    public int CustomerId { get; set; }
+    public string CustomerName { get; set; } = string.Empty;
+
+    // Teklif edilen yükün rota özeti
+    public string FromCity { get; set; }     = string.Empty;
+    public string FromDistrict { get; set; } = string.Empty;
+    public string ToCity { get; set; }       = string.Empty;
+    public string ToDistrict { get; set; }   = string.Empty;
+    public decimal LoadPrice { get; set; }
+
+    public decimal? Amount { get; set; }
+    public string? Note { get; set; }
+
+    public string Status { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+}
+
+/// <summary>Müşterinin kendi gönderdiği teklif görünümü.</summary>
+public sealed class MyListingOfferDto
+{
+    public Guid Id { get; set; }
+
+    public Guid DriverListingId { get; set; }
+    public string DriverName { get; set; }      = string.Empty;
+    public string OriginCity { get; set; }      = string.Empty;
+    public string DestinationCity { get; set; } = string.Empty;
+
+    public Guid LoadId { get; set; }
+    public string FromCity { get; set; } = string.Empty;
+    public string ToCity { get; set; }   = string.Empty;
+
+    public decimal? Amount { get; set; }
+    public string? Note { get; set; }
+
+    public string Status { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+}

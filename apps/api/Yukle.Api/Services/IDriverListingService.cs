@@ -32,4 +32,31 @@ public interface IDriverListingService
     /// <see cref="InvalidOperationException"/> fırlatır.
     /// </summary>
     Task CancelAsync(Guid id, int driverId);
+
+    // ── Teklif / Eşleşme ──────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Müşteri, yayında olan bir şoför ilanına kendi AÇIK (Active, atanmamış) yükünü teklif eder.
+    /// Oluşturulan teklifin ID'sini döner.
+    /// </summary>
+    Task<Guid> CreateOfferAsync(Guid listingId, CreateListingOfferDto dto, int customerId);
+
+    /// <summary>İlan sahibi şoför, ilanına gelen teklifleri görür (sahiplik doğrulamalı).</summary>
+    Task<List<ListingOfferDto>> GetOffersForListingAsync(Guid listingId, int driverId);
+
+    /// <summary>Müşterinin gönderdiği tüm teklifler, en yeni üstte.</summary>
+    Task<List<MyListingOfferDto>> GetMyOffersAsync(int customerId);
+
+    /// <summary>
+    /// İlan sahibi şoför teklifi kabul eder. MEVCUT atama+escrow hattıyla (BidService.AcceptBidAsync
+    /// ile birebir) yük bu şoföre atanır, escrow hold konur; ilan Eşleşti olur; aynı ilandaki diğer
+    /// bekleyen teklifler reddedilir. Atomik (transaction) çalışır.
+    /// </summary>
+    Task AcceptOfferAsync(Guid offerId, int driverId);
+
+    /// <summary>İlan sahibi şoför bekleyen bir teklifi reddeder (Status → Rejected).</summary>
+    Task RejectOfferAsync(Guid offerId, int driverId);
+
+    /// <summary>Müşteri kendi bekleyen teklifini geri çeker (Status → Withdrawn).</summary>
+    Task WithdrawOfferAsync(Guid offerId, int customerId);
 }

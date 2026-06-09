@@ -43,6 +43,9 @@ public class YukleDbContext : DbContext
     // Şoför "Boş Araç" ilanları
     public DbSet<DriverListing> DriverListings { get; set; }
 
+    // Müşterinin şoför ilanına verdiği yük teklifleri
+    public DbSet<ListingOffer> ListingOffers { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -370,6 +373,38 @@ public class YukleDbContext : DbContext
             entity.HasIndex(d => new { d.Status, d.AvailableFrom });
             // Şoförün kendi ilanları
             entity.HasIndex(d => d.DriverId);
+        });
+
+        // ── ListingOffer (Müşteri → Şoför İlanı Yük Teklifi) ──────────────────
+        modelBuilder.Entity<ListingOffer>(entity =>
+        {
+            entity.HasKey(o => o.Id);
+
+            // İlan: ilan silinirse teklifleri de silinir.
+            entity.HasOne(o => o.DriverListing)
+                  .WithMany()
+                  .HasForeignKey(o => o.DriverListingId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // Yük: ödeme/atama izi için yük silinmesi kısıtlı.
+            entity.HasOne(o => o.Load)
+                  .WithMany()
+                  .HasForeignKey(o => o.LoadId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            // Müşteri: çoklu cascade yolunu önlemek için kısıtlı.
+            entity.HasOne(o => o.Customer)
+                  .WithMany()
+                  .HasForeignKey(o => o.CustomerId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(o => o.Amount).HasPrecision(18, 2);
+            entity.Property(o => o.Note).HasMaxLength(1000);
+
+            // İlana gelen bekleyen teklifleri hızlı getirmek için bileşik index
+            entity.HasIndex(o => new { o.DriverListingId, o.Status });
+            // Müşterinin kendi teklifleri
+            entity.HasIndex(o => o.CustomerId);
         });
 
         // ── Phase 4.3 UetdsOutbox ─────────────────────────────────────────────

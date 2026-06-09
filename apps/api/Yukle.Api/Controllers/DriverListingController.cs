@@ -107,4 +107,165 @@ public sealed class DriverListingController(
             return BadRequest(new { Message = ex.Message });
         }
     }
+
+    // ── POST api/DriverListing/{id}/offers ─────────────────────────────────────
+
+    /// <summary>Müşteri, yayında olan bir şoför ilanına kendi açık yükünü teklif eder.</summary>
+    [HttpPost("{id:guid}/offers")]
+    [Authorize(Roles = "Customer")]
+    public async Task<IActionResult> CreateOffer(Guid id, [FromBody] CreateListingOfferDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId))
+            return Unauthorized(new { Message = "Geçerli bir müşteri kimliği bulunamadı." });
+
+        try
+        {
+            var offerId = await listingService.CreateOfferAsync(id, dto, customerId);
+            return Ok(new { Id = offerId, Message = "Teklifiniz iletildi." });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { Message = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { Message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { Message = ex.Message });
+        }
+    }
+
+    // ── GET api/DriverListing/{id}/offers ──────────────────────────────────────
+
+    /// <summary>İlan sahibi şoför, ilanına gelen teklifleri görür.</summary>
+    [HttpGet("{id:guid}/offers")]
+    [Authorize(Roles = "Driver")]
+    public async Task<IActionResult> GetOffers(Guid id)
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var driverId))
+            return Unauthorized(new { Message = "Geçerli bir sürücü kimliği bulunamadı." });
+
+        try
+        {
+            var items = await listingService.GetOffersForListingAsync(id, driverId);
+            return Ok(new { Total = items.Count, Items = items });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { Message = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { Message = ex.Message });
+        }
+    }
+
+    // ── GET api/DriverListing/offers/mine ──────────────────────────────────────
+
+    /// <summary>Müşterinin gönderdiği tüm teklifler.</summary>
+    [HttpGet("offers/mine")]
+    [Authorize(Roles = "Customer")]
+    public async Task<IActionResult> GetMyOffers()
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId))
+            return Unauthorized(new { Message = "Geçerli bir müşteri kimliği bulunamadı." });
+
+        var items = await listingService.GetMyOffersAsync(customerId);
+        return Ok(new { Total = items.Count, Items = items });
+    }
+
+    // ── POST api/DriverListing/offers/{offerId}/accept ─────────────────────────
+
+    /// <summary>
+    /// İlan sahibi şoför teklifi kabul eder; yük bu şoföre atanır (mevcut atama+escrow hattı),
+    /// ilan Eşleşti olur, diğer bekleyen teklifler reddedilir.
+    /// </summary>
+    [HttpPost("offers/{offerId:guid}/accept")]
+    [Authorize(Roles = "Driver")]
+    public async Task<IActionResult> AcceptOffer(Guid offerId)
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var driverId))
+            return Unauthorized(new { Message = "Geçerli bir sürücü kimliği bulunamadı." });
+
+        try
+        {
+            await listingService.AcceptOfferAsync(offerId, driverId);
+            return Ok(new { Message = "Teklif kabul edildi. Yük size atandı." });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { Message = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { Message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { Message = ex.Message });
+        }
+    }
+
+    // ── POST api/DriverListing/offers/{offerId}/reject ─────────────────────────
+
+    /// <summary>İlan sahibi şoför bekleyen bir teklifi reddeder.</summary>
+    [HttpPost("offers/{offerId:guid}/reject")]
+    [Authorize(Roles = "Driver")]
+    public async Task<IActionResult> RejectOffer(Guid offerId)
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var driverId))
+            return Unauthorized(new { Message = "Geçerli bir sürücü kimliği bulunamadı." });
+
+        try
+        {
+            await listingService.RejectOfferAsync(offerId, driverId);
+            return Ok(new { Message = "Teklif reddedildi." });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { Message = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { Message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { Message = ex.Message });
+        }
+    }
+
+    // ── POST api/DriverListing/offers/{offerId}/withdraw ───────────────────────
+
+    /// <summary>Müşteri kendi bekleyen teklifini geri çeker.</summary>
+    [HttpPost("offers/{offerId:guid}/withdraw")]
+    [Authorize(Roles = "Customer")]
+    public async Task<IActionResult> WithdrawOffer(Guid offerId)
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId))
+            return Unauthorized(new { Message = "Geçerli bir müşteri kimliği bulunamadı." });
+
+        try
+        {
+            await listingService.WithdrawOfferAsync(offerId, customerId);
+            return Ok(new { Message = "Teklif geri çekildi." });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { Message = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { Message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { Message = ex.Message });
+        }
+    }
 }
