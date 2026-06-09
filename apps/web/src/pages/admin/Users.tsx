@@ -41,6 +41,14 @@ export default function AdminUsersPage() {
   }
 
   if (loading) return <PageSkeleton rows={8} />
+  const roleCount = (r: string) =>
+    r === 'All' ? users.length : users.filter((u) => String(u.role) === r).length
+  const SEGMENTS: { value: string; label: string }[] = [
+    { value: 'All', label: 'Tümü' },
+    { value: 'Customer', label: 'Müşteri' },
+    { value: 'Driver', label: 'Şoför' },
+    { value: 'Admin', label: 'Yönetici' },
+  ]
   const filtered = users.filter((u) => {
     if (role !== 'All' && String(u.role) !== role) return false
     return JSON.stringify(u).toLowerCase().includes(query.toLowerCase())
@@ -50,10 +58,22 @@ export default function AdminUsersPage() {
     <div className="admin-page">
       <h1 className="admin-title">Tüm Kullanıcılar</h1>
       {error ? <PageError message={error} /> : null}
+      <div className="admin-segment" role="tablist" aria-label="Role göre filtrele">
+        {SEGMENTS.map((s) => (
+          <button
+            key={s.value}
+            type="button"
+            role="tab"
+            aria-selected={role === s.value}
+            className={`admin-seg-btn ${role === s.value ? 'active' : ''}`}
+            onClick={() => setRole(s.value)}
+          >
+            {s.label}
+            <span className="admin-seg-count">{roleCount(s.value)}</span>
+          </button>
+        ))}
+      </div>
       <div className="admin-filters">
-        <select className="form-input" value={role} onChange={(e) => setRole(e.target.value)}>
-          <option value="All">Tümü</option><option value="Customer">Müşteri</option><option value="Driver">Şoför</option><option value="Admin">Yönetici</option>
-        </select>
         <input className="form-input" placeholder="Ad, e-posta, telefon" value={query} onChange={(e) => setQuery(e.target.value)} />
       </div>
       <div className="admin-table-wrap">

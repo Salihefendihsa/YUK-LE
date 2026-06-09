@@ -65,6 +65,46 @@
   gap: 10px;
 }
 
+/* Rol segment filtresi — admin kırmızı aksan (floating card içi). */
+.admin-segment {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 14px;
+  background: var(--color-card);
+  border: 1px solid var(--color-border-light);
+  border-radius: 10px;
+}
+
+.admin-seg-btn {
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.admin-seg-btn:hover {
+  color: #fca5a5;
+}
+
+.admin-seg-btn.active {
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.85), rgba(239, 68, 68, 0.55));
+  border-color: rgba(239, 68, 68, 0.7);
+  color: #fff;
+}
+
+.admin-seg-count {
+  margin-left: 6px;
+  font-size: 11px;
+  opacity: 0.85;
+}
+
 .admin-table-wrap {
   overflow: auto;
   border: 1px solid var(--color-border-light);
