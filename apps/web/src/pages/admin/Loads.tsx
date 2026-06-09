@@ -36,9 +36,9 @@ export default function AdminLoadsPage() {
     const data = await getAdminLoads({
       status: status || undefined,
       fromCity: cityFilter.trim() || undefined,
-      dateFrom: dateFrom || undefined,
-      // Bitiş tarihini gün sonuna çek (aynı günü dahil et).
-      dateTo: dateTo ? `${dateTo}T23:59:59` : undefined,
+      // Backend timestamptz UTC bekler — tarihi gün başı/sonu UTC (Z) olarak gönder.
+      dateFrom: dateFrom ? `${dateFrom}T00:00:00Z` : undefined,
+      dateTo: dateTo ? `${dateTo}T23:59:59Z` : undefined,
     })
     setLoads(data)
   }
