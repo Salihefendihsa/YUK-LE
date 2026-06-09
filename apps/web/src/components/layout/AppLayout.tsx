@@ -47,6 +47,7 @@ export default function AppLayout() {
     '/customer/settings': 'Ayarlar | Navlonix',
     '/customer/analytics': 'Analitik | Navlonix',
     '/customer/bids': 'Teklifler | Navlonix',
+    '/customer/listing-offers': 'Boş Araç Tekliflerim | Navlonix',
     '/customer/track': 'Canlı Takip | Navlonix',
     '/driver/dashboard': 'Genel Bakış | Navlonix',
     '/driver/loads': 'Yükler | Navlonix',

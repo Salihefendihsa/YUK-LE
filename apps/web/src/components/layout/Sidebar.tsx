@@ -18,6 +18,7 @@ const CUSTOMER_NAV: NavItem[] = [
   { label: 'İlanlarım', path: '/customer/loads', icon: '📦' },
   { label: 'Teklifler', path: '/customer/bids', icon: '💼' },
   { label: 'Boş Araçlar', path: '/customer/driver-listings', icon: '🚚' },
+  { label: 'Boş Araç Tekliflerim', path: '/customer/listing-offers', icon: '📨' },
   { label: 'Sohbetlerim', path: '/customer/chats', icon: '💬' },
   { label: 'Destek', path: '/customer/support', icon: '🎧' },
   { label: 'Canlı Takip', path: '/customer/track', icon: '🗺️' },
