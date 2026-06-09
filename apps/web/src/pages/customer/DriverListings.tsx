@@ -90,7 +90,8 @@ export default function CustomerDriverListingsPage() {
 
   const applyFilter = () => {
     setLoading(true)
-    void load({ fromCity, toCity })
+    // Yalnız dolu filtreler API'ye gider; boş şehir alanları gönderilmez.
+    void load({ fromCity: fromCity.trim() || undefined, toCity: toCity.trim() || undefined })
       .catch((e: { uiMessage?: string }) => setError(e.uiMessage ?? 'Boş araç ilanları yüklenemedi.'))
       .finally(() => setLoading(false))
   }

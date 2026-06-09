@@ -37,7 +37,7 @@ function offerStatusBadgeClass(status: string): string {
 const STATUS_LABEL: Record<string, string> = {
   Active: 'Yayında',
   Matched: 'Eşleşti',
-  Cancelled: 'İptal',
+  Cancelled: 'İptal edildi',
   Expired: 'Süresi doldu',
 }
 
